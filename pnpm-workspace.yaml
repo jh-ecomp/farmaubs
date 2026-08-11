@@ -1,0 +1,11 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  '@scarf/scarf': true
+  bcrypt: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - unrs-resolver
+  - bcrypt
+  - '@scarf/scarf'
