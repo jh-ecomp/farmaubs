@@ -1,0 +1,38 @@
+# FarmaUBS — overrides de desenvolvimento local (ADR-023)
+# Hot-reload, portas expostas e bind mount do código-fonte.
+services:
+  postgres:
+    ports:
+      - "5434:5432"   # acesso direto do host (tools de banco, pgAdmin)
+
+  api:
+    build:
+      target: dev
+    command: pnpm --filter @farmaubs/backend start:dev
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"   # watch confiável em bind mount no Windows
+    ports:
+      - "3000:3000"
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/apps/backend/node_modules
+      - /app/apps/frontend/node_modules
+      - /app/packages/shared/node_modules
+
+  frontend:
+    build:
+      target: dev
+    command: pnpm --filter @farmaubs/frontend dev --host 0.0.0.0
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/apps/backend/node_modules
+      - /app/apps/frontend/node_modules
+      - /app/packages/shared/node_modules

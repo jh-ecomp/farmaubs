@@ -1,0 +1,35 @@
+# FarmaUBS — configuração base (ADR-023)
+# Uso (da raiz do repositório):
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+name: farmaubs
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file: ../.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/backend/Dockerfile
+    env_file: ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: apps/frontend/Dockerfile
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
