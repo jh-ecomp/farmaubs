@@ -4,7 +4,7 @@
 
 **Status:** 🟡 Em desenvolvimento
 
-**Última atualização:** 18/08/2026
+**Última atualização:** 20/08/2026
 
 | Campo                   | Valor                                                                                                |
 | ----------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -96,10 +96,10 @@ farmaubs/
 2. Abra o VS Code e instale as extensões pela aba Extensões (Ctrl+Shift+X) ou pelo terminal:
 
 ```powershell
-   code --install-extension GitHub.vscode-pull-request-github
-   code --install-extension dbaeumer.vscode-eslint
-   code --install-extension esbenp.prettier-vscode
-   code --install-extension ashinzekene.nestjs
+code --install-extension GitHub.vscode-pull-request-github
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+code --install-extension ashinzekene.nestjs
 ```
 
 | Extensão                                        | Obrigatória | Motivo                                       |
@@ -203,15 +203,15 @@ pnpm --version   # deve retornar exatamente 11.21.0
    Clone via HTTPS
 
    ```powershell
-      git clone https://github.com/jh-ecomp/farmaubs.git
-      cd farmaubs
+   git clone https://github.com/jh-ecomp/farmaubs.git
+   cd farmaubs
    ```
 
    Clone via SSH
 
    ```powershell
-      git clone git@github.com:jh-ecomp/farmaubs.git
-      cd farmaubs
+   git clone git@github.com:jh-ecomp/farmaubs.git
+   cd farmaubs
    ```
 
    <img src="./imagens/repo-01.png" alt="Verificar instalação do Docker" width="600"/>
@@ -219,7 +219,7 @@ pnpm --version   # deve retornar exatamente 11.21.0
 5. Confirme a estrutura:
 
    ```powershell
-      Get-ChildItem
+   Get-ChildItem
    ```
 
 Deve exibir as pastas `apps/`, `packages/`, `infra/`, `docs/` e os arquivos `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `.env.example`, `package.json`.
@@ -235,7 +235,7 @@ Para gerar uma chave SSH siga o seguinte tutorial: [Gerando uma nova chave SSH e
 1. Na raiz do repositório, instale tudo de uma vez (backend, frontend e shared):
 
    ```powershell
-      pnpm install
+   pnpm install
    ```
 
    <img src="./imagens/repo-02.png" alt="Verificar instalação do Docker" width="600"/>
@@ -243,7 +243,7 @@ Para gerar uma chave SSH siga o seguinte tutorial: [Gerando uma nova chave SSH e
 2. Compile os pacotes para validar a integridade:
 
    ```powershell
-      pnpm build
+   pnpm build
    ```
 
    <img src="./imagens/repo-03.png" alt="Verificar instalação do Docker" width="600"/>
@@ -262,7 +262,7 @@ pnpm approve-builds
 
 **Objetivo:** associar seus commits ao seu nome e e-mail, **apenas neste repositório** (sem afetar outras máquinas ou projetos).
 
-Na raiz do repositório (sem as aspas):
+Na raiz do repositório (com as aspas):
 
 ```powershell
 git config user.name "Seu Nome Completo"
@@ -285,35 +285,35 @@ git config --get user.email
 1. Copie o modelo:
 
 ```powershell
-   Copy-Item .env.example .env
+Copy-Item .env.example .env
 ```
 
 2. Gere as chaves aleatórias com o Node (nunca invente ou reutilize segredos):
 
 ```powershell
-   node -e "console.log('POSTGRES_PASSWORD=' + require('crypto').randomBytes(24).toString('hex'))"
-   node -e "console.log('SESSION_SECRET=' + require('crypto').randomBytes(64).toString('hex'))"
-   node -e "console.log('ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
+node -e "console.log('POSTGRES_PASSWORD=' + require('crypto').randomBytes(24).toString('hex'))"
+node -e "console.log('SESSION_SECRET=' + require('crypto').randomBytes(64).toString('hex'))"
+node -e "console.log('ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 3. Abra o `.env` e cole os valores gerados nas variáveis correspondentes. A chave `ENCRYPTION_KEY` exige **32 bytes** (o comando acima gera 64 caracteres hex, equivalentes a 32 bytes, conforme AES-256 do NF010).
-4. Confira as portas que o projeto usa: **5432** (Postgres), **3000** (API), **5173** (frontend Vite). Verifique se já estão ocupadas por outros processos:
+4. Confira as portas que o projeto usa: **5434** (Postgres), **3000** (API), **5173** (frontend Vite). Verifique se já estão ocupadas por outros processos:
 
 ```powershell
-   Get-NetTCPConnection -LocalPort 5432,3000,5173 -ErrorAction SilentlyContinue |
-     Select-Object LocalPort, State, OwningProcess
+Get-NetTCPConnection -LocalPort 5434,3000,5173 -ErrorAction SilentlyContinue |
+   Select-Object LocalPort, State, OwningProcess
 ```
 
 Alternativa com netstat:
 
 ```powershell
-   netstat -ano | findstr ":5432 :3000 :5173"
+netstat -ano | findstr ":5434 :3000 :5173"
 ```
 
 Se aparecerem linhas, identifique o processo que ocupa a porta:
 
 ```powershell
-   Get-Process -Id <PID_RETORNADO>
+Get-Process -Id <PID_RETORNADO>
 ```
 
 Encerre o processo (se for seguro) ou ajuste a porta no `.env`/compose antes de subir a stack.
@@ -323,7 +323,7 @@ Encerre o processo (se for seguro) ou ajuste a porta no `.env`/compose antes de 
 - [ ] `.env` existe na raiz e foi preenchido
 - [ ] `.env` **não** aparece no `git status` (o `.gitignore` deve cobri-lo; ADR-027)
 - [ ] `ENCRYPTION_KEY` e `SESSION_SECRET` são valores gerados, únicos desta máquina
-- [ ] Portas 5432, 3000 e 5173 livres
+- [ ] Portas 5434, 3000 e 5173 livres
 
 ## Etapa 10 — Execução do projeto
 
@@ -332,19 +332,19 @@ Encerre o processo (se for seguro) ou ajuste a porta no `.env`/compose antes de 
 1. Suba a stack de desenvolvimento:
 
 ```powershell
-   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
 ```
 
 A primeira execução constrói as imagens e pode levar alguns minutos. 2. Confirme que os três serviços estão de pé:
 
 ```powershell
-   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml ps
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml ps
 ```
 
 3. Acompanhe os logs da API:
 
 ```powershell
-   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
 ```
 
 **Acessos após a subida:**
@@ -353,7 +353,7 @@ A primeira execução constrói as imagens e pode levar alguns minutos. 2. Confi
 | --------------- | ----------------------- |
 | Frontend (Vite) | `http://localhost:5173` |
 | API (NestJS)    | `http://localhost:3000` |
-| PostgreSQL      | `localhost:5432`        |
+| PostgreSQL      | `localhost:5434`        |
 
 **Parar a stack:**
 
@@ -362,11 +362,6 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down
 ```
 
 **Alerta:** `down` preserva os dados do Postgres (volume). Use `down -v` apenas se quiser apagar o banco local e recomeçar do zero.
-
-> **ESPAÇO PARA IMAGEM:** `images/onboarding/etapa-10-stack-rodando.png`
-> Cole aqui a captura de tela do `docker compose ps` mostrando os três serviços com status Up.
-
----
 
 ## Checklist final de validação
 
@@ -388,6 +383,6 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down
 | `wsl` retorna erro de versão                      | WSL desatualizado                                   | `wsl --update` e `wsl --set-default-version 2`                                                                                |
 | `pnpm install` avisa `ERR_PNPM_IGNORED_BUILDS`    | pnpm 10+ bloqueia scripts de build                  | `pnpm approve-builds` ou `onlyBuiltDependencies` no `pnpm-workspace.yaml`                                                     |
 | Build do Docker falha com `node:sqlite`           | pnpm 11 exige Node 22+ e a imagem usa Node 20       | Confirmar imagem `node:22-alpine` no Dockerfile                                                                               |
-| Porta 5432/3000/5173 ocupada                      | Processo local pré-existente                        | Encerrar processo ou ajustar porta no `.env`                                                                                  |
+| Porta 5434/3000/5173 ocupada                      | Processo local pré-existente                        | Encerrar processo ou ajustar porta no `.env`                                                                                  |
 | `git add apps/backend` acusa repositório aninhado | `nest new` criou `apps/backend/.git`                | `Remove-Item -Recurse -Force apps/backend/.git`                                                                               |
 | API não acha o banco                              | `DB_HOST` com `localhost` em vez do nome do serviço | Usar `DB_HOST=postgres` (nome do serviço no compose)                                                                          |
