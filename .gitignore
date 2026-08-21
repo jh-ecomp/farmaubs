@@ -1,8 +1,14 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+# Dependências (todos os workspaces do monorepo)
+node_modules/
+**/node_modules/
+
+# Builds (todos os workspaces)
+dist/
+**/dist/
+build/
+**/build/
+.temp
+.tmp
 
 # Logs
 logs
@@ -13,12 +19,14 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# dotenv environment variable files
+# Variáveis de ambiente (ADR-027) — nunca versionar, exceto o exemplo
 .env
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
-# temp directory
-.temp
-.tmp
+# Arquivos gerados pelo editor/OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
