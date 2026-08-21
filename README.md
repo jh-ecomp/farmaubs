@@ -15,16 +15,31 @@
 </p>
 
 #### Status: Done
+
 ## Summary
-1. [Sobre](#sobre)
-2. [Instalação](#instalacao)
-3. [Estrutura de pastas completa](#estrutura-de-pastas-completa)
-4. [Como usar](#como-usar)
-5. [Autores](#autores)
-6. [Licença](#licença)
+
+1. [Sobre](#1-sobre)
+2. [Instalação](#2-instalação)
+3. [Estrutura de pastas completa](#3-estrutura-de-pastas-completa)
+4. [Como usar](#4-como-usar)
+5. [Autores](#5-autores)
+6. [Licença](#6-licença)
 
 ## 1. Sobre
 
+O FarmaUBS é uma aplicação web voltada para profissionais farmacêuticos que atuam nas farmácias públicas das Unidades Básicas de Saúde (UBS) de Parnaíba-Piauí. O sistema tem como objetivo central prover controle de estoque de medicamentos com rastreabilidade por lote e validade, previsão de demanda e indicadores operacionais, eliminando a dependência de planilhas manuais e reduzindo o desperdício por vencimento de medicamentos.
+
+## 2. Instalação
+
+A instalação do projeto FarmaUBS está documentada no arquivo `/docs/onboarding/kickoff.md`, juntamente com todos os pré-requisitos de sistema.
+
+#### 2.1 Pré-requisitos do Sistema
+
+- **Node.js:** Versão 22.x (LTS).
+- **pnpm:** Versão 11.21.0 (`corepack enable pnpm`).
+- **Docker Desktop:** Com backend WSL2 habilitado e funcional.
+- **Git:** Configurado para o repositório FarmaUBS.
+- **VS Code:** Recomendado com extensões para ESLint, Prettier e NestJS.
 
 ## 5. Autores
 
@@ -61,10 +76,16 @@
             <sub><b>Kauan Brito</b></sub>
         </a><a href="https://www.linkedin.com/in/kauan-almeida/">[in]</a>
     </td>
+    <td align="center">
+        <b>Software Engineer</b><br />
+        <a href="https://github.com/Franciscovieira-tech?tab=repositories">
+            <img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/179271832?v=4" width="100px;" alt="Francisco Vieira"/><br />
+            <sub><b>Francisco Vieira</b></sub>
+        </a><a href="https://www.linkedin.com/in/francisco-vieira-847782378/">[in]</a>
+    </td>
   </tr>
 </table>
 </div>
-
 
 ## 6. Licença
 
