@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:backend": "pnpm --filter @farmaubs/backend dev",
+    "dev:backend": "pnpm --filter @farmaubs/backend start:dev",
     "dev:frontend": "pnpm --filter @farmaubs/frontend dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
   },
   "keywords": [],
   "author": "",
