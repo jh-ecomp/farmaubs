@@ -1,6 +1,7 @@
 # Dependências (todos os workspaces do monorepo)
 node_modules/
 **/node_modules/
+.pnpm-store/
 
 # Builds (todos os workspaces)
 dist/

@@ -5,10 +5,10 @@ name: farmaubs
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     env_file: ../.env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql # era /var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -20,6 +20,9 @@ services:
       context: ..
       dockerfile: apps/backend/Dockerfile
     env_file: ../.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
     depends_on:
       postgres:
         condition: service_healthy
