@@ -132,12 +132,17 @@ Em seguida rode os comandos docker a partir da raiz do repositório:
 ```powershell
 # 2. Subir a stack de dev (primeira vez constrói as imagens, demora alguns minutos)
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+# Alternativamente use --force-recreate para obrigar a recriação dos containers do zero
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --force-recreate
 
 # 3. Acompanhar os logs da API
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
 
 # 4. Derrubar infra (adicina a flag -v, ao final, para apagar os volumes - apagar os dados do Postgres)
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down
+
+#5. Caso precise restartar o serviço da api
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml restart api
 ```
 
 Acessos:
