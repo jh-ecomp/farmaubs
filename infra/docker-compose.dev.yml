@@ -3,36 +3,49 @@
 services:
   postgres:
     ports:
-      - "5434:5432"   # acesso direto do host (tools de banco, pgAdmin)
+      - "5434:5432"
 
   api:
     build:
       target: dev
-    command: pnpm --filter @farmaubs/backend start:dev
     environment:
       NODE_ENV: development
-      CHOKIDAR_USEPOLLING: "true"   # watch confiável em bind mount no Windows
+      CHOKIDAR_USEPOLLING: "true"
+      npm_config_store_dir: /pnpm-store
     ports:
       - "3000:3000"
+    working_dir: /app
     volumes:
       - ..:/app
-      - /app/node_modules
-      - /app/apps/backend/node_modules
-      - /app/apps/frontend/node_modules
-      - /app/packages/shared/node_modules
+      - node_modules_root:/app/node_modules
+      - node_modules_backend:/app/apps/backend/node_modules
+      - node_modules_frontend:/app/apps/frontend/node_modules
+      - node_modules_shared:/app/packages/shared/node_modules
+      - pnpm_store:/pnpm-store
+    command: pnpm --filter @farmaubs/backend start:dev
 
   frontend:
     build:
       target: dev
-    command: pnpm --filter @farmaubs/frontend dev --host 0.0.0.0
     environment:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
+      npm_config_store_dir: /pnpm-store
     ports:
       - "5173:5173"
+    working_dir: /app
     volumes:
       - ..:/app
-      - /app/node_modules
-      - /app/apps/backend/node_modules
-      - /app/apps/frontend/node_modules
-      - /app/packages/shared/node_modules
+      - node_modules_root:/app/node_modules
+      - node_modules_backend:/app/apps/backend/node_modules
+      - node_modules_frontend:/app/apps/frontend/node_modules
+      - node_modules_shared:/app/packages/shared/node_modules
+      - pnpm_store:/pnpm-store
+    command: pnpm --filter @farmaubs/frontend dev
+
+volumes:
+  node_modules_root:
+  node_modules_backend:
+  node_modules_frontend:
+  node_modules_shared:
+  pnpm_store:

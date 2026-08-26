@@ -31,3 +31,16 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Cobertura de testes (ADR-030 — Jest)
+coverage/
+**/coverage/
+
+# Estado incremental do TypeScript (recompilação do nest start --watch)
+*.tsbuildinfo
+
+# Relatórios gerados em runtime (ADR-009 — REPORTS_DIR=./storage/reports)
+storage/reports/
+
+# Cache de build do vite-plugin-pwa (ADR-014 — preventivo)
+dev-dist/
