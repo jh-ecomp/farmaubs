@@ -10,4 +10,4 @@ async function bootstrap() {
     process.env.API_HOST ?? '0.0.0.0',
   );
 }
-bootstrap();
+void bootstrap();

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { Server } from 'node:http';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
@@ -22,7 +23,7 @@ describe('HealthController (e2e)', () => {
   });
 
   it('GET /api/v1/health → 200 com status ok e banco up', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .get('/api/v1/health')
       .expect(200);
 
