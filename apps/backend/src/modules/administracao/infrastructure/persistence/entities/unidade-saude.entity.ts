@@ -13,7 +13,6 @@ import { MunicipioEntity } from './municipio.entity';
 @Entity('unidades_saude')
 export class UnidadeSaudeEntity {
   @PrimaryColumn('uuid', {
-    default: () => 'uuidv7()',
     default: () => 'gen_random_uuid()',
   })
   id: string;
@@ -30,35 +29,24 @@ export class UnidadeSaudeEntity {
     onUpdate: 'CASCADE',
   })
   @JoinColumn({ name: 'municipio_id' })
-  municipio: MunicipioEntity;
   municipio?: MunicipioEntity;
 
   @Column({
-    type: 'varchar',
-    length: 200,
     type: 'text',
     nullable: false,
   })
   nome: string;
 
   @Column({
-    type: 'varchar',
-    length: 255,
-    nullable: false,
     type: 'text',
     nullable: true,
   })
-  endereco: string;
   endereco?: string;
 
   @Column({
-    type: 'varchar',
-    length: 150,
-    nullable: false,
     type: 'text',
     nullable: true,
   })
-  responsavel_tecnico: string;
   responsavel_tecnico?: string;
 
   @Column({
@@ -67,13 +55,6 @@ export class UnidadeSaudeEntity {
     nullable: false,
   })
   caf_lead_time_days: number;
-
-  @Column({
-    type: 'boolean',
-    default: true,
-    nullable: false,
-  })
-  ativo: boolean;
 
   @CreateDateColumn({
     type: 'timestamptz',
