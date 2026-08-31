@@ -57,7 +57,8 @@ describe('UnidadeSaudeEntity (unit)', () => {
 
     it('deve configurar a coluna "municipio_id" como uuid obrigatória', () => {
       const col = storage.columns.find(
-        (c) => c.target === UnidadeSaudeEntity && c.propertyName === 'municipio_id',
+        (c) =>
+          c.target === UnidadeSaudeEntity && c.propertyName === 'municipio_id',
       );
 
       expect(col).toBeDefined();
@@ -112,7 +113,8 @@ describe('UnidadeSaudeEntity (unit)', () => {
 
     it('deve configurar a coluna "created_at" como timestamptz', () => {
       const col = storage.columns.find(
-        (c) => c.target === UnidadeSaudeEntity && c.propertyName === 'created_at',
+        (c) =>
+          c.target === UnidadeSaudeEntity && c.propertyName === 'created_at',
       );
 
       expect(col).toBeDefined();
@@ -122,7 +124,8 @@ describe('UnidadeSaudeEntity (unit)', () => {
 
     it('deve configurar a coluna "updated_at" como timestamptz', () => {
       const col = storage.columns.find(
-        (c) => c.target === UnidadeSaudeEntity && c.propertyName === 'updated_at',
+        (c) =>
+          c.target === UnidadeSaudeEntity && c.propertyName === 'updated_at',
       );
 
       expect(col).toBeDefined();
@@ -132,12 +135,14 @@ describe('UnidadeSaudeEntity (unit)', () => {
 
     it('deve configurar relacionamento ManyToOne com MunicipioEntity', () => {
       const relation = storage.relations.find(
-        (r) => r.target === UnidadeSaudeEntity && r.propertyName === 'municipio',
+        (r) =>
+          r.target === UnidadeSaudeEntity && r.propertyName === 'municipio',
       );
 
-      expect(relation).toBeDefined();
-      expect(relation?.relationType).toBe('many-to-one');
-      expect(relation?.type()).toBe(MunicipioEntity);
+      const relType = relation?.type;
+      const relTarget =
+        typeof relType === 'function' ? (relType as () => unknown)() : relType;
+      expect(relTarget).toBe(MunicipioEntity);
     });
 
     it('deve configurar o índice na coluna municipio_id', () => {

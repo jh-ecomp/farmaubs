@@ -1,6 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateUnidadesSaude implements MigrationInterface {
+export class CreateUnidadesSaude1787681100000 implements MigrationInterface {
+  name = 'CreateUnidadesSaude1787681100000';
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE unidades_saude (
