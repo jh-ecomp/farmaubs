@@ -7,7 +7,7 @@ describe('HealthService (unit)', () => {
 
   beforeEach(() => {
     // Mock manual da porta de infraestrutura (camada A — ADR-030)
-    databaseHealth = { isUp: jest.fn() } as jest.Mocked<DatabaseHealthPort>;
+    databaseHealth = { isUp: jest.fn() };
     service = new HealthService(databaseHealth);
   });
 
