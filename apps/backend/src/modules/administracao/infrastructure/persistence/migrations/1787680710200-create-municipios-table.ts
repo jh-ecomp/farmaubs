@@ -1,63 +1,26 @@
-import { MigrationInterface, QueryRunner, Table } from 'typeorm';
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateMunicipiosTable1787680710200 implements MigrationInterface {
-  name = 'CreateMunicipiosTable1787680710200';
-
+export class CreateMunicipios implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.createTable(
-      new Table({
-        name: 'municipios',
-        columns: [
-          {
-            name: 'id',
-            type: 'uuid',
-            isPrimary: true,
-            default: 'uuidv7()',
-          },
-          {
-            name: 'nome',
-            type: 'varchar',
-            length: '150',
-            isNullable: false,
-          },
-          {
-            name: 'uf',
-            type: 'char',
-            length: '2',
-            isNullable: false,
-          },
-          {
-            name: 'codigo_ibge',
-            type: 'varchar',
-            length: '7',
-            isNullable: false,
-            isUnique: true,
-          },
-          {
-            name: 'ativo',
-            type: 'boolean',
-            default: true,
-            isNullable: false,
-          },
-          {
-            name: 'created_at',
-            type: 'timestamptz',
-            default: 'now()',
-            isNullable: false,
-          },
-          {
-            name: 'updated_at',
-            type: 'timestamptz',
-            default: 'now()',
-            isNullable: false,
-          },
-        ],
-      }),
-      true,
+    await queryRunner.query(`
+      CREATE TABLE municipios (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome text NOT NULL,
+        uf char(2) NOT NULL,
+        ibge_code char(7) UNIQUE,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    // Marcação de escopo: documentação no próprio banco (fonte de verdade
+    // é o manifesto tenant-scope.ts, validado pelo guard test)
+    await queryRunner.query(
+      `COMMENT ON TABLE municipios IS 'scope:global | registro de tenants (ADR-002, ADR-016)'`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('municipios', true);
+    await queryRunner.query(`DROP TABLE IF EXISTS municipios`);
   }
 }
