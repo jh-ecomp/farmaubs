@@ -14,6 +14,7 @@ import { MunicipioEntity } from './municipio.entity';
 export class UnidadeSaudeEntity {
   @PrimaryColumn('uuid', {
     default: () => 'uuidv7()',
+    default: () => 'gen_random_uuid()',
   })
   id: string;
 
@@ -30,10 +31,12 @@ export class UnidadeSaudeEntity {
   })
   @JoinColumn({ name: 'municipio_id' })
   municipio: MunicipioEntity;
+  municipio?: MunicipioEntity;
 
   @Column({
     type: 'varchar',
     length: 200,
+    type: 'text',
     nullable: false,
   })
   nome: string;
@@ -42,15 +45,21 @@ export class UnidadeSaudeEntity {
     type: 'varchar',
     length: 255,
     nullable: false,
+    type: 'text',
+    nullable: true,
   })
   endereco: string;
+  endereco?: string;
 
   @Column({
     type: 'varchar',
     length: 150,
     nullable: false,
+    type: 'text',
+    nullable: true,
   })
   responsavel_tecnico: string;
+  responsavel_tecnico?: string;
 
   @Column({
     type: 'integer',
