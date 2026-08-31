@@ -22,8 +22,8 @@ describe('CreateMunicipios1787680710200 (migration unit)', () => {
 
       expect(queryRunner.query).toHaveBeenCalledTimes(2);
 
-      const createTableQuery = (queryRunner.query as jest.Mock).mock
-        .calls[0][0];
+      const calls = (queryRunner.query as jest.Mock).mock.calls as [string][];
+      const createTableQuery = calls[0][0];
       expect(createTableQuery).toContain('CREATE TABLE municipios');
       expect(createTableQuery).toContain(
         'id uuid PRIMARY KEY DEFAULT gen_random_uuid()',
@@ -38,7 +38,7 @@ describe('CreateMunicipios1787680710200 (migration unit)', () => {
         'updated_at timestamptz NOT NULL DEFAULT now()',
       );
 
-      const commentQuery = (queryRunner.query as jest.Mock).mock.calls[1][0];
+      const commentQuery = calls[1][0];
       expect(commentQuery).toContain(
         "COMMENT ON TABLE municipios IS 'scope:global | registro de tenants (ADR-002, ADR-016)'",
       );
@@ -60,7 +60,8 @@ describe('CreateMunicipios1787680710200 (migration unit)', () => {
       await migration.down(queryRunner);
 
       expect(queryRunner.query).toHaveBeenCalledTimes(1);
-      const dropQuery = (queryRunner.query as jest.Mock).mock.calls[0][0];
+      const calls = (queryRunner.query as jest.Mock).mock.calls as [string][];
+      const dropQuery = calls[0][0];
       expect(dropQuery).toContain('DROP TABLE IF EXISTS municipios');
     });
 

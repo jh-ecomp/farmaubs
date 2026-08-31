@@ -44,9 +44,9 @@ export const TABLE_SCOPES: TableScope[] = [
       'Associação usuário-UBS (RF001); define o escopo, não é escopada.',
   },
   {
-    table: 'profiles',
+    table: 'perfis',
     scope: 'global',
-    justification: 'Catálogo de perfis RBAC (NF009).',
+    justification: 'Catálogo de perfis RBAC (ADR-006, NF009).',
   },
 
   // Épicos futuros (padrão a seguir quando entrarem):

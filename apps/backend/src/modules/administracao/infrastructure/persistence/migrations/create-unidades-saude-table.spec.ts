@@ -1,15 +1,19 @@
 import { QueryRunner } from 'typeorm';
-import { CreateUnidadesSaude } from './create-unidades-saude-table';
+import { CreateUnidadesSaude1787681100000 } from './create-unidades-saude-table';
 
-describe('CreateUnidadesSaude (migration unit)', () => {
-  let migration: CreateUnidadesSaude;
+describe('CreateUnidadesSaude1787681100000 (migration unit)', () => {
+  let migration: CreateUnidadesSaude1787681100000;
   let queryRunner: jest.Mocked<QueryRunner>;
 
   beforeEach(() => {
-    migration = new CreateUnidadesSaude();
+    migration = new CreateUnidadesSaude1787681100000();
     queryRunner = {
       query: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<QueryRunner>;
+  });
+
+  it('deve possuir o nome de migration com timestamp para o TypeORM', () => {
+    expect(migration.name).toBe('CreateUnidadesSaude1787681100000');
   });
 
   describe('up()', () => {
@@ -18,8 +22,8 @@ describe('CreateUnidadesSaude (migration unit)', () => {
 
       expect(queryRunner.query).toHaveBeenCalledTimes(4);
 
-      const createTableQuery = (queryRunner.query as jest.Mock).mock
-        .calls[0][0];
+      const calls = (queryRunner.query as jest.Mock).mock.calls as [string][];
+      const createTableQuery = calls[0][0];
       expect(createTableQuery).toContain('CREATE TABLE unidades_saude');
       expect(createTableQuery).toContain(
         'id uuid PRIMARY KEY DEFAULT gen_random_uuid()',
@@ -40,20 +44,18 @@ describe('CreateUnidadesSaude (migration unit)', () => {
         'updated_at timestamptz NOT NULL DEFAULT now()',
       );
 
-      const createIndexQuery = (queryRunner.query as jest.Mock).mock
-        .calls[1][0];
+      const createIndexQuery = calls[1][0];
       expect(createIndexQuery).toContain(
         'CREATE INDEX idx_unidades_saude_municipio_id',
       );
       expect(createIndexQuery).toContain('ON unidades_saude (municipio_id)');
 
-      const commentTableQuery = (queryRunner.query as jest.Mock).mock
-        .calls[2][0];
+      const commentTableQuery = calls[2][0];
       expect(commentTableQuery).toContain(
         "COMMENT ON TABLE unidades_saude IS 'scope:global | topologia (RF026); municipio_id e FK de dado, nao escopo de RLS (ADR-016)'",
       );
 
-      const commentColQuery = (queryRunner.query as jest.Mock).mock.calls[3][0];
+      const commentColQuery = calls[3][0];
       expect(commentColQuery).toContain(
         "COMMENT ON COLUMN unidades_saude.municipio_id IS 'FK de topologia; tabela global sem RLS, lida no bootstrap de sessao pre-auth'",
       );
@@ -75,7 +77,8 @@ describe('CreateUnidadesSaude (migration unit)', () => {
       await migration.down(queryRunner);
 
       expect(queryRunner.query).toHaveBeenCalledTimes(1);
-      const dropQuery = (queryRunner.query as jest.Mock).mock.calls[0][0];
+      const calls = (queryRunner.query as jest.Mock).mock.calls as [string][];
+      const dropQuery = calls[0][0];
       expect(dropQuery).toContain('DROP TABLE IF EXISTS unidades_saude');
     });
 
