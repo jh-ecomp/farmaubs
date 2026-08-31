@@ -1,15 +1,19 @@
 import { QueryRunner } from 'typeorm';
-import { CreateMunicipios } from './create-municipios-table';
+import { CreateMunicipios1787680710200 } from './create-municipios-table';
 
-describe('CreateMunicipios (migration unit)', () => {
-  let migration: CreateMunicipios;
+describe('CreateMunicipios1787680710200 (migration unit)', () => {
+  let migration: CreateMunicipios1787680710200;
   let queryRunner: jest.Mocked<QueryRunner>;
 
   beforeEach(() => {
-    migration = new CreateMunicipios();
+    migration = new CreateMunicipios1787680710200();
     queryRunner = {
       query: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<QueryRunner>;
+  });
+
+  it('deve possuir o nome de migration com timestamp para o TypeORM', () => {
+    expect(migration.name).toBe('CreateMunicipios1787680710200');
   });
 
   describe('up()', () => {

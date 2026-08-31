@@ -18,7 +18,7 @@ export const AppDataSource = new DataSource({
     'src/modules/**/infrastructure/persistence/entities/*.entity{.ts,.js}',
   ],
   migrations: [
-    'src/modules/**/infrastructure/persistence/migrations/*{.ts,.js}',
+    'src/modules/**/infrastructure/persistence/migrations/!(*.spec|*.test){.ts,.js}',
   ],
   synchronize: false,
 });

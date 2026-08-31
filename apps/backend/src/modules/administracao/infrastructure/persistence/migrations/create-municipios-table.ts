@@ -1,6 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateMunicipios implements MigrationInterface {
+export class CreateMunicipios1787680710200 implements MigrationInterface {
+  name = 'CreateMunicipios1787680710200';
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE municipios (
