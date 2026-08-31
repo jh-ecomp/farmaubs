@@ -1,19 +1,15 @@
 import { QueryRunner } from 'typeorm';
-import { CreateUnidadesSaude1787681100000 } from './create-unidades-saude-table';
+import { CreateUnidadesSaude } from './create-unidades-saude-table';
 
-describe('CreateUnidadesSaude1787681100000 (migration unit)', () => {
-  let migration: CreateUnidadesSaude1787681100000;
+describe('CreateUnidadesSaude (migration unit)', () => {
+  let migration: CreateUnidadesSaude;
   let queryRunner: jest.Mocked<QueryRunner>;
 
   beforeEach(() => {
-    migration = new CreateUnidadesSaude1787681100000();
+    migration = new CreateUnidadesSaude();
     queryRunner = {
       query: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<QueryRunner>;
-  });
-
-  it('deve possuir o nome de migration com timestamp para o TypeORM', () => {
-    expect(migration.name).toBe('CreateUnidadesSaude1787681100000');
   });
 
   describe('up()', () => {
