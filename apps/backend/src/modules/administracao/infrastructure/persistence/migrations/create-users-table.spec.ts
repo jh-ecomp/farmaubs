@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { CreateUsersTable1788180806000 } from './create-users-table';
+import { CreateUsersTable1788180806000 } from './1788180806000create-users-table';
 
 describe('CreateUsersTable1788180806000 (migration unit)', () => {
   let migration: CreateUsersTable1788180806000;

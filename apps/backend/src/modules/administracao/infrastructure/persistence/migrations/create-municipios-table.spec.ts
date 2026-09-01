@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { CreateMunicipios1787680710200 } from './create-municipios-table';
+import { CreateMunicipios1787680710200 } from './1787680710200create-municipios-table';
 
 describe('CreateMunicipios1787680710200 (migration unit)', () => {
   let migration: CreateMunicipios1787680710200;

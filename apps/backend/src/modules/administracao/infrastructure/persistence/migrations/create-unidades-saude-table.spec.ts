@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { CreateUnidadesSaude1787681100000 } from './create-unidades-saude-table';
+import { CreateUnidadesSaude1787681100000 } from './1787681100000create-unidades-saude-table';
 
 describe('CreateUnidadesSaude1787681100000 (migration unit)', () => {
   let migration: CreateUnidadesSaude1787681100000;

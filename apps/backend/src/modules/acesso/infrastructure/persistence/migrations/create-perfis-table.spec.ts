@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { CreatePerfis1787681200000 } from './create-perfis-table';
+import { CreatePerfis1787681200000 } from './1787681200000create-perfis-table';
 
 describe('CreatePerfis1787681200000 (migration unit)', () => {
   let migration: CreatePerfis1787681200000;

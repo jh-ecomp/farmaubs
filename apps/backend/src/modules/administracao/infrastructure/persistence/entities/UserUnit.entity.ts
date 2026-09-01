@@ -9,8 +9,8 @@ import {
   Unique,
   Index,
 } from "typeorm";
-import { User } from "./User"; // Ajuste o caminho conforme sua estrutura
-import { UnidadeSaude } from "./UnidadeSaude"; // Ajuste o caminho conforme sua estrutura
+import { User } from './user.entity';
+import { UnidadeSaudeEntity } from './unidade-saude.entity';
 
 @Entity("user_units")
 @Unique("uq_user_units_usuario_unidade", ["usuarioId", "unidadeId"])
@@ -41,7 +41,7 @@ export class UserUnit {
   @JoinColumn({ name: "usuario_id", referencedColumnName: "id" })
   usuario!: User;
 
-  @ManyToOne(() => UnidadeSaude, { onDelete: "RESTRICT" })
+  @ManyToOne(() => UnidadeSaudeEntity, { onDelete: "RESTRICT" })
   @JoinColumn({ name: "unidade_id", referencedColumnName: "id" })
-  unidade!: UnidadeSaude;
+  unidade!: UnidadeSaudeEntity;
 }
