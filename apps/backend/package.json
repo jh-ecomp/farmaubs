@@ -23,7 +23,9 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
-    "db:seed": "ts-node src/database/seed.ts"
+    "db:seed-dev": "ts-node src/database/seed-dev.ts",
+    "test:schema": "docker compose -f ../../infra/docker-compose.test.yml up -d --wait && jest --config test/schema/jest-schema.json --runInBand",
+    "test:schema:down": "docker compose -f ../../infra/docker-compose.test.yml down"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
