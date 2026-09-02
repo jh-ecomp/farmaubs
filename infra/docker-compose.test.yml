@@ -1,0 +1,22 @@
+# Harness de teste de integração — Postgres efêmero (TAREFA-13, ADR-030 camada B)
+# Banco em tmpfs: dados somem ao derrubar o container. Nenhum volume persistente.
+# Uso:
+#   docker compose -f docker-compose.test.yml up -d --wait
+#   docker compose -f docker-compose.test.yml down
+services:
+  postgres-test:
+    image: postgres:18-alpine
+    container_name: farmaubs-postgres-test
+    environment:
+      POSTGRES_USER: farmaubs_admin
+      POSTGRES_PASSWORD: farmaubs_test_password
+      POSTGRES_DB: farmaubs
+    ports:
+      - "5435:5432"
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farmaubs_admin -d farmaubs"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
