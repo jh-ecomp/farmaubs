@@ -5,7 +5,7 @@ export class CreateUnidadesSaude1787681100000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE unidades_saude (
-        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        id uuid PRIMARY KEY DEFAULT uuidv7(),
         municipio_id uuid NOT NULL REFERENCES municipios(id),
         nome text NOT NULL,
         endereco text,

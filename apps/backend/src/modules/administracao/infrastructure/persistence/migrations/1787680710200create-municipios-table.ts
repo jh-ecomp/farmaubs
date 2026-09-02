@@ -5,7 +5,7 @@ export class CreateMunicipios1787680710200 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE municipios (
-        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        id uuid PRIMARY KEY DEFAULT uuidv7(),
         nome text NOT NULL,
         uf char(2) NOT NULL,
         ibge_code char(7) UNIQUE,

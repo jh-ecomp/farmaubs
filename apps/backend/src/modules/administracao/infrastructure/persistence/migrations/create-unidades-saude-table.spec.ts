@@ -26,7 +26,7 @@ describe('CreateUnidadesSaude1787681100000 (migration unit)', () => {
       const createTableQuery = calls[0][0];
       expect(createTableQuery).toContain('CREATE TABLE unidades_saude');
       expect(createTableQuery).toContain(
-        'id uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+        'id uuid PRIMARY KEY DEFAULT uuidv7()',
       );
       expect(createTableQuery).toContain(
         'municipio_id uuid NOT NULL REFERENCES municipios(id)',
