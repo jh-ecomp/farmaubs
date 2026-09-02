@@ -17,7 +17,7 @@ describe('CreateUsersTable1788180806000 (migration unit)', () => {
       await migration.up(queryRunnerMock);
 
       expect(queryRunnerMock.query).toHaveBeenCalledTimes(1);
-      const queryText = queryRunnerMock.query.mock.calls[0][0] as string;
+      const queryText = queryRunnerMock.query.mock.calls[0][0];
 
       expect(queryText).toContain('CREATE TABLE IF NOT EXISTS users');
       expect(queryText).toContain('municipio_id UUID NOT NULL');
@@ -48,7 +48,7 @@ describe('CreateUsersTable1788180806000 (migration unit)', () => {
       await migration.down(queryRunnerMock);
 
       expect(queryRunnerMock.query).toHaveBeenCalledTimes(1);
-      const queryText = queryRunnerMock.query.mock.calls[0][0] as string;
+      const queryText = queryRunnerMock.query.mock.calls[0][0];
 
       expect(queryText).toContain('DROP TABLE IF EXISTS users');
       expect(queryText).toContain('DROP INDEX IF EXISTS idx_users_email_lower');
