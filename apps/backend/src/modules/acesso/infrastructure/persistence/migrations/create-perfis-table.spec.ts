@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { CreatePerfis1787681200000 } from './create-perfis-table';
+import { CreatePerfis1787681200000 } from './1787681200000create-perfis-table';
 
 describe('CreatePerfis1787681200000 (migration unit)', () => {
   let migration: CreatePerfis1787681200000;
@@ -26,7 +26,7 @@ describe('CreatePerfis1787681200000 (migration unit)', () => {
       const createTableQuery = calls[0][0];
       expect(createTableQuery).toContain('CREATE TABLE perfis');
       expect(createTableQuery).toContain(
-        'id uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+        'id uuid PRIMARY KEY DEFAULT uuidv7()',
       );
       expect(createTableQuery).toContain('codigo varchar(50) NOT NULL UNIQUE');
       expect(createTableQuery).toContain('nome varchar(100) NOT NULL');

@@ -7,7 +7,8 @@
     "dev:backend": "pnpm --filter @farmaubs/backend start:dev",
     "dev:frontend": "pnpm --filter @farmaubs/frontend dev",
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "db:seed": "pnpm --filter @farmaubs/backend db:seed"
   },
   "keywords": [],
   "author": "",

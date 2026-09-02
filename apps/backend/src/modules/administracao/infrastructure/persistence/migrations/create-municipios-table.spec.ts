@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { CreateMunicipios1787680710200 } from './create-municipios-table';
+import { CreateMunicipios1787680710200 } from './1787680710200create-municipios-table';
 
 describe('CreateMunicipios1787680710200 (migration unit)', () => {
   let migration: CreateMunicipios1787680710200;
@@ -26,7 +26,7 @@ describe('CreateMunicipios1787680710200 (migration unit)', () => {
       const createTableQuery = calls[0][0];
       expect(createTableQuery).toContain('CREATE TABLE municipios');
       expect(createTableQuery).toContain(
-        'id uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+        'id uuid PRIMARY KEY DEFAULT uuidv7()',
       );
       expect(createTableQuery).toContain('nome text NOT NULL');
       expect(createTableQuery).toContain('uf char(2) NOT NULL');

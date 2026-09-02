@@ -6,7 +6,7 @@ export class CreatePerfis1787681200000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE perfis (
-        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        id uuid PRIMARY KEY DEFAULT uuidv7(),
         codigo varchar(50) NOT NULL UNIQUE,
         nome varchar(100) NOT NULL,
         descricao text,

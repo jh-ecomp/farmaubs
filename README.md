@@ -148,9 +148,9 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml resta
 Acessos:
 
 - API em http://localhost:3000/api/v1
-- Swagger em http://localhost:3000/api/docs (quando o @nestjs/swagger for configurado)
+- Swagger em http://localhost:3000/api/v1/docs
 - Frontend em http://localhost:5173
-- Postgres em localhost:5432.
+- Postgres em localhost:5434.
 
 ## 5. Autores
 
@@ -188,7 +188,7 @@ Acessos:
                 </a><a href="https://www.linkedin.com/in/kauan-almeida/">[in]</a>
             </td>
             <td align="center">
-                <b>Project Manager</b><br />
+                <b>Backend Software Engineer</b><br />
                 <a href="https://github.com/Franciscovieira-tech?tab=repositories">
                     <img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/179271832?v=4" width="100px;" alt="Francisco Vieira"/><br />
                     <sub><b>Francisco Vieira</b></sub>
