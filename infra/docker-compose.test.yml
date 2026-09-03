@@ -11,6 +11,7 @@ services:
       POSTGRES_USER: farmaubs_admin
       POSTGRES_PASSWORD: farmaubs_test_password
       POSTGRES_DB: farmaubs
+      FARMAUBS_APP_DB_PASSWORD: farmaubs_test_app_password
     ports:
       - "5435:5432"
     tmpfs:

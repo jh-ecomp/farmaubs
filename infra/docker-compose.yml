@@ -8,7 +8,8 @@ services:
     image: postgres:18-alpine
     env_file: ../.env
     volumes:
-      - postgres_data:/var/lib/postgresql # era /var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
