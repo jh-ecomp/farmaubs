@@ -149,3 +149,26 @@ A evidência de teste substitui o gate de CI nesta fase (ADR-030) — **sem os p
 - [ ] Issue vinculada (Closes #<numero>)
 - [ ] Prints anexados conforme a tabela da seção 4.2
 ```
+
+## 5. Execução de SQL no banco dev
+
+### 5. Com credenciais da API (backend)
+
+```PowerShell
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml exec postgres psql -U farmaubs_admin -d farmaubs -c "SUA-QUERY-AQUI';"
+```
+
+## 6. Execução da Suíte de Testes de integração
+
+Na raiz do repositório suba o banco efêmero limpo
+
+```PowerShell
+docker compose -f infra/docker-compose.test.yml down -v
+docker compose -f infra/docker-compose.test.yml up -d --wait
+```
+
+Depois em `apps/backend`
+
+```PowerShell
+pnpm test:integration
+```

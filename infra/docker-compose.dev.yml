@@ -12,6 +12,7 @@ services:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
       npm_config_store_dir: /pnpm-store
+      CI: "true"
     ports:
       - "3000:3000"
     working_dir: /app

@@ -11,10 +11,13 @@ services:
       POSTGRES_USER: farmaubs_admin
       POSTGRES_PASSWORD: farmaubs_test_password
       POSTGRES_DB: farmaubs
+      FARMAUBS_APP_DB_PASSWORD: farmaubs_test_app_password
     ports:
       - "5435:5432"
     tmpfs:
       - /var/lib/postgresql
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U farmaubs_admin -d farmaubs"]
       interval: 2s
