@@ -155,5 +155,5 @@ A evidência de teste substitui o gate de CI nesta fase (ADR-030) — **sem os p
 ### 5. Com credenciais da API (backend)
 
 ```PowerShell
-docker compose exec postgres psql -U farmaubs_admin -d farmaubs -c "SUA-QUERY-AQUI';"
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml exec postgres psql -U farmaubs_admin -d farmaubs -c "SUA-QUERY-AQUI';"
 ```
