@@ -149,3 +149,11 @@ A evidência de teste substitui o gate de CI nesta fase (ADR-030) — **sem os p
 - [ ] Issue vinculada (Closes #<numero>)
 - [ ] Prints anexados conforme a tabela da seção 4.2
 ```
+
+## 5. Execução de SQL no banco dev
+
+### 5. Com credenciais da API (backend)
+
+```PowerShell
+docker compose exec postgres psql -U farmaubs_admin -d farmaubs -c "SUA-QUERY-AQUI';"
+```
