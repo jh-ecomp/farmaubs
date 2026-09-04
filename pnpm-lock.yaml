@@ -236,9 +236,6 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
       otplib:
         specifier: ^13.4.1
         version: 13.4.1
@@ -288,6 +285,9 @@ importers:
       '@types/supertest':
         specifier: ^7.0.0
         version: 7.2.1
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       eslint:
         specifier: ^9.18.0
         version: 9.39.5(supports-color@8.1.1)
