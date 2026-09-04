@@ -1,4 +1,5 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { SkipTransaction } from '../common/transaction/skip-transaction.decorator';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HealthService } from './health.service';
 
@@ -8,6 +9,7 @@ export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Get()
+  @SkipTransaction()
   @ApiOperation({
     summary: 'Verifica a saúde do serviço e da conexão com o banco',
   })
