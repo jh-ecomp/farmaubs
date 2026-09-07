@@ -4,6 +4,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'node:path';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { TenantContextService } from './common/tenant/tenant-context.service';
 import { TenantInterceptor } from './common/tenant/tenant.interceptor';
 import { TransactionContext } from './common/transaction/transaction-context.service';
@@ -30,6 +31,7 @@ import { TransactionInterceptor } from './common/transaction/transaction.interce
       }),
     }),
     HealthModule,
+    AuthModule,
   ],
   providers: [
     TenantContextService,
