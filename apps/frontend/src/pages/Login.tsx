@@ -5,55 +5,50 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-// AJUSTE AQUI: Como o arquivo está em /pages, usamos "../" para importar da raiz do src
 import "../index.css";
 import { useAuth } from "../contexts/AuthContext";
+import { authService, AuthError } from "../services/api";
 import logoFarmaUbs from "../assets/logofarmaubs.svg";
 
-// 1. Definindo as regras de validação (Zod) conforme o DoD
+// 1. Definindo as regras de validação (Zod) conforme os critérios e cenários 2 e 3
 const loginSchema = z.object({
   email: z
     .string()
     .min(1, "O e-mail é obrigatório.")
+    .trim()
+    .toLowerCase()
     .email("Formato de e-mail inválido."),
-  senha: z.string().min(8, "A senha deve ter no mínimo 8 caracteres."),
+  senha: z
+    .string()
+    .min(1, "A senha é obrigatória.")
+    .min(8, "A senha deve ter no mínimo 8 caracteres."),
 });
 
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  // Renomeei de App para Login para ficar semântico
   const [erroApi, setErroApi] = useState("");
-  const { login } = useAuth(); // AC-10: Contexto de Autenticação
-  const navigate = useNavigate(); // Para redirecionar após login bem-sucedido
+  const { login } = useAuth(); // Contexto de Autenticação (ADR-013)
+  const navigate = useNavigate(); // Redirecionar após login bem-sucedido (RF002)
 
-  // 2. Configurando o React Hook Form (Agora validando apenas no Submit)
+  // 2. Configurando o React Hook Form (validando no submit)
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
-    mode: "onSubmit", // O erro só aparece depois de tentar enviar
+    mode: "onSubmit",
   });
 
-  // 3. Integração AC-11 com TanStack Query (ADR-013)
+  // 3. Mutação via TanStack Query (ADR-013 / AC-11)
   const loginMutation = useMutation({
     mutationFn: async (dadosLogin: LoginFormInputs) => {
-      // Endpoint exigido na AC-11
-      const resposta = await fetch("http://localhost:3000/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dadosLogin),
-      });
-
-      if (!resposta.ok) throw new Error("Falha na autenticação");
-      return resposta.json(); // Retorna token, expiresAt, ttlSeconds, etc.
+      return await authService.login(dadosLogin);
     },
     onSuccess: (data) => {
       setErroApi("");
-
-      // Chamando a função do AuthContext para salvar a sessão globalmente
+      // Armazenando sessão completa no contexto de autenticação (ADR-013 / AC-10)
       login({
         token: data.token,
         expiresAt: data.expiresAt,
@@ -62,26 +57,37 @@ export default function Login() {
         usuario: data.usuario,
       });
 
-      console.log("Sessão salva com sucesso no AuthContext!", data);
+      // Redirecionamento ao dashboard da UBS padrão (RF002 / Cenário 1)
       navigate("/dashboard");
     },
-    onError: () => {
-      // Mensagem genérica para respeitar a NF001 (Segurança contra Enumeração)
-      setErroApi("E-mail ou senha incorretos.");
+    onError: (error: unknown) => {
+      // Cenários 4 (anti-enumeração), 5 (bloqueio temporário) e 6 (erro de rede)
+      if (error instanceof AuthError) {
+        setErroApi(error.message);
+      } else {
+        setErroApi("E-mail ou senha incorretos.");
+      }
     },
   });
 
-  // 4. Função disparada ao clicar em Entrar
+  // 4. Disparo do formulário
   const onSubmit = (data: LoginFormInputs) => {
     setErroApi("");
-    loginMutation.mutate(data); // Dispara a requisição para o NestJS
+    loginMutation.mutate(data);
+  };
+
+  const handleForgotPassword = () => {
+    // Cenário 7: Acesso à recuperação de senha (RF003)
+    alert(
+      "Para recuperar o acesso, contate o gestor CAF do seu município ou use o canal institucional de suporte.",
+    );
   };
 
   return (
     <div className="login-container1">
       {/* Cartão de Autenticação Central */}
-      <div className="login-thq-main-authentication-card-level1-elevation-elm">
-        <div className="login-thq-header-typographymargin-elm">
+      <main className="login-thq-main-authentication-card-level1-elevation-elm">
+        <header className="login-thq-header-typographymargin-elm">
           {/* LOGO */}
           <img
             src={logoFarmaUbs}
@@ -90,7 +96,7 @@ export default function Login() {
               height: "48px",
               marginBottom: "16px",
             }}
-          ></img>
+          />
           <h1
             style={{
               fontSize: "24px",
@@ -104,25 +110,29 @@ export default function Login() {
           <p style={{ fontSize: "14px", color: "#64748B", margin: 0 }}>
             Insira suas credenciais institucionais
           </p>
-        </div>
+        </header>
 
-        {/* Formulário integrado com o layout novo */}
+        {/* Formulário integrado e acessível (ADR-032 / WCAG 2.1 AA) */}
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="login-thq-login-form-elm"
+          noValidate
+          aria-label="Formulário de acesso ao FarmaUBS"
         >
           {/* Campo de E-mail */}
           <div className="login-thq-input1-email-institucional-elm">
             <label
+              htmlFor="email"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 fontSize: "14px",
                 fontWeight: 500,
                 color: "#334155",
               }}
             >
-              E-mail institucional
+              <span>E-mail institucional</span>
               <span
                 style={{
                   fontSize: "11px",
@@ -138,27 +148,37 @@ export default function Login() {
 
             <div style={{ position: "relative" }}>
               <span
+                aria-hidden="true"
                 style={{
                   position: "absolute",
                   left: "12px",
                   top: "50%",
                   transform: "translateY(-50%)",
+                  pointerEvents: "none",
                 }}
               >
                 ✉
               </span>
               <input
+                id="email"
                 className="login-thq-input-elm1"
                 type="email"
                 placeholder="farmaceutico@saude.parnaiba.pi.gov.br"
+                autoComplete="username"
+                aria-required="true"
+                aria-invalid={errors.email ? "true" : "false"}
+                aria-describedby={errors.email ? "email-error" : undefined}
                 style={{ paddingLeft: "36px" }}
                 {...register("email")}
               />
             </div>
 
-            {/* Mensagem de Erro Acessível */}
+            {/* Mensagem de Erro Acessível (Cenários 2 e 3) */}
             {errors.email && (
               <span
+                id="email-error"
+                role="alert"
+                aria-live="polite"
                 style={{
                   color: "#cc0000",
                   fontSize: "11px",
@@ -174,49 +194,69 @@ export default function Login() {
           {/* Campo de Senha */}
           <div className="login-thq-input2-senha-elm">
             <label
+              htmlFor="senha"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 fontSize: "14px",
                 fontWeight: 500,
                 color: "#334155",
               }}
             >
-              Senha
-              <span
+              <span>Senha</span>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
                 style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
                   fontSize: "11px",
                   color: "#0b3099",
                   cursor: "pointer",
                   fontWeight: 700,
+                  textDecoration: "underline",
                 }}
+                aria-label="Esqueceu sua senha? Solicitar recuperação de senha"
               >
                 Esqueceu sua senha?
-              </span>
+              </button>
             </label>
 
             <div style={{ position: "relative" }}>
               <span
+                aria-hidden="true"
                 style={{
                   position: "absolute",
                   left: "12px",
                   top: "50%",
                   transform: "translateY(-50%)",
+                  pointerEvents: "none",
                 }}
               >
                 🔒
               </span>
               <input
+                id="senha"
                 className="login-thq-input-elm2"
                 type="password"
                 placeholder="••••••••"
+                autoComplete="current-password"
+                aria-required="true"
+                aria-invalid={errors.senha ? "true" : "false"}
+                aria-describedby={errors.senha ? "senha-error" : undefined}
                 style={{ paddingLeft: "36px" }}
                 {...register("senha")}
               />
             </div>
 
+            {/* Mensagem de Erro Acessível (Cenário 3) */}
             {errors.senha && (
               <span
+                id="senha-error"
+                role="alert"
+                aria-live="polite"
                 style={{
                   color: "#cc0000",
                   fontSize: "11px",
@@ -229,18 +269,23 @@ export default function Login() {
             )}
           </div>
 
+          {/* Botão de Envio com Loading State (Cenário 1 e NF002) */}
           <div className="login-thq-primary-cta-buttonmargin-elm">
             <button
               type="submit"
               className="login-thq-primary-cta-button-elm"
-              disabled={loginMutation.isPending}
+              disabled={loginMutation.isPending || isSubmitting}
+              aria-busy={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Entrando..." : "Entrar no FarmaUBS"}
             </button>
           </div>
         </form>
 
-        <div className="login-thq-divider-sectionmargin-elm">
+        <section
+          className="login-thq-divider-sectionmargin-elm"
+          aria-label="Suporte"
+        >
           <div
             style={{
               fontSize: "11px",
@@ -252,30 +297,36 @@ export default function Login() {
             Suporte Técnico
           </div>
           <div style={{ fontSize: "14px", color: "#001c6d", fontWeight: 700 }}>
-            <span>📋</span> Solicite cadastro junto à coordenação CAF
+            <span aria-hidden="true">📋 </span> Solicite cadastro junto à
+            coordenação CAF
           </div>
-        </div>
+        </section>
 
+        {/* Mensagens de Erro da API (Cenários 4, 5 e 6) */}
         {erroApi && (
           <div
+            role="alert"
+            aria-live="assertive"
             style={{
               width: "100%",
               marginTop: "16px",
               padding: "12px",
-              border: "1px dashed #666",
-              backgroundColor: "#e4e4e4",
+              border: "1px dashed #ef4444",
+              backgroundColor: "#fef2f2",
+              color: "#991b1b",
               borderRadius: "4px",
               fontSize: "13px",
               textAlign: "center",
             }}
           >
-            ⚠ {erroApi}
+            <span aria-hidden="true">⚠ </span>
+            {erroApi}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* TEXTOS OFICIAIS DO GERADOR VISUAL INSERIDOS AQUI */}
-      <div
+      {/* Rodapé institucional */}
+      <footer
         style={{
           textAlign: "center",
           marginTop: "32px",
@@ -297,7 +348,7 @@ export default function Login() {
           }}
         >
           <span>Central de Abastecimento Farmacêutico</span>
-          <span>•</span>
+          <span aria-hidden="true">•</span>
           <a
             href="#"
             style={{
@@ -309,7 +360,7 @@ export default function Login() {
             Aviso de Privacidade
           </a>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

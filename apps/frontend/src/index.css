@@ -81,6 +81,14 @@ textarea {
   border: 1px solid rgba(226, 232, 240, 1); /* Borda neutra */
   background-color: rgba(255, 255, 255, 1);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+}
+
+.login-thq-input-elm1:focus-visible,
+.login-thq-input-elm2:focus-visible {
+  outline: 2px solid #0b3099;
+  outline-offset: 1px;
+  border-color: #0b3099;
 }
 
 /* Botão Principal de Login */
@@ -105,8 +113,18 @@ textarea {
   transition: opacity 0.2s;
 }
 
-.login-thq-primary-cta-button-elm:hover {
+.login-thq-primary-cta-button-elm:hover:not(:disabled) {
   opacity: 0.9;
+}
+
+.login-thq-primary-cta-button-elm:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-thq-primary-cta-button-elm:focus-visible {
+  outline: 2px solid #001c6d;
+  outline-offset: 2px;
 }
 
 /* Links e Rodapé (Esqueci a senha, Suporte) */

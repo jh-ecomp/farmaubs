@@ -1,15 +1,7 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
+import type { UsuarioPayload } from "../types/auth";
 
-// 1. Tipando o Payload que o back-end devolve (conforme AC-10)
-interface UsuarioPayload {
-  nome: string;
-  email: string;
-  perfil: string[];
-  municipio_id: number;
-  unidade_id: number;
-}
-
-interface AuthState {
+export interface AuthState {
   token: string | null;
   expiresAt: string | null;
   ttlSeconds: number | null;
@@ -18,36 +10,70 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
-interface AuthContextType extends AuthState {
+export interface AuthContextType extends AuthState {
   login: (dadosAuth: Omit<AuthState, "isAuthenticated">) => void;
   logout: () => void;
 }
 
 // 2. Criando o Contexto
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 // 3. Provider que vai envelopar a aplicação
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>({
-    token: null,
-    expiresAt: null,
-    ttlSeconds: null,
-    warningSeconds: null,
-    usuario: null,
-    isAuthenticated: false,
+  const [authState, setAuthState] = useState<AuthState>(() => {
+    const savedToken = localStorage.getItem("@FarmaUBS:token");
+    const savedUser = localStorage.getItem("@FarmaUBS:usuario");
+    const savedExpiresAt = localStorage.getItem("@FarmaUBS:expiresAt");
+
+    let usuario: UsuarioPayload | null = null;
+    if (savedToken) {
+      try {
+        if (savedUser) {
+          usuario = JSON.parse(savedUser);
+        }
+      } catch {
+        // Usuário inválido no storage permanece null
+      }
+
+      return {
+        token: savedToken,
+        expiresAt: savedExpiresAt,
+        ttlSeconds: null,
+        warningSeconds: null,
+        usuario,
+        isAuthenticated: true,
+      };
+    }
+
+    return {
+      token: null,
+      expiresAt: null,
+      ttlSeconds: null,
+      warningSeconds: null,
+      usuario: null,
+      isAuthenticated: false,
+    };
   });
 
   const login = (dadosAuth: Omit<AuthState, "isAuthenticated">) => {
-    // Salvando no state do React
     setAuthState({
       ...dadosAuth,
       isAuthenticated: true,
     });
 
-    // (Opcional, mas recomendado) Persistir no localStorage ou Cookie seguro
-    // dependendo da implementação exata do seu time de back-end.
     if (dadosAuth.token) {
       localStorage.setItem("@FarmaUBS:token", dadosAuth.token);
+    }
+    if (dadosAuth.usuario) {
+      localStorage.setItem(
+        "@FarmaUBS:usuario",
+        JSON.stringify(dadosAuth.usuario),
+      );
+    }
+    if (dadosAuth.expiresAt) {
+      localStorage.setItem("@FarmaUBS:expiresAt", dadosAuth.expiresAt);
     }
   };
 
@@ -61,6 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: false,
     });
     localStorage.removeItem("@FarmaUBS:token");
+    localStorage.removeItem("@FarmaUBS:usuario");
+    localStorage.removeItem("@FarmaUBS:expiresAt");
   };
 
   return (
