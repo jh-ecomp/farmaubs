@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; // Importando as ferramentas
+import { AuthProvider } from "./contexts/AuthContext";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -16,9 +17,11 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {/* 2. Envelopando a aplicação para disponibilizar o gerenciamento de estado do servidor */}
     <QueryClientProvider client={queryClient}>
-      <App />
+      {/* O AuthProvider DEVE envolver o App para a tela de Login enxergá-lo */}
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
