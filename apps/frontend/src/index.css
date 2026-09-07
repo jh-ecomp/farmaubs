@@ -1,111 +1,121 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* --- CONFIGURAÇÕES GLOBAIS DE FONTE --- */
+body {
+  font-family: "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased; /* Deixa a fonte mais nítida no Chrome/Safari */
+  -moz-osx-font-smoothing: grayscale; /* Deixa a fonte mais nítida no Firefox */
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+/* --- LAYOUT DA TELA DE LOGIN --- */
+/* Container Principal (Fundo da tela) */
+.login-container1 {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: var(--dl-color-default-gallery, #f0f0f0);
+  padding: 16px; /* Espaço seguro para celular/tablet */
+}
+
+/* O Cartão Branco de Autenticação */
+.login-thq-main-authentication-card-level1-elevation-elm {
+  width: 100%;
+  max-width: 480px; /* Largura máxima para não esticar no Desktop */
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: 48px 32px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1);
+  gap: 32px; /* Espaçamento padrão entre cabeçalho, form e rodapé */
+}
+
+/* Cabeçalho do Cartão (Logo e Título) */
+.login-thq-header-typographymargin-elm {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 8px;
+}
+
+/* Container do Formulário */
+.login-thq-login-form-elm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 20px; /* Espaçamento entre os inputs */
+}
+
+/* Estilo Base dos Inputs (E-mail e Senha) */
+.login-thq-input1-email-institucional-elm,
+.login-thq-input2-senha-elm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Campos de Digitação (Caixa Branca do Input) */
+.login-thq-input-elm1,
+.login-thq-input-elm2 {
+  width: 100%;
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
+  display: flex;
+  padding: 12px 16px;
   border-radius: 4px;
-  color: var(--text-h);
+  border: 1px solid rgba(226, 232, 240, 1); /* Borda neutra */
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Botão Principal de Login */
+.login-thq-primary-cta-buttonmargin-elm {
+  display: flex;
+  width: 100%;
+  padding-top: 16px;
+}
+
+.login-thq-primary-cta-button-elm {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background-color: rgba(11, 48, 153, 1);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.login-thq-primary-cta-button-elm:hover {
+  opacity: 0.9;
+}
+
+/* Links e Rodapé (Esqueci a senha, Suporte) */
+.login-thq-institutional-help-registration-links-elm,
+.login-thq-divider-sectionmargin-elm {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin-top: 16px;
 }
