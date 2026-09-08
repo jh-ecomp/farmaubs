@@ -49,6 +49,7 @@ Ordem recomendada (da mais barata à mais cara):
 Detalhes:
 
 - `test:schema` sobe o Postgres efêmero via `docker-compose.test.yml`, aplica as migrations do zero em banco limpo e executa os TCs (TC-01 a TC-13). Exige Docker rodando. Ao final, derrube o container com `pnpm test:schema:down`.
+- **Padrão BDD/Cucumber para novas funcionalidades (Camada A):** A partir da issue de cadastro de usuários, novos casos de uso e regras de negócio devem ser especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.spec.ts` ou `*.steps.ts`). Testes criados antes desse marco permanecem em formato Jest `.spec.ts` sem necessidade de migração retroativa.
 - Mudanças em política de RLS ou em lógica de concorrência de estoque (ADR-008) exigem teste de integração correspondente **antes do merge**, sem exceção (ADR-030).
 - Rerode a suíte completa após a última alteração, antes do push.
 
