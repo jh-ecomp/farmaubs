@@ -71,6 +71,12 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     const persistirComTransacao = async (
       em: EntityManager,
     ): Promise<UsuarioModeloDominio> => {
+      if (typeof em.query === 'function' && dadosUsuario.municipioId) {
+        await em.query(`SELECT set_config('app.municipio_id', $1, true)`, [
+          dadosUsuario.municipioId,
+        ]);
+      }
+
       const usuarioSalvo = await em.save(User, user);
 
       if (ubsIdsDeduplicados.length > 0) {
