@@ -7,7 +7,7 @@ import { AcessoPgRepository } from "../../src/modules/acesso/infrastructure/adap
 const MUNICIPIO_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const PERFIL_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const USER_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
-const EMAIL = "auth.integration@farmaubs.test";
+const EMAIL = "acesso.integration@farmaubs.test";
 const SENHA = "Teste@123456";
 
 describe("AcessoPgRepository — integração (camada B)", () => {
@@ -146,7 +146,7 @@ describe("AcessoPgRepository — integração (camada B)", () => {
       .digest("hex");
 
     const rows = await admin.query(
-      `SELECT * FROM auth_buscar_sessao_por_token($1)`,
+      `SELECT * FROM acesso_buscar_sessao_por_token($1)`,
       [tokenHash],
     );
     expect(rows).toHaveLength(0);

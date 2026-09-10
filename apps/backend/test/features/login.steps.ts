@@ -27,6 +27,10 @@ function makeRepo(
 ): jest.Mocked<IAcessoRepository> {
   return {
     buscarUsuarioPorEmail: jest.fn(),
+    buscarEscopoUsuario: jest.fn().mockResolvedValue({
+      perfilId: "uuid-perfil",
+      unidadeIds: [],
+    }),
     registrarFalhaLogin: jest.fn().mockResolvedValue(undefined),
     resetarEstadoLogin: jest.fn().mockResolvedValue(undefined),
     criarSessao: jest
@@ -40,7 +44,9 @@ async function hashSenha(senha: string): Promise<string> {
   return bcrypt.hash(senha, 4);
 }
 
-function makeUsuario(overrides: Partial<UserAcessoRecord> = {}): UserAcessoRecord {
+function makeUsuario(
+  overrides: Partial<UserAcessoRecord> = {},
+): UserAcessoRecord {
   return {
     id: "uuid-usuario",
     municipioId: "uuid-municipio",
@@ -298,7 +304,7 @@ defineFeature(feature, (test) => {
 
     when("o sistema verificar a sessão", () => {
       // Verificação de sessão expirada é responsabilidade do middleware/guard
-      // A função auth_buscar_sessao_por_token já filtra expira_em > now()
+      // A função acesso_buscar_sessao_por_token já filtra expira_em > now()
     });
 
     then("a sessão é recusada por expiração", () => {
