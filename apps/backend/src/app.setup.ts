@@ -8,6 +8,8 @@ export function configureApp(app: INestApplication): void {
     .setTitle('FarmaUBS API')
     .setDescription('API REST do FarmaUBS — Gestão de Insumos Farmacêuticos')
     .setVersion('1.0')
+    .addTag('Usuários', 'Operações de gestão e cadastro de usuários (RF001)')
+    .addTag('health', 'Verificação de saúde do serviço e banco de dados')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -19,6 +19,11 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "./",
+    "paths": {
+      "@farmaubs/shared": ["../../packages/shared/src/index.ts"],
+      "@farmaubs/shared/*": ["../../packages/shared/src/*"]
+    }
   }
 }

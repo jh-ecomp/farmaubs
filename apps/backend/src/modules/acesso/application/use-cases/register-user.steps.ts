@@ -12,9 +12,11 @@ import {
   UnidadeSaudeInvalidaException,
   DadosUsuarioInvalidosException,
 } from '../../domain/errors/user-registration.errors';
-import { CadastrarUsuarioComando } from '../dto/register-user.command';
+import {
+  CadastrarUsuarioComando,
+  ResultadoCadastroUsuario,
+} from '@farmaubs/shared';
 import { DadosCriacaoUsuario } from '../../domain/models/user-registration.model';
-import { ResultadoCadastroUsuario } from '../dto/register-user.result';
 
 const feature = loadFeature(path.resolve(__dirname, 'register-user.feature'));
 
@@ -200,8 +202,12 @@ defineFeature(feature, (test) => {
     );
 
     and('a senha em texto puro não deve ser retornada nem persistida', () => {
-      expect((resultado as Record<string, unknown>).senha).toBeUndefined();
-      expect((resultado as Record<string, unknown>).senhaHash).toBeUndefined();
+      expect(
+        (resultado as unknown as Record<string, unknown>).senha,
+      ).toBeUndefined();
+      expect(
+        (resultado as unknown as Record<string, unknown>).senhaHash,
+      ).toBeUndefined();
     });
 
     and(

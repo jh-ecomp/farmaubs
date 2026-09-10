@@ -9,10 +9,11 @@ import { RepositorioPerfilPort } from '../../domain/ports/profile.repository.por
 import { RepositorioUnidadeSaudePort } from '../../domain/ports/health-unit.repository.port';
 import { GeradorHashSenhaPort } from '../../domain/ports/password-hasher.port';
 import { ServicoEmailPort } from '../../domain/ports/email-service.port';
-import { CadastrarUsuarioComando } from '../dto/register-user.command';
-import { CadastrarUsuarioResultado } from '../dto/register-user.result';
-
-const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import {
+  CadastrarUsuarioComando,
+  CadastrarUsuarioResultado,
+} from '@farmaubs/shared';
+import { isEmail } from 'class-validator';
 
 export class CadastrarUsuarioUseCase {
   constructor(
@@ -139,7 +140,7 @@ export class CadastrarUsuarioUseCase {
       throw new DadosUsuarioInvalidosException('O e-mail é obrigatório.');
     }
 
-    if (!REGEX_EMAIL.test(comando.email.trim())) {
+    if (!isEmail(comando.email.trim())) {
       throw new DadosUsuarioInvalidosException(
         'O e-mail informado possui formato inválido.',
       );
