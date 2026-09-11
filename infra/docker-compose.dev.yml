@@ -32,6 +32,7 @@ services:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
       npm_config_store_dir: /pnpm-store
+      VITE_PROXY_TARGET: "http://api:3000"
     ports:
       - "5173:5173"
     working_dir: /app

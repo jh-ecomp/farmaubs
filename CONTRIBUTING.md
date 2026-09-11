@@ -1,175 +1,404 @@
-# CONTRIBUTING — Fluxo de Trabalho do Desenvolvedor (FarmaUBS)
+# CONTRIBUTING — Guia do Desenvolvedor e Padrões de Engenharia (FarmaUBS)
 
-> Define o ciclo completo de desenvolvimento no monorepo (ADR-022): pull na main →
-> branch → testes → commit → pull request. Aplica-se a backend, frontend, shared e infra.
+> **Documento Vivo de Engenharia de Software.**  
+> Este guia orienta desenvolvedores (de iniciantes a seniores) e **agentes de Inteligência Artificial** sobre a arquitetura do FarmaUBS, padrões de código, organização de diretórios, execução de testes e ciclo de vida de contribuição no monorepo.
 
-## 1. Fluxo de trabalho
+---
 
-### 1.1 Atualizar a main
+## Sumário
+
+1. [Visão Geral e Arquitetura dos Projetos](#1-visão-geral-e-arquitetura-dos-projetos)
+   - [1.1 Backend (`@farmaubs/backend`)](#11-backend-farmaubsbackend---nestjs--arquitetura-hexagonal)
+   - [1.2 Frontend (`@farmaubs/frontend`)](#12-frontend-farmaubsfrontend---react--vite)
+   - [1.3 Pacote Compartilhado (`@farmaubs/shared`)](#13-pacote-compartilhado-farmaubsshared)
+   - [1.4 Infraestrutura (`infra/`)](#14-infraestrutura-infra)
+2. [Regras Rígidas de Estrutura de Pastas (Guia para Humanos e IA)](#2-regras-rígidas-de-estrutura-de-pastas-guia-para-humanos-e-ia)
+3. [Fluxo de Trabalho do Desenvolvedor](#3-fluxo-de-trabalho-do-desenvolvedor)
+   - [3.1 Atualizar a main](#31-atualizar-a-branch-main)
+   - [3.2 Sincronizar Variáveis de Ambiente](#32-sincronizar-variáveis-de-ambiente-env)
+   - [3.3 Criar a Branch de Trabalho](#33-criar-a-branch-de-trabalho)
+   - [3.4 Ciclo de Desenvolvimento](#34-ciclo-de-desenvolvimento)
+   - [3.5 Como Rodar os Testes (Camadas A, B, C, D)](#35-como-rodar-os-testes-camadas-a-b-c-d)
+4. [Padrão de Commits](#4-padrão-de-commits-conventional-commits)
+5. [Padrão de Pull Request](#5-padrão-de-pull-request-pr)
+6. [Troubleshooting (Resolução de Problemas Frequentes)](#6-troubleshooting-resolução-de-problemas-frequentes)
+
+---
+
+## 1. Visão Geral e Arquitetura dos Projetos
+
+O **FarmaUBS** é organizado como um **Monorepo PNPM** com tipagem estrita em TypeScript:
+
+```text
+farmaubs/
+├── apps/
+│   ├── backend/        # API REST NestJS (Arquitetura Hexagonal + PostgreSQL TypeORM + RLS)
+│   └── frontend/       # SPA React 19 + Vite + Tailwind CSS + TanStack Query
+├── packages/
+│   └── shared/         # Tipos, contratos DTO, enums de domínio e utilitários agnósticos
+├── infra/              # Docker Compose (dev, test, prod) e configurações Nginx
+├── pnpm-workspace.yaml # Definição dos pacotes do monorepo
+└── package.json        # Scripts unificados da raiz
+```
+
+### 1.1 Backend (`@farmaubs/backend`) — NestJS + Arquitetura Hexagonal
+
+O backend adota a **Arquitetura Hexagonal (Ports & Adapters)** combinada com **Vertical Slicing** (fatiamento por módulos de domínio).
+
+- **Objetivo da arquitetura:** Isolar a regra de negócio do mundo externo. Banco de dados, frameworks HTTP e bibliotecas são tratados como meros detalhes de implementação (adaptadores plugáveis).
+- **Multi-tenancy com Row-Level Security (RLS):** As tabelas com dados municipais/unidades utilizam RLS nativo do PostgreSQL. Cada requisição recebe o escopo do tenant via `TenantInterceptor` e aplica `SET LOCAL farmaubs.current_tenant_id` via `TransactionInterceptor`.
+
+#### Anatomia Canônica de um Módulo do Backend:
+
+```text
+apps/backend/src/modules/<modulo>/
+├── <modulo>.module.ts          # Módulo NestJS: declara providers, vincula Portas aos Adaptadores e expõe controllers
+│
+├── api/                        # Adaptadores de Entrada (Driving / Inbound)
+│   ├── controllers/            # Controllers NestJS (@Controller, @Get, @Post)
+│   │   ├── <modulo>.controller.ts
+│   │   └── <modulo>.e2e.spec.ts # Testes de integração de endpoints
+│   └── dto/                    # Validação de payload (class-validator) e Swagger (@ApiProperty)
+│       └── <recurso>.dto.ts    # DEVE implementar interfaces do @farmaubs/shared
+│
+├── application/                # Camada de Aplicação
+│   └── use-cases/              # Casos de uso orquestradores da regra de negócio
+│       ├── <acao>.use-case.ts
+│       └── <acao>.use-case.spec.ts # Testes unitários puros (sem banco de dados)
+│
+├── domain/                     # O Coração do Negócio (TypeScript Puro, sem TypeORM nem NestJS)
+│   ├── entities/               # Entidades de Domínio puras e objetos de valor
+│   ├── ports/                  # Interfaces que ditam contratos de persistência e serviços
+│   │   └── <recurso>.repository.port.ts
+│   └── errors/                 # Erros de domínio customizados
+│
+└── infrastructure/             # Adaptadores de Saída (Driven / Outbound)
+    ├── adapters/               # Implementações concretas das portas
+    │   ├── <recurso>-pg.repository.ts # Repositório oficial TypeORM/Postgres
+    │   └── <recurso>-pg.repository.spec.ts
+    └── persistence/
+        ├── entities/           # Entidades físicas do TypeORM (@Entity, @Column)
+        │   └── <tabela>.entity.ts
+        └── migrations/         # Migrações versionadas do schema PostgreSQL
+            └── <timestamp><nome>.ts
+```
+
+---
+
+### 1.2 Frontend (`@farmaubs/frontend`) — React + Vite
+
+O frontend é uma SPA moderna focada em alta responsividade, feedback instantâneo ao farmacêutico e suporte a conexões instáveis.
+
+- **Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query (React Query) e React Router DOM.
+- **Comunicação com Backend:** As chamadas HTTP consomem `/api/v1` via Axios, tipadas com os contratos de `@farmaubs/shared`.
+- **Gerenciamento de Estado de Servidor:** Utiliza TanStack Query com cache inteligente para inventários, listas de medicamentos e dispensações.
+
+#### Estrutura de Pastas do Frontend:
+
+```text
+apps/frontend/src/
+├── assets/                     # Imagens, SVGs e ícones estáticos
+├── components/                 # Componentes reutilizáveis
+│   ├── ui/                     # Botões, inputs, modais (componentes visuais puros)
+│   └── common/                 # Header, Sidebar, layouts e guardas de rota
+├── contexts/                   # React Contexts (AuthContext, TenantContext)
+├── hooks/                      # Custom hooks reutilizáveis (useAuth, useDebounce)
+├── lib/                        # Instâncias de bibliotecas (axios instance, queryClient)
+├── pages/                      # Views correspondentes às rotas da aplicação
+├── services/                   # Funções de requisição HTTP da API
+├── styles/                     # Temas e Tailwind CSS global
+├── App.tsx                     # Roteador principal e provedores
+└── main.tsx                    # Ponto de entrada React
+```
+
+---
+
+### 1.3 Pacote Compartilhado (`@farmaubs/shared`)
+
+O `@farmaubs/shared` é o elo que garante que Frontend e Backend compartilhem a **mesma fonte da verdade** sem duplicação de contratos.
+
+- **O que DEVE estar no shared:**
+  1. **Interfaces de Contrato de API:** Request e Response DTOs (ex: `LoginRequest`, `LoginResponse`, `MedicamentoDto`).
+  2. **Enums de Domínio:** Papéis de acesso (`PerfilCodigo`), status de sessão (`SessionStatus`), status de lote e movimentação.
+  3. **Constantes de Sistema e Rotas:** Mapa centralizado de rotas da API (`API_ROUTES`), limites de paginação.
+  4. **Utilitários Puros:** Validação e formatação de CPF (`validarCPF`, `formatarCPF`), normalização de e-mail, funções agnósticas de formatação de datas.
+- **O que NUNCA deve estar no shared:**
+  - Dependências de frameworks como NestJS (`@Injectable`, `@Controller`), TypeORM (`@Entity`, `@Column`) ou React (`useState`, JSX).
+
+---
+
+### 1.4 Infraestrutura (`infra/`)
+
+- **`docker-compose.yml` + `docker-compose.dev.yml`:** Ambiente de desenvolvimento com PostgreSQL e API.
+- **`docker-compose.test.yml`:** Instância efêmera de PostgreSQL (porta `5435`) para testes automatizados de migrações e schema.
+- **`infra/nginx/`:** Servidor web para distribuição estática e proxy reverso em produção.
+
+---
+
+## 2. Regras Rígidas de Estrutura de Pastas (Guia para Humanos e IA)
+
+> [!CAUTION]
+> **Instrução Crítica para Desenvolvedores e Agentes de IA:**
+> NUNCA crie pastas arbitrárias no projeto. Ao adicionar novas funcionalidades, consulte a tabela de correspondência abaixo:
+
+| Se você precisa criar...                       | Onde DEVE ficar                                                                                | O que NÃO fazer                                                                        |
+| :--------------------------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| **Endpoint REST / Rota HTTP**                  | `apps/backend/src/modules/<modulo>/api/controllers/<nome>.controller.ts`                       | ❌ Não crie pastas como `infrastructure/http` ou `controllers` na raiz do módulo.      |
+| **Validação de Request / DTO HTTP**            | `apps/backend/src/modules/<modulo>/api/dto/<recurso>.dto.ts`                                   | ❌ Não crie DTOs em pastas isoladas sem implementar a interface de `@farmaubs/shared`. |
+| **Caso de Uso / Regra de Negócio**             | `apps/backend/src/modules/<modulo>/application/use-cases/<acao>.use-case.ts`                   | ❌ Não coloque casos de uso dentro de `domain/` ou no controller.                      |
+| **Interface / Contrato de Repositório**        | `apps/backend/src/modules/<modulo>/domain/ports/<recurso>.repository.port.ts`                  | ❌ Não importe TypeORM dentro da pasta `domain/`. Domínio é TypeScript puro.           |
+| **Entidade Física TypeORM (Banco de Dados)**   | `apps/backend/src/modules/<modulo>/infrastructure/persistence/entities/<tabela>.entity.ts`     | ❌ Não crie entidades fora de `infrastructure/persistence/entities`.                   |
+| **Implementação de Repositório (SQL/TypeORM)** | `apps/backend/src/modules/<modulo>/infrastructure/adapters/<recurso>-pg.repository.ts`         | ❌ Não faça queries de banco diretamente dentro do use case ou controller.             |
+| **Script de Migração SQL**                     | `apps/backend/src/modules/<modulo>/infrastructure/persistence/migrations/<timestamp><Nome>.ts` | ❌ Não utilize `synchronize: true` do TypeORM em hipótese alguma.                      |
+| **Tipagem ou Enum compartilhado (Front/Back)** | `packages/shared/src/<modulo>/<recurso>.types.ts`                                              | ❌ Não duplique enums e interfaces separadamente no frontend e backend.                |
+| **Componente de Tela React**                   | `apps/frontend/src/pages/<NomeDaPagina>/index.tsx`                                             | ❌ Não misture views inteiras na pasta `components/ui`.                                |
+
+---
+
+## 3. Fluxo de Trabalho do Desenvolvedor
+
+### 3.1 Atualizar a branch `main`
+
+Sempre comece seu dia de trabalho ou uma nova tarefa sincronizando com a `main` remota:
 
 ```bash
 git checkout main
 git pull origin main
 ```
 
-### 1.2 Criar a branch
+### 3.2 Sincronizar Variáveis de Ambiente (`.env`)
 
-Padrão: `<tipo>/<numero-da-issue>-<descricao-curta>`
-Alternativamente você pode usar a ferramenta criar branch present nas Issues do GitHub.
+Se novas variáveis forem introduzidas, elas estarão listadas no `.env.example`:
 
-```bash
-git checkout -b feat/25-testes-integracao-schema
-```
+1. Compare o seu `.env` local com o `.env.example`.
+2. Para novos segredos criptográficos, utilize:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+3. Cole as chaves geradas em `SESSION_SECRET` e `ENCRYPTION_KEY` se aplicável.
 
-- `<tipo>`: mesmo vocabulário do commit (feat, fix, chore, test, docs, refactor, perf, style, ci)
-- `<numero-da-issue>`: número da tarefa no GitHub Projects (ex.: 25)
-- `<descricao-curta>`: kebab-case, sem acento, no máximo 5 palavras
+### 3.3 Criar a Branch de Trabalho
 
-Sem issue vinculada: `git checkout -b fix/corrige-validacao-email`
+Padrão obrigatório de nomenclatura de branches:  
+`<tipo>/<numero-da-issue>-<descricao-curta>`
 
-### 1.3 Desenvolver
-
-- Commits atômicos: um commit por mudança lógica (seção 3)
-- Rodar os testes da seção 2 antes de cada commit e novamente antes do push
-
-## 2. Testes antes do commit
-
-**Onde rodar:** localmente, na máquina do desenvolvedor (ADR-030 — não há gate de CI nesta fase; a evidência é levada ao PR). Docker Compose é obrigatório para os testes de integração.
-
-Ordem recomendada (da mais barata à mais cara):
-
-| #   | Comando            | Onde                                         | O que valida                                                          |
-| --- | ------------------ | -------------------------------------------- | --------------------------------------------------------------------- |
-| 1   | `pnpm lint`        | apps/backend, apps/frontend, packages/shared | Padrões de código (ESLint)                                            |
-| 2   | `pnpm test`        | apps/backend                                 | Testes unitários de domínio — camada A (Jest, sem banco)              |
-| 3   | `pnpm test:schema` | apps/backend                                 | Testes de integração de schema — camada B (banco efêmero, porta 5435) |
-| 4   | `pnpm test`        | apps/frontend                                | Testes de componente — camada D (Testing Library)                     |
-| 5   | `pnpm build`       | raiz do monorepo                             | Compilação de todos os packages (TypeScript)                          |
-
-Detalhes:
-
-- `test:schema` sobe o Postgres efêmero via `docker-compose.test.yml`, aplica as migrations do zero em banco limpo e executa os TCs (TC-01 a TC-13). Exige Docker rodando. Ao final, derrube o container com `pnpm test:schema:down`.
-- **Padrão BDD/Cucumber para novas funcionalidades (Camada A):** A partir da issue de cadastro de usuários, novos casos de uso e regras de negócio devem ser especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.spec.ts` ou `*.steps.ts`). Testes criados antes desse marco permanecem em formato Jest `.spec.ts` sem necessidade de migração retroativa.
-- Mudanças em política de RLS ou em lógica de concorrência de estoque (ADR-008) exigem teste de integração correspondente **antes do merge**, sem exceção (ADR-030).
-- Rerode a suíte completa após a última alteração, antes do push.
-
-## 3. Padrão de commits
-
-Formato: `<tipo>(<package>): <descrição>`
-
-Tipos (Conventional Commits):
-
-| Tipo     | Uso                                               |
-| -------- | ------------------------------------------------- |
-| feat     | Nova funcionalidade                               |
-| fix      | Correção de bug                                   |
-| test     | Testes (novos ou ajustes)                         |
-| chore    | Manutenção, dependências, build tooling           |
-| docs     | Documentação (ADRs, README, CONTRIBUTING)         |
-| refactor | Mudança sem alterar comportamento                 |
-| perf     | Otimização de performance                         |
-| style    | Formatação, sem mudança lógica                    |
-| ci       | Pipeline/CI (quando o ADR-024 entrar em operação) |
-
-Escopos (packages do monorepo — ADR-022):
-
-| Escopo   | Diretório                                 |
-| -------- | ----------------------------------------- |
-| backend  | apps/backend (NestJS, migrations, schema) |
-| frontend | apps/frontend (React + Vite)              |
-| shared   | packages/shared (tipos e DTOs)            |
-| infra    | infra/ (docker-compose, deploy)           |
-
-Regras:
-
-- Descrição no imperativo, minúscula, sem ponto final, até 72 caracteres
-- Corpo explica o **porquê**, não o quê
-- Referencie a issue no corpo: `Refs #25` ou `Closes #25`
 
 Exemplos:
 
+- Com issue no GitHub Projects:
+  ```bash
+  git checkout -b feat/42-cadastro-medicamentos
+  git checkout -b fix/58-ajuste-validacao-cpf
+  ```
+- Sem issue vinculada (apenas correções pequenas):
+  ```bash
+  git checkout -b fix/corrige-padding-tabela
+  ```
+
+### 3.4 Ciclo de Desenvolvimento
+
+1. **Subir a stack de desenvolvimento com Docker:**
+   ```bash
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+   ```
+2. **Acompanhar os logs da API:**
+   ```bash
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
+   ```
+3. **Atualização de dependências com Docker em execução:**
+   Os containers de desenvolvimento utilizam volumes nomeados para isolar os diretórios `node_modules` (`node_modules_backend`, `node_modules_frontend`, etc. definidos no `infra/docker-compose.dev.yml`).  
+   Quando novas dependências forem adicionadas ao monorepo (após um `git pull`, `git merge` ou `pnpm add`), elas **não entram automaticamente nos containers apenas rodando `pnpm install` no host**. Para sincronizá-las:
+
+   ```bash
+   # Opção rápida (com os containers em execução):
+   docker exec -i farmaubs-api-1 pnpm install && docker restart farmaubs-api-1
+   docker exec -i farmaubs-frontend-1 pnpm install && docker restart farmaubs-frontend-1
+   ```
+
+4. **Rodar localmente (sem container para debug rápido):**
+
+   ```bash
+   # Terminal 1: compilação contínua do shared
+   pnpm --filter @farmaubs/shared dev
+
+   # Terminal 2: API backend com live-reload
+   pnpm dev:backend
+
+   # Terminal 3: Frontend Vite
+   pnpm dev:frontend
+   ```
+
+---
+
+### 3.5 Como Rodar os Testes (Camadas A, B, C, D)
+
+O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (ADR-030):
+
+| Camada       | Nome                           | Onde executa    | Comando                                      | Objetivo                                                             |
+| :----------- | :----------------------------- | :-------------- | :------------------------------------------- | :------------------------------------------------------------------- |
+| **Camada A** | Testes Unitários de Domínio    | `apps/backend`  | `pnpm test` ou `pnpm test <arquivo.spec.ts>` | Valida Use Cases e regras puras sem necessidade de banco de dados.   |
+| **Camada B** | Testes de Integração de Schema | `apps/backend`  | `pnpm test:schema`                           | Sobe banco efêmero na porta 5435 e testa todas as migrações do zero. |
+| **Camada C** | Testes de Integração / E2E     | `apps/backend`  | `pnpm test:integration`                      | Valida repositórios e endpoints com banco de dados real.             |
+| **Camada D** | Testes de Componentes          | `apps/frontend` | `pnpm test`                                  | Valida componentes e interações de tela no React.                    |
+| **Build**    | Verificação de Compilação      | Raiz            | `pnpm build`                                 | Compila `@farmaubs/shared`, backend e frontend simultaneamente.      |
+
+> [!NOTE]
+> Ao finalizar testes na porta 5435 (Camada B), derrube o banco de teste efêmero com:
+>
+> ```bash
+> pnpm --filter @farmaubs/backend test:schema:down
+> ```
+
+> [!TIP]
+> **Padrão BDD/Cucumber para novas funcionalidades (Camada A):** A partir da issue de cadastro de usuários (#53), casos de uso e regras de negócio devem ser preferencialmente especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.spec.ts` ou `*.steps.ts`). Testes criados antes desse marco permanecem em formato Jest `.spec.ts` sem necessidade de migração retroativa.
+
+
+---
+
+## 4. Padrão de Commits (Conventional Commits)
+
+Formato obrigatório:  
+`<tipo>(<escopo>): <descrição>`
+
+### Tipos Permitidos:
+
+- **`feat`**: Nova funcionalidade.
+- **`fix`**: Correção de bug.
+- **`test`**: Inclusão ou ajuste de testes.
+- **`chore`**: Atualização de dependências, builds ou scripts.
+- **`docs`**: Documentação (README, CONTRIBUTING, ADRs).
+- **`refactor`**: Reestruturação de código sem alteração funcional.
+- **`perf`**: Otimização de desempenho.
+- **`style`**: Formatação de código sem impacto na lógica.
+
+### Escopos Obrigatórios:
+
+- **`backend`**: Código da API NestJS.
+- **`frontend`**: Código da SPA React.
+- **`shared`**: Tipos e contratos do `@farmaubs/shared`.
+- **`infra`**: Docker, Docker Compose, Nginx e CI/CD.
+- Ou o nome específico do módulo: `(acesso)`, `(medicamentos)`, `(estoque)`.
+
+### Exemplos Válidos:
+
+```text
+feat(acesso): implementa renovação deslizante de sessão no LoginUseCase
+
+Refs #61
 ```
-feat(backend): adiciona testes de integração de schema (TC-01 a TC-13)
 
-Cria o harness de banco efêmero (docker-compose.test.yml) e os 13 testes
-de schema da camada B do ADR-030, provando que as migrations aplicam
-do zero em banco limpo e que o down() é idempotente.
+```text
+fix(shared): corrige cálculo dos dígitos verificadores no validador de CPF
 
-Closes #25
+Closes #78
 ```
 
-```
-fix(frontend): corrige validação de quantidade dispensada
+---
 
-A validação aceitava quantidade zero; passa a exigir valor positivo
-conforme RF010.
+## 5. Padrão de Pull Request (PR)
 
-Refs #32
-```
+### 5.1 Requisitos para Aprovação
 
-## 4. Pull Request
+1. O título do PR deve seguir o mesmo padrão do commit: `<tipo>(<escopo>): <descrição>`.
+2. A branch deve estar atualizada em relação à `main`.
+3. Todos os testes relevantes devem estar passando com **prints anexados** na descrição do PR.
 
-### 4.1 Abertura
+### 5.2 Prints Obrigatórios por Escopo
 
-- Título: `<tipo>(<package>): <descrição>` (mesmo padrão do commit)
-- Corpo: template da seção 4.3
-- Vincular a issue: `Closes #<numero>` no corpo
+| Mudança                         | Evidências Necessárias no PR                                        |
+| :------------------------------ | :------------------------------------------------------------------ |
+| **Backend (Regras/Use Cases)**  | Print do `pnpm test` (testes unitários passando) e do `pnpm build`. |
+| **Backend (Schema/Migrations)** | Print do `pnpm test:schema` provando execução em banco limpo.       |
+| **Frontend (Telas)**            | Screenshots das telas afetadas (desktop/mobile) e do build.         |
+| **Shared**                      | Print do `pnpm --filter @farmaubs/shared build` sem erros.          |
 
-### 4.2 Prints esperados no corpo do PR
-
-A evidência de teste substitui o gate de CI nesta fase (ADR-030) — **sem os prints, o PR não é aprovado pelo revisor**.
-
-| Tipo de mudança             | Prints obrigatórios                                                                            |
-| --------------------------- | ---------------------------------------------------------------------------------------------- |
-| Backend (código)            | Saída do `pnpm test` (unit) com todos passando; saída do `pnpm build` sem erros                |
-| Backend (schema/migrations) | Saída do `pnpm test:schema` com os 13 TCs passando (prova de aplicação do zero em banco limpo) |
-| Frontend                    | Prints das telas afetadas (antes/depois quando aplicável); saída do `pnpm test` (componentes)  |
-| Shared                      | Saída do build do package                                                                      |
-| Infra                       | Saída do comando validado (ex.: `docker compose up`, `docker compose config`)                  |
-
-### 4.3 Template do corpo do PR (utilize somente o que convém para o PR em questão)
+### 5.3 Template do Corpo do PR
 
 ```markdown
 ## O que mudou
 
-<resumo do que foi feito e por quê>
+<Breve resumo das alterações e motivação técnica>
 
 ## Como foi testado
 
-- [ ] `pnpm test` (backend) — <print>
-- [ ] `pnpm test:schema` (backend) — <print>
-- [ ] `pnpm build` — <print>
-- [ ] `pnpm test` (frontend) — <print>
-- [ ] Prints das telas afetadas — <prints>
+- [ ] Testes unitários (`pnpm test`) — <anexar print>
+- [ ] Testes de schema (`pnpm test:schema`) — <anexar print>
+- [ ] Build global do monorepo (`pnpm build`) — <anexar print>
+- [ ] Evidências visuais de tela (frontend) — <anexar screenshots>
 
 ## Checklist
 
-- [ ] Branch criada a partir da main atualizada
-- [ ] Testes da seção 2 executados e passando
-- [ ] Commits no padrão `<tipo>(<package>)`
-- [ ] Issue vinculada (Closes #<numero>)
-- [ ] Prints anexados conforme a tabela da seção 4.2
+- [ ] Branch criada a partir da `main` atualizada
+- [ ] Commits seguindo o padrão Conventional Commits
+- [ ] Issue vinculada (`Closes #<numero>` ou `Refs #<numero>`)
+- [ ] Arquivos alocados nas pastas canônicas da Arquitetura Hexagonal
 ```
 
-## 5. Execução de SQL no banco dev
+---
 
-### 5. Com credenciais da API (backend)
+## 6. Troubleshooting (Resolução de Problemas Frequentes)
 
-```PowerShell
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml exec postgres psql -U farmaubs_admin -d farmaubs -c "SUA-QUERY-AQUI';"
-```
+### 6.1 `fatal: .git/index: index file smaller than expected` (Windows / OneDrive)
 
-## 6. Execução da Suíte de Testes de integração
+- **Causa:** O OneDrive tenta sincronizar arquivos dentro de `.git/` durante uma operação de escrita do Git, truncando o arquivo de índice para 0 bytes.
+- **Solução rápida (sem perda de dados):**
+  ```powershell
+  Remove-Item .git/index -Force
+  git reset
+  git add -A
+  ```
+- **Dica preventiva:** Pause a sincronização do OneDrive na pasta do repositório enquanto estiver codificando.
 
-Na raiz do repositório suba o banco efêmero limpo
+### 6.2 Erro de módulo `@farmaubs/shared` não encontrado
 
-```PowerShell
-docker compose -f infra/docker-compose.test.yml down -v
-docker compose -f infra/docker-compose.test.yml up -d --wait
-```
+- **Causa:** O TypeScript ou o Vite não encontraram os arquivos compilados em `packages/shared/dist`.
+- **Solução:**
+  ```bash
+  pnpm --filter @farmaubs/shared build
+  pnpm install
+  ```
 
-Depois em `apps/backend`
+### 6.3 Conflito de Portas no PostgreSQL (`5432` / `5434` / `5435`)
 
-```PowerShell
-pnpm test:integration
-```
+- Se você já possui um PostgreSQL instalado na sua máquina host na porta `5432`, o FarmaUBS foi configurado para rodar o banco de desenvolvimento na porta **`5434`** e o banco efêmero de testes na porta **`5435`**.
+- Verifique seu `.env` para garantir que `DB_PORT=5434`.
+
+### 6.4 `Seed de desenvolvimento só pode rodar com NODE_ENV=development`
+
+- **Causa:** O script `seed-dev.ts` possui uma trava de segurança para não rodar em produção ou staging.
+- **Solução:** Certifique-se de que a variável `NODE_ENV=development` esteja definida no seu arquivo `.env`.
+
+### 6.5 Containers Docker desatualizados ou instáveis
+
+- Para forçar uma reconstrução limpa dos containers:
+  ```bash
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down -v
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build --force-recreate
+  ```
+
+### 6.6 Erro `Failed to resolve import "<pacote>"` ou módulo ausente no container
+
+- **Causa:** Novas dependências foram adicionadas no `package.json` (no seu host ou via PR/merge), mas os volumes Docker (`node_modules_backend`, `node_modules_frontend`, etc.) mantiveram a versão antiga dos pacotes instalados.
+- **Solução Rápida (com containers ativos):**
+  Instale diretamente nos containers e reinicie o serviço:
+
+  ```bash
+  # Para o backend:
+  docker exec -i farmaubs-api-1 pnpm install
+  docker restart farmaubs-api-1
+
+  # Para o frontend:
+  docker exec -i farmaubs-frontend-1 pnpm install
+  docker restart farmaubs-frontend-1
+  ```
+
+- **Solução via Rebuild do Compose:**
+  ```bash
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build
+  ```
+- **Solução Definitiva (reset apenas dos volumes de dependências, mantendo o banco de dados intacto):**
+  ```bash
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml stop api frontend
+  docker volume rm farmaubs_node_modules_root farmaubs_node_modules_backend farmaubs_node_modules_frontend farmaubs_node_modules_shared
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build
+  ```

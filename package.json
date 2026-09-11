@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:backend": "pnpm --filter @farmaubs/backend start:dev",
+    "dev:backend": "pnpm --filter @farmaubs/shared build && pnpm --filter @farmaubs/backend start:dev",
     "dev:frontend": "pnpm --filter @farmaubs/frontend dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
