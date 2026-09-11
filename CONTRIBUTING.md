@@ -204,7 +204,17 @@ Exemplos:
    ```bash
    docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
    ```
-3. **Rodar localmente (sem container para debug rápido):**
+3. **Atualização de dependências com Docker em execução:**
+   Os containers de desenvolvimento utilizam volumes nomeados para isolar os diretórios `node_modules` (`node_modules_backend`, `node_modules_frontend`, etc. definidos no `infra/docker-compose.dev.yml`).  
+   Quando novas dependências forem adicionadas ao monorepo (após um `git pull`, `git merge` ou `pnpm add`), elas **não entram automaticamente nos containers apenas rodando `pnpm install` no host**. Para sincronizá-las:
+
+   ```bash
+   # Opção rápida (com os containers em execução):
+   docker exec -i farmaubs-api-1 pnpm install && docker restart farmaubs-api-1
+   docker exec -i farmaubs-frontend-1 pnpm install && docker restart farmaubs-frontend-1
+   ```
+
+4. **Rodar localmente (sem container para debug rápido):**
 
    ```bash
    # Terminal 1: compilação contínua do shared
@@ -359,4 +369,31 @@ Closes #78
   ```bash
   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down -v
   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build --force-recreate
+  ```
+
+### 6.6 Erro `Failed to resolve import "<pacote>"` ou módulo ausente no container
+
+- **Causa:** Novas dependências foram adicionadas no `package.json` (no seu host ou via PR/merge), mas os volumes Docker (`node_modules_backend`, `node_modules_frontend`, etc.) mantiveram a versão antiga dos pacotes instalados.
+- **Solução Rápida (com containers ativos):**
+  Instale diretamente nos containers e reinicie o serviço:
+
+  ```bash
+  # Para o backend:
+  docker exec -i farmaubs-api-1 pnpm install
+  docker restart farmaubs-api-1
+
+  # Para o frontend:
+  docker exec -i farmaubs-frontend-1 pnpm install
+  docker restart farmaubs-frontend-1
+  ```
+
+- **Solução via Rebuild do Compose:**
+  ```bash
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build
+  ```
+- **Solução Definitiva (reset apenas dos volumes de dependências, mantendo o banco de dados intacto):**
+  ```bash
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml stop api frontend
+  docker volume rm farmaubs_node_modules_root farmaubs_node_modules_backend farmaubs_node_modules_frontend farmaubs_node_modules_shared
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build
   ```
