@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # 01-create-role-farmaubs-app.sh
 # Cria a role de aplicação farmaubs_app (DML, não-dona das tabelas) — AC-02 #37, ADR-016.
 # Executado pelo docker-entrypoint-initdb.d do Postgres no primeiro boot do volume.
