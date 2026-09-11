@@ -28,7 +28,9 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [erroApi, setErroApi] = useState("");
-  const { login } = useAuth(); // Contexto de Autenticação (ADR-013)
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const { login, logoutReason, clearLogoutReason } = useAuth(); // Contexto de Autenticação (ADR-013)
   const navigate = useNavigate(); // Redirecionar após login bem-sucedido (RF002)
 
   // 2. Configurando o React Hook Form (validando no submit)
@@ -57,8 +59,8 @@ export default function Login() {
         usuario: data.usuario,
       });
 
-      // Redirecionamento ao dashboard da UBS padrão (RF002 / Cenário 1)
-      navigate("/dashboard");
+      // Redirecionamento padrão para a tela de 'Em Desenvolvimento' enquanto as próximas telas são construídas
+      navigate("/em-desenvolvimento");
     },
     onError: (error: unknown) => {
       // Cenários 4 (anti-enumeração), 5 (bloqueio temporário) e 6 (erro de rede)
@@ -73,14 +75,12 @@ export default function Login() {
   // 4. Disparo do formulário
   const onSubmit = (data: LoginFormInputs) => {
     setErroApi("");
+    clearLogoutReason();
     loginMutation.mutate(data);
   };
 
   const handleForgotPassword = () => {
-    // Cenário 7: Acesso à recuperação de senha (RF003)
-    alert(
-      "Para recuperar o acesso, contate o gestor CAF do seu município ou use o canal institucional de suporte.",
-    );
+    setShowForgotModal(true);
   };
 
   return (
@@ -149,15 +149,18 @@ export default function Login() {
             <div style={{ position: "relative" }}>
               <span
                 aria-hidden="true"
+                className="material-symbols-outlined text-[20px]"
                 style={{
                   position: "absolute",
                   left: "12px",
                   top: "50%",
                   transform: "translateY(-50%)",
                   pointerEvents: "none",
+                  color: "#64748B",
+                  fontSize: "20px",
                 }}
               >
-                ✉
+                mail
               </span>
               <input
                 id="email"
@@ -168,7 +171,7 @@ export default function Login() {
                 aria-required="true"
                 aria-invalid={errors.email ? "true" : "false"}
                 aria-describedby={errors.email ? "email-error" : undefined}
-                style={{ paddingLeft: "36px" }}
+                style={{ paddingLeft: "38px" }}
                 {...register("email")}
               />
             </div>
@@ -193,18 +196,23 @@ export default function Login() {
 
           {/* Campo de Senha */}
           <div className="login-thq-input2-senha-elm">
-            <label
-              htmlFor="senha"
+            <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "#334155",
               }}
             >
-              <span>Senha</span>
+              <label
+                htmlFor="senha"
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  color: "#334155",
+                }}
+              >
+                Senha
+              </label>
               <button
                 type="button"
                 onClick={handleForgotPassword}
@@ -222,33 +230,62 @@ export default function Login() {
               >
                 Esqueceu sua senha?
               </button>
-            </label>
+            </div>
 
             <div style={{ position: "relative" }}>
               <span
                 aria-hidden="true"
+                className="material-symbols-outlined text-[20px]"
                 style={{
                   position: "absolute",
                   left: "12px",
                   top: "50%",
                   transform: "translateY(-50%)",
                   pointerEvents: "none",
+                  color: "#64748B",
+                  fontSize: "20px",
                 }}
               >
-                🔒
+                lock
               </span>
               <input
                 id="senha"
                 className="login-thq-input-elm2"
-                type="password"
+                type={mostrarSenha ? "text" : "password"}
                 placeholder="••••••••"
                 autoComplete="current-password"
                 aria-required="true"
                 aria-invalid={errors.senha ? "true" : "false"}
                 aria-describedby={errors.senha ? "senha-error" : undefined}
-                style={{ paddingLeft: "36px" }}
+                style={{ paddingLeft: "38px", paddingRight: "40px" }}
                 {...register("senha")}
               />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha((prev) => !prev)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  color: "#64748B",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label={mostrarSenha ? "Ocultar senha" : "Ver senha"}
+              >
+                <span
+                  className="material-symbols-outlined text-[20px]"
+                  id="eyeIcon"
+                >
+                  {mostrarSenha ? "visibility_off" : "visibility"}
+                </span>
+              </button>
             </div>
 
             {/* Mensagem de Erro Acessível (Cenário 3) */}
@@ -296,11 +333,84 @@ export default function Login() {
           >
             Suporte Técnico
           </div>
-          <div style={{ fontSize: "14px", color: "#001c6d", fontWeight: 700 }}>
-            <span aria-hidden="true">📋 </span> Solicite cadastro junto à
-            coordenação CAF
+          <div
+            style={{
+              fontSize: "14px",
+              color: "#001c6d",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-[18px]"
+            >
+              badge
+            </span>
+            <span>Solicite cadastro junto à coordenação CAF</span>
           </div>
         </section>
+
+        {/* Mensagens de Sessão Expirada / Logout Informativo (NF012 / AC-10) */}
+        {logoutReason && (
+          <div
+            role="alert"
+            aria-live="polite"
+            style={{
+              width: "100%",
+              marginTop: "16px",
+              padding: "12px 14px",
+              border: "1px solid #FCD34D",
+              backgroundColor: "#FFFBEB",
+              color: "#92400E",
+              borderRadius: "6px",
+              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "10px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                textAlign: "left",
+              }}
+            >
+              <span
+                className="material-symbols-outlined text-[20px]"
+                style={{ color: "#D97706", flexShrink: 0 }}
+              >
+                lock_clock
+              </span>
+              <span>{logoutReason}</span>
+            </div>
+            <button
+              type="button"
+              onClick={clearLogoutReason}
+              aria-label="Fechar aviso de sessão expirada"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#92400E",
+                cursor: "pointer",
+                padding: "2px",
+                display: "flex",
+                alignItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                close
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Mensagens de Erro da API (Cenários 4, 5 e 6) */}
         {erroApi && (
@@ -361,6 +471,110 @@ export default function Login() {
           </a>
         </div>
       </footer>
+
+      {/* Modal Acessível "FarmaUBS diz" para Recuperação de Senha */}
+      {showForgotModal && (
+        <div
+          role="presentation"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(2px)",
+            padding: "16px",
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="forgot-modal-title"
+            aria-describedby="forgot-modal-desc"
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              backgroundColor: "#FFFFFF",
+              borderRadius: "10px",
+              padding: "24px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "#E0E7FF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#001c6d",
+                }}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  info
+                </span>
+              </div>
+              <h2
+                id="forgot-modal-title"
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#0F172A",
+                  margin: 0,
+                }}
+              >
+                FarmaUBS diz:
+              </h2>
+            </div>
+
+            <p
+              id="forgot-modal-desc"
+              style={{
+                fontSize: "14px",
+                lineHeight: "1.5",
+                color: "#475569",
+                margin: 0,
+              }}
+            >
+              Para recuperar o acesso, contate a coordenação CAF do seu município
+              ou o administrador do sistema FarmaUBS.
+            </p>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(false)}
+                style={{
+                  padding: "8px 20px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "#FFFFFF",
+                  backgroundColor: "#001c6d",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Entendi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

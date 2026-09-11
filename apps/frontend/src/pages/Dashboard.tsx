@@ -7,7 +7,8 @@ export default function Dashboard() {
     <div style={{ padding: "24px" }}>
       <h1>Dashboard FarmaUBS</h1>
       <button
-        onClick={logout}
+        type="button"
+        onClick={() => logout()}
         style={{ padding: "8px 16px", marginTop: "16px" }}
       >
         Sair

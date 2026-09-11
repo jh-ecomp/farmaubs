@@ -1,3 +1,18 @@
+import type {
+  LoginRequest,
+  LoginResponse as BackendLoginResponse,
+  ContaBloqueadaResponse,
+  ErroCredenciaisResponse,
+} from "@farmaubs/shared";
+
+// Re-exporta os contratos oficiais compartilhados de @farmaubs/shared (ADR-022)
+export type {
+  LoginRequest,
+  BackendLoginResponse,
+  ContaBloqueadaResponse,
+  ErroCredenciaisResponse,
+};
+
 export interface UsuarioPayload {
   nome: string;
   email: string;
@@ -12,18 +27,13 @@ export interface LoginResponse {
   ttlSeconds: number;
   warningSeconds: number;
   usuario: UsuarioPayload;
-}
-
-export interface LoginRequest {
-  email: string;
-  senha: string;
+  usuarioId?: string;
+  redirectUrl?: string;
 }
 
 export interface ApiErrorResponse {
   message?: string | string[];
   error?: string;
   statusCode?: number;
-  tempoRestanteMinutos?: number;
-  tempoRestanteSegundos?: number;
-  bloqueadoAte?: string;
+  minutosRestantes?: number;
 }
