@@ -163,18 +163,18 @@ packages/shared/src/
 > **Instrução Crítica para Desenvolvedores e Agentes de IA:**
 > NUNCA crie pastas arbitrárias no projeto. Ao adicionar novas funcionalidades, consulte a tabela de correspondência abaixo:
 
-| Se você precisa criar...                       | Onde DEVE ficar                                                                                | O que NÃO fazer                                                                        |
-| :--------------------------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
-| **Endpoint REST / Rota HTTP**                  | `apps/backend/src/modules/<modulo>/api/controllers/<nome>.controller.ts`                       | ❌ Não crie pastas como `infrastructure/http` ou `controllers` na raiz do módulo.      |
-| **Validação de Request / DTO HTTP**            | `apps/backend/src/modules/<modulo>/api/dto/<recurso>.dto.ts`                                   | ❌ Não crie DTOs em pastas isoladas sem implementar a interface de `@farmaubs/shared`. |
-| **Caso de Uso / Regra de Negócio**             | `apps/backend/src/modules/<modulo>/application/use-cases/<acao>.use-case.ts`                   | ❌ Não coloque casos de uso dentro de `domain/` ou no controller.                      |
-| **Entidade de Domínio Pura / Model de Negócio**| `apps/backend/src/modules/<modulo>/domain/entities/<recurso>.entity.ts`                        | ❌ Não crie pastas como `domain/models/` ou misture entidades de domínio com TypeORM.   |
-| **Interface / Contrato de Repositório**        | `apps/backend/src/modules/<modulo>/domain/ports/<recurso>.repository.port.ts`                  | ❌ Não importe TypeORM dentro da pasta `domain/`. Domínio é TypeScript puro.           |
-| **Entidade Física TypeORM (Banco de Dados)**   | `apps/backend/src/modules/<modulo>/infrastructure/persistence/entities/<tabela>.entity.ts`     | ❌ Não crie entidades fora de `infrastructure/persistence/entities`.                   |
-| **Implementação de Repositório (SQL/TypeORM)** | `apps/backend/src/modules/<modulo>/infrastructure/adapters/<recurso>-pg.repository.ts`         | ❌ Não faça queries de banco diretamente dentro do use case ou controller.             |
-| **Script de Migração SQL**                     | `apps/backend/src/modules/<modulo>/infrastructure/persistence/migrations/<timestamp><Nome>.ts` | ❌ Não utilize `synchronize: true` do TypeORM em hipótese alguma.                      |
-| **Tipagem, DTO de Contrato ou Enum no Shared** | `packages/shared/src/<modulo>/<recurso>.types.ts`                                              | ❌ NUNCA crie pastas `dto/` ou arquivos soltos na raiz de `packages/shared/src/`.       |
-| **Componente de Tela React**                   | `apps/frontend/src/pages/<NomeDaPagina>/index.tsx`                                             | ❌ Não misture views inteiras na pasta `components/ui`.                                |
+| Se você precisa criar...                        | Onde DEVE ficar                                                                                | O que NÃO fazer                                                                        |
+| :---------------------------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| **Endpoint REST / Rota HTTP**                   | `apps/backend/src/modules/<modulo>/api/controllers/<nome>.controller.ts`                       | ❌ Não crie pastas como `infrastructure/http` ou `controllers` na raiz do módulo.      |
+| **Validação de Request / DTO HTTP**             | `apps/backend/src/modules/<modulo>/api/dto/<recurso>.dto.ts`                                   | ❌ Não crie DTOs em pastas isoladas sem implementar a interface de `@farmaubs/shared`. |
+| **Caso de Uso / Regra de Negócio**              | `apps/backend/src/modules/<modulo>/application/use-cases/<acao>.use-case.ts`                   | ❌ Não coloque casos de uso dentro de `domain/` ou no controller.                      |
+| **Entidade de Domínio Pura / Model de Negócio** | `apps/backend/src/modules/<modulo>/domain/entities/<recurso>.entity.ts`                        | ❌ Não crie pastas como `domain/models/` ou misture entidades de domínio com TypeORM.  |
+| **Interface / Contrato de Repositório**         | `apps/backend/src/modules/<modulo>/domain/ports/<recurso>.repository.port.ts`                  | ❌ Não importe TypeORM dentro da pasta `domain/`. Domínio é TypeScript puro.           |
+| **Entidade Física TypeORM (Banco de Dados)**    | `apps/backend/src/modules/<modulo>/infrastructure/persistence/entities/<tabela>.entity.ts`     | ❌ Não crie entidades fora de `infrastructure/persistence/entities`.                   |
+| **Implementação de Repositório (SQL/TypeORM)**  | `apps/backend/src/modules/<modulo>/infrastructure/adapters/<recurso>-pg.repository.ts`         | ❌ Não faça queries de banco diretamente dentro do use case ou controller.             |
+| **Script de Migração SQL**                      | `apps/backend/src/modules/<modulo>/infrastructure/persistence/migrations/<timestamp><Nome>.ts` | ❌ Não utilize `synchronize: true` do TypeORM em hipótese alguma.                      |
+| **Tipagem, DTO de Contrato ou Enum no Shared**  | `packages/shared/src/<modulo>/<recurso>.types.ts`                                              | ❌ NUNCA crie pastas `dto/` ou arquivos soltos na raiz de `packages/shared/src/`.      |
+| **Componente de Tela React**                    | `apps/frontend/src/pages/<NomeDaPagina>/index.tsx`                                             | ❌ Não misture views inteiras na pasta `components/ui`.                                |
 
 ---
 

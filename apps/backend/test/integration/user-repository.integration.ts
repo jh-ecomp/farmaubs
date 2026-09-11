@@ -1,27 +1,27 @@
-import { defineFeature, loadFeature } from 'jest-cucumber';
-import * as path from 'node:path';
-import { DataSource } from 'typeorm';
-import { adminDatabaseUrl, appDatabaseUrl } from '../test-db';
-import { TypeOrmUserRepository } from '../../src/modules/acesso/infrastructure/adapters/typeorm-user.repository';
-import { TransactionContext } from '../../src/common/transaction/transaction-context.service';
-import { User } from '../../src/modules/administracao/infrastructure/persistence/entities/user.entity';
-import { UserUnit } from '../../src/modules/administracao/infrastructure/persistence/entities/UserUnit.entity';
-import { PerfilEntity } from '../../src/modules/acesso/infrastructure/persistence/entities/perfil.entity';
-import { UnidadeSaudeEntity } from '../../src/modules/administracao/infrastructure/persistence/entities/unidade-saude.entity';
-import { MunicipioEntity } from '../../src/modules/administracao/infrastructure/persistence/entities/municipio.entity';
+import { defineFeature, loadFeature } from "jest-cucumber";
+import * as path from "node:path";
+import { DataSource } from "typeorm";
+import { adminDatabaseUrl, appDatabaseUrl } from "../test-db";
+import { TypeOrmUserRepository } from "../../src/modules/acesso/infrastructure/adapters/typeorm-user.repository";
+import { TransactionContext } from "../../src/common/transaction/transaction-context.service";
+import { User } from "../../src/modules/administracao/infrastructure/persistence/entities/user.entity";
+import { UserUnit } from "../../src/modules/administracao/infrastructure/persistence/entities/UserUnit.entity";
+import { PerfilEntity } from "../../src/modules/acesso/infrastructure/persistence/entities/perfil.entity";
+import { UnidadeSaudeEntity } from "../../src/modules/administracao/infrastructure/persistence/entities/unidade-saude.entity";
+import { MunicipioEntity } from "../../src/modules/administracao/infrastructure/persistence/entities/municipio.entity";
 import {
   DadosCriacaoUsuario,
   UsuarioModeloDominio,
-} from '../../src/modules/acesso/domain/entities/user-registration.entity';
+} from "../../src/modules/acesso/domain/entities/user-registration.entity";
 
 const feature = loadFeature(
-  path.resolve(__dirname, 'user-repository.integration.feature'),
+  path.resolve(__dirname, "user-repository.integration.feature"),
 );
 
-const MUNICIPIO_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-const PERFIL_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-const UNIDADE_1_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
-const UNIDADE_2_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+const MUNICIPIO_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const PERFIL_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const UNIDADE_1_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const UNIDADE_2_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
 defineFeature(feature, (test) => {
   let admin: DataSource;
@@ -41,12 +41,12 @@ defineFeature(feature, (test) => {
 
   beforeAll(async () => {
     admin = new DataSource({
-      type: 'postgres',
+      type: "postgres",
       url: adminDatabaseUrl(),
     });
 
     app = new DataSource({
-      type: 'postgres',
+      type: "postgres",
       url: appDatabaseUrl(),
       entities: [
         User,
@@ -129,14 +129,14 @@ defineFeature(feature, (test) => {
     }
   });
 
-  test('Persistência real de usuário e vínculos user_units no PostgreSQL', ({
+  test("Persistência real de usuário e vínculos user_units no PostgreSQL", ({
     given,
     and,
     when,
     then,
   }) => {
     given(
-      'que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados',
+      "que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados",
       () => {
         expect(admin.isInitialized).toBe(true);
         expect(app.isInitialized).toBe(true);
@@ -159,12 +159,12 @@ defineFeature(feature, (test) => {
       },
     );
 
-    and('que informo as UBSs cadastradas para o vínculo', () => {
+    and("que informo as UBSs cadastradas para o vínculo", () => {
       ubsIdsRoberto = [UNIDADE_1_ID, UNIDADE_2_ID];
     });
 
     when(
-      'eu executo o método salvar do TypeOrmUserRepository conectado ao banco real',
+      "eu executo o método salvar do TypeOrmUserRepository conectado ao banco real",
       async () => {
         usuarioSalvoRoberto = await repositorio.salvar(
           dadosCriacaoRoberto,
@@ -174,7 +174,7 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'o usuário deve ser persistido fisicamente na tabela users com status ativo',
+      "o usuário deve ser persistido fisicamente na tabela users com status ativo",
       async () => {
         expect(usuarioSalvoRoberto).toBeDefined();
 
@@ -194,10 +194,10 @@ defineFeature(feature, (test) => {
         );
 
         expect(linhasUser).toHaveLength(1);
-        expect(linhasUser[0].nome_completo).toBe('Roberto Martins');
-        expect(linhasUser[0].email).toBe('roberto@repo-integration.test');
+        expect(linhasUser[0].nome_completo).toBe("Roberto Martins");
+        expect(linhasUser[0].email).toBe("roberto@repo-integration.test");
         expect(linhasUser[0].senha_hash).toBe(
-          '$2b$12$hashedPasswordExampleValue',
+          "$2b$12$hashedPasswordExampleValue",
         );
         expect(linhasUser[0].perfil_id).toBe(PERFIL_ID);
         expect(linhasUser[0].ativo).toBe(true);
@@ -205,7 +205,7 @@ defineFeature(feature, (test) => {
     );
 
     and(
-      'as associações correspondentes devem ser persistidas fisicamente na tabela user_units com ativo verdadeiro',
+      "as associações correspondentes devem ser persistidas fisicamente na tabela user_units com ativo verdadeiro",
       async () => {
         interface LinhaUnit {
           usuario_id: string;
@@ -231,13 +231,13 @@ defineFeature(feature, (test) => {
     );
   });
 
-  test('Busca de usuário por e-mail com case-insensitivity contra índice real do banco', ({
+  test("Busca de usuário por e-mail com case-insensitivity contra índice real do banco", ({
     given,
     when,
     then,
   }) => {
     given(
-      'que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados',
+      "que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados",
       () => {
         expect(admin.isInitialized).toBe(true);
         expect(app.isInitialized).toBe(true);
@@ -264,24 +264,24 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'o usuário correspondente deve ser retornado pelo repositório com o e-mail em minúsculas',
+      "o usuário correspondente deve ser retornado pelo repositório com o e-mail em minúsculas",
       () => {
         expect(usuarioBuscado).not.toBeNull();
         expect(usuarioBuscado?.id).toBe(usuarioSalvoRoberto?.id);
-        expect(usuarioBuscado?.email).toBe('roberto@repo-integration.test');
-        expect(usuarioBuscado?.nomeCompleto).toBe('Roberto Martins');
+        expect(usuarioBuscado?.email).toBe("roberto@repo-integration.test");
+        expect(usuarioBuscado?.nomeCompleto).toBe("Roberto Martins");
       },
     );
   });
 
-  test('Verificação de existência de e-mail no banco real', ({
+  test("Verificação de existência de e-mail no banco real", ({
     given,
     when,
     then,
     and,
   }) => {
     given(
-      'que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados',
+      "que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados",
       () => {
         expect(admin.isInitialized).toBe(true);
         expect(app.isInitialized).toBe(true);
@@ -307,7 +307,7 @@ defineFeature(feature, (test) => {
       },
     );
 
-    then('a verificação no repositório deve retornar verdadeiro', () => {
+    then("a verificação no repositório deve retornar verdadeiro", () => {
       expect(existeRetornado).toBe(true);
     });
 
@@ -322,7 +322,7 @@ defineFeature(feature, (test) => {
     );
   });
 
-  test('Garantia de rollback transacional real ao tentar associar uma UBS inexistente', ({
+  test("Garantia de rollback transacional real ao tentar associar uma UBS inexistente", ({
     given,
     and,
     but,
@@ -333,7 +333,7 @@ defineFeature(feature, (test) => {
     let ubsIdsComInvalida: string[];
 
     given(
-      'que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados',
+      "que o banco PostgreSQL está operacional com município, perfil e UBSs previamente semeados",
       () => {
         expect(admin.isInitialized).toBe(true);
         expect(app.isInitialized).toBe(true);
@@ -347,7 +347,7 @@ defineFeature(feature, (test) => {
           municipioId: MUNICIPIO_ID,
           nomeCompleto: nome,
           email,
-          senhaHash: '$2b$12$hashedPasswordExampleValue',
+          senhaHash: "$2b$12$hashedPasswordExampleValue",
           perfilId: PERFIL_ID,
           ativo: true,
           deveTrocarSenha: true,
@@ -365,7 +365,7 @@ defineFeature(feature, (test) => {
     );
 
     when(
-      'eu tento executar o método salvar do TypeOrmUserRepository',
+      "eu tento executar o método salvar do TypeOrmUserRepository",
       async () => {
         erroRollback = null;
         try {
@@ -376,16 +376,16 @@ defineFeature(feature, (test) => {
       },
     );
 
-    then('o salvamento deve falhar com violação de chave estrangeira', () => {
+    then("o salvamento deve falhar com violação de chave estrangeira", () => {
       expect(erroRollback).toBeDefined();
       // Código 23503 é foreign_key_violation; 42501 é restrição de integridade via RLS policy em user_units
       const err = erroRollback as { code?: string; message?: string };
       expect(
-        err.code === '23503' ||
-          err.code === '42501' ||
-          err.message?.includes('violates foreign key constraint') ||
-          err.message?.includes('foreign key') ||
-          err.message?.includes('violates row-level security policy'),
+        err.code === "23503" ||
+          err.code === "42501" ||
+          err.message?.includes("violates foreign key constraint") ||
+          err.message?.includes("foreign key") ||
+          err.message?.includes("violates row-level security policy"),
       ).toBe(true);
     });
 

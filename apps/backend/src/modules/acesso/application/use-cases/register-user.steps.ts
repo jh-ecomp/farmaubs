@@ -1,24 +1,24 @@
-import { defineFeature, loadFeature } from 'jest-cucumber';
-import * as path from 'path';
-import { CadastrarUsuarioUseCase } from './register-user.use-case';
-import { RepositorioUsuarioPort } from '../../domain/ports/user.repository.port';
-import { RepositorioPerfilPort } from '../../domain/ports/profile.repository.port';
-import { RepositorioUnidadeSaudePort } from '../../domain/ports/health-unit.repository.port';
-import { GeradorHashSenhaPort } from '../../domain/ports/password-hasher.port';
-import { ServicoEmailPort } from '../../domain/ports/email-service.port';
+import { defineFeature, loadFeature } from "jest-cucumber";
+import * as path from "path";
+import { CadastrarUsuarioUseCase } from "./register-user.use-case";
+import { RepositorioUsuarioPort } from "../../domain/ports/user.repository.port";
+import { RepositorioPerfilPort } from "../../domain/ports/profile.repository.port";
+import { RepositorioUnidadeSaudePort } from "../../domain/ports/health-unit.repository.port";
+import { GeradorHashSenhaPort } from "../../domain/ports/password-hasher.port";
+import { ServicoEmailPort } from "../../domain/ports/email-service.port";
 import {
   UsuarioEmailJaExisteException,
   PerfilNaoEncontradoException,
   UnidadeSaudeInvalidaException,
   DadosUsuarioInvalidosException,
-} from '../../domain/errors/user-registration.errors';
+} from "../../domain/errors/user-registration.errors";
 import {
   CadastrarUsuarioComando,
   ResultadoCadastroUsuario,
-} from '@farmaubs/shared';
-import { DadosCriacaoUsuario } from '../../domain/entities/user-registration.entity';
+} from "@farmaubs/shared";
+import { DadosCriacaoUsuario } from "../../domain/entities/user-registration.entity";
 
-const feature = loadFeature(path.resolve(__dirname, 'register-user.feature'));
+const feature = loadFeature(path.resolve(__dirname, "register-user.feature"));
 
 defineFeature(feature, (test) => {
   let casoDeUso: CadastrarUsuarioUseCase;
@@ -32,20 +32,20 @@ defineFeature(feature, (test) => {
   let erroCapturado: Error | null = null;
 
   const perfilPadrao = {
-    id: '33333333-3333-3333-3333-333333333333',
-    codigo: 'FARMACEUTICO_RESPONSAVEL',
-    nome: 'Farmacêutico Responsável',
-    descricao: 'Responsável técnico',
+    id: "33333333-3333-3333-3333-333333333333",
+    codigo: "FARMACEUTICO_RESPONSAVEL",
+    nome: "Farmacêutico Responsável",
+    descricao: "Responsável técnico",
     ativo: true,
   };
 
   const comandoBase: CadastrarUsuarioComando = {
-    municipioId: '11111111-1111-1111-1111-111111111111',
-    nomeCompleto: 'Ana Souza',
-    email: 'ana.souza@farmaubs.local',
-    senha: 'SenhaForte@2026',
-    perfil: 'Farmacêutico Responsável',
-    ubsIds: ['22222222-2222-2222-2222-222222222222'],
+    municipioId: "11111111-1111-1111-1111-111111111111",
+    nomeCompleto: "Ana Souza",
+    email: "ana.souza@farmaubs.local",
+    senha: "SenhaForte@2026",
+    perfil: "Farmacêutico Responsável",
+    ubsIds: ["22222222-2222-2222-2222-222222222222"],
   };
 
   const configurarAmbiente = () => {
@@ -59,7 +59,7 @@ defineFeature(feature, (test) => {
         .fn()
         .mockImplementation((dadosUsuario: DadosCriacaoUsuario) =>
           Promise.resolve({
-            id: 'user-generated-uuid',
+            id: "user-generated-uuid",
             municipioId: dadosUsuario.municipioId,
             nomeCompleto: dadosUsuario.nomeCompleto,
             email: dadosUsuario.email,
@@ -84,7 +84,7 @@ defineFeature(feature, (test) => {
     geradorHashSenhaMock = {
       gerarHash: jest
         .fn()
-        .mockResolvedValue('$2b$12$mockedBcryptHashedPasswordResult'),
+        .mockResolvedValue("$2b$12$mockedBcryptHashedPasswordResult"),
       comparar: jest.fn().mockResolvedValue(true),
     };
 
@@ -117,14 +117,14 @@ defineFeature(feature, (test) => {
     }
   };
 
-  test('Cadastro de usuário com sucesso com hash bcrypt custo 12 e envio de e-mail', ({
+  test("Cadastro de usuário com sucesso com hash bcrypt custo 12 e envio de e-mail", ({
     given,
     when,
     then,
     and,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
@@ -138,14 +138,14 @@ defineFeature(feature, (test) => {
       );
     });
 
-    and('que as UBSs informadas existem no sistema', () => {
+    and("que as UBSs informadas existem no sistema", () => {
       repositorioUnidadeSaudeMock.buscarIdsExistentes.mockImplementation(
         (ids: string[]) => Promise.resolve([...ids]),
       );
     });
 
     when(
-      'eu submeto o comando de cadastro com os seguintes dados:',
+      "eu submeto o comando de cadastro com os seguintes dados:",
       async (tabela: Array<{ campo: string; valor: string }>) => {
         const dados: Record<string, string> = {};
         for (const linha of tabela) {
@@ -166,7 +166,7 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'o usuário deve ser salvo com status ativo e troca de senha obrigatória',
+      "o usuário deve ser salvo com status ativo e troca de senha obrigatória",
       () => {
         expect(erroCapturado).toBeNull();
         expect(resultado).toBeDefined();
@@ -174,34 +174,34 @@ defineFeature(feature, (test) => {
         expect(resultado?.deveTrocarSenha).toBe(true);
         expect(repositorioUsuarioMock.salvar).toHaveBeenCalledWith(
           expect.objectContaining({
-            nomeCompleto: 'Ana Souza',
-            email: 'ana.souza@farmaubs.local',
+            nomeCompleto: "Ana Souza",
+            email: "ana.souza@farmaubs.local",
             perfilId: perfilPadrao.id,
             ativo: true,
             deveTrocarSenha: true,
             tentativasLoginFalhas: 0,
           }),
-          ['22222222-2222-2222-2222-222222222222'],
+          ["22222222-2222-2222-2222-222222222222"],
         );
       },
     );
 
     and(
-      'a senha deve ser transformada em hash bcrypt com custo mínimo 12',
+      "a senha deve ser transformada em hash bcrypt com custo mínimo 12",
       () => {
         expect(geradorHashSenhaMock.gerarHash).toHaveBeenCalledWith(
-          'SenhaForte@2026',
+          "SenhaForte@2026",
         );
         expect(repositorioUsuarioMock.salvar).toHaveBeenCalledWith(
           expect.objectContaining({
-            senhaHash: '$2b$12$mockedBcryptHashedPasswordResult',
+            senhaHash: "$2b$12$mockedBcryptHashedPasswordResult",
           }),
           expect.any(Array),
         );
       },
     );
 
-    and('a senha em texto puro não deve ser retornada nem persistida', () => {
+    and("a senha em texto puro não deve ser retornada nem persistida", () => {
       expect(
         (resultado as unknown as Record<string, unknown>).senha,
       ).toBeUndefined();
@@ -215,19 +215,19 @@ defineFeature(feature, (test) => {
       (email: string) => {
         expect(servicoEmailMock.enviarConfirmacaoCadastro).toHaveBeenCalledWith(
           email,
-          'Ana Souza',
+          "Ana Souza",
         );
       },
     );
   });
 
-  test('Localização do perfil de acesso por identificador UUID direto', ({
+  test("Localização do perfil de acesso por identificador UUID direto", ({
     given,
     when,
     then,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
@@ -264,44 +264,44 @@ defineFeature(feature, (test) => {
     );
   });
 
-  test('Resiliência do cadastro caso o serviço de envio de e-mail falhe', ({
+  test("Resiliência do cadastro caso o serviço de envio de e-mail falhe", ({
     given,
     when,
     then,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
-    given('que o serviço de e-mail está indisponível ou falha', () => {
+    given("que o serviço de e-mail está indisponível ou falha", () => {
       servicoEmailMock.enviarConfirmacaoCadastro.mockRejectedValue(
-        new Error('SMTP unreachable'),
+        new Error("SMTP unreachable"),
       );
     });
 
-    when('eu submeto um comando de cadastro válido', async () => {
+    when("eu submeto um comando de cadastro válido", async () => {
       await executarComando(comandoBase);
     });
 
     then(
-      'o usuário deve ser cadastrado com sucesso sem que a falha de e-mail interrompa o fluxo',
+      "o usuário deve ser cadastrado com sucesso sem que a falha de e-mail interrompa o fluxo",
       () => {
         expect(erroCapturado).toBeNull();
         expect(resultado).toBeDefined();
-        expect(resultado?.id).toBe('user-generated-uuid');
+        expect(resultado?.id).toBe("user-generated-uuid");
       },
     );
   });
 
-  test('Rejeição de cadastro quando o e-mail já existe', ({
+  test("Rejeição de cadastro quando o e-mail já existe", ({
     given,
     when,
     then,
     and,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
@@ -320,33 +320,33 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'o cadastro deve ser rejeitado com erro indicando que o e-mail já existe',
+      "o cadastro deve ser rejeitado com erro indicando que o e-mail já existe",
       () => {
         expect(erroCapturado).toBeInstanceOf(UsuarioEmailJaExisteException);
       },
     );
 
-    and('o usuário não deve ser persistido', () => {
+    and("o usuário não deve ser persistido", () => {
       expect(repositorioUsuarioMock.salvar).not.toHaveBeenCalled();
     });
 
-    and('a senha não deve ter hash gerado', () => {
+    and("a senha não deve ter hash gerado", () => {
       expect(geradorHashSenhaMock.gerarHash).not.toHaveBeenCalled();
     });
 
-    and('nenhum e-mail de confirmação deve ser enviado', () => {
+    and("nenhum e-mail de confirmação deve ser enviado", () => {
       expect(servicoEmailMock.enviarConfirmacaoCadastro).not.toHaveBeenCalled();
     });
   });
 
-  test('Rejeição de cadastro com e-mail duplicado em caixa alta ou mista (normalização AC-03)', ({
+  test("Rejeição de cadastro com e-mail duplicado em caixa alta ou mista (normalização AC-03)", ({
     given,
     when,
     then,
     and,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
@@ -365,30 +365,30 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'a unicidade deve ser validada após normalização em caixa baixa',
+      "a unicidade deve ser validada após normalização em caixa baixa",
       () => {
         expect(repositorioUsuarioMock.existePorEmail).toHaveBeenCalledWith(
-          'ana.souza@farmaubs.local',
+          "ana.souza@farmaubs.local",
         );
       },
     );
 
     and(
-      'o cadastro deve ser rejeitado com erro indicando que o e-mail já existe',
+      "o cadastro deve ser rejeitado com erro indicando que o e-mail já existe",
       () => {
         expect(erroCapturado).toBeInstanceOf(UsuarioEmailJaExisteException);
       },
     );
   });
 
-  test('Rejeição de cadastro quando o perfil não for encontrado no catálogo', ({
+  test("Rejeição de cadastro quando o perfil não for encontrado no catálogo", ({
     given,
     when,
     then,
     and,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
@@ -408,25 +408,25 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'o cadastro deve ser rejeitado com erro de perfil não encontrado',
+      "o cadastro deve ser rejeitado com erro de perfil não encontrado",
       () => {
         expect(erroCapturado).toBeInstanceOf(PerfilNaoEncontradoException);
       },
     );
 
-    and('o usuário não deve ser persistido', () => {
+    and("o usuário não deve ser persistido", () => {
       expect(repositorioUsuarioMock.salvar).not.toHaveBeenCalled();
     });
   });
 
-  test('Rejeição de cadastro quando o perfil existe mas está inativo', ({
+  test("Rejeição de cadastro quando o perfil existe mas está inativo", ({
     given,
     when,
     then,
     and,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
@@ -448,88 +448,88 @@ defineFeature(feature, (test) => {
     );
 
     then(
-      'o cadastro deve ser rejeitado com erro de perfil não encontrado ou inativo',
+      "o cadastro deve ser rejeitado com erro de perfil não encontrado ou inativo",
       () => {
         expect(erroCapturado).toBeInstanceOf(PerfilNaoEncontradoException);
       },
     );
 
-    and('o usuário não deve ser persistido', () => {
+    and("o usuário não deve ser persistido", () => {
       expect(repositorioUsuarioMock.salvar).not.toHaveBeenCalled();
     });
   });
 
-  test('Rejeição por campos obrigatórios ausentes ou inválidos', ({
+  test("Rejeição por campos obrigatórios ausentes ou inválidos", ({
     given,
     when,
     then,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
     when(
       /^eu submeto um comando com dados inválidos contendo "(.*)" igual a "(.*)"$/,
       async (campo: string, valor: string) => {
-        if (campo === 'comando' && valor === 'nulo') {
+        if (campo === "comando" && valor === "nulo") {
           await executarComando(null);
           return;
         }
 
         const comandoInvalido: CadastrarUsuarioComando = { ...comandoBase };
 
-        if (campo === 'nomeCompleto' && valor === 'espacos') {
-          comandoInvalido.nomeCompleto = '   ';
-        } else if (campo === 'email' && valor === 'vazio') {
-          comandoInvalido.email = '';
-        } else if (campo === 'email' && valor === 'formato-invalido') {
-          comandoInvalido.email = 'email-sem-arroba';
-        } else if (campo === 'senha' && valor === 'vazia') {
-          comandoInvalido.senha = '';
-        } else if (campo === 'senha' && valor === 'curta') {
-          comandoInvalido.senha = '1234567';
-        } else if (campo === 'perfil' && valor === 'vazio') {
-          comandoInvalido.perfil = '';
-        } else if (campo === 'ubsIds' && valor === 'vazia') {
+        if (campo === "nomeCompleto" && valor === "espacos") {
+          comandoInvalido.nomeCompleto = "   ";
+        } else if (campo === "email" && valor === "vazio") {
+          comandoInvalido.email = "";
+        } else if (campo === "email" && valor === "formato-invalido") {
+          comandoInvalido.email = "email-sem-arroba";
+        } else if (campo === "senha" && valor === "vazia") {
+          comandoInvalido.senha = "";
+        } else if (campo === "senha" && valor === "curta") {
+          comandoInvalido.senha = "1234567";
+        } else if (campo === "perfil" && valor === "vazio") {
+          comandoInvalido.perfil = "";
+        } else if (campo === "ubsIds" && valor === "vazia") {
           comandoInvalido.ubsIds = [];
-        } else if (campo === 'municipioId' && valor === 'vazio') {
-          comandoInvalido.municipioId = '';
+        } else if (campo === "municipioId" && valor === "vazio") {
+          comandoInvalido.municipioId = "";
         }
 
         await executarComando(comandoInvalido);
       },
     );
 
-    then('o cadastro deve ser rejeitado com erro de validação de dados', () => {
+    then("o cadastro deve ser rejeitado com erro de validação de dados", () => {
       expect(erroCapturado).toBeInstanceOf(DadosUsuarioInvalidosException);
       expect(repositorioUsuarioMock.salvar).not.toHaveBeenCalled();
     });
   });
 
-  test('Rejeição quando uma das UBSs informadas não existe no sistema', ({
+  test("Rejeição quando uma das UBSs informadas não existe no sistema", ({
     given,
     when,
     then,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
-    given('que uma das UBSs informadas não existe no sistema', () => {
+    given("que uma das UBSs informadas não existe no sistema", () => {
       repositorioUnidadeSaudeMock.buscarIdsExistentes.mockResolvedValue([]);
     });
 
     when(
-      'eu submeto um comando de cadastro com uma UBS inexistente',
+      "eu submeto um comando de cadastro com uma UBS inexistente",
       async () => {
         await executarComando(comandoBase);
       },
     );
 
     then(
-      'o cadastro deve ser rejeitado com erro de unidade de saúde inválida',
+      "o cadastro deve ser rejeitado com erro de unidade de saúde inválida",
       () => {
         expect(erroCapturado).toBeInstanceOf(UnidadeSaudeInvalidaException);
         expect(repositorioUsuarioMock.salvar).not.toHaveBeenCalled();
@@ -537,20 +537,20 @@ defineFeature(feature, (test) => {
     );
   });
 
-  test('Deduplicação de IDs de UBS duplicadas na mesma requisição', ({
+  test("Deduplicação de IDs de UBS duplicadas na mesma requisição", ({
     given,
     when,
     then,
   }) => {
     given(
-      'que os repositórios e serviços de apoio estão operacionais',
+      "que os repositórios e serviços de apoio estão operacionais",
       configurarAmbiente,
     );
 
     when(
-      'eu submeto o comando de cadastro informando IDs de UBS duplicados',
+      "eu submeto o comando de cadastro informando IDs de UBS duplicados",
       async () => {
-        const idRepetido = '22222222-2222-2222-2222-222222222222';
+        const idRepetido = "22222222-2222-2222-2222-222222222222";
         await executarComando({
           ...comandoBase,
           ubsIds: [idRepetido, idRepetido, idRepetido],
@@ -558,14 +558,14 @@ defineFeature(feature, (test) => {
       },
     );
 
-    then('as UBSs associadas ao usuário salvo devem ser deduplicadas', () => {
+    then("as UBSs associadas ao usuário salvo devem ser deduplicadas", () => {
       expect(erroCapturado).toBeNull();
       expect(resultado?.ubsIds).toEqual([
-        '22222222-2222-2222-2222-222222222222',
+        "22222222-2222-2222-2222-222222222222",
       ]);
       expect(repositorioUsuarioMock.salvar).toHaveBeenCalledWith(
         expect.anything(),
-        ['22222222-2222-2222-2222-222222222222'],
+        ["22222222-2222-2222-2222-222222222222"],
       );
     });
   });

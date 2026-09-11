@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
-import { randomUUID } from 'node:crypto';
-import { RepositorioUsuarioPort } from '../../domain/ports/user.repository.port';
+import { Injectable } from "@nestjs/common";
+import { EntityManager } from "typeorm";
+import { randomUUID } from "node:crypto";
+import { RepositorioUsuarioPort } from "../../domain/ports/user.repository.port";
 import {
   DadosCriacaoUsuario,
   UsuarioModeloDominio,
-} from '../../domain/entities/user-registration.entity';
-import { User } from '../../../administracao/infrastructure/persistence/entities/user.entity';
-import { UserUnit } from '../../../administracao/infrastructure/persistence/entities/UserUnit.entity';
-import { TransactionContext } from '../../../../common/transaction/transaction-context.service';
+} from "../../domain/entities/user-registration.entity";
+import { User } from "../../../administracao/infrastructure/persistence/entities/user.entity";
+import { UserUnit } from "../../../administracao/infrastructure/persistence/entities/UserUnit.entity";
+import { TransactionContext } from "../../../../common/transaction/transaction-context.service";
 
 @Injectable()
 export class TypeOrmUserRepository implements RepositorioUsuarioPort {
@@ -19,8 +19,8 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     const manager = this.transactionContext.getManager();
 
     const usuario = await manager
-      .createQueryBuilder(User, 'u')
-      .where('LOWER(u.email) = LOWER(:email)', { email: emailNormalizado })
+      .createQueryBuilder(User, "u")
+      .where("LOWER(u.email) = LOWER(:email)", { email: emailNormalizado })
       .getOne();
 
     if (!usuario) {
@@ -35,8 +35,8 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     const manager = this.transactionContext.getManager();
 
     const quantidade = await manager
-      .createQueryBuilder(User, 'u')
-      .where('LOWER(u.email) = LOWER(:email)', { email: emailNormalizado })
+      .createQueryBuilder(User, "u")
+      .where("LOWER(u.email) = LOWER(:email)", { email: emailNormalizado })
       .getCount();
 
     return quantidade > 0;
@@ -71,7 +71,7 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     const persistirComTransacao = async (
       em: EntityManager,
     ): Promise<UsuarioModeloDominio> => {
-      if (typeof em.query === 'function' && dadosUsuario.municipioId) {
+      if (typeof em.query === "function" && dadosUsuario.municipioId) {
         await em.query(`SELECT set_config('app.municipio_id', $1, true)`, [
           dadosUsuario.municipioId,
         ]);

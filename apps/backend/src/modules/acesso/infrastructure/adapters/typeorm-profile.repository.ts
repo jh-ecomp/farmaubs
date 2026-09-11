@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { RepositorioPerfilPort } from '../../domain/ports/profile.repository.port';
-import { PerfilModeloDominio } from '../../domain/entities/user-registration.entity';
-import { PerfilEntity } from '../persistence/entities/perfil.entity';
-import { TransactionContext } from '../../../../common/transaction/transaction-context.service';
+import { Injectable } from "@nestjs/common";
+import { RepositorioPerfilPort } from "../../domain/ports/profile.repository.port";
+import { PerfilModeloDominio } from "../../domain/entities/user-registration.entity";
+import { PerfilEntity } from "../persistence/entities/perfil.entity";
+import { TransactionContext } from "../../../../common/transaction/transaction-context.service";
 
 @Injectable()
 export class TypeOrmProfileRepository implements RepositorioPerfilPort {
@@ -29,9 +29,9 @@ export class TypeOrmProfileRepository implements RepositorioPerfilPort {
     const codigoUpper = valorNormalizado.toUpperCase();
 
     const perfil = await manager
-      .createQueryBuilder(PerfilEntity, 'p')
-      .where('p.codigo = :codigo', { codigo: codigoUpper })
-      .orWhere('LOWER(p.nome) = LOWER(:nome)', { nome: valorNormalizado })
+      .createQueryBuilder(PerfilEntity, "p")
+      .where("p.codigo = :codigo", { codigo: codigoUpper })
+      .orWhere("LOWER(p.nome) = LOWER(:nome)", { nome: valorNormalizado })
       .getOne();
 
     if (!perfil) {
