@@ -6,6 +6,9 @@ import EmDesenvolvimento from "./pages/EmDesenvolvimento";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SessionTimeoutModal from "./components/SessionTimeoutModal";
+import { RoleRoute } from "./components/RoleRoute";
+import { AdminUsuarios } from "./pages/AdminUsuarios";
+import { AccessDenied } from "./pages/AccessDenied";
 
 export default function App() {
   return (
@@ -41,6 +44,19 @@ export default function App() {
             <ProtectedRoute>
               <AdminCadastro />
             </ProtectedRoute>
+          }
+        />
+
+        {/* Acesso Negado (403 - RBAC) */}
+        <Route path="/403" element={<AccessDenied />} />
+
+        {/* Painel Administrativo de Gestão de Usuários (RF001, RF025) */}
+        <Route
+          path="/admin/usuarios"
+          element={
+            <RoleRoute allowedRoles={["ADMINISTRADOR", "GESTOR"]}>
+              <AdminUsuarios />
+            </RoleRoute>
           }
         />
 

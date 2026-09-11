@@ -59,8 +59,20 @@ export default function Login() {
         usuario: data.usuario,
       });
 
-      // Redirecionamento padrão para a tela de 'Em Desenvolvimento' enquanto as próximas telas são construídas
-      navigate("/em-desenvolvimento");
+      // Redirecionamento por perfil (RF025): Administrador e Gestor vão para a Gestão de Usuários
+      const perfis = Array.isArray(data.usuario?.perfil)
+        ? data.usuario.perfil.map((p) => p.toUpperCase())
+        : [];
+
+      const isAdminOuGestor = perfis.some(
+        (p) => p === "ADMINISTRADOR" || p === "GESTOR" || p === "ADMIN",
+      );
+
+      if (isAdminOuGestor) {
+        navigate("/admin/usuarios");
+      } else {
+        navigate("/em-desenvolvimento");
+      }
     },
     onError: (error: unknown) => {
       // Cenários 4 (anti-enumeração), 5 (bloqueio temporário) e 6 (erro de rede)

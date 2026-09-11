@@ -14,6 +14,7 @@ export type {
 };
 
 export interface UsuarioPayload {
+  id?: string;
   nome: string;
   email: string;
   perfil: string[];
