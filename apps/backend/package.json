@@ -84,7 +84,7 @@
       "ts"
     ],
     "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
+    "testRegex": ".*\\.(spec|steps)\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

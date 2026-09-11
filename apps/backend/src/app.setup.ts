@@ -16,6 +16,8 @@ export function configureApp(app: INestApplication): void {
     .setDescription("API REST do FarmaUBS — Gestão de Insumos Farmacêuticos")
     .setVersion("1.0")
     .addTag("Acesso", "Autenticação e controle de sessão (RF002)")
+    .addTag("Usuários", "Operações de gestão e cadastro de usuários (RF001)")
+    .addTag("health", "Verificação de saúde do serviço e banco de dados")
     // Configura o suporte a Bearer Token no cabeçalho das requisições
     .addBearerAuth(
       {

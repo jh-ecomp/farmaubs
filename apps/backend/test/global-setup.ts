@@ -7,7 +7,9 @@ export default async function globalSetup(): Promise<void> {
   loadEnv({ path: path.resolve(process.cwd(), '../../.env') });
 
   const password =
-    process.env.TEST_ADMIN_DB_PASSWORD ?? process.env.POSTGRES_PASSWORD ?? '';
+    process.env.TEST_ADMIN_DB_PASSWORD ??
+    process.env.TEST_DB_PASSWORD ??
+    'farmaubs_test_password';
   const host = process.env.TEST_DB_HOST ?? 'localhost';
   const port = process.env.TEST_DB_PORT ?? '5435';
   const database = process.env.TEST_DB_DATABASE ?? 'farmaubs';

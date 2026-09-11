@@ -118,12 +118,34 @@ apps/frontend/src/
 O `@farmaubs/shared` é o elo que garante que Frontend e Backend compartilhem a **mesma fonte da verdade** sem duplicação de contratos.
 
 - **O que DEVE estar no shared:**
-  1. **Interfaces de Contrato de API:** Request e Response DTOs (ex: `LoginRequest`, `LoginResponse`, `MedicamentoDto`).
+  1. **Interfaces de Contrato de API:** Request e Response DTOs, Commands e Results (ex: `LoginRequest`, `LoginResponse`, `CadastrarUsuarioComando`, `CadastrarUsuarioResultado`).
   2. **Enums de Domínio:** Papéis de acesso (`PerfilCodigo`), status de sessão (`SessionStatus`), status de lote e movimentação.
   3. **Constantes de Sistema e Rotas:** Mapa centralizado de rotas da API (`API_ROUTES`), limites de paginação.
   4. **Utilitários Puros:** Validação e formatação de CPF (`validarCPF`, `formatarCPF`), normalização de e-mail, funções agnósticas de formatação de datas.
 - **O que NUNCA deve estar no shared:**
   - Dependências de frameworks como NestJS (`@Injectable`, `@Controller`), TypeORM (`@Entity`, `@Column`) ou React (`useState`, JSX).
+
+#### Estrutura Canônica do `@farmaubs/shared`:
+
+```text
+packages/shared/src/
+├── <modulo>/                       # Organizado rigorosamente pelos mesmos módulos de negócio do backend
+│   ├── <recurso>.types.ts          # Interfaces de DTOs, comandos, resultados e enums do recurso
+│   └── index.ts                    # Barrel export do módulo
+├── constants/                      # Constantes compartilhadas do sistema
+│   ├── routes.ts                   # Rotas centralizadas da API
+│   └── index.ts
+├── utils/                          # Funções utilitárias puras (sem dependência de frameworks)
+│   ├── formatters.ts               # Formatadores (CPF, telefone, etc.)
+│   └── index.ts
+└── index.ts                        # Ponto de entrada raiz (re-exporta exclusivamente os submódulos)
+```
+
+- **Regras de Organização do `@farmaubs/shared`:**
+  1. **Organização Estritamente por Módulo:** Todo tipo, interface de contrato (Request/Response), comando (Command) ou resultado (Result) DEVE residir em `packages/shared/src/<modulo>/<recurso>.types.ts` (ex: `administracao/usuario.types.ts`, `acesso/login.types.ts`).
+  2. **Proibido Pastas Genéricas:** NUNCA crie pastas como `packages/shared/src/dto/`, `models/`, `interfaces/` ou similares. DTOs de API pertencem ao respectivo módulo de negócio.
+  3. **Proibido Arquivos Soltos na Raiz de `src/`:** Apenas `packages/shared/src/index.ts` deve existir na raiz de `src/`. Não crie arquivos avulsos de re-exportação na raiz (ex: `src/register-user.command.ts`).
+  4. **Exportação Modular em Cascata:** Cada submódulo possui seu próprio `index.ts` que exporta seus arquivos `.types.ts`. A raiz `src/index.ts` re-exporta apenas os diretórios de módulos (`export * from "./<modulo>"`).
 
 ---
 
@@ -141,17 +163,18 @@ O `@farmaubs/shared` é o elo que garante que Frontend e Backend compartilhem a 
 > **Instrução Crítica para Desenvolvedores e Agentes de IA:**
 > NUNCA crie pastas arbitrárias no projeto. Ao adicionar novas funcionalidades, consulte a tabela de correspondência abaixo:
 
-| Se você precisa criar...                       | Onde DEVE ficar                                                                                | O que NÃO fazer                                                                        |
-| :--------------------------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
-| **Endpoint REST / Rota HTTP**                  | `apps/backend/src/modules/<modulo>/api/controllers/<nome>.controller.ts`                       | ❌ Não crie pastas como `infrastructure/http` ou `controllers` na raiz do módulo.      |
-| **Validação de Request / DTO HTTP**            | `apps/backend/src/modules/<modulo>/api/dto/<recurso>.dto.ts`                                   | ❌ Não crie DTOs em pastas isoladas sem implementar a interface de `@farmaubs/shared`. |
-| **Caso de Uso / Regra de Negócio**             | `apps/backend/src/modules/<modulo>/application/use-cases/<acao>.use-case.ts`                   | ❌ Não coloque casos de uso dentro de `domain/` ou no controller.                      |
-| **Interface / Contrato de Repositório**        | `apps/backend/src/modules/<modulo>/domain/ports/<recurso>.repository.port.ts`                  | ❌ Não importe TypeORM dentro da pasta `domain/`. Domínio é TypeScript puro.           |
-| **Entidade Física TypeORM (Banco de Dados)**   | `apps/backend/src/modules/<modulo>/infrastructure/persistence/entities/<tabela>.entity.ts`     | ❌ Não crie entidades fora de `infrastructure/persistence/entities`.                   |
-| **Implementação de Repositório (SQL/TypeORM)** | `apps/backend/src/modules/<modulo>/infrastructure/adapters/<recurso>-pg.repository.ts`         | ❌ Não faça queries de banco diretamente dentro do use case ou controller.             |
-| **Script de Migração SQL**                     | `apps/backend/src/modules/<modulo>/infrastructure/persistence/migrations/<timestamp><Nome>.ts` | ❌ Não utilize `synchronize: true` do TypeORM em hipótese alguma.                      |
-| **Tipagem ou Enum compartilhado (Front/Back)** | `packages/shared/src/<modulo>/<recurso>.types.ts`                                              | ❌ Não duplique enums e interfaces separadamente no frontend e backend.                |
-| **Componente de Tela React**                   | `apps/frontend/src/pages/<NomeDaPagina>/index.tsx`                                             | ❌ Não misture views inteiras na pasta `components/ui`.                                |
+| Se você precisa criar...                        | Onde DEVE ficar                                                                                | O que NÃO fazer                                                                        |
+| :---------------------------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| **Endpoint REST / Rota HTTP**                   | `apps/backend/src/modules/<modulo>/api/controllers/<nome>.controller.ts`                       | ❌ Não crie pastas como `infrastructure/http` ou `controllers` na raiz do módulo.      |
+| **Validação de Request / DTO HTTP**             | `apps/backend/src/modules/<modulo>/api/dto/<recurso>.dto.ts`                                   | ❌ Não crie DTOs em pastas isoladas sem implementar a interface de `@farmaubs/shared`. |
+| **Caso de Uso / Regra de Negócio**              | `apps/backend/src/modules/<modulo>/application/use-cases/<acao>.use-case.ts`                   | ❌ Não coloque casos de uso dentro de `domain/` ou no controller.                      |
+| **Entidade de Domínio Pura / Model de Negócio** | `apps/backend/src/modules/<modulo>/domain/entities/<recurso>.entity.ts`                        | ❌ Não crie pastas como `domain/models/` ou misture entidades de domínio com TypeORM.  |
+| **Interface / Contrato de Repositório**         | `apps/backend/src/modules/<modulo>/domain/ports/<recurso>.repository.port.ts`                  | ❌ Não importe TypeORM dentro da pasta `domain/`. Domínio é TypeScript puro.           |
+| **Entidade Física TypeORM (Banco de Dados)**    | `apps/backend/src/modules/<modulo>/infrastructure/persistence/entities/<tabela>.entity.ts`     | ❌ Não crie entidades fora de `infrastructure/persistence/entities`.                   |
+| **Implementação de Repositório (SQL/TypeORM)**  | `apps/backend/src/modules/<modulo>/infrastructure/adapters/<recurso>-pg.repository.ts`         | ❌ Não faça queries de banco diretamente dentro do use case ou controller.             |
+| **Script de Migração SQL**                      | `apps/backend/src/modules/<modulo>/infrastructure/persistence/migrations/<timestamp><Nome>.ts` | ❌ Não utilize `synchronize: true` do TypeORM em hipótese alguma.                      |
+| **Tipagem, DTO de Contrato ou Enum no Shared**  | `packages/shared/src/<modulo>/<recurso>.types.ts`                                              | ❌ NUNCA crie pastas `dto/` ou arquivos soltos na raiz de `packages/shared/src/`.      |
+| **Componente de Tela React**                    | `apps/frontend/src/pages/<NomeDaPagina>/index.tsx`                                             | ❌ Não misture views inteiras na pasta `components/ui`.                                |
 
 ---
 
@@ -247,6 +270,9 @@ O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (AD
 > ```bash
 > pnpm --filter @farmaubs/backend test:schema:down
 > ```
+
+> [!TIP]
+> **Padrão BDD/Cucumber para novas funcionalidades (Camada A):** A partir da issue de cadastro de usuários (#53), casos de uso e regras de negócio devem ser preferencialmente especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.spec.ts` ou `*.steps.ts`). Testes criados antes desse marco permanecem em formato Jest `.spec.ts` sem necessidade de migração retroativa.
 
 ---
 

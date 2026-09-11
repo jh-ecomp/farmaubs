@@ -24,3 +24,31 @@ export interface UsuarioResumoDto {
   unidadeIds?: string[];
   ativo: boolean;
 }
+
+export interface CadastrarUsuarioComando {
+  municipioId: string;
+  nomeCompleto: string;
+  email: string;
+  senha: string;
+  perfil: string;
+  ubsIds: string[];
+}
+
+export type RegisterUserCommand = CadastrarUsuarioComando;
+
+export interface CadastrarUsuarioResultado {
+  id: string;
+  municipioId: string;
+  nomeCompleto: string;
+  email: string;
+  perfilId: string;
+  ativo: boolean;
+  deveTrocarSenha: boolean;
+  ubsIds: string[];
+  criadoEm: Date;
+  // Compatibilidade
+  createdAt?: Date;
+}
+
+export type RegisterUserResult = CadastrarUsuarioResultado;
+export type ResultadoCadastroUsuario = CadastrarUsuarioResultado;

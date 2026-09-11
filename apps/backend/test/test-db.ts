@@ -1,4 +1,4 @@
-﻿import * as path from 'node:path';
+import * as path from 'node:path';
 import { config as loadEnv } from 'dotenv';
 /**
  * Helper de conexão dos testes de integração (camada B, ADR-030).
@@ -22,7 +22,9 @@ export function adminDatabaseUrl(): string {
     process.env.TEST_ADMIN_DATABASE_URL ??
     buildUrl(
       'farmaubs_admin',
-      process.env.TEST_ADMIN_DB_PASSWORD ?? process.env.POSTGRES_PASSWORD ?? '',
+      process.env.TEST_ADMIN_DB_PASSWORD ??
+        process.env.TEST_DB_PASSWORD ??
+        'farmaubs_test_password',
     )
   );
 }
@@ -32,7 +34,9 @@ export function appDatabaseUrl(): string {
     process.env.TEST_APP_DATABASE_URL ??
     buildUrl(
       'farmaubs_app',
-      process.env.TEST_APP_DB_PASSWORD ?? process.env.DB_PASSWORD ?? '',
+      process.env.TEST_APP_DB_PASSWORD ??
+        process.env.FARMAUBS_APP_DB_PASSWORD ??
+        'farmaubs_test_app_password',
     )
   );
 }

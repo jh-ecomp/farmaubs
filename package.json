@@ -8,6 +8,8 @@
     "dev:frontend": "pnpm --filter @farmaubs/frontend dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:backend": "pnpm --filter @farmaubs/backend test",
+    "test:integration": "pnpm --filter @farmaubs/backend test:integration",
     "db:seed": "pnpm --filter @farmaubs/backend db:seed"
   },
   "keywords": [],
