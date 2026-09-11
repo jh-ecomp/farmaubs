@@ -1,7 +1,7 @@
 import {
   DadosCriacaoUsuario,
   UsuarioModeloDominio,
-} from '../models/user-registration.model';
+} from '../entities/user-registration.entity';
 
 export const REPOSITORIO_USUARIO_PORT = Symbol('REPOSITORIO_USUARIO_PORT');
 export const USER_REPOSITORY_PORT = REPOSITORIO_USUARIO_PORT;

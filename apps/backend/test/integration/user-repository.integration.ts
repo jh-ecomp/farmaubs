@@ -12,7 +12,7 @@ import { MunicipioEntity } from '../../src/modules/administracao/infrastructure/
 import {
   DadosCriacaoUsuario,
   UsuarioModeloDominio,
-} from '../../src/modules/acesso/domain/models/user-registration.model';
+} from '../../src/modules/acesso/domain/entities/user-registration.entity';
 
 const feature = loadFeature(
   path.resolve(__dirname, 'user-repository.integration.feature'),

@@ -16,7 +16,7 @@ import {
   CadastrarUsuarioComando,
   ResultadoCadastroUsuario,
 } from '@farmaubs/shared';
-import { DadosCriacaoUsuario } from '../../domain/models/user-registration.model';
+import { DadosCriacaoUsuario } from '../../domain/entities/user-registration.entity';
 
 const feature = loadFeature(path.resolve(__dirname, 'register-user.feature'));
 

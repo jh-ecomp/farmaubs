@@ -5,7 +5,7 @@ import { TransactionContext } from '../../../../common/transaction/transaction-c
 import {
   DadosCriacaoUsuario,
   UsuarioModeloDominio,
-} from '../../domain/models/user-registration.model';
+} from '../../domain/entities/user-registration.entity';
 import { User } from '../../../administracao/infrastructure/persistence/entities/user.entity';
 import { UserUnit } from '../../../administracao/infrastructure/persistence/entities/UserUnit.entity';
 

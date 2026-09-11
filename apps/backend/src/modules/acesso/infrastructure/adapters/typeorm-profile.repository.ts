@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RepositorioPerfilPort } from '../../domain/ports/profile.repository.port';
-import { PerfilModeloDominio } from '../../domain/models/user-registration.model';
+import { PerfilModeloDominio } from '../../domain/entities/user-registration.entity';
 import { PerfilEntity } from '../persistence/entities/perfil.entity';
 import { TransactionContext } from '../../../../common/transaction/transaction-context.service';
 
