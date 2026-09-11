@@ -3,11 +3,10 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as path from "node:path";
+import { CommonModule } from "./common/common.module";
 import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
-import { TenantContextService } from "./common/tenant/tenant-context.service";
 import { TenantInterceptor } from "./common/tenant/tenant.interceptor";
-import { TransactionContext } from "./common/transaction/transaction-context.service";
 import { TransactionInterceptor } from "./common/transaction/transaction.interceptor";
 
 @Module({
@@ -30,12 +29,11 @@ import { TransactionInterceptor } from "./common/transaction/transaction.interce
         synchronize: false,
       }),
     }),
+    CommonModule,
     HealthModule,
     AcessoModule,
   ],
   providers: [
-    TenantContextService,
-    TransactionContext,
     { provide: APP_INTERCEPTOR, useClass: TenantInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransactionInterceptor },
   ],
