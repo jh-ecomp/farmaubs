@@ -135,14 +135,17 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
 # Alternativamente use --force-recreate para obrigar a recriação dos containers do zero
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --force-recreate
 
-# 3. Acompanhar os logs da API
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
+# 3. Acompanhar os logs dos serviços
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f # <escolha um: api/frontend/postgres>
 
-# 4. Derrubar infra (adicina a flag -v, ao final, para apagar os volumes - apagar os dados do Postgres)
+# 4. Acompanhar saúde dos serviços
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml ps
+
+# 5. Derrubar infra (adicina a flag -v, ao final, para apagar os volumes - apagar os dados do Postgres)
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down
 
-#5. Caso precise restartar o serviço da api
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml restart api
+# 6. Caso precise restartar um serviço
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml restart # <escolha um: api/frontend/postgres>
 ```
 
 Acessos:

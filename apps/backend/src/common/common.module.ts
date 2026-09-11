@@ -1,6 +1,6 @@
-import { Global, Module } from '@nestjs/common';
-import { TenantContextService } from './tenant/tenant-context.service';
-import { TransactionContext } from './transaction/transaction-context.service';
+import { Global, Module } from "@nestjs/common";
+import { TenantContextService } from "./tenant/tenant-context.service";
+import { TransactionContext } from "./transaction/transaction-context.service";
 
 @Global()
 @Module({
