@@ -182,7 +182,6 @@ Se novas variáveis forem introduzidas, elas estarão listadas no `.env.example`
 Padrão obrigatório de nomenclatura de branches:  
 `<tipo>/<numero-da-issue>-<descricao-curta>`
 
-
 Exemplos:
 
 - Com issue no GitHub Projects:
@@ -251,7 +250,6 @@ O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (AD
 
 > [!TIP]
 > **Padrão BDD/Cucumber para novas funcionalidades (Camada A):** A partir da issue de cadastro de usuários (#53), casos de uso e regras de negócio devem ser preferencialmente especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.spec.ts` ou `*.steps.ts`). Testes criados antes desse marco permanecem em formato Jest `.spec.ts` sem necessidade de migração retroativa.
-
 
 ---
 

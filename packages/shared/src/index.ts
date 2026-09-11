@@ -3,4 +3,3 @@ export * from "./administracao";
 export * from "./constants";
 export * from "./utils";
 export * from "./dto";
-

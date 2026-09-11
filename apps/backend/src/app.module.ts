@@ -10,7 +10,6 @@ import { TenantInterceptor } from "./common/tenant/tenant.interceptor";
 import { TransactionContext } from "./common/transaction/transaction-context.service";
 import { TransactionInterceptor } from "./common/transaction/transaction.interceptor";
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
