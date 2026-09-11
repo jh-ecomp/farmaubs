@@ -550,8 +550,8 @@ export default function Login() {
                 margin: 0,
               }}
             >
-              Para recuperar o acesso, contate a coordenação CAF do seu município
-              ou o administrador do sistema FarmaUBS.
+              Para recuperar o acesso, contate a coordenação CAF do seu
+              município ou o administrador do sistema FarmaUBS.
             </p>
 
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
