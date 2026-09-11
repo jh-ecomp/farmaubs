@@ -8,11 +8,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-export enum SessionStatus {
-  ATIVA = 'ativa',
-  PENDENTE_2FA = 'pendente_2fa',
-  REVOGADA = 'revogada',
-}
+import { SessionStatus } from '@farmaubs/shared';
+
+export { SessionStatus };
 
 @Entity('sessions')
 export class Session {

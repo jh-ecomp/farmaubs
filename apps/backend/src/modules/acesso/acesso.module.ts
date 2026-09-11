@@ -1,11 +1,11 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { ACESSO_REPOSITORY } from "./domain/ports/acesso.repository.port";
-import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
-import { LoginUseCase } from "./domain/use-cases/login.use-case";
-import { AcessoPgRepository } from "./infrastructure/adapters/acesso-pg.repository";
-import { SessionPgRepository } from "./infrastructure/adapters/session-pg.repository";
-import { AcessoController } from "./infrastructure/http/acesso.controller";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ACESSO_REPOSITORY } from './domain/ports/acesso.repository.port';
+import { SESSION_REPOSITORY } from './domain/ports/session.repository.port';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+import { AcessoPgRepository } from './infrastructure/adapters/acesso-pg.repository';
+import { SessionPgRepository } from './infrastructure/adapters/session-pg.repository';
+import { AcessoController } from './api/controllers/acesso.controller';
 
 @Module({
   imports: [ConfigModule],
