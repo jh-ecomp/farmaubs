@@ -31,9 +31,9 @@ export function AccessDenied() {
         </h1>
 
         <p className="font-body-md text-body-md text-text-secondary leading-relaxed">
-          Seu perfil de usuário não possui as permissões regulatórias
-          necessárias para acessar este módulo do FarmaUBS. Esta restrição segue
-          o princípio do menor privilégio (NF009 / RF025).
+          Seu perfil de usuário não possui as permissões necessárias para
+          acessar este módulo do FarmaUBS. Esta restrição segue a política de
+          controle de acesso e segurança do sistema.
         </p>
 
         <div className="w-full pt-space-xs flex flex-col sm:flex-row gap-2 justify-center">

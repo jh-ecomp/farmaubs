@@ -50,11 +50,11 @@ export default function App() {
         {/* Acesso Negado (403 - RBAC) */}
         <Route path="/403" element={<AccessDenied />} />
 
-        {/* Painel Administrativo de Gestão de Usuários (RF001, RF025) */}
+        {/* Painel Administrativo de Gestão de Usuários */}
         <Route
           path="/admin/usuarios"
           element={
-            <RoleRoute allowedRoles={["ADMINISTRADOR", "GESTOR"]}>
+            <RoleRoute allowedRoles={["ADMINISTRADOR"]}>
               <AdminUsuarios />
             </RoleRoute>
           }

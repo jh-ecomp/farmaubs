@@ -16,12 +16,9 @@ export function AdminUsuarios() {
   const { usuario: loggedUser, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Dados do usuário logado normalizados
-  const isGestor =
-    loggedUser?.perfil?.includes("GESTOR") ||
-    loggedUser?.email?.toLowerCase().includes("gestor");
-  const defaultNome = isGestor ? "Gestor Municipal" : "Administrador Geral";
-  const defaultEmail = isGestor ? "gestor@farmaubs.dev" : "admin@farmaubs.dev";
+  // Dados do administrador logado normalizados
+  const defaultNome = "Administrador Geral";
+  const defaultEmail = "admin@farmaubs.dev";
   const userNome =
     !loggedUser?.nome || loggedUser.nome.includes("Carlos Mendonça")
       ? defaultNome
@@ -30,7 +27,7 @@ export function AdminUsuarios() {
     !loggedUser?.email || loggedUser.email.includes("carlos")
       ? defaultEmail
       : loggedUser.email;
-  const userRoleLabel = isGestor ? "Gestor Municipal" : "Administrador Geral";
+  const userRoleLabel = "Administrador Geral";
 
   // Estados de Filtros e Busca com Debounce (300ms)
   const [buscaInput, setBuscaInput] = useState("");
@@ -159,7 +156,7 @@ export function AdminUsuarios() {
       await redefinirSenhaMutation.mutateAsync(usuario.id);
       showToast(
         "Senha Provisória Emitida",
-        `Um link de redefinição e credencial provisória foram enviados para ${usuario.email} (RF003).`,
+        `Um link de redefinição e credencial provisória foram enviados para ${usuario.email}.`,
       );
     } catch {
       showToast(
@@ -380,8 +377,8 @@ export function AdminUsuarios() {
                   Gestão de Usuários e Perfis
                 </h1>
                 <p className="font-body-md text-body-md text-text-secondary mt-1">
-                  Controle centralizado de credenciais, papéis de acesso (RBAC)
-                  e topologia do sistema FarmaUBS.
+                  Controle centralizado de credenciais, papéis de acesso e
+                  topologia do sistema FarmaUBS.
                 </p>
               </div>
 
@@ -534,7 +531,7 @@ export function AdminUsuarios() {
                         Profissional / Identificação
                       </th>
                       <th scope="col" className="px-4 py-2 font-label-caps">
-                        Perfil / Papel RBAC
+                        Perfil de Acesso
                       </th>
                       <th scope="col" className="px-4 py-2 font-label-caps">
                         UBS Vinculada
@@ -713,7 +710,7 @@ export function AdminUsuarios() {
                                   onClick={() => handleResetPassword(u)}
                                   disabled={redefinirSenhaMutation.isPending}
                                   className="p-1.5 hover:bg-surface-subtle text-text-secondary hover:text-primary rounded transition-colors"
-                                  title="Redefinir Senha Provisória (RF003)"
+                                  title="Redefinir Senha Provisória"
                                   aria-label={`Redefinir senha de ${u.nomeCompleto}`}
                                 >
                                   <span className="material-symbols-outlined text-[18px]">

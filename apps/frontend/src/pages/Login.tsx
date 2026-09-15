@@ -59,16 +59,16 @@ export default function Login() {
         usuario: data.usuario,
       });
 
-      // Redirecionamento por perfil (RF025): Administrador e Gestor vão para a Gestão de Usuários
+      // Redirecionamento por perfil: somente Administrador acessa a Gestão de Usuários
       const perfis = Array.isArray(data.usuario?.perfil)
         ? data.usuario.perfil.map((p) => p.toUpperCase())
         : [];
 
-      const isAdminOuGestor = perfis.some(
-        (p) => p === "ADMINISTRADOR" || p === "GESTOR" || p === "ADMIN",
+      const isAdmin = perfis.some(
+        (p) => p === "ADMINISTRADOR" || p === "ADMIN",
       );
 
-      if (isAdminOuGestor) {
+      if (isAdmin) {
         navigate("/admin/usuarios");
       } else {
         navigate("/em-desenvolvimento");

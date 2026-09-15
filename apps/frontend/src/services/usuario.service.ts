@@ -39,7 +39,12 @@ const STORAGE_KEY_USUARIOS = "@FarmaUBS:dev_usuarios";
 const INITIAL_MUNICIPIOS: MunicipioDto[] = [
   { id: "mun-parnaiba", nome: "Parnaíba", uf: "PI", ibgeCode: "2207702" },
   { id: "mun-teresina", nome: "Teresina", uf: "PI", ibgeCode: "2211001" },
-  { id: "mun-luis-correia", nome: "Luís Correia", uf: "PI", ibgeCode: "2205706" },
+  {
+    id: "mun-luis-correia",
+    nome: "Luís Correia",
+    uf: "PI",
+    ibgeCode: "2205706",
+  },
 ];
 
 const INITIAL_UNIDADES: UnidadeSaudeDto[] = [
@@ -92,7 +97,7 @@ function getDevUsuarios(): UsuarioItemTabela[] {
       }
       return limpos;
     } catch {
-      // fallback
+      // fallback se parse falhar
     }
   }
   return [];
@@ -113,7 +118,7 @@ export const usuarioService = {
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await fetch(
-        `${API_BASE_URL}/administracao/usuarios${queryString}`,
+        `${API_BASE_URL}/usuarios${queryString}`,
         {
           headers: getAuthHeaders(),
         },
@@ -203,14 +208,17 @@ export const usuarioService = {
     dados: CadastrarUsuarioComando,
   ): Promise<CadastrarUsuarioResultado> {
     try {
-      const res = await fetch(`${API_BASE_URL}/administracao/usuarios`, {
+      const res = await fetch(`${API_BASE_URL}/usuarios`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(dados),
       });
 
       if (res.status === 409) {
-        throw new UsuarioApiError("Este e-mail já está em uso por outro usuário.", 409);
+        throw new UsuarioApiError(
+          "Este e-mail já está em uso por outro usuário.",
+          409,
+        );
       }
 
       if (res.ok) {
@@ -223,10 +231,14 @@ export const usuarioService = {
     // Fallback de desenvolvimento: valida e salva no storage local
     const usuarios: UsuarioItemTabela[] = getDevUsuarios();
     const jaExiste = usuarios.some(
-      (u: UsuarioItemTabela) => u.email.toLowerCase() === dados.email.toLowerCase(),
+      (u: UsuarioItemTabela) =>
+        u.email.toLowerCase() === dados.email.toLowerCase(),
     );
     if (jaExiste) {
-      throw new UsuarioApiError("Este e-mail já está em uso por outro usuário.", 409);
+      throw new UsuarioApiError(
+        "Este e-mail já está em uso por outro usuário.",
+        409,
+      );
     }
 
     const mun = INITIAL_MUNICIPIOS.find((m) => m.id === dados.municipioId);
@@ -268,7 +280,7 @@ export const usuarioService = {
   async alterarStatus(usuarioId: string, ativo: boolean): Promise<void> {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/administracao/usuarios/${encodeURIComponent(usuarioId)}/status`,
+        `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/status`,
         {
           method: "PATCH",
           headers: getAuthHeaders(),
@@ -281,7 +293,9 @@ export const usuarioService = {
     }
 
     const usuarios: UsuarioItemTabela[] = getDevUsuarios();
-    const index = usuarios.findIndex((u: UsuarioItemTabela) => u.id === usuarioId);
+    const index = usuarios.findIndex(
+      (u: UsuarioItemTabela) => u.id === usuarioId,
+    );
     if (index !== -1) {
       usuarios[index].ativo = ativo;
       localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(usuarios));
@@ -294,7 +308,7 @@ export const usuarioService = {
   ): Promise<UsuarioItemTabela> {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/administracao/usuarios/${encodeURIComponent(usuarioId)}`,
+        `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}`,
         {
           method: "PUT",
           headers: getAuthHeaders(),
@@ -316,11 +330,13 @@ export const usuarioService = {
 
     const mun = INITIAL_MUNICIPIOS.find((m) => m.id === dados.municipioId);
     const ubsVinculadas = dados.ubsIds
-      ? INITIAL_UNIDADES.filter((u) => dados.ubsIds?.includes(u.id)).map((u) => ({
-          id: u.id,
-          nome: u.nome,
-          cnes: "2401824",
-        }))
+      ? INITIAL_UNIDADES.filter((u) => dados.ubsIds?.includes(u.id)).map(
+          (u) => ({
+            id: u.id,
+            nome: u.nome,
+            cnes: "2401824",
+          }),
+        )
       : usuarios[index].unidades;
 
     const usuarioAtualizado: UsuarioItemTabela = {
@@ -328,7 +344,9 @@ export const usuarioService = {
       nomeCompleto: dados.nomeCompleto || usuarios[index].nomeCompleto,
       email: dados.email || usuarios[index].email,
       perfilCodigo: dados.perfil || usuarios[index].perfilCodigo,
-      perfilNome: dados.perfil ? String(dados.perfil) : usuarios[index].perfilNome,
+      perfilNome: dados.perfil
+        ? String(dados.perfil)
+        : usuarios[index].perfilNome,
       municipioId: dados.municipioId || usuarios[index].municipioId,
       municipioNome: mun ? mun.nome : usuarios[index].municipioNome,
       unidades: ubsVinculadas,
@@ -344,7 +362,7 @@ export const usuarioService = {
   async redefinirSenha(usuarioId: string): Promise<{ mensagem: string }> {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/administracao/usuarios/${encodeURIComponent(usuarioId)}/redefinir-senha`,
+        `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/redefinir-senha`,
         {
           method: "POST",
           headers: getAuthHeaders(),
@@ -357,7 +375,8 @@ export const usuarioService = {
       // Fallback
     }
     return {
-      mensagem: "Link de redefinição e credencial provisória emitidos com sucesso (RF003).",
+      mensagem:
+        "Link de redefinição e credencial provisória emitidos com sucesso (RF003).",
     };
   },
 };

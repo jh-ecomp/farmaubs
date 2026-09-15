@@ -28,7 +28,7 @@ const usuarioSchema = z.object({
       1,
       "Vincule o usuário a pelo menos uma Unidade Básica de Saúde (UBS).",
     ),
-  deveTrocarSenha: z.boolean(),
+  deveTrocarSenha: z.boolean().optional(),
 });
 
 export type UsuarioFormValues = z.infer<typeof usuarioSchema>;
@@ -198,7 +198,7 @@ export function UsuarioModalForm({
         ubsIds: values.ubsIds,
         cpf: values.cpf?.trim() || undefined,
         crf: values.crf?.trim() || undefined,
-        deveTrocarSenha: values.deveTrocarSenha,
+        deveTrocarSenha: true,
       });
 
       onSuccess(values.nomeCompleto);
@@ -241,8 +241,8 @@ export function UsuarioModalForm({
                 id="modalTitle"
               >
                 {isEditing
-                  ? "Editar Profissional (RF025)"
-                  : "Cadastrar Novo Profissional (RF025)"}
+                  ? "Editar Profissional"
+                  : "Cadastrar Novo Profissional"}
               </h2>
               <p className="font-caption-micro text-caption-micro text-text-secondary">
                 Definição de acesso municipal e governança de dados do FarmaUBS
@@ -403,7 +403,7 @@ export function UsuarioModalForm({
                   htmlFor="formUserRole"
                   className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1"
                 >
-                  Perfil de Acesso (RBAC) *
+                  Perfil de Acesso *
                 </label>
                 <select
                   id="formUserRole"
@@ -529,26 +529,6 @@ export function UsuarioModalForm({
                   {errors.ubsIds.message}
                 </p>
               )}
-            </div>
-
-            {/* Troca de Senha */}
-            <div className="p-3 bg-surface-subtle rounded-lg space-y-2">
-              <label className="flex items-center justify-between cursor-pointer">
-                <div>
-                  <p className="font-body-md-medium text-text-primary">
-                    Exigir troca de senha no primeiro login (RF001)
-                  </p>
-                  <p className="font-caption-micro text-caption-micro text-text-tertiary">
-                    O profissional deverá cadastrar uma nova senha ao autenticar
-                    pela primeira vez.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 accent-primary rounded"
-                  {...register("deveTrocarSenha")}
-                />
-              </label>
             </div>
 
             {/* Rodapé / Ações */}
