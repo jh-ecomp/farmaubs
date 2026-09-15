@@ -273,7 +273,7 @@ export const usuarioService = {
       ativo: true,
       deveTrocarSenha: Boolean(dados.deveTrocarSenha),
       ubsIds: dados.ubsIds,
-      criadoEm: String(novoUsuario.createdAt),
+      criadoEm: new Date(novoUsuario.createdAt),
     };
   },
 

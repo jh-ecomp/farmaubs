@@ -321,7 +321,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         ativo: true,
         deveTrocarSenha: true,
         ubsIds: ["ubs-frei-higino"],
-        criadoEm: new Date().toISOString(),
+        criadoEm: new Date(),
       });
 
       renderWithProviders(<AdminUsuarios />, {
