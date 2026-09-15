@@ -50,12 +50,12 @@ beforeAll(async () => {
   // dsAdmin é usado nos helpers de setup que fazem UPDATE direto em users
   // (farmaubs_app tem RLS — sem GUC setado o UPDATE não afeta nenhuma linha)
   dsAdmin = new DataSource({
-    type: 'postgres',
-    host: process.env.DB_HOST ?? 'localhost',
-    port: parseInt(process.env.DB_PORT ?? '5434', 10),
-    database: process.env.POSTGRES_DB ?? 'farmaubs',
-    username: process.env.MIGRATION_DB_USER ?? 'farmaubs_admin',
-    password: process.env.MIGRATION_DB_PASSWORD ?? '',
+    type: "postgres",
+    host: process.env.DB_HOST ?? "localhost",
+    port: parseInt(process.env.DB_PORT ?? "5434", 10),
+    database: process.env.POSTGRES_DB ?? "farmaubs",
+    username: process.env.MIGRATION_DB_USER ?? "farmaubs_admin",
+    password: process.env.MIGRATION_DB_PASSWORD ?? "",
     synchronize: false,
     logging: false,
   });
@@ -65,21 +65,23 @@ beforeAll(async () => {
 afterAll(async () => {
   await app.close();
   if (dsAdmin?.isInitialized) await dsAdmin.destroy();
-});
+}, 30_000);
 
 async function resetarUsuario(email: string) {
-  await ds.query(
-    `UPDATE users
-     SET tentativas_login_falhas = 0,
-         bloqueado_ate           = NULL,
-         updated_at              = now()
-     WHERE email = $1`,
-    [email],
-  );
-  await ds.query(
-    `DELETE FROM sessions WHERE usuario_id = (SELECT id FROM users WHERE email = $1)`,
-    [email],
-  );
+  if (dsAdmin?.isInitialized) {
+    await dsAdmin.query(
+      `UPDATE users
+       SET tentativas_login_falhas = 0,
+           bloqueado_ate           = NULL,
+           updated_at              = now()
+       WHERE email = $1`,
+      [email],
+    );
+    await dsAdmin.query(
+      `DELETE FROM sessions WHERE usuario_id = (SELECT id FROM users WHERE email = $1)`,
+      [email],
+    );
+  }
 }
 
 // ─── testes ──────────────────────────────────────────────────────────────────
@@ -254,6 +256,90 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
           campoExtra: "injetado",
         })
         .expect(400);
+    });
+  });
+
+  // ── Cenário 6: Validação de Sessão, Sliding Expiration e Header (AC-10) ──
+
+  describe("Validação Contínua de Sessão e Timeout (AC-10 — Camada C)", () => {
+    let validToken: string;
+
+    beforeEach(async () => {
+      await resetarUsuario(ADMIN_EMAIL);
+      const loginRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      expect(loginRes.status).toBe(200);
+      validToken = loginRes.headers["authorization"];
+    });
+
+    it("GET /api/v1/acesso/me com token válido responde 200 com payload da sessão e header X-Session-Expires-At", async () => {
+      const res = await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", validToken)
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        usuarioId: expect.any(String),
+        municipioId: expect.any(String),
+        perfilId: expect.any(String),
+        unidadeIds: expect.any(Array),
+        expiresAt: expect.any(String),
+      });
+
+      expect(res.headers["x-session-expires-at"]).toBeDefined();
+      const expiresAtHeader = new Date(res.headers["x-session-expires-at"]);
+      expect(expiresAtHeader.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it("GET /api/v1/acesso/me sem cabeçalho Authorization responde 401 Unauthorized", async () => {
+      await request(app.getHttpServer()).get("/api/v1/acesso/me").expect(401);
+    });
+
+    it("GET /api/v1/acesso/me com token inválido responde 401 Unauthorized", async () => {
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", "Bearer token-invalido-inexistente")
+        .expect(401);
+    });
+
+    it("GET /api/v1/acesso/me após expiração manual da sessão responde 401", async () => {
+      // Expira a sessão diretamente no banco como admin (bypass RLS)
+      await dsAdmin.query(
+        `UPDATE sessions SET expira_em = now() - interval '1 minute'`,
+      );
+
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", validToken)
+        .expect(401);
+    });
+
+    it("POST /api/v1/acesso/renovar estende sessão e retorna 200 com novo expiresAt", async () => {
+      const res = await request(app.getHttpServer())
+        .post("/api/v1/acesso/renovar")
+        .set("Authorization", validToken)
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        expiresAt: expect.any(String),
+        ttlSeconds: 3600,
+        warningSeconds: 300,
+      });
+
+      expect(res.headers["x-session-expires-at"]).toBeDefined();
+      const expiresAtDate = new Date(res.body.expiresAt);
+      expect(expiresAtDate.getTime() - Date.now()).toBeGreaterThanOrEqual(
+        3500 * 1000,
+      );
+    });
+
+    it("GET /api/v1/health permanece acessível sem autenticação (@SkipAuth)", async () => {
+      const res = await request(app.getHttpServer())
+        .get("/api/v1/health")
+        .expect(200);
+
+      expect(res.body.status).toBe("ok");
     });
   });
 });

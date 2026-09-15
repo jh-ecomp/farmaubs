@@ -4,6 +4,7 @@ import { UserController } from "./api/controllers/user.controller";
 import { AcessoController } from "./api/controllers/acesso.controller";
 import { CadastrarUsuarioUseCase } from "./application/use-cases/register-user.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
+import { RenewSessionUseCase } from "./application/use-cases/renew-session.use-case";
 import { TypeOrmUserRepository } from "./infrastructure/adapters/typeorm-user.repository";
 import { TypeOrmProfileRepository } from "./infrastructure/adapters/typeorm-profile.repository";
 import { TypeOrmHealthUnitRepository } from "./infrastructure/adapters/typeorm-health-unit.repository";
@@ -24,6 +25,7 @@ import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
   controllers: [AcessoController, UserController],
   providers: [
     LoginUseCase,
+    RenewSessionUseCase,
     {
       provide: ACESSO_REPOSITORY,
       useClass: AcessoPgRepository,
@@ -85,6 +87,7 @@ import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
   ],
   exports: [
     LoginUseCase,
+    RenewSessionUseCase,
     SESSION_REPOSITORY,
     CadastrarUsuarioUseCase,
     REPOSITORIO_USUARIO_PORT,
