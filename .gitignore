@@ -44,3 +44,44 @@ storage/reports/
 
 # Cache de build do vite-plugin-pwa (ADR-014 — preventivo)
 dev-dist/
+
+# ==========================================
+# Ferramentas de IA e Assistentes de Código
+# ==========================================
+
+# Claude Code (Anthropic)
+.claude/
+claude_*.log
+
+# Antigravity (Google / Dev Tools)
+.antigravity/
+antigravity.config.local.json
+antigravity-cache/
+.agents/
+graphify-out/
+scratch/
+
+# GitHub Copilot & VS Code AI extensions
+.copilot/
+.github/copilot-instructions.md # (Opcional: ignore apenas se forem regras estritamente pessoais)
+
+# Cursor Editor
+.cursor/
+.cursorrules # (Opcional: remova desta lista se quiser compartilhar regras com o time)
+
+# Continue.dev
+.continue/
+
+# Aider (AI pair programmer)
+.aider*
+!.aider.conf.json # (Opcional: mantenha se quiser compartilhar a configuração base)
+
+# Supermaven
+.supermaven/
+
+# Cody (Sourcegraph)
+.cody/
+
+# Arquivos genéricos de histórico e logs de LLMs
+*.prompt
+*.llm.log
