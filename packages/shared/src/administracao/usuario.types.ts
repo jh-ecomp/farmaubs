@@ -52,3 +52,18 @@ export interface CadastrarUsuarioResultado {
 
 export type RegisterUserResult = CadastrarUsuarioResultado;
 export type ResultadoCadastroUsuario = CadastrarUsuarioResultado;
+
+export interface TrocarSenhaComando {
+  novaSenha: string;
+  confirmacaoSenha: string;
+}
+
+export interface RedefinirSenhaProvisoriaComando {
+  senhaProvisoria?: string;
+}
+
+export interface RedefinirSenhaProvisoriaResultado {
+  usuarioId: string;
+  senhaProvisoria: string;
+  mensagem: string;
+}

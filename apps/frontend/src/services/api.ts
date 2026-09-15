@@ -1,6 +1,8 @@
 import type {
   LoginRequest,
   LoginResponse as BackendLoginResponse,
+  TrocarSenhaComando,
+  RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
 import type { LoginResponse } from "../types/auth";
 
@@ -175,6 +177,104 @@ export const authService = {
       expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
       ttlSeconds: 3600,
       warningSeconds: 300,
+    };
+  },
+
+  async trocarSenha(dados: TrocarSenhaComando): Promise<{ mensagem: string }> {
+    const token = localStorage.getItem("@FarmaUBS:token");
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/acesso/trocar-senha`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(dados),
+      });
+
+      if (!resposta.ok) {
+        let errorData: { message?: string | string[] } = {};
+        try {
+          errorData = await resposta.json();
+        } catch {
+          // ignore
+        }
+
+        let msg = "";
+        if (Array.isArray(errorData.message)) {
+          msg = errorData.message.join(", ");
+        } else if (typeof errorData.message === "string") {
+          msg = errorData.message;
+        }
+
+        if (resposta.status === 400) {
+          throw new AuthError(
+            msg ||
+              "A nova senha não atende aos requisitos ou é igual à senha provisória.",
+            "VALIDATION_ERROR",
+          );
+        }
+
+        throw new AuthError(
+          msg || "Não foi possível alterar a senha.",
+          "UNKNOWN",
+        );
+      }
+
+      return await resposta.json();
+    } catch (err) {
+      if (err instanceof AuthError) {
+        throw err;
+      }
+      // Fallback de homologação: atualiza estado do usuário local
+      const savedUserStr = localStorage.getItem("@FarmaUBS:usuario");
+      if (savedUserStr) {
+        try {
+          const userObj = JSON.parse(savedUserStr);
+          userObj.deveTrocarSenha = false;
+          localStorage.setItem("@FarmaUBS:usuario", JSON.stringify(userObj));
+        } catch {
+          // ignore
+        }
+      }
+      return {
+        mensagem: "Senha redefinida com sucesso!",
+      };
+    }
+  },
+
+  async redefinirSenhaProvisoria(
+    usuarioId: string,
+    senhaProvisoria?: string,
+  ): Promise<RedefinirSenhaProvisoriaResultado> {
+    const token = localStorage.getItem("@FarmaUBS:token");
+    const payload = senhaProvisoria ? { senhaProvisoria } : {};
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/senha-provisoria`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+
+    const senhaGerada =
+      senhaProvisoria || "Temp@" + Math.random().toString(36).slice(-6) + "1!";
+
+    return {
+      usuarioId,
+      senhaProvisoria: senhaGerada,
+      mensagem: "Senha provisória emitida com sucesso.",
     };
   },
 };

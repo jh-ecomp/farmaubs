@@ -14,11 +14,13 @@ export type {
 };
 
 export interface UsuarioPayload {
+  id?: string;
   nome: string;
   email: string;
   perfil: string[];
   municipio_id: number;
   unidade_id: number;
+  deveTrocarSenha?: boolean;
 }
 
 export interface LoginResponse {

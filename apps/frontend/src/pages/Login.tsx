@@ -59,6 +59,12 @@ export default function Login() {
         usuario: data.usuario,
       });
 
+      // RF003: Se a conta requer troca obrigatória no primeiro acesso
+      if (data.usuario?.deveTrocarSenha || data.redirectUrl === "/trocar-senha") {
+        navigate("/trocar-senha");
+        return;
+      }
+
       // Redirecionamento padrão para a tela de 'Em Desenvolvimento' enquanto as próximas telas são construídas
       navigate("/em-desenvolvimento");
     },
