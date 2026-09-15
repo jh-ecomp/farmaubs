@@ -2,9 +2,12 @@ export interface SessionRecord {
   id: string;
   usuarioId: string;
   municipioId: string;
+  perfilId: string;
+  unidadeIds: string[];
   status: string;
   expiraEm: Date;
   criadoEm: Date;
+  ultimaAtividadeEm: Date;
 }
 
 export interface RenovarSessaoParams {

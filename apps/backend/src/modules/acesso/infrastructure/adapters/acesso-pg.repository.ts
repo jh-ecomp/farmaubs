@@ -55,4 +55,24 @@ export class AcessoPgRepository implements IAcessoRepository {
 
     return tokenPlain;
   }
+
+  async buscarEscopoUsuario(
+    usuarioId: string,
+  ): Promise<{ perfilId: string; unidadeIds: string[] }> {
+    const userRows = await this.ds.query<any[]>(
+      `SELECT perfil_id FROM users WHERE id = $1`,
+      [usuarioId],
+    );
+    if (!userRows[0]) {
+      throw new Error(`Usuário "${usuarioId}" não encontrado`);
+    }
+    const unitRows = await this.ds.query<any[]>(
+      `SELECT unidade_id FROM user_units WHERE usuario_id = $1 AND ativo = true`,
+      [usuarioId],
+    );
+    return {
+      perfilId: userRows[0].perfil_id,
+      unidadeIds: unitRows.map((u) => u.unidade_id),
+    };
+  }
 }

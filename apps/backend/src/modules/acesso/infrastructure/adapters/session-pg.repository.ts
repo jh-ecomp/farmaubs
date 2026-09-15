@@ -22,9 +22,12 @@ export class SessionPgRepository implements ISessionRepository {
       id: r.id,
       usuarioId: r.usuario_id,
       municipioId: r.municipio_id,
+      perfilId: r.perfil_id,
+      unidadeIds: r.unidade_ids ?? [],
       status: r.status,
       expiraEm: new Date(r.expira_em),
       criadoEm: new Date(r.criado_em),
+      ultimaAtividadeEm: new Date(r.ultima_atividade_em),
     };
   }
 
