@@ -4,6 +4,7 @@ export const API_ROUTES = {
   ACESSO: {
     LOGIN: "/api/v1/acesso/login",
     ME: "/api/v1/acesso/me",
+    RENOVAR: "/api/v1/acesso/renovar",
     LOGOUT: "/api/v1/acesso/logout",
   },
   ADMINISTRACAO: {

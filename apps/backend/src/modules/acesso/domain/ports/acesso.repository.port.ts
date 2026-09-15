@@ -20,6 +20,9 @@ export interface IAcessoRepository {
   registrarFalhaLogin(usuarioId: string): Promise<void>;
   resetarEstadoLogin(usuarioId: string): Promise<void>;
   criarSessao(params: CreateSessionParams): Promise<string>;
+  buscarEscopoUsuario(
+    usuarioId: string,
+  ): Promise<{ perfilId: string; unidadeIds: string[] }>;
 }
 
 export const ACESSO_REPOSITORY = Symbol("IAcessoRepository");

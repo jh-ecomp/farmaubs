@@ -342,6 +342,38 @@ describe("SessionPgRepository (integração — camada B)", () => {
       );
       expect(diff).toBeLessThan(2_000);
     });
+
+    it("atualiza ultima_atividade_em e expira_em mantendo status ativa", async () => {
+      const sessao = await sessionRepo.buscarPorTokenHash(tokenHash);
+      const novaExpiracao = new Date(Date.now() + 120 * 60_000);
+
+      await sessionRepo.renovarAtividade({
+        sessionId: sessao!.id,
+        expiraEm: novaExpiracao,
+      });
+
+      const rows = await ds.query<
+        {
+          expira_em: Date;
+          ultima_atividade_em: Date;
+          status: string;
+        }[]
+      >(
+        `SELECT expira_em, ultima_atividade_em, status FROM sessions WHERE token_hash = $1`,
+        [tokenHash],
+      );
+
+      expect(rows[0].status).toBe("ativa");
+      const diffExpira = Math.abs(
+        new Date(rows[0].expira_em).getTime() - novaExpiracao.getTime(),
+      );
+      expect(diffExpira).toBeLessThan(2_000);
+
+      const diffAtividade = Math.abs(
+        new Date(rows[0].ultima_atividade_em).getTime() - Date.now(),
+      );
+      expect(diffAtividade).toBeLessThan(5_000);
+    });
   });
 
   describe("revogar", () => {

@@ -2,6 +2,11 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 export function configureApp(app: INestApplication): void {
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+    exposedHeaders: ["Authorization", "X-Session-Expires-At"],
+  });
+
   app.setGlobalPrefix("api/v1");
 
   app.useGlobalPipes(
