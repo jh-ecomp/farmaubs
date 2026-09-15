@@ -312,9 +312,7 @@ export function RedefinirSenhaModal({
                 {isPending && (
                   <span className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
                 )}
-                <span>
-                  {isPending ? "Emitindo..." : "Confirmar Emissão"}
-                </span>
+                <span>{isPending ? "Emitindo..." : "Confirmar Emissão"}</span>
               </button>
             </div>
           </form>

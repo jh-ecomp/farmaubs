@@ -7,9 +7,10 @@ import TrocarSenha from "./index";
 import { authService, AuthError } from "../../services/api";
 
 vi.mock("../../services/api", async () => {
-  const actual = await vi.importActual<typeof import("../../services/api")>(
-    "../../services/api",
-  );
+  const actual =
+    await vi.importActual<typeof import("../../services/api")>(
+      "../../services/api",
+    );
   return {
     ...actual,
     authService: {
@@ -53,12 +54,8 @@ describe("TrocarSenha — Fluxo de Troca Obrigatória no Frontend (Camada D / RF
     expect(
       screen.getByText(/Defina sua nova senha pessoal para continuar/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/Nova Senha Pessoal/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/Confirmar Nova Senha/i),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Nova Senha Pessoal/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Confirmar Nova Senha/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Confirmar Nova Senha/i }),
     ).toBeDisabled();
@@ -106,9 +103,7 @@ describe("TrocarSenha — Fluxo de Troca Obrigatória no Frontend (Camada D / RF
     await user.type(inputConfirmacao, "OutraSenha@2026");
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/As senhas não coincidem/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/As senhas não coincidem/i)).toBeInTheDocument();
     });
 
     const btnConfirmar = screen.getByRole("button", {

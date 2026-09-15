@@ -60,7 +60,10 @@ export default function Login() {
       });
 
       // RF003: Se a conta requer troca obrigatória no primeiro acesso
-      if (data.usuario?.deveTrocarSenha || data.redirectUrl === "/trocar-senha") {
+      if (
+        data.usuario?.deveTrocarSenha ||
+        data.redirectUrl === "/trocar-senha"
+      ) {
         navigate("/trocar-senha");
         return;
       }

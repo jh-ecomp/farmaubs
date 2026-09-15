@@ -21,9 +21,7 @@ export const trocarSenhaSchema = z
         /[@$!%*?&#]/,
         "A senha deve conter ao menos um caractere especial (@$!%*?&#)",
       ),
-    confirmacaoSenha: z
-      .string()
-      .min(1, "A confirmação de senha é obrigatória"),
+    confirmacaoSenha: z.string().min(1, "A confirmação de senha é obrigatória"),
   })
   .refine((data) => data.novaSenha === data.confirmacaoSenha, {
     message: "As senhas não coincidem",
@@ -159,7 +157,11 @@ export default function TrocarSenha() {
         )}
 
         {/* FORMULÁRIO */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           {/* CAMPO NOVA SENHA */}
           <div>
             <label
