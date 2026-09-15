@@ -1,11 +1,12 @@
-import type {
-  CadastrarUsuarioComando,
-  CadastrarUsuarioResultado,
-  ListagemUsuariosFiltros,
-  ListagemUsuariosResultado,
-  MunicipioDto,
-  UnidadeSaudeDto,
-  UsuarioItemTabela,
+import {
+  PerfilCodigo,
+  type CadastrarUsuarioComando,
+  type CadastrarUsuarioResultado,
+  type ListagemUsuariosFiltros,
+  type ListagemUsuariosResultado,
+  type MunicipioDto,
+  type UnidadeSaudeDto,
+  type UsuarioItemTabela,
 } from "@farmaubs/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -37,44 +38,105 @@ function getAuthHeaders(): HeadersInit {
 const STORAGE_KEY_USUARIOS = "@FarmaUBS:dev_usuarios";
 
 const INITIAL_MUNICIPIOS: MunicipioDto[] = [
-  { id: "mun-parnaiba", nome: "Parnaíba", uf: "PI", ibgeCode: "2207702" },
-  { id: "mun-teresina", nome: "Teresina", uf: "PI", ibgeCode: "2211001" },
-  {
-    id: "mun-luis-correia",
-    nome: "Luís Correia",
-    uf: "PI",
-    ibgeCode: "2205706",
-  },
+  { id: "mun-sp", nome: "São Paulo", uf: "SP", ibgeCode: "3550308" },
+  { id: "mun-rj", nome: "Rio de Janeiro", uf: "RJ", ibgeCode: "3304557" },
+  { id: "mun-bh", nome: "Belo Horizonte", uf: "MG", ibgeCode: "3106200" },
 ];
 
 const INITIAL_UNIDADES: UnidadeSaudeDto[] = [
   {
-    id: "ubs-frei-higino",
-    municipioId: "mun-parnaiba",
-    nome: "UBS Frei Higino",
-    endereco: "Rua São Pedro, 120 - Bairro Frei Higino",
-    cafLeadTimeDays: 10,
-  },
-  {
-    id: "ubs-ilha-grande",
-    municipioId: "mun-parnaiba",
-    nome: "UBS Ilha Grande de Santa Isabel",
-    endereco: "Av. das Canárias, Km 4 - Ilha Grande",
-    cafLeadTimeDays: 12,
-  },
-  {
-    id: "ubs-piaui",
-    municipioId: "mun-parnaiba",
-    nome: "UBS Piauí",
-    endereco: "Rua Itaúna, 410 - Bairro Piauí",
+    id: "ubs-jardim-primavera",
+    municipioId: "mun-sp",
+    nome: "UBS Jardim Primavera",
+    endereco: "Rua das Flores, 100 — Jardim Primavera, São Paulo/SP",
     cafLeadTimeDays: 15,
   },
   {
-    id: "ubs-dirceu",
-    municipioId: "mun-parnaiba",
-    nome: "UBS Dirceu Arcoverde",
-    endereco: "Av. Pinheiro Machado, 2800",
+    id: "ubs-vila-nova",
+    municipioId: "mun-sp",
+    nome: "UBS Vila Nova",
+    endereco: "Av. Central, 250 — Vila Nova, São Paulo/SP",
+    cafLeadTimeDays: 15,
+  },
+  {
+    id: "ubs-copacabana-sul",
+    municipioId: "mun-rj",
+    nome: "UBS Copacabana Sul",
+    endereco: "Rua Bolivar, 30 — Copacabana, Rio de Janeiro/RJ",
     cafLeadTimeDays: 10,
+  },
+];
+
+const SEED_USUARIOS: UsuarioItemTabela[] = [
+  {
+    id: "usr-admin",
+    municipioId: "mun-sp",
+    municipioNome: "São Paulo",
+    nomeCompleto: "Admin Sistema",
+    email: "admin@farmaubs.dev",
+    perfilCodigo: PerfilCodigo.ADMINISTRADOR,
+    perfilNome: "Administrador",
+    unidades: [],
+    ativo: true,
+    ultimoLoginEm: null,
+    createdAt: "2026-09-01T08:00:00.000Z",
+  },
+  {
+    id: "usr-gestor",
+    municipioId: "mun-sp",
+    municipioNome: "São Paulo",
+    nomeCompleto: "Gestor São Paulo",
+    email: "gestor@farmaubs.dev",
+    perfilCodigo: PerfilCodigo.GESTOR,
+    perfilNome: "Gestor/Coordenador",
+    unidades: [],
+    ativo: true,
+    ultimoLoginEm: null,
+    createdAt: "2026-09-02T09:30:00.000Z",
+  },
+  {
+    id: "usr-farma-resp",
+    municipioId: "mun-sp",
+    municipioNome: "São Paulo",
+    nomeCompleto: "Farmacêutico Responsável UBS Jardim Primavera",
+    email: "farmaceutico.responsavel@farmaubs.dev",
+    perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+    perfilNome: "Farmacêutico Responsável",
+    unidades: [
+      { id: "ubs-jardim-primavera", nome: "UBS Jardim Primavera" },
+    ],
+    ativo: true,
+    ultimoLoginEm: null,
+    createdAt: "2026-09-03T10:15:00.000Z",
+  },
+  {
+    id: "usr-farma-res",
+    municipioId: "mun-sp",
+    municipioNome: "São Paulo",
+    nomeCompleto: "Farmacêutico Residente Teste",
+    email: "farmaceutico.residente@farmaubs.dev",
+    perfilCodigo: PerfilCodigo.FARMACEUTICO_RESIDENTE,
+    perfilNome: "Farmacêutico Residente",
+    unidades: [
+      { id: "ubs-jardim-primavera", nome: "UBS Jardim Primavera" },
+      { id: "ubs-vila-nova", nome: "UBS Vila Nova" },
+    ],
+    ativo: true,
+    ultimoLoginEm: null,
+    createdAt: "2026-09-04T11:00:00.000Z",
+  },
+  {
+    id: "usr-inativo",
+    municipioId: "mun-sp",
+    municipioNome: "São Paulo",
+    nomeCompleto: "Usuário Inativo Teste",
+    email: "inativo@farmaubs.dev",
+    perfilCodigo: PerfilCodigo.GESTOR,
+    perfilNome: "Gestor/Coordenador",
+    unidades: [],
+    ativo: false,
+    ultimoLoginEm: null,
+    createdAt: "2026-09-05T14:20:00.000Z",
   },
 ];
 
@@ -83,24 +145,15 @@ function getDevUsuarios(): UsuarioItemTabela[] {
   if (saved) {
     try {
       const parsed: UsuarioItemTabela[] = JSON.parse(saved);
-      // Limpa os exemplos fictícios legados do protótipo que foram usados apenas como guia
-      const limpos = parsed.filter(
-        (u) =>
-          u.nomeCompleto !== "Dr. Carlos Mendonça" &&
-          u.nomeCompleto !== "Dra. Mariana Vasconcelos" &&
-          u.nomeCompleto !== "Lucas Rodrigues da Silva" &&
-          u.nomeCompleto !== "Carla Beatriz Fontenele" &&
-          u.nomeCompleto !== "Roberto Alves Dias",
-      );
-      if (limpos.length !== parsed.length) {
-        localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(limpos));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
       }
-      return limpos;
     } catch {
       // fallback se parse falhar
     }
   }
-  return [];
+  localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(SEED_USUARIOS));
+  return [...SEED_USUARIOS];
 }
 
 export const usuarioService = {
@@ -249,7 +302,7 @@ export const usuarioService = {
     const novoUsuario: UsuarioItemTabela = {
       id: "user-" + Date.now(),
       municipioId: dados.municipioId,
-      municipioNome: mun ? mun.nome : "Parnaíba",
+      municipioNome: mun ? mun.nome : "São Paulo",
       nomeCompleto: dados.nomeCompleto,
       email: dados.email,
       perfilCodigo: dados.perfil,
