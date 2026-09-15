@@ -183,6 +183,8 @@ Acessos:
                     <sub><b>Jonas Valentim</b></sub>
                 </a><a href="https://www.linkedin.com/in/jonasvalentim021/">[in]</a>
             </td>
+        </tr>
+        <tr>
             <td align="center">
                 <b>Frontend Software Engineer</b><br />
                 <a href="https://github.com/kauanalmeidadev?tab=repositories">
