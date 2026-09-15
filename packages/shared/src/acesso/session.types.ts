@@ -24,3 +24,17 @@ export interface SessionInfo {
   status: SessionStatus;
   expiraEm: Date | string;
 }
+
+export interface RenovarSessaoResponse {
+  expiresAt: string;
+  ttlSeconds: number;
+  warningSeconds: number;
+}
+
+export interface SessaoUsuarioResponse {
+  usuarioId: string;
+  municipioId: string;
+  perfilId: string;
+  unidadeIds: string[];
+  expiresAt: string;
+}
