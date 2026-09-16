@@ -55,7 +55,9 @@ defineFeature(feature, (test) => {
     repositorioUsuarioMock = {
       buscarPorEmail: jest.fn().mockResolvedValue(null),
       existePorEmail: jest.fn().mockResolvedValue(false),
+      listar: jest.fn(),
       salvar: jest
+
         .fn()
         .mockImplementation((dadosUsuario: DadosCriacaoUsuario) =>
           Promise.resolve({

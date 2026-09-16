@@ -6,8 +6,16 @@ import {
   DadosCriacaoUsuario,
   UsuarioModeloDominio,
 } from "../../domain/entities/user-registration.entity";
+import type {
+  ListagemUsuariosFiltros,
+  ListagemUsuariosResultado,
+  UsuarioItemTabela,
+} from "@farmaubs/shared";
 import { User } from "../../../administracao/infrastructure/persistence/entities/user.entity";
 import { UserUnit } from "../../../administracao/infrastructure/persistence/entities/UserUnit.entity";
+import { MunicipioEntity } from "../../../administracao/infrastructure/persistence/entities/municipio.entity";
+import { PerfilEntity } from "../persistence/entities/perfil.entity";
+import { UnidadeSaudeEntity } from "../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
 import { TransactionContext } from "../../../../common/transaction/transaction-context.service";
 
 @Injectable()
@@ -102,6 +110,136 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     return await manager.transaction(async (txManager) => {
       return await persistirComTransacao(txManager);
     });
+  }
+
+  async listar(
+    filtros: ListagemUsuariosFiltros,
+  ): Promise<ListagemUsuariosResultado> {
+    const manager = this.transactionContext.getManager();
+    const page =
+      filtros.page && filtros.page >= 1 ? Math.floor(filtros.page) : 1;
+    const limit =
+      filtros.limit && filtros.limit >= 1
+        ? Math.min(Math.floor(filtros.limit), 100)
+        : 10;
+    const offset = (page - 1) * limit;
+
+    if (typeof manager.query === "function" && filtros.municipioId) {
+      await manager.query(`SELECT set_config('app.municipio_id', $1, true)`, [
+        filtros.municipioId.trim(),
+      ]);
+    }
+
+    const qb = manager
+
+      .createQueryBuilder(User, "u")
+      .leftJoin(MunicipioEntity, "m", "m.id = u.municipio_id")
+      .leftJoin(PerfilEntity, "p", "p.id = u.perfil_id")
+      .select([
+        "u.id AS id",
+        'u.municipio_id AS "municipioId"',
+        'm.nome AS "municipioNome"',
+        'u.nome_completo AS "nomeCompleto"',
+        "u.email AS email",
+        'p.codigo AS "perfilCodigo"',
+        'p.nome AS "perfilNome"',
+        "u.ativo AS ativo",
+        'u.ultimo_login_em AS "ultimoLoginEm"',
+        'u.created_at AS "createdAt"',
+      ]);
+
+    if (filtros.busca) {
+      const termo = `%${filtros.busca.trim().toLowerCase()}%`;
+      qb.andWhere(
+        "(LOWER(u.nome_completo) LIKE :termo OR LOWER(u.email) LIKE :termo)",
+        { termo },
+      );
+    }
+
+    if (filtros.municipioId) {
+      qb.andWhere("u.municipio_id = :municipioId", {
+        municipioId: filtros.municipioId.trim(),
+      });
+    }
+
+    if (filtros.perfilId) {
+      const perfilValor = filtros.perfilId.trim();
+      qb.andWhere(
+        "(u.perfil_id = :perfilValor OR UPPER(p.codigo) = :perfilUpper)",
+        {
+          perfilValor,
+          perfilUpper: perfilValor.toUpperCase(),
+        },
+      );
+    }
+
+    if (filtros.status) {
+      const statusUpper = filtros.status.trim().toUpperCase();
+      if (statusUpper === "ATIVO") {
+        qb.andWhere("u.ativo = :ativo", { ativo: true });
+      } else if (statusUpper === "INATIVO") {
+        qb.andWhere("u.ativo = :ativo", { ativo: false });
+      }
+    }
+
+    qb.orderBy("u.created_at", "DESC");
+
+    const total = await qb.getCount();
+    const rawUsers = await qb.offset(offset).limit(limit).getRawMany();
+
+    const userIds = rawUsers.map((u) => u.id);
+    const ubsPorUsuario = new Map<
+      string,
+      Array<{ id: string; nome: string; cnes?: string }>
+    >();
+
+    if (userIds.length > 0) {
+      const vinculos = await manager
+        .createQueryBuilder(UserUnit, "uu")
+        .innerJoin(UnidadeSaudeEntity, "us", "us.id = uu.unidade_id")
+        .select([
+          'uu.usuario_id AS "usuarioId"',
+          'us.id AS "unidadeId"',
+          'us.nome AS "unidadeNome"',
+        ])
+        .where("uu.usuario_id IN (:...userIds)", { userIds })
+        .andWhere("uu.ativo = true")
+        .getRawMany();
+
+      for (const v of vinculos) {
+        if (!ubsPorUsuario.has(v.usuarioId)) {
+          ubsPorUsuario.set(v.usuarioId, []);
+        }
+        ubsPorUsuario.get(v.usuarioId)!.push({
+          id: v.unidadeId,
+          nome: v.unidadeNome,
+        });
+      }
+    }
+
+    const data: UsuarioItemTabela[] = rawUsers.map((u) => ({
+      id: u.id,
+      municipioId: u.municipioId,
+      municipioNome: u.municipioNome ?? "Desconhecido",
+      nomeCompleto: u.nomeCompleto,
+      email: u.email,
+      perfilCodigo: u.perfilCodigo ?? "DESCONHECIDO",
+      perfilNome: u.perfilNome ?? "Desconhecido",
+      unidades: ubsPorUsuario.get(u.id) ?? [],
+      ativo: Boolean(u.ativo),
+      ultimoLoginEm: u.ultimoLoginEm ? new Date(u.ultimoLoginEm) : null,
+      createdAt: new Date(u.createdAt),
+    }));
+
+    const totalPages = Math.ceil(total / limit) || (total === 0 ? 0 : 1);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   private mapearParaDominio(user: User): UsuarioModeloDominio {

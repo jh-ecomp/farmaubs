@@ -3,9 +3,9 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
-} from '@nestjs/common';
-import { Observable, defer } from 'rxjs';
-import { TenantContextService } from './tenant-context.service';
+} from "@nestjs/common";
+import { Observable, defer } from "rxjs";
+import { TenantContextService } from "./tenant-context.service";
 
 export interface SessionScope {
   municipioId?: string | null;
@@ -26,14 +26,18 @@ export class TenantInterceptor implements NestInterceptor {
   constructor(private readonly tenantContext: TenantContextService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const municipioId = this.resolveMunicipioId(context);
-    return defer(() =>
-      this.tenantContext.run({ municipioId }, () => next.handle()),
-    );
+    return defer(() => {
+      const municipioId = this.resolveMunicipioId(context);
+      return new Observable((subscriber) => {
+        return this.tenantContext.run({ municipioId }, () =>
+          next.handle().subscribe(subscriber),
+        );
+      });
+    });
   }
 
   private resolveMunicipioId(context: ExecutionContext): string | null {
-    if (context.getType() !== 'http') {
+    if (context.getType() !== "http") {
       return null;
     }
     const request = context.switchToHttp().getRequest();
