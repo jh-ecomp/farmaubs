@@ -22,6 +22,8 @@ import { GERADOR_HASH_SENHA_PORT } from "./domain/ports/password-hasher.port";
 import { SERVICO_EMAIL_PORT } from "./domain/ports/email-service.port";
 import { ACESSO_REPOSITORY } from "./domain/ports/acesso.repository.port";
 import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
+import { AUDIT_REPOSITORY_PORT } from "./domain/ports/audit.repository.port";
+import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.repository";
 
 @Module({
   imports: [ConfigModule],
@@ -42,11 +44,16 @@ import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
     TypeOrmUserRepository,
     TypeOrmProfileRepository,
     TypeOrmHealthUnitRepository,
+    TypeOrmAuditRepository,
     BcryptPasswordHasherAdapter,
     ConsoleEmailServiceAdapter,
     {
       provide: REPOSITORIO_USUARIO_PORT,
       useExisting: TypeOrmUserRepository,
+    },
+    {
+      provide: AUDIT_REPOSITORY_PORT,
+      useExisting: TypeOrmAuditRepository,
     },
     {
       provide: REPOSITORIO_PERFIL_PORT,
@@ -102,6 +109,8 @@ import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
     REPOSITORIO_UNIDADE_SAUDE_PORT,
     GERADOR_HASH_SENHA_PORT,
     SERVICO_EMAIL_PORT,
+    AUDIT_REPOSITORY_PORT,
+    TypeOrmAuditRepository,
   ],
 })
 export class AcessoModule {}

@@ -1,4 +1,4 @@
-export type TenantScope = 'municipio' | 'global';
+export type TenantScope = "municipio" | "global";
 
 export interface TableScope {
   table: string; // nome da tabela no schema public
@@ -16,37 +16,43 @@ export interface TableScope {
 export const TABLE_SCOPES: TableScope[] = [
   // Módulo de acesso (ADR-006): globais, pois definem identidade e escopo
   {
-    table: 'municipios',
-    scope: 'global',
+    table: "municipios",
+    scope: "global",
     justification:
-      'Registro de tenants (fronteira primária ADR-002). Necessária ao bootstrap de qualquer contexto.',
+      "Registro de tenants (fronteira primária ADR-002). Necessária ao bootstrap de qualquer contexto.",
   },
   {
-    table: 'unidades_saude',
-    scope: 'global',
+    table: "unidades_saude",
+    scope: "global",
     justification:
-      'Topologia (RF026). Lida no bootstrap de sessão pré-auth; RLS quebraria o login. municipio_id é FK, não escopo de RLS.',
+      "Topologia (RF026). Lida no bootstrap de sessão pré-auth; RLS quebraria o login. municipio_id é FK, não escopo de RLS.",
   },
   {
-    table: 'users',
-    scope: 'global',
-    justification: 'Identidade do usuário, multi-UBS (RF001).',
+    table: "users",
+    scope: "global",
+    justification: "Identidade do usuário, multi-UBS (RF001).",
   },
   {
-    table: 'sessions',
-    scope: 'global',
-    justification: 'Sessão server-side (ADR-006).',
+    table: "sessions",
+    scope: "global",
+    justification: "Sessão server-side (ADR-006).",
   },
   {
-    table: 'user_units',
-    scope: 'global',
+    table: "user_units",
+    scope: "global",
     justification:
-      'Associação usuário-UBS (RF001); define o escopo, não é escopada.',
+      "Associação usuário-UBS (RF001); define o escopo, não é escopada.",
   },
   {
-    table: 'perfis',
-    scope: 'global',
-    justification: 'Catálogo de perfis RBAC (ADR-006, NF009).',
+    table: "perfis",
+    scope: "global",
+    justification: "Catálogo de perfis RBAC (ADR-006, NF009).",
+  },
+  {
+    table: "audit_logs",
+    scope: "global",
+    justification:
+      "Trilha de auditoria transacional e imutável de ações administrativas (RF028, NF018).",
   },
 
   // Épicos futuros (padrão a seguir quando entrarem):

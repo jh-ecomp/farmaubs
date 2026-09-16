@@ -12,6 +12,7 @@ import { TransactionInterceptor } from "./common/transaction/transaction.interce
 import { SessionHeaderInterceptor } from "./common/interceptors/session-header.interceptor";
 import { PerfilEntity } from "./modules/acesso/infrastructure/persistence/entities/perfil.entity";
 import { Session } from "./modules/acesso/infrastructure/persistence/entities/session.entity";
+import { AuditLogEntity } from "./modules/acesso/infrastructure/persistence/entities/audit-log.entity";
 import { User } from "./modules/administracao/infrastructure/persistence/entities/user.entity";
 import { UserUnit } from "./modules/administracao/infrastructure/persistence/entities/UserUnit.entity";
 import { MunicipioEntity } from "./modules/administracao/infrastructure/persistence/entities/municipio.entity";
@@ -36,6 +37,7 @@ import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persi
         entities: [
           PerfilEntity,
           Session,
+          AuditLogEntity,
           User,
           UserUnit,
           MunicipioEntity,
