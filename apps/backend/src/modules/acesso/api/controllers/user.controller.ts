@@ -49,6 +49,7 @@ export class UserController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth("access-token")
   @ApiOperation({
     summary: "Cadastra um novo usuário no sistema",
     description:
@@ -57,6 +58,9 @@ export class UserController {
   @ApiCreatedResponse({
     description: "Usuário cadastrado com sucesso.",
     type: UsuarioCadastradoResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: "Não autorizado — token de autenticação ausente ou inválido.",
   })
   @ApiBadRequestResponse({
     description:
