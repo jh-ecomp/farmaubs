@@ -102,9 +102,7 @@ const SEED_USUARIOS: UsuarioItemTabela[] = [
     email: "farmaceutico.responsavel@farmaubs.dev",
     perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
     perfilNome: "Farmacêutico Responsável",
-    unidades: [
-      { id: "ubs-jardim-primavera", nome: "UBS Jardim Primavera" },
-    ],
+    unidades: [{ id: "ubs-jardim-primavera", nome: "UBS Jardim Primavera" }],
     ativo: true,
     ultimoLoginEm: null,
     createdAt: "2026-09-03T10:15:00.000Z",
@@ -170,12 +168,9 @@ export const usuarioService = {
       if (filtros.status) params.set("status", filtros.status);
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await fetch(
-        `${API_BASE_URL}/usuarios${queryString}`,
-        {
-          headers: getAuthHeaders(),
-        },
-      );
+      const res = await fetch(`${API_BASE_URL}/usuarios${queryString}`, {
+        headers: getAuthHeaders(),
+      });
 
       if (res.ok) {
         return await res.json();
@@ -205,6 +200,10 @@ export const usuarioService = {
       todos = todos.filter(
         (u: UsuarioItemTabela) => u.municipioId === filtros.municipioId,
       );
+    }
+    if (filtros.status && filtros.status !== "ALL") {
+      const deveSerAtivo = filtros.status.toUpperCase() === "ATIVO";
+      todos = todos.filter((u: UsuarioItemTabela) => u.ativo === deveSerAtivo);
     }
 
     const page = filtros.page || 1;

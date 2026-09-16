@@ -236,12 +236,58 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
 
       expect(mockUsuarioService.listarUsuarios).toHaveBeenCalled();
     });
+
+    it("deve permitir acesso quando perfil ADMINISTRADOR for fornecido como string simples", async () => {
+      localStorage.setItem("@FarmaUBS:token", mockAdminSession.token);
+      localStorage.setItem("@FarmaUBS:expiresAt", mockAdminSession.expiresAt);
+      localStorage.setItem(
+        "@FarmaUBS:usuario",
+        JSON.stringify({
+          ...mockAdminSession.usuario,
+          perfil: PerfilCodigo.ADMINISTRADOR,
+        }),
+      );
+
+      renderWithProviders(
+        <Routes>
+          <Route path="/403" element={<AccessDenied />} />
+          <Route
+            path="/admin/usuarios"
+            element={
+              <RoleRoute allowedRoles={["ADMINISTRADOR"]}>
+                <AdminUsuarios />
+              </RoleRoute>
+            }
+          />
+        </Routes>,
+        { initialEntries: ["/admin/usuarios"] },
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole("table")).toBeInTheDocument();
+      });
+    });
   });
 
   // =========================================================================
-  // CENÁRIO 2: Filtro por Município e Busca Textual com Debounce
+  // CENÁRIO 2: Filtros Combinados e Busca Textual com Debounce
   // =========================================================================
   describe("Cenário 2: Filtros Combinados e Busca Textual", () => {
+    it("deve renderizar a coluna Município no cabeçalho e os municípios correspondentes nas linhas", async () => {
+      setupAuthenticatedAdmin();
+
+      renderWithProviders(<AdminUsuarios />, {
+        initialEntries: ["/admin/usuarios"],
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("columnheader", { name: /^município$/i }),
+        ).toBeInTheDocument();
+        expect(screen.getAllByText("Parnaíba").length).toBeGreaterThan(0);
+      });
+    });
+
     it("deve aplicar debounce na busca textual e atualizar os parâmetros da requisição", async () => {
       const user = userEvent.setup();
       setupAuthenticatedAdmin();
@@ -298,6 +344,32 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         expect(mockUsuarioService.listarUsuarios).toHaveBeenCalledWith(
           expect.objectContaining({
             municipioId: "mun-parnaiba",
+          }),
+        );
+      });
+    });
+
+    it("deve disparar requisição filtrada ao alterar o status no dropdown", async () => {
+      const user = userEvent.setup();
+      setupAuthenticatedAdmin();
+
+      renderWithProviders(<AdminUsuarios />, {
+        initialEntries: ["/admin/usuarios"],
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/filtrar por status/i),
+        ).toBeInTheDocument();
+      });
+
+      const selectStatus = screen.getByLabelText(/filtrar por status/i);
+      await user.selectOptions(selectStatus, "ATIVO");
+
+      await waitFor(() => {
+        expect(mockUsuarioService.listarUsuarios).toHaveBeenCalledWith(
+          expect.objectContaining({
+            status: "ATIVO",
           }),
         );
       });
@@ -414,6 +486,28 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         expect(screen.getByRole("status")).toHaveTextContent(
           /usuário cadastrado com sucesso/i,
         );
+      });
+    });
+
+    it("deve fechar o modal de cadastro ao pressionar a tecla Escape (WCAG 2.1 AA)", async () => {
+      const user = userEvent.setup();
+      setupAuthenticatedAdmin();
+
+      renderWithProviders(<AdminUsuarios />, {
+        initialEntries: ["/admin/usuarios"],
+      });
+
+      const btnNovoUsuario = await screen.findByRole("button", {
+        name: /\+ novo usuário/i,
+      });
+      await user.click(btnNovoUsuario);
+
+      expect(await screen.findByRole("dialog")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       });
     });
   });
@@ -552,6 +646,29 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         expect(screen.getByRole("status")).toHaveTextContent(
           /usuário inativado/i,
         );
+      });
+    });
+
+    it("deve fechar o diálogo de confirmação ao pressionar a tecla Escape (WCAG 2.1 AA)", async () => {
+      const user = userEvent.setup();
+      setupAuthenticatedAdmin();
+
+      renderWithProviders(<AdminUsuarios />, {
+        initialEntries: ["/admin/usuarios"],
+      });
+
+      await screen.findByText("Dra. Mariana Vasconcelos");
+      const btnInativar = screen.getByRole("button", {
+        name: /inativar dra\. mariana vasconcelos/i,
+      });
+      await user.click(btnInativar);
+
+      expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
       });
     });
   });

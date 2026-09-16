@@ -34,6 +34,7 @@ export function AdminUsuarios() {
   const [buscaDebounced, setBuscaDebounced] = useState("");
   const [filtroPerfil, setFiltroPerfil] = useState<string>("ALL");
   const [filtroMunicipio, setFiltroMunicipio] = useState<string>("ALL");
+  const [filtroStatus, setFiltroStatus] = useState<string>("ALL");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const limitePorPagina = 10;
 
@@ -56,6 +57,7 @@ export function AdminUsuarios() {
       busca: buscaDebounced || undefined,
       perfilId: filtroPerfil !== "ALL" ? filtroPerfil : undefined,
       municipioId: filtroMunicipio !== "ALL" ? filtroMunicipio : undefined,
+      status: filtroStatus !== "ALL" ? filtroStatus : undefined,
     };
   }, [
     paginaAtual,
@@ -63,6 +65,7 @@ export function AdminUsuarios() {
     buscaDebounced,
     filtroPerfil,
     filtroMunicipio,
+    filtroStatus,
   ]);
 
   const {
@@ -110,6 +113,7 @@ export function AdminUsuarios() {
     setBuscaDebounced("");
     setFiltroPerfil("ALL");
     setFiltroMunicipio("ALL");
+    setFiltroStatus("ALL");
     setPaginaAtual(1);
   };
 
@@ -491,6 +495,21 @@ export function AdminUsuarios() {
                     ))}
                   </select>
 
+                  <select
+                    id="statusFilterSelect"
+                    value={filtroStatus}
+                    onChange={(e) => {
+                      setFiltroStatus(e.target.value);
+                      setPaginaAtual(1);
+                    }}
+                    className="py-2 px-3 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-container"
+                    aria-label="Filtrar por Status"
+                  >
+                    <option value="ALL">Todos os Status</option>
+                    <option value="ATIVO">Ativo</option>
+                    <option value="INATIVO">Inativo</option>
+                  </select>
+
                   <button
                     type="button"
                     onClick={handleResetFilters}
@@ -531,6 +550,9 @@ export function AdminUsuarios() {
                         Profissional / Identificação
                       </th>
                       <th scope="col" className="px-4 py-2 font-label-caps">
+                        Município
+                      </th>
+                      <th scope="col" className="px-4 py-2 font-label-caps">
                         Perfil de Acesso
                       </th>
                       <th scope="col" className="px-4 py-2 font-label-caps">
@@ -554,7 +576,7 @@ export function AdminUsuarios() {
                     {isLoading ? (
                       <tr>
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="px-4 py-8 text-center text-text-tertiary"
                         >
                           <div className="flex items-center justify-center gap-2">
@@ -568,7 +590,7 @@ export function AdminUsuarios() {
                     ) : isError ? (
                       <tr>
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="px-4 py-8 text-center text-error"
                         >
                           Não foi possível carregar os usuários. Tente novamente
@@ -578,7 +600,7 @@ export function AdminUsuarios() {
                     ) : usuarios.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="px-4 py-12 text-center text-text-tertiary"
                         >
                           <div className="flex flex-col items-center justify-center space-y-2">
@@ -643,6 +665,13 @@ export function AdminUsuarios() {
                                   )}
                                 </div>
                               </div>
+                            </td>
+
+                            {/* Município */}
+                            <td className="px-4 py-3">
+                              <span className="font-body-md text-text-secondary">
+                                {u.municipioNome || "—"}
+                              </span>
                             </td>
 
                             {/* Perfil */}

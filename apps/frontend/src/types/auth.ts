@@ -17,7 +17,7 @@ export interface UsuarioPayload {
   id?: string;
   nome: string;
   email: string;
-  perfil: string[];
+  perfil: string[] | string;
   municipio_id: number;
   unidade_id: number;
 }

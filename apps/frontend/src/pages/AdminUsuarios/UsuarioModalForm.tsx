@@ -124,6 +124,18 @@ export function UsuarioModalForm({
     setValue("ubsIds", []);
   }, [selectedMunicipioId, setValue, usuarioParaEditar]);
 
+  // Acessibilidade WCAG 2.1 AA (ADR-032): Fechamento via tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const toggleUbs = (ubsId: string) => {

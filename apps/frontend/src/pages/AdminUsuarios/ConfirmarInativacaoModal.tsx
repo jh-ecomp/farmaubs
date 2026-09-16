@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { UsuarioItemTabela } from "@farmaubs/shared";
 
 interface ConfirmarInativacaoModalProps {
@@ -15,6 +16,18 @@ export function ConfirmarInativacaoModal({
   onConfirm,
   isLoading,
 }: ConfirmarInativacaoModalProps) {
+  // Acessibilidade WCAG 2.1 AA (ADR-032): Fechamento via tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !usuario) return null;
 
   const isInativando = usuario.ativo;
