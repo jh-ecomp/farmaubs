@@ -10,6 +10,12 @@ import { SessionAuthGuard } from "./common/guards/session-auth.guard";
 import { TenantInterceptor } from "./common/tenant/tenant.interceptor";
 import { TransactionInterceptor } from "./common/transaction/transaction.interceptor";
 import { SessionHeaderInterceptor } from "./common/interceptors/session-header.interceptor";
+import { PerfilEntity } from "./modules/acesso/infrastructure/persistence/entities/perfil.entity";
+import { Session } from "./modules/acesso/infrastructure/persistence/entities/session.entity";
+import { User } from "./modules/administracao/infrastructure/persistence/entities/user.entity";
+import { UserUnit } from "./modules/administracao/infrastructure/persistence/entities/UserUnit.entity";
+import { MunicipioEntity } from "./modules/administracao/infrastructure/persistence/entities/municipio.entity";
+import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persistence/entities/unidade-saude.entity";
 
 @Module({
   imports: [
@@ -27,10 +33,19 @@ import { SessionHeaderInterceptor } from "./common/interceptors/session-header.i
         password: config.get<string>("DB_PASSWORD", ""),
         database: config.get<string>("POSTGRES_DB", "farmaubs"),
         schema: config.get<string>("DB_SCHEMA", "public"),
+        entities: [
+          PerfilEntity,
+          Session,
+          User,
+          UserUnit,
+          MunicipioEntity,
+          UnidadeSaudeEntity,
+        ],
         autoLoadEntities: true,
         synchronize: false,
       }),
     }),
+
     CommonModule,
     HealthModule,
     AcessoModule,

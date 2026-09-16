@@ -3,8 +3,11 @@ import { ConfigModule } from "@nestjs/config";
 import { UserController } from "./api/controllers/user.controller";
 import { AcessoController } from "./api/controllers/acesso.controller";
 import { CadastrarUsuarioUseCase } from "./application/use-cases/register-user.use-case";
+import { ListUsersUseCase } from "./application/use-cases/list-users.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "./application/use-cases/renew-session.use-case";
+import { RolesGuard } from "../../common/guards/roles.guard";
+
 import { TypeOrmUserRepository } from "./infrastructure/adapters/typeorm-user.repository";
 import { TypeOrmProfileRepository } from "./infrastructure/adapters/typeorm-profile.repository";
 import { TypeOrmHealthUnitRepository } from "./infrastructure/adapters/typeorm-health-unit.repository";
@@ -26,6 +29,8 @@ import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
   providers: [
     LoginUseCase,
     RenewSessionUseCase,
+    ListUsersUseCase,
+    RolesGuard,
     {
       provide: ACESSO_REPOSITORY,
       useClass: AcessoPgRepository,
@@ -88,6 +93,8 @@ import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
   exports: [
     LoginUseCase,
     RenewSessionUseCase,
+    ListUsersUseCase,
+    RolesGuard,
     SESSION_REPOSITORY,
     CadastrarUsuarioUseCase,
     REPOSITORIO_USUARIO_PORT,
