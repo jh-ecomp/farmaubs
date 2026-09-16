@@ -4,6 +4,7 @@ import { UserController } from "./api/controllers/user.controller";
 import { AcessoController } from "./api/controllers/acesso.controller";
 import { CadastrarUsuarioUseCase } from "./application/use-cases/register-user.use-case";
 import { ListUsersUseCase } from "./application/use-cases/list-users.use-case";
+import { EditUserUseCase } from "./application/use-cases/edit-user.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "./application/use-cases/renew-session.use-case";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -32,6 +33,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     LoginUseCase,
     RenewSessionUseCase,
     ListUsersUseCase,
+    EditUserUseCase,
     RolesGuard,
     {
       provide: ACESSO_REPOSITORY,
@@ -101,6 +103,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     LoginUseCase,
     RenewSessionUseCase,
     ListUsersUseCase,
+    EditUserUseCase,
     RolesGuard,
     SESSION_REPOSITORY,
     CadastrarUsuarioUseCase,

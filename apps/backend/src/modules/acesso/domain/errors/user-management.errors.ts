@@ -1,3 +1,10 @@
+export {
+  UsuarioEmailJaExisteException,
+  PerfilNaoEncontradoException,
+  UnidadeSaudeInvalidaException,
+  DadosUsuarioInvalidosException,
+} from "./user-registration.errors";
+
 export class UsuarioNaoEncontradoException extends Error {
   constructor(id: string) {
     super(`Usuário com ID "${id}" não foi encontrado.`);
