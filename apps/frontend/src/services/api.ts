@@ -36,6 +36,47 @@ export class AuthError extends Error {
   }
 }
 
+// NF012 / AC-20: Interceptor reativo de expiração de sessão via cabeçalho HTTP
+export type SessionExpiresListener = (expiresAt: string) => void;
+const sessionExpiresListeners = new Set<SessionExpiresListener>();
+
+export function onSessionExpiresUpdate(
+  listener: SessionExpiresListener,
+): () => void {
+  sessionExpiresListeners.add(listener);
+  return () => {
+    sessionExpiresListeners.delete(listener);
+  };
+}
+
+export function inspectSessionExpiresHeader(response: Response): Response {
+  try {
+    const expiresAtHeader =
+      response.headers.get("X-Session-Expires-At") ||
+      response.headers.get("x-session-expires-at");
+    if (expiresAtHeader && response.ok) {
+      localStorage.setItem("@FarmaUBS:expiresAt", expiresAtHeader);
+      sessionExpiresListeners.forEach((listener) => {
+        try {
+          listener(expiresAtHeader);
+        } catch (e) {
+          console.error("Erro no listener de expiração:", e);
+        }
+      });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("@FarmaUBS:session-expires-at", {
+            detail: { expiresAt: expiresAtHeader },
+          }),
+        );
+      }
+    }
+  } catch {
+    // Leitura silenciosa para não interromper requisição
+  }
+  return response;
+}
+
 export const authService = {
   async login(dadosLogin: LoginRequest): Promise<LoginResponse> {
     let resposta: Response;
@@ -48,6 +89,7 @@ export const authService = {
         },
         body: JSON.stringify(dadosLogin),
       });
+      resposta = inspectSessionExpiresHeader(resposta);
     } catch {
       // Cenário 6 BDD: Falha de conexão / servidor indisponível
       throw new AuthError(
@@ -160,43 +202,43 @@ export const authService = {
       );
     }
 
+    let resposta: Response;
     try {
-      const resposta = await fetch(`${API_BASE_URL}/acesso/renovar`, {
+      resposta = await fetch(`${API_BASE_URL}/acesso/renovar`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-
-      if (resposta.status === 401) {
-        throw new AuthError(
-          "Sua sessão expirou no servidor.",
-          "SESSION_EXPIRED",
-        );
-      }
-
-      if (resposta.ok) {
-        const dados = await resposta.json();
-        return {
-          expiresAt:
-            dados.expiresAt ?? new Date(Date.now() + 60 * 60_000).toISOString(),
-          ttlSeconds: dados.ttlSeconds ?? 3600,
-          warningSeconds: dados.warningSeconds ?? 300,
-        };
-      }
-    } catch (err) {
-      if (err instanceof AuthError) {
-        throw err;
-      }
-      // Fallback seguro caso a rota ainda não tenha sido exposta pelo backend
+      resposta = inspectSessionExpiresHeader(resposta);
+    } catch {
+      throw new AuthError(
+        "Não foi possível conectar ao servidor para renovar a sessão.",
+        "NETWORK_ERROR",
+      );
     }
 
-    // NF012: 60 minutos de TTL e 5 minutos (300s) de aviso
+    if (resposta.status === 401) {
+      throw new AuthError("Sua sessão expirou no servidor.", "SESSION_EXPIRED");
+    }
+
+    if (!resposta.ok) {
+      throw new AuthError("Não foi possível renovar a sessão.", "UNKNOWN");
+    }
+
+    const dados = await resposta.json().catch(() => ({}));
+    const headerExpiresAt =
+      resposta.headers.get("X-Session-Expires-At") ||
+      resposta.headers.get("x-session-expires-at");
+
     return {
-      expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
-      ttlSeconds: 3600,
-      warningSeconds: 300,
+      expiresAt:
+        dados.expiresAt ??
+        headerExpiresAt ??
+        new Date(Date.now() + 60 * 60_000).toISOString(),
+      ttlSeconds: dados.ttlSeconds ?? 3600,
+      warningSeconds: dados.warningSeconds ?? 300,
     };
   },
 
@@ -212,6 +254,7 @@ export const authService = {
         },
         body: JSON.stringify(dados),
       });
+      resposta = inspectSessionExpiresHeader(resposta);
     } catch {
       throw new AuthError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",
@@ -270,6 +313,7 @@ export const authService = {
           body: JSON.stringify(payload),
         },
       );
+      res = inspectSessionExpiresHeader(res);
     } catch {
       throw new AuthError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",

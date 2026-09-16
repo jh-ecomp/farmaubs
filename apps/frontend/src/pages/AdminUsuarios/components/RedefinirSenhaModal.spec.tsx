@@ -5,11 +5,18 @@ import { renderWithProviders } from "../../../test/test-utils";
 import { RedefinirSenhaModal } from "./RedefinirSenhaModal";
 import { authService } from "../../../services/api";
 
-vi.mock("../../../services/api", () => ({
-  authService: {
-    redefinirSenhaProvisoria: vi.fn(),
-  },
-}));
+vi.mock("../../../services/api", async () => {
+  const actual = await vi.importActual<typeof import("../../../services/api")>(
+    "../../../services/api",
+  );
+  return {
+    ...actual,
+    authService: {
+      ...actual.authService,
+      redefinirSenhaProvisoria: vi.fn(),
+    },
+  };
+});
 
 describe("RedefinirSenhaModal — Ação do Administrador (RF001 / RF003)", () => {
   const mockAuthService = vi.mocked(authService);
