@@ -144,6 +144,17 @@ function getDevUsuarios(): UsuarioItemTabela[] {
     try {
       const parsed: UsuarioItemTabela[] = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        const emailsExistentes = new Set(
+          parsed.map((u) => u.email?.toLowerCase()),
+        );
+        const faltantes = SEED_USUARIOS.filter(
+          (s) => !emailsExistentes.has(s.email.toLowerCase()),
+        );
+        if (faltantes.length > 0) {
+          const mesclados = [...parsed, ...faltantes];
+          localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(mesclados));
+          return mesclados;
+        }
         return parsed;
       }
     } catch {
