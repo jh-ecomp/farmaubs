@@ -175,8 +175,15 @@ export const usuarioService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch {
-      // Se a rota não existir no backend, recorre ao fallback de desenvolvimento
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
+      }
+    } catch (err) {
+      if (err instanceof UsuarioApiError) throw err;
+      // Se a rota não existir no backend (404), recorre ao fallback de desenvolvimento
     }
 
     // Fallback de desenvolvimento
@@ -228,7 +235,14 @@ export const usuarioService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch {
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
+      }
+    } catch (err) {
+      if (err instanceof UsuarioApiError) throw err;
       // Fallback
     }
     return INITIAL_MUNICIPIOS;
@@ -248,7 +262,14 @@ export const usuarioService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch {
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
+      }
+    } catch (err) {
+      if (err instanceof UsuarioApiError) throw err;
       // Fallback
     }
 
@@ -275,6 +296,13 @@ export const usuarioService = {
 
       if (res.ok) {
         return await res.json();
+      }
+
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
       }
     } catch (err) {
       if (err instanceof UsuarioApiError) throw err;
@@ -340,7 +368,14 @@ export const usuarioService = {
         },
       );
       if (res.ok) return;
-    } catch {
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
+      }
+    } catch (err) {
+      if (err instanceof UsuarioApiError) throw err;
       // Fallback
     }
 
@@ -370,7 +405,14 @@ export const usuarioService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch {
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
+      }
+    } catch (err) {
+      if (err instanceof UsuarioApiError) throw err;
       // Fallback
     }
 
@@ -423,7 +465,14 @@ export const usuarioService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch {
+      if (res.status >= 500) {
+        throw new UsuarioApiError(
+          "Erro interno no servidor (5xx).",
+          res.status,
+        );
+      }
+    } catch (err) {
+      if (err instanceof UsuarioApiError) throw err;
       // Fallback
     }
     return {

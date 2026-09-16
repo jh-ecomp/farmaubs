@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import "../index.css";
 import { useAuth } from "../contexts/AuthContext";
 import { authService, AuthError } from "../services/api";
+import { getDefaultRouteForUser } from "../utils/navigation";
 import logoFarmaUbs from "../assets/logofarmaubs.svg";
 
 // 1. Definindo as regras de validação (Zod) conforme os critérios e cenários 2 e 3
@@ -30,8 +31,16 @@ export default function Login() {
   const [erroApi, setErroApi] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const { login, logoutReason, clearLogoutReason } = useAuth(); // Contexto de Autenticação (ADR-013)
+  const { isAuthenticated, usuario, login, logoutReason, clearLogoutReason } =
+    useAuth(); // Contexto de Autenticação (ADR-013)
   const navigate = useNavigate(); // Redirecionar após login bem-sucedido (RF002)
+
+  // Redireciona usuário já autenticado para a tela padrão do seu perfil (evita reexibir login)
+  useEffect(() => {
+    if (isAuthenticated && usuario) {
+      navigate(getDefaultRouteForUser(usuario), { replace: true });
+    }
+  }, [isAuthenticated, usuario, navigate]);
 
   // 2. Configurando o React Hook Form (validando no submit)
   const {
@@ -59,20 +68,8 @@ export default function Login() {
         usuario: data.usuario,
       });
 
-      // Redirecionamento por perfil: somente Administrador acessa a Gestão de Usuários
-      const perfis = Array.isArray(data.usuario?.perfil)
-        ? data.usuario.perfil.map((p) => p.toUpperCase())
-        : [];
-
-      const isAdmin = perfis.some(
-        (p) => p === "ADMINISTRADOR" || p === "ADMIN",
-      );
-
-      if (isAdmin) {
-        navigate("/admin/usuarios");
-      } else {
-        navigate("/em-desenvolvimento");
-      }
+      // Redirecionamento por perfil via utilitário compartilhado
+      navigate(getDefaultRouteForUser(data.usuario));
     },
     onError: (error: unknown) => {
       // Cenários 4 (anti-enumeração), 5 (bloqueio temporário) e 6 (erro de rede)
@@ -94,6 +91,10 @@ export default function Login() {
   const handleForgotPassword = () => {
     setShowForgotModal(true);
   };
+
+  if (isAuthenticated && usuario) {
+    return null;
+  }
 
   return (
     <div className="login-container1">

@@ -1,4 +1,6 @@
-import { Construction } from "lucide-react";
+import { Construction, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import logoFarmaUbs from "../assets/logofarmaubs.svg";
 import "../index.css";
 
@@ -11,6 +13,14 @@ export default function EmDesenvolvimento({
   titulo = "Funcionalidade em Desenvolvimento",
   descricao = "Esta tela está em desenvolvimento e será disponibilizada nas próximas etapas do FarmaUBS.",
 }: EmDesenvolvimentoProps) {
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <div className="login-container1">
       <main
@@ -57,12 +67,31 @@ export default function EmDesenvolvimento({
             fontSize: "14px",
             color: "#64748B",
             lineHeight: "1.5",
-            margin: "0 0 8px 0",
+            margin: "0 0 24px 0",
             maxWidth: "360px",
           }}
         >
           {descricao}
         </p>
+
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="login-thq-primary-cta-button-elm"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              maxWidth: "200px",
+              margin: "0 auto",
+            }}
+          >
+            <LogOut size={16} />
+            Sair do Sistema
+          </button>
+        )}
       </main>
 
       <footer
