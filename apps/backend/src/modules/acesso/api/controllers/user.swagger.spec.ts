@@ -66,6 +66,7 @@ describe("Swagger Documentation - UserController", () => {
     // Validação de códigos de resposta documentados
     expect(postOp.responses["201"]).toBeDefined();
     expect(postOp.responses["400"]).toBeDefined();
+    expect(postOp.responses["401"]).toBeDefined();
     expect(postOp.responses["404"]).toBeDefined();
     expect(postOp.responses["409"]).toBeDefined();
 
