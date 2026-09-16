@@ -370,4 +370,68 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  describe("6. Redirecionamento de Usuário Já Autenticado", () => {
+    it("deve redirecionar para /admin/usuarios se usuário autenticado for ADMINISTRADOR e não renderizar o formulário", async () => {
+      localStorage.setItem("@FarmaUBS:token", "jwt-token-admin");
+      localStorage.setItem(
+        "@FarmaUBS:expiresAt",
+        new Date(Date.now() + 3600_000).toISOString(),
+      );
+      localStorage.setItem(
+        "@FarmaUBS:usuario",
+        JSON.stringify({
+          id: "usr-admin",
+          nome: "Administrador Teste",
+          email: "admin@farmaubs.gov.br",
+          perfil: ["ADMINISTRADOR"],
+          municipio_id: 1,
+          unidade_id: 1,
+        }),
+      );
+
+      renderWithProviders(<Login />);
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/admin/usuarios", {
+          replace: true,
+        });
+      });
+
+      expect(
+        screen.queryByRole("heading", { name: /acesso ao sistema/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("deve redirecionar para /em-desenvolvimento se usuário autenticado for farmacêutico ou outro perfil", async () => {
+      localStorage.setItem("@FarmaUBS:token", "jwt-token-farm");
+      localStorage.setItem(
+        "@FarmaUBS:expiresAt",
+        new Date(Date.now() + 3600_000).toISOString(),
+      );
+      localStorage.setItem(
+        "@FarmaUBS:usuario",
+        JSON.stringify({
+          id: "usr-farm",
+          nome: "Farmacêutico Teste",
+          email: "farmaceutico@farmaubs.gov.br",
+          perfil: ["FARMACEUTICO_RESPONSAVEL"],
+          municipio_id: 1,
+          unidade_id: 1,
+        }),
+      );
+
+      renderWithProviders(<Login />);
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/em-desenvolvimento", {
+          replace: true,
+        });
+      });
+
+      expect(
+        screen.queryByRole("heading", { name: /acesso ao sistema/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
 });

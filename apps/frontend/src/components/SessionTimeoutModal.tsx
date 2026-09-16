@@ -141,7 +141,7 @@ export default function SessionTimeoutModal() {
               borderRadius: "4px",
             }}
           >
-            NF012 / Segurança
+            Segurança
           </span>
         </div>
 
