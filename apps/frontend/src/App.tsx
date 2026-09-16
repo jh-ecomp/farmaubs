@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminCadastro from "./pages/AdminCadastro";
 import EmDesenvolvimento from "./pages/EmDesenvolvimento";
 import NotFound from "./pages/NotFound";
+import TrocarSenha from "./pages/TrocarSenha";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SessionTimeoutModal from "./components/SessionTimeoutModal";
 import { RoleRoute } from "./components/RoleRoute";
@@ -21,6 +22,16 @@ export default function App() {
         <Routes>
           {/* Rota pública da tela de Login (ADR-012) */}
           <Route path="/login" element={<Login />} />
+
+          {/* Rota de troca obrigatória de senha (RF003 / ADR-006) */}
+          <Route
+            path="/trocar-senha"
+            element={
+              <ProtectedRoute>
+                <TrocarSenha />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Rotas protegidas (exigem login ativo) */}
           <Route

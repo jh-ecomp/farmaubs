@@ -20,6 +20,7 @@ export interface UsuarioPayload {
   perfil: string[] | string;
   municipio_id: number;
   unidade_id: number;
+  deveTrocarSenha?: boolean;
 }
 
 export interface LoginResponse {

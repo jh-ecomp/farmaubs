@@ -1,6 +1,8 @@
 import type {
   LoginRequest,
   LoginResponse as BackendLoginResponse,
+  TrocarSenhaComando,
+  RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
 import type { LoginResponse } from "../types/auth";
 
@@ -196,5 +198,106 @@ export const authService = {
       ttlSeconds: 3600,
       warningSeconds: 300,
     };
+  },
+
+  async trocarSenha(dados: TrocarSenhaComando): Promise<{ mensagem: string }> {
+    const token = localStorage.getItem("@FarmaUBS:token");
+    let resposta: Response;
+    try {
+      resposta = await fetch(`${API_BASE_URL}/acesso/trocar-senha`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(dados),
+      });
+    } catch {
+      throw new AuthError(
+        "Não foi possível conectar ao servidor. Verifique sua conexão.",
+        "NETWORK_ERROR",
+      );
+    }
+
+    if (!resposta.ok) {
+      let errorData: { message?: string | string[] } = {};
+      try {
+        errorData = await resposta.json();
+      } catch {
+        // ignore
+      }
+
+      let msg = "";
+      if (Array.isArray(errorData.message)) {
+        msg = errorData.message.join(", ");
+      } else if (typeof errorData.message === "string") {
+        msg = errorData.message;
+      }
+
+      if (resposta.status === 400) {
+        throw new AuthError(
+          msg ||
+            "A nova senha não atende aos requisitos ou é igual à senha provisória.",
+          "VALIDATION_ERROR",
+        );
+      }
+
+      throw new AuthError(
+        msg || "Não foi possível alterar a senha.",
+        "UNKNOWN",
+      );
+    }
+
+    return await resposta.json();
+  },
+
+  async redefinirSenhaProvisoria(
+    usuarioId: string,
+    senhaProvisoria?: string,
+  ): Promise<RedefinirSenhaProvisoriaResultado> {
+    const token = localStorage.getItem("@FarmaUBS:token");
+    const payload = senhaProvisoria ? { senhaProvisoria } : {};
+    let res: Response;
+    try {
+      res = await fetch(
+        `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/senha-provisoria`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+    } catch {
+      throw new AuthError(
+        "Não foi possível conectar ao servidor. Verifique sua conexão.",
+        "NETWORK_ERROR",
+      );
+    }
+
+    if (!res.ok) {
+      let errorData: { message?: string | string[] } = {};
+      try {
+        errorData = await res.json();
+      } catch {
+        // ignore
+      }
+
+      let msg = "";
+      if (Array.isArray(errorData.message)) {
+        msg = errorData.message.join(", ");
+      } else if (typeof errorData.message === "string") {
+        msg = errorData.message;
+      }
+
+      throw new AuthError(
+        msg || "Não foi possível emitir senha provisória.",
+        "UNKNOWN",
+      );
+    }
+
+    return await res.json();
   },
 };

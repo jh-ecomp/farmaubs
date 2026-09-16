@@ -17,6 +17,7 @@ export interface AuthContextType extends AuthState {
   extendSession: () => Promise<void>;
   logoutReason: string | null;
   clearLogoutReason: () => void;
+  atualizarDeveTrocarSenha: (deveTrocar: boolean) => void;
 }
 
 // 2. Criando o Contexto
@@ -172,6 +173,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLogoutReason(null);
   };
 
+  const atualizarDeveTrocarSenha = (deveTrocar: boolean) => {
+    setAuthState((prev) => {
+      if (!prev.usuario) return prev;
+      const usuarioAtualizado = {
+        ...prev.usuario,
+        deveTrocarSenha: deveTrocar,
+      };
+      localStorage.setItem(
+        "@FarmaUBS:usuario",
+        JSON.stringify(usuarioAtualizado),
+      );
+      return {
+        ...prev,
+        usuario: usuarioAtualizado,
+      };
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -181,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         extendSession,
         logoutReason,
         clearLogoutReason,
+        atualizarDeveTrocarSenha,
       }}
     >
       {children}
