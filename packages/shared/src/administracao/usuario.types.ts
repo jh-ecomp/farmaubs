@@ -30,8 +30,11 @@ export interface CadastrarUsuarioComando {
   nomeCompleto: string;
   email: string;
   senha: string;
-  perfil: string;
+  perfil: PerfilCodigo | string;
   ubsIds: string[];
+  cpf?: string;
+  crf?: string;
+  deveTrocarSenha?: boolean;
 }
 
 export type RegisterUserCommand = CadastrarUsuarioComando;
@@ -66,4 +69,45 @@ export interface RedefinirSenhaProvisoriaResultado {
   usuarioId: string;
   senhaProvisoria: string;
   mensagem: string;
+}
+
+export interface UsuarioItemTabela {
+  id: string;
+  municipioId: string;
+  municipioNome?: string;
+  nomeCompleto: string;
+  email: string;
+  perfilCodigo: PerfilCodigo | string;
+  perfilNome?: string;
+  unidades: Array<{
+    id: string;
+    nome: string;
+    cnes?: string;
+  }>;
+  ativo: boolean;
+  cpf?: string;
+  crf?: string;
+  ultimoLoginEm?: Date | string | null;
+  createdAt: Date | string;
+}
+
+export interface ListagemUsuariosFiltros {
+  page?: number;
+  limit?: number;
+  busca?: string;
+  perfilId?: string;
+  municipioId?: string;
+  status?: string;
+}
+
+export interface ListagemUsuariosResultado {
+  data: UsuarioItemTabela[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AlterarStatusUsuarioComando {
+  ativo: boolean;
 }
