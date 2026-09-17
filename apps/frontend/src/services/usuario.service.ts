@@ -8,6 +8,8 @@ import type {
   UsuarioItemTabela,
 } from "@farmaubs/shared";
 
+import { inspectSessionExpiresHeader } from "./api";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 export class UsuarioApiError extends Error {
@@ -51,6 +53,7 @@ export const usuarioService = {
       res = await fetch(`${API_BASE_URL}/usuarios${queryString}`, {
         headers: getAuthHeaders(),
       });
+      res = inspectSessionExpiresHeader(res);
     } catch {
       throw new UsuarioApiError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",
@@ -76,6 +79,7 @@ export const usuarioService = {
       res = await fetch(`${API_BASE_URL}/administracao/municipios`, {
         headers: getAuthHeaders(),
       });
+      res = inspectSessionExpiresHeader(res);
     } catch {
       throw new UsuarioApiError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",
@@ -106,6 +110,7 @@ export const usuarioService = {
           headers: getAuthHeaders(),
         },
       );
+      res = inspectSessionExpiresHeader(res);
     } catch {
       throw new UsuarioApiError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",
@@ -135,6 +140,7 @@ export const usuarioService = {
         headers: getAuthHeaders(),
         body: JSON.stringify(dados),
       });
+      res = inspectSessionExpiresHeader(res);
     } catch {
       throw new UsuarioApiError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",
