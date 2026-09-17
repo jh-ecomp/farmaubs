@@ -7,6 +7,7 @@ import { ListUsersUseCase } from "./application/use-cases/list-users.use-case";
 import { EditUserUseCase } from "./application/use-cases/edit-user.use-case";
 import { UpdateAssociationsUseCase } from "./application/use-cases/update-associations.use-case";
 import { ToggleUserStatusUseCase } from "./application/use-cases/toggle-user-status.use-case";
+import { SetTemporaryPasswordUseCase } from "./application/use-cases/set-temporary-password.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "./application/use-cases/renew-session.use-case";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -38,6 +39,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     EditUserUseCase,
     UpdateAssociationsUseCase,
     ToggleUserStatusUseCase,
+    SetTemporaryPasswordUseCase,
     RolesGuard,
     {
       provide: ACESSO_REPOSITORY,
@@ -110,6 +112,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     EditUserUseCase,
     UpdateAssociationsUseCase,
     ToggleUserStatusUseCase,
+    SetTemporaryPasswordUseCase,
     RolesGuard,
     SESSION_REPOSITORY,
     CadastrarUsuarioUseCase,
