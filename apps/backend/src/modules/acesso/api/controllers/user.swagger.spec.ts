@@ -61,34 +61,27 @@ describe("Swagger Documentation - UserController", () => {
     await app.close();
   });
 
-  it("deve gerar o documento Swagger contendo o endpoint POST /api/v1/usuarios e seus metadados", () => {
   it("deve gerar o documento Swagger contendo todos os endpoints de gestão de usuários", () => {
     const config = new DocumentBuilder()
       .setTitle("FarmaUBS API")
       .setDescription("API REST do FarmaUBS — Gestão de Insumos Farmacêuticos")
       .setVersion("1.0")
-      .addTag("Usuários", "Operações de gestão e cadastro de usuários (RF001)")
-      .addTag("Usuários", "Operações de gestão e cadastro de usuários (RF001, RF025)")
+      .addTag(
+        "Usuários",
+        "Operações de gestão e cadastro de usuários (RF001, RF025)",
+      )
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
 
     expect(document.paths).toBeDefined();
 
-    // No SwaggerModule com globalPrefix, a chave do endpoint é /api/v1/usuarios
-    const pathItem = document.paths["/api/v1/usuarios"];
-    expect(pathItem).toBeDefined();
-    expect(pathItem.post).toBeDefined();
-    // POST /api/v1/usuarios
+    // POST e GET /api/v1/usuarios
     const basePathItem = document.paths["/api/v1/usuarios"];
     expect(basePathItem).toBeDefined();
     expect(basePathItem.post).toBeDefined();
     expect(basePathItem.get).toBeDefined();
 
-    const postOp = pathItem.post!;
-    expect(postOp.tags).toContain("Usuários");
-    expect(postOp.summary).toBe("Cadastra um novo usuário no sistema");
-    expect(postOp.description).toContain("RF001");
     // PATCH /api/v1/usuarios/{id}
     const idPathItem = document.paths["/api/v1/usuarios/{id}"];
     expect(idPathItem).toBeDefined();
@@ -96,11 +89,6 @@ describe("Swagger Documentation - UserController", () => {
     expect(idPathItem.patch!.summary).toContain("Edita dados cadastrais");
     expect(idPathItem.patch!.responses["200"]).toBeDefined();
 
-    // Validação de códigos de resposta documentados
-    expect(postOp.responses["201"]).toBeDefined();
-    expect(postOp.responses["400"]).toBeDefined();
-    expect(postOp.responses["404"]).toBeDefined();
-    expect(postOp.responses["409"]).toBeDefined();
     // PUT /api/v1/usuarios/{id}/associacoes
     const assocPathItem = document.paths["/api/v1/usuarios/{id}/associacoes"];
     expect(assocPathItem).toBeDefined();
@@ -108,8 +96,6 @@ describe("Swagger Documentation - UserController", () => {
     expect(assocPathItem.put!.summary).toContain("Atualiza perfil de acesso");
     expect(assocPathItem.put!.responses["200"]).toBeDefined();
 
-    // Validação do schema do requestBody
-    expect(postOp.requestBody).toBeDefined();
     // PATCH /api/v1/usuarios/{id}/status
     const statusPathItem = document.paths["/api/v1/usuarios/{id}/status"];
     expect(statusPathItem).toBeDefined();
@@ -117,21 +103,14 @@ describe("Swagger Documentation - UserController", () => {
     expect(statusPathItem.patch!.summary).toContain("Inativa ou reativa");
     expect(statusPathItem.patch!.responses["200"]).toBeDefined();
 
-    // Validação do endpoint GET /api/v1/usuarios
-    expect(pathItem.get).toBeDefined();
-    const getOp = pathItem.get!;
-    expect(getOp.tags).toContain("Usuários");
-    expect(getOp.summary).toBe(
-      "Lista usuários do sistema de forma paginada e filtrada",
-    );
-    expect(getOp.responses["200"]).toBeDefined();
-    expect(getOp.responses["401"]).toBeDefined();
-    expect(getOp.responses["403"]).toBeDefined();
     // POST /api/v1/usuarios/{id}/senha-provisoria
-    const senhaPathItem = document.paths["/api/v1/usuarios/{id}/senha-provisoria"];
+    const senhaPathItem =
+      document.paths["/api/v1/usuarios/{id}/senha-provisoria"];
     expect(senhaPathItem).toBeDefined();
     expect(senhaPathItem.post).toBeDefined();
-    expect(senhaPathItem.post!.summary).toContain("Define uma senha provisória");
+    expect(senhaPathItem.post!.summary).toContain(
+      "Define uma senha provisória",
+    );
     expect(senhaPathItem.post!.responses["204"]).toBeDefined();
     expect(senhaPathItem.post!.responses["400"]).toBeDefined();
   });

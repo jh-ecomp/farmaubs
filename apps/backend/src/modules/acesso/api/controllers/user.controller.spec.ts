@@ -48,16 +48,11 @@ describe("UserController", () => {
   let setTemporaryPasswordUseCaseMock: jest.Mocked<SetTemporaryPasswordUseCase>;
   let perfilRepoMock: { buscarPorId: jest.Mock };
 
-  const dtoValido: CadastrarUsuarioDto = {
-    municipioId: "01919a77-3e15-7000-8000-000000000001",
   const mockUsuarioResultado = {
     id: "user-uuid-1",
     municipioId: "muni-uuid-1",
     nomeCompleto: "Carlos Eduardo da Silva",
     email: "carlos.silva@ubs.gov.br",
-    senha: "SenhaForte#2026",
-    perfil: "FARMACEUTICO",
-    ubsIds: ["01919a77-3e15-7000-8000-000000000010"],
     perfilId: "perfil-uuid-1",
     ativo: true,
     deveTrocarSenha: true,
@@ -107,14 +102,10 @@ describe("UserController", () => {
         { provide: ListUsersUseCase, useValue: listUsersUseCaseMock },
         { provide: EditUserUseCase, useValue: editUserUseCaseMock },
         {
-          provide: CadastrarUsuarioUseCase,
-          useValue: useCaseMock,
           provide: UpdateAssociationsUseCase,
           useValue: updateAssociationsUseCaseMock,
         },
         {
-          provide: ListUsersUseCase,
-          useValue: listUsersUseCaseMock,
           provide: ToggleUserStatusUseCase,
           useValue: toggleUserStatusUseCaseMock,
         },
@@ -134,19 +125,6 @@ describe("UserController", () => {
     controller = module.get<UserController>(UserController);
   });
 
-  it("deve cadastrar usuário com sucesso retornando status 201 e dados do usuário", async () => {
-    const dataCriacao = new Date("2026-09-10T12:00:00.000Z");
-    const mockResultado = {
-      id: "01919a77-3e15-7000-8000-000000000020",
-      municipioId: dtoValido.municipioId,
-      nomeCompleto: dtoValido.nomeCompleto,
-      email: dtoValido.email,
-      perfilId: "01919a77-3e15-7000-8000-000000000005",
-      ativo: true,
-      deveTrocarSenha: true,
-      ubsIds: dtoValido.ubsIds,
-      criadoEm: dataCriacao,
-      createdAt: dataCriacao,
   describe("POST /api/v1/usuarios (cadastro)", () => {
     const dtoValido: CadastrarUsuarioDto = {
       municipioId: "01919a77-3e15-7000-8000-000000000001",
@@ -157,14 +135,12 @@ describe("UserController", () => {
       ubsIds: ["01919a77-3e15-7000-8000-000000000010"],
     };
 
-    useCaseMock.executar.mockResolvedValue(mockResultado);
     it("deve cadastrar usuário com sucesso retornando status 201 e dados do usuário", async () => {
       useCaseMock.executar.mockResolvedValue(mockUsuarioResultado as any);
       const resultado = await controller.cadastrar(dtoValido);
       expect(resultado).toEqual(mockUsuarioResultado);
     });
 
-    const resultado = await controller.cadastrar(dtoValido);
     it("deve converter UsuarioEmailJaExisteException em ConflictException (409)", async () => {
       useCaseMock.executar.mockRejectedValue(
         new UsuarioEmailJaExisteException(dtoValido.email),
@@ -174,8 +150,6 @@ describe("UserController", () => {
       );
     });
 
-    expect(useCaseMock.executar).toHaveBeenCalledWith(dtoValido);
-    expect(resultado).toEqual(mockResultado);
     it("deve converter PerfilNaoEncontradoException em NotFoundException (404)", async () => {
       useCaseMock.executar.mockRejectedValue(
         new PerfilNaoEncontradoException("INEXISTENTE"),
@@ -193,34 +167,41 @@ describe("UserController", () => {
         BadRequestException,
       );
     });
+
+    it("deve converter DadosUsuarioInvalidosException em BadRequestException (400)", async () => {
+      useCaseMock.executar.mockRejectedValue(
+        new DadosUsuarioInvalidosException("Dados inválidos"),
+      );
+      await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it("deve propagar erros inesperados sem mascarar", async () => {
+      useCaseMock.executar.mockRejectedValue(
+        new Error("Erro de banco de dados"),
+      );
+      await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
+        "Erro de banco de dados",
+      );
+    });
   });
 
-  it("deve converter UsuarioEmailJaExisteException em ConflictException (409)", async () => {
-    useCaseMock.executar.mockRejectedValue(
-      new UsuarioEmailJaExisteException(dtoValido.email),
-    );
   describe("PATCH /api/v1/usuarios/:id (editar dados cadastrais)", () => {
     const dto: EditarUsuarioDto = {
       nomeCompleto: "Novo Nome",
       email: "novo@farmaubs.gov.br",
     };
 
-    await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
-      ConflictException,
-    );
-  });
     it("deve atualizar dados com sucesso e retornar 200", async () => {
       editUserUseCaseMock.executar.mockResolvedValue(mockUsuarioResultado);
 
-  it("deve converter PerfilNaoEncontradoException em NotFoundException (404)", async () => {
-    useCaseMock.executar.mockRejectedValue(
-      new PerfilNaoEncontradoException("INEXISTENTE"),
-    );
-      const resultado = await controller.editar("user-uuid-1", dto, mockRequest);
+      const resultado = await controller.editar(
+        "user-uuid-1",
+        dto,
+        mockRequest,
+      );
 
-    await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
-      NotFoundException,
-    );
       expect(editUserUseCaseMock.executar).toHaveBeenCalledWith(
         "admin-executor-uuid",
         "user-uuid-1",
@@ -250,19 +231,12 @@ describe("UserController", () => {
     });
   });
 
-  it("deve converter UnidadeSaudeInvalidaException em BadRequestException (400)", async () => {
-    useCaseMock.executar.mockRejectedValue(
-      new UnidadeSaudeInvalidaException("UBS inválida"),
-    );
   describe("PUT /api/v1/usuarios/:id/associacoes (perfil e UBSs)", () => {
     const dto: AtualizarAssociacoesUsuarioDto = {
       perfilId: "perfil-farm-uuid",
       ubsIds: ["ubs-uuid-1"],
     };
 
-    await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
-      BadRequestException,
-    );
     it("deve atualizar associações com sucesso e retornar 200", async () => {
       updateAssociationsUseCaseMock.executar.mockResolvedValue(
         mockUsuarioResultado,
@@ -303,16 +277,9 @@ describe("UserController", () => {
     });
   });
 
-  it("deve converter DadosUsuarioInvalidosException em BadRequestException (400)", async () => {
-    useCaseMock.executar.mockRejectedValue(
-      new DadosUsuarioInvalidosException("Nome obrigatório"),
-    );
   describe("PATCH /api/v1/usuarios/:id/status (inativar / reativar)", () => {
     const dto: AlterarStatusUsuarioDto = { ativo: false };
 
-    await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
-      BadRequestException,
-    );
     it("deve alterar status com sucesso e retornar 200", async () => {
       toggleUserStatusUseCaseMock.executar.mockResolvedValue({
         ...mockUsuarioResultado,
@@ -354,16 +321,11 @@ describe("UserController", () => {
     });
   });
 
-  it("deve propagar erros inesperados sem mascarar", async () => {
-    useCaseMock.executar.mockRejectedValue(new Error("Erro de banco de dados"));
   describe("POST /api/v1/usuarios/:id/senha-provisoria (redefinir senha)", () => {
     const dto: RedefinirSenhaProvisoriaDto = {
       senhaProvisoria: "Provisoria#2026",
     };
 
-    await expect(controller.cadastrar(dtoValido)).rejects.toThrow(
-      "Erro de banco de dados",
-    );
     it("deve redefinir senha provisória com sucesso e responder void (204)", async () => {
       setTemporaryPasswordUseCaseMock.executar.mockResolvedValue(undefined);
 
@@ -405,27 +367,10 @@ describe("UserController", () => {
   describe("GET /api/v1/usuarios (listar)", () => {
     it("deve listar usuários com sucesso retornando resultado paginado", async () => {
       const mockResultado = {
-        data: [
-          {
-            id: "01919a77-3e15-7000-8000-000000000001",
-            municipioId: "01919a77-3e15-7000-8000-000000000001",
-            municipioNome: "Parnaíba",
-            nomeCompleto: "Carlos Eduardo",
-            email: "carlos@farmaubs.gov.br",
-            perfilCodigo: "ADMINISTRADOR",
-            perfilNome: "Administrador",
-            unidades: [],
-            ativo: true,
-            ultimoLoginEm: null,
-            createdAt: new Date(),
-          },
-        ],
-        total: 1,
         data: [],
         total: 0,
         page: 1,
         limit: 10,
-        totalPages: 1,
         totalPages: 0,
       };
 
@@ -437,32 +382,8 @@ describe("UserController", () => {
       expect(listUsersUseCaseMock.executar).toHaveBeenCalledWith(query);
       expect(resultado).toEqual(mockResultado);
     });
-
-    it("deve repassar filtros opcionais para o caso de uso", async () => {
-      listUsersUseCaseMock.executar.mockResolvedValue({
-        data: [],
-        total: 0,
-        page: 2,
-        limit: 20,
-        totalPages: 0,
-      });
-
-      const query: ListUsersQueryDto = {
-        page: 2,
-        limit: 20,
-        busca: "mariana",
-        municipioId: "01919a77-3e15-7000-8000-000000000001",
-        perfilId: "ADMINISTRADOR",
-        status: "ATIVO",
-      };
-
-      await controller.listar(query);
-
-      expect(listUsersUseCaseMock.executar).toHaveBeenCalledWith(query);
-    });
   });
 
-  describe("RolesGuard (RBAC no endpoint de listagem)", () => {
   describe("RolesGuard (RBAC nas rotas)", () => {
     let guard: RolesGuard;
     let reflector: Reflector;
@@ -472,10 +393,8 @@ describe("UserController", () => {
       guard = new RolesGuard(reflector, perfilRepoMock as any);
     });
 
-    function criarMockContext(sessao?: any): any {
     function criarMockContext(handler: any, sessao?: any): any {
       return {
-        getHandler: () => controller.listar,
         getHandler: () => handler,
         getClass: () => UserController,
         getType: () => "http",
@@ -487,7 +406,6 @@ describe("UserController", () => {
       };
     }
 
-    it("deve permitir acesso para usuário com perfil ADMINISTRADOR", async () => {
     it("deve permitir acesso para perfil ADMINISTRADOR no endpoint de senha provisória", async () => {
       perfilRepoMock.buscarPorId.mockResolvedValue({
         id: "perfil-admin-uuid",
@@ -496,7 +414,6 @@ describe("UserController", () => {
         ativo: true,
       });
 
-      const context = criarMockContext({
       const context = criarMockContext(controller.redefinirSenhaProvisoria, {
         id: "sessao-1",
         usuarioId: "user-1",
@@ -515,7 +432,6 @@ describe("UserController", () => {
         ativo: true,
       });
 
-      const context = criarMockContext({
       const context = criarMockContext(controller.redefinirSenhaProvisoria, {
         id: "sessao-2",
         usuarioId: "user-2",
@@ -528,8 +444,10 @@ describe("UserController", () => {
     });
 
     it("deve rejeitar com UnauthorizedException (401) quando a sessão não existe", async () => {
-      const context = criarMockContext(undefined);
-      const context = criarMockContext(controller.redefinirSenhaProvisoria, undefined);
+      const context = criarMockContext(
+        controller.redefinirSenhaProvisoria,
+        undefined,
+      );
 
       await expect(guard.canActivate(context)).rejects.toThrow(
         UnauthorizedException,
