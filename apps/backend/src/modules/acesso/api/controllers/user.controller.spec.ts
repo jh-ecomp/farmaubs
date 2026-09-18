@@ -382,6 +382,29 @@ describe("UserController", () => {
       expect(listUsersUseCaseMock.executar).toHaveBeenCalledWith(query);
       expect(resultado).toEqual(mockResultado);
     });
+
+    it("deve repassar filtros opcionais para o caso de uso", async () => {
+      listUsersUseCaseMock.executar.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 2,
+        limit: 20,
+        totalPages: 0,
+      });
+
+      const query: ListUsersQueryDto = {
+        page: 2,
+        limit: 20,
+        busca: "mariana",
+        municipioId: "01919a77-3e15-7000-8000-000000000001",
+        perfilId: "ADMINISTRADOR",
+        status: "ATIVO",
+      };
+
+      await controller.listar(query);
+
+      expect(listUsersUseCaseMock.executar).toHaveBeenCalledWith(query);
+    });
   });
 
   describe("RolesGuard (RBAC nas rotas)", () => {

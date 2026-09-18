@@ -89,6 +89,13 @@ describe("Swagger Documentation - UserController", () => {
     expect(idPathItem.patch!.summary).toContain("Edita dados cadastrais");
     expect(idPathItem.patch!.responses["200"]).toBeDefined();
 
+    // Validação de códigos de resposta documentados no POST /api/v1/usuarios
+    expect(basePathItem.post!.responses["201"]).toBeDefined();
+    expect(basePathItem.post!.responses["400"]).toBeDefined();
+    expect(basePathItem.post!.responses["401"]).toBeDefined();
+    expect(basePathItem.post!.responses["404"]).toBeDefined();
+    expect(basePathItem.post!.responses["409"]).toBeDefined();
+
     // PUT /api/v1/usuarios/{id}/associacoes
     const assocPathItem = document.paths["/api/v1/usuarios/{id}/associacoes"];
     expect(assocPathItem).toBeDefined();
