@@ -146,7 +146,7 @@ describe("AcessoPgRepository — integração (camada B)", () => {
       .digest("hex");
 
     const rows = await admin.query(
-      `SELECT * FROM acesso_buscar_sessao_por_token($1)`,
+      `SELECT * FROM auth_buscar_sessao_por_token($1)`,
       [tokenHash],
     );
     expect(rows).toHaveLength(0);
