@@ -51,11 +51,18 @@ beforeAll(async () => {
   // (farmaubs_app tem RLS — sem GUC setado o UPDATE não afeta nenhuma linha)
   dsAdmin = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST ?? "localhost",
-    port: parseInt(process.env.DB_PORT ?? "5434", 10),
-    database: process.env.POSTGRES_DB ?? "farmaubs",
+    host: process.env.TEST_DB_HOST ?? process.env.DB_HOST ?? "localhost",
+    port: parseInt(
+      process.env.TEST_DB_PORT ?? process.env.DB_PORT ?? "5435",
+      10,
+    ),
+    database:
+      process.env.TEST_DB_DATABASE ?? process.env.POSTGRES_DB ?? "farmaubs",
     username: process.env.MIGRATION_DB_USER ?? "farmaubs_admin",
-    password: process.env.MIGRATION_DB_PASSWORD ?? "",
+    password:
+      process.env.TEST_ADMIN_DB_PASSWORD ??
+      process.env.MIGRATION_DB_PASSWORD ??
+      "farmaubs_test_password",
     synchronize: false,
     logging: false,
   });
@@ -111,7 +118,20 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
         .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
 
       expect(res.body).toMatchObject({
-        usuarioId: expect.any(String),
+        usuario: expect.objectContaining({
+          id: expect.any(String),
+          nomeCompleto: expect.any(String),
+          email: expect.any(String),
+          perfilCodigo: expect.any(String),
+          municipioId: expect.any(String),
+          unidadeIds: expect.any(Array),
+          deveTrocarSenha: expect.any(Boolean),
+        }),
+        sessao: expect.objectContaining({
+          expiresAt: expect.any(String),
+          ttlSeconds: expect.any(Number),
+          warningSeconds: expect.any(Number),
+        }),
         redirectUrl: "/dashboard",
       });
     });
@@ -282,7 +302,7 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res.body).toMatchObject({
         usuarioId: expect.any(String),
         municipioId: expect.any(String),
-        perfilId: expect.any(String),
+        perfilCodigo: expect.any(String),
         unidadeIds: expect.any(Array),
         expiresAt: expect.any(String),
       });

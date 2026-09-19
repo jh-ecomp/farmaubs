@@ -20,9 +20,9 @@ export function AdminUsuarios() {
   const defaultNome = "Administrador Geral";
   const defaultEmail = "admin@farmaubs.dev";
   const userNome =
-    !loggedUser?.nome || loggedUser.nome.includes("Carlos Mendonça")
+    !loggedUser?.nomeCompleto || loggedUser.nomeCompleto.includes("Carlos Mendonça")
       ? defaultNome
-      : loggedUser.nome;
+      : loggedUser.nomeCompleto;
   const userEmail =
     !loggedUser?.email || loggedUser.email.includes("carlos")
       ? defaultEmail

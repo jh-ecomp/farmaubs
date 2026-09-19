@@ -186,14 +186,15 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
         expiresAt: new Date(Date.now() + 3600_000).toISOString(),
         ttlSeconds: 3600,
         warningSeconds: 300,
-        usuarioId: "123",
         redirectUrl: "/em-desenvolvimento",
         usuario: {
-          nome: "Farmacêutico",
+          id: "123",
+          nomeCompleto: "Farmacêutico",
           email: "farmaceutico@saude.gov.br",
-          perfil: ["FARMACEUTICO"],
-          municipio_id: 1,
-          unidade_id: 1,
+          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          municipioId: "uuid-municipio-1",
+          unidadeIds: [],
+          deveTrocarSenha: false,
         },
       });
 
@@ -288,14 +289,15 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
         expiresAt: new Date(Date.now() + 3600_000).toISOString(),
         ttlSeconds: 3600,
         warningSeconds: 300,
-        usuarioId: "uuid-user-1",
         redirectUrl: "/em-desenvolvimento",
         usuario: {
-          nome: "Maria Farmacêutica",
+          id: "uuid-user-1",
+          nomeCompleto: "Maria Farmacêutica",
           email: "maria@saude.parnaiba.pi.gov.br",
-          perfil: ["FARMACEUTICO"],
-          municipio_id: 1,
-          unidade_id: 1,
+          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          municipioId: "uuid-municipio-1",
+          unidadeIds: [],
+          deveTrocarSenha: false,
         },
       });
 

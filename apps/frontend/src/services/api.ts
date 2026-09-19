@@ -152,40 +152,21 @@ export const authService = {
     const token = authHeader ? authHeader.replace(/^Bearer\s+/i, "") : "";
     const body: BackendLoginResponse = await resposta.json();
 
-    // Determina o perfil e nome do usuário autenticado
-    const emailLower = dadosLogin.email.trim().toLowerCase();
-    let perfil = ["FARMACEUTICO"];
-    let nome = "Profissional de Saúde";
-
-    if (emailLower.includes("admin")) {
-      perfil = ["ADMINISTRADOR"];
-      nome = "Administrador Geral";
-    } else if (emailLower.includes("gestor")) {
-      perfil = ["GESTOR"];
-      nome = "Gestor Municipal";
-    } else if (emailLower.includes("residente")) {
-      perfil = ["FARMACEUTICO_RESIDENTE"];
-      nome = "Farmacêutico Residente";
-    } else if (emailLower.includes("responsavel")) {
-      perfil = ["FARMACEUTICO_RESPONSAVEL"];
-      nome = "Farmacêutico Responsável";
-    }
-
     return {
       token,
-      expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
-      ttlSeconds: 3600,
-      warningSeconds: 300,
-      usuarioId: body.usuarioId,
-      redirectUrl: body.redirectUrl,
+      expiresAt: body.sessao.expiresAt,
+      ttlSeconds: body.sessao.ttlSeconds,
+      warningSeconds: body.sessao.warningSeconds,
       usuario: {
-        id: body.usuarioId,
-        nome,
-        email: dadosLogin.email,
-        perfil,
-        municipio_id: 1,
-        unidade_id: 1,
+        id: body.usuario.id,
+        nomeCompleto: body.usuario.nomeCompleto,
+        email: body.usuario.email,
+        perfilCodigo: body.usuario.perfilCodigo,
+        municipioId: body.usuario.municipioId,
+        unidadeIds: body.usuario.unidadeIds,
+        deveTrocarSenha: body.usuario.deveTrocarSenha,
       },
+      redirectUrl: body.redirectUrl,
     };
   },
 

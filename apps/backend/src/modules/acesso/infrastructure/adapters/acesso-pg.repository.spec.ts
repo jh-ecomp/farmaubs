@@ -31,11 +31,11 @@ let sessionRepo: SessionPgRepository;
 beforeAll(async () => {
   ds = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST ?? "localhost",
-    port: parseInt(process.env.DB_PORT ?? "5434", 10),
-    database: process.env.POSTGRES_DB ?? "farmaubs",
-    username: process.env.POSTGRES_USER ?? "farmaubs_admin",
-    password: process.env.POSTGRES_PASSWORD ?? "",
+    host: process.env.TEST_DB_HOST ?? process.env.DB_HOST ?? "localhost",
+    port: parseInt(process.env.TEST_DB_PORT ?? process.env.DB_PORT ?? "5435", 10),
+    database: process.env.TEST_DB_DATABASE ?? process.env.POSTGRES_DB ?? "farmaubs",
+    username: process.env.TEST_DB_USERNAME ?? process.env.POSTGRES_USER ?? "farmaubs_admin",
+    password: process.env.TEST_ADMIN_DB_PASSWORD ?? process.env.POSTGRES_PASSWORD ?? "",
     synchronize: false,
     logging: false,
   });
@@ -296,7 +296,7 @@ describe("SessionPgRepository (integração — camada B)", () => {
       expect(sessao).not.toBeNull();
       expect(sessao!.usuarioId).toBe(usuarioId);
       expect(typeof sessao!.municipioId).toBe("string");
-      expect(typeof sessao!.perfilId).toBe("string");
+      expect(typeof sessao!.perfilCodigo).toBe("string");
       expect(Array.isArray(sessao!.unidadeIds)).toBe(true);
       expect(sessao!.status).toBe("ativa");
       expect(sessao!.expiraEm).toBeInstanceOf(Date);
