@@ -6,9 +6,10 @@ import type {
   MunicipioDto,
   UnidadeSaudeDto,
   UsuarioItemTabela,
+  RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
 
-import { inspectSessionExpiresHeader } from "./api";
+import { authService, inspectSessionExpiresHeader } from "./api";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -228,32 +229,10 @@ export const usuarioService = {
     return await res.json();
   },
 
-  async redefinirSenha(usuarioId: string): Promise<{ mensagem: string }> {
-    let res: Response;
-    try {
-      res = await fetch(
-        `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/redefinir-senha`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-        },
-      );
-    } catch {
-      throw new UsuarioApiError(
-        "Não foi possível conectar ao servidor. Verifique sua conexão.",
-        0,
-      );
-    }
-
-    if (!res.ok) {
-      const erro = await res.json().catch(() => ({}));
-      throw new UsuarioApiError(
-        erro.message || "Erro ao solicitar redefinição de senha.",
-        res.status,
-        erro,
-      );
-    }
-
-    return await res.json();
+  async redefinirSenha(
+    usuarioId: string,
+    senhaProvisoria?: string,
+  ): Promise<RedefinirSenhaProvisoriaResultado> {
+    return authService.redefinirSenhaProvisoria(usuarioId, senhaProvisoria);
   },
 };

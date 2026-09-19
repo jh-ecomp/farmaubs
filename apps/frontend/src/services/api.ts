@@ -342,6 +342,20 @@ export const authService = {
       );
     }
 
-    return await res.json();
+    // Se a API responder 204 No Content, não tenta fazer parse do corpo JSON
+    if (res.status === 204) {
+      return {
+        usuarioId,
+        senhaProvisoria: payload.senhaProvisoria || "",
+        mensagem: "Senha provisória emitida com sucesso.",
+      };
+    }
+
+    const data = await res.json().catch(() => ({}));
+    return {
+      usuarioId: data.usuarioId || usuarioId,
+      senhaProvisoria: data.senhaProvisoria || payload.senhaProvisoria || "",
+      mensagem: data.mensagem || "Senha provisória emitida com sucesso.",
+    };
   },
 };
