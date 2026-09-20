@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useSessionTimeout } from "../hooks/useSessionTimeout";
 
 export default function SessionTimeoutModal() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { expiresAt, warningSeconds, isAuthenticated, extendSession, logout } =
     useAuth();
 
   const [isExtending, setIsExtending] = useState(false);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
+  const secondaryButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const handleTimeout = () => {
+    queryClient.clear();
     logout(
       "Sua sessão expirou por inatividade. Faça login novamente para continuar.",
     );
@@ -46,8 +50,25 @@ export default function SessionTimeoutModal() {
   };
 
   const handleLogout = () => {
+    queryClient.clear();
     logout();
     navigate("/login");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Tab") {
+      if (e.shiftKey) {
+        if (document.activeElement === secondaryButtonRef.current) {
+          e.preventDefault();
+          primaryButtonRef.current?.focus();
+        }
+      } else {
+        if (document.activeElement === primaryButtonRef.current) {
+          e.preventDefault();
+          secondaryButtonRef.current?.focus();
+        }
+      }
+    }
   };
 
   // Se restar menos de 1 minuto, destaca com tom de urgência visual
@@ -73,6 +94,7 @@ export default function SessionTimeoutModal() {
         aria-modal="true"
         aria-labelledby="session-timeout-title"
         aria-describedby="session-timeout-description"
+        onKeyDown={handleKeyDown}
         style={{
           width: "100%",
           maxWidth: "440px",
@@ -205,6 +227,7 @@ export default function SessionTimeoutModal() {
           }}
         >
           <button
+            ref={secondaryButtonRef}
             type="button"
             onClick={handleLogout}
             style={{

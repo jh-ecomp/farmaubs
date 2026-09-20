@@ -41,6 +41,7 @@ export function useSessionTimeout({
   useEffect(() => {
     timeoutTriggeredRef.current = false;
     if (!isAuthenticated || !expiresAt) {
+      setSecondsRemaining(0);
       return;
     }
 
@@ -53,6 +54,8 @@ export function useSessionTimeout({
         onTimeout();
       }
     };
+
+    tick();
 
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);

@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 import type { UsuarioPayload } from "../types/auth";
-import { authService } from "../services/api";
+import { authService, onSessionExpiresUpdate } from "../services/api";
 
 export interface AuthState {
   token: string | null;
@@ -15,6 +21,7 @@ export interface AuthContextType extends AuthState {
   login: (dadosAuth: Omit<AuthState, "isAuthenticated">) => void;
   logout: (motivo?: string) => void;
   extendSession: () => Promise<void>;
+  updateExpiresAt?: (expiresAt: string) => void;
   logoutReason: string | null;
   clearLogoutReason: () => void;
   atualizarDeveTrocarSenha: (deveTrocar: boolean) => void;
@@ -92,6 +99,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: false,
     };
   });
+
+  // NF012 / AC-20: Sincronização reativa via cabeçalho X-Session-Expires-At (sem polling)
+  useEffect(() => {
+    if (typeof onSessionExpiresUpdate !== "function") return;
+    const unsubscribe = onSessionExpiresUpdate((novoExpiresAt) => {
+      setAuthState((prev) => {
+        if (!prev.isAuthenticated) return prev;
+        return {
+          ...prev,
+          expiresAt: novoExpiresAt,
+        };
+      });
+    });
+    return unsubscribe;
+  }, []);
+
+  const updateExpiresAt = (novoExpiresAt: string) => {
+    localStorage.setItem("@FarmaUBS:expiresAt", novoExpiresAt);
+    setAuthState((prev) => ({
+      ...prev,
+      expiresAt: novoExpiresAt,
+    }));
+  };
 
   const login = (dadosAuth: Omit<AuthState, "isAuthenticated">) => {
     setAuthState({
@@ -198,6 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         extendSession,
+        updateExpiresAt,
         logoutReason,
         clearLogoutReason,
         atualizarDeveTrocarSenha,
