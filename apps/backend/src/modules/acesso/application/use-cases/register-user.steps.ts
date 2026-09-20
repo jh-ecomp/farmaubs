@@ -76,7 +76,7 @@ defineFeature(feature, (test) => {
             atualizadoEm: new Date(),
           }),
         ),
-    };
+    } as unknown as jest.Mocked<RepositorioUsuarioPort>;
 
     repositorioPerfilMock = {
       buscarPorId: jest.fn().mockResolvedValue(null),

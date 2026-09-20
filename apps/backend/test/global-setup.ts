@@ -1,29 +1,35 @@
-import 'ts-node/register/transpile-only';
-import { DataSource } from 'typeorm';
-import * as path from 'node:path';
-import { config as loadEnv } from 'dotenv';
+import * as path from "node:path";
+import { register } from "ts-node";
+
+register({
+  transpileOnly: true,
+  project: path.resolve(__dirname, "../tsconfig.json"),
+});
+
+import { DataSource } from "typeorm";
+import { config as loadEnv } from "dotenv";
 
 export default async function globalSetup(): Promise<void> {
-  loadEnv({ path: path.resolve(process.cwd(), '../../.env') });
+  loadEnv({ path: path.resolve(process.cwd(), "../../.env") });
 
   const password =
     process.env.TEST_ADMIN_DB_PASSWORD ??
     process.env.TEST_DB_PASSWORD ??
-    'farmaubs_test_password';
-  const host = process.env.TEST_DB_HOST ?? 'localhost';
-  const port = process.env.TEST_DB_PORT ?? '5435';
-  const database = process.env.TEST_DB_DATABASE ?? 'farmaubs';
+    "farmaubs_test_password";
+  const host = process.env.TEST_DB_HOST ?? "localhost";
+  const port = process.env.TEST_DB_PORT ?? "5435";
+  const database = process.env.TEST_DB_DATABASE ?? "farmaubs";
   const url =
     process.env.TEST_ADMIN_DATABASE_URL ??
     `postgresql://farmaubs_admin:${encodeURIComponent(password)}@${host}:${port}/${database}`;
 
   const dataSource = new DataSource({
-    type: 'postgres',
+    type: "postgres",
     url,
     migrations: [
       path.join(
         __dirname,
-        '../src/modules/**/infrastructure/persistence/migrations/!(*.spec).ts',
+        "../src/modules/**/infrastructure/persistence/migrations/!(*.spec).ts",
       ),
     ],
   });

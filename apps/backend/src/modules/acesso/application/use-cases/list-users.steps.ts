@@ -21,7 +21,7 @@ defineFeature(feature, (test) => {
       existePorEmail: jest.fn(),
       salvar: jest.fn(),
       listar: jest.fn(),
-    };
+    } as unknown as jest.Mocked<RepositorioUsuarioPort>;
     useCase = new ListUsersUseCase(usuarioRepoMock);
   });
 

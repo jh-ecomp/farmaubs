@@ -111,3 +111,45 @@ export interface ListagemUsuariosResultado {
 export interface AlterarStatusUsuarioComando {
   ativo: boolean;
 }
+
+export interface EditarUsuarioComando {
+  nomeCompleto?: string;
+  email?: string;
+}
+
+export interface AtualizarAssociacoesUsuarioComando {
+  perfilId: string;
+  ubsIds: string[];
+}
+
+export interface UsuarioAtualizadoResultado {
+  id: string;
+  municipioId: string;
+  nomeCompleto: string;
+  email: string;
+  perfilId: string;
+  ativo: boolean;
+  deveTrocarSenha: boolean;
+  ubsIds: string[];
+  atualizadoEm: Date;
+}
+
+export const TipoOperacaoAuditoria = {
+  EDICAO_DADOS: "EDICAO_DADOS",
+  MUDANCA_PERFIL_UBSS: "MUDANCA_PERFIL_UBSS",
+  INATIVACAO: "INATIVACAO",
+  REATIVACAO: "REATIVACAO",
+  REDEFINICAO_SENHA_PROVISORIA: "REDEFINICAO_SENHA_PROVISORIA",
+} as const;
+
+export type TipoOperacaoAuditoria =
+  (typeof TipoOperacaoAuditoria)[keyof typeof TipoOperacaoAuditoria];
+
+export interface EventoAuditoria {
+  id?: string;
+  usuarioExecutorId: string;
+  usuarioAlvoId: string;
+  tipoOperacao: TipoOperacaoAuditoria;
+  detalhes: Record<string, unknown>;
+  createdAt?: Date;
+}

@@ -242,6 +242,118 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     };
   }
 
+  async buscarPorId(id: string): Promise<UsuarioModeloDominio | null> {
+    const manager = this.transactionContext.getManager();
+    const user = await manager.findOne(User, { where: { id } });
+    return user ? this.mapearParaDominio(user) : null;
+  }
+
+  async buscarUbsIds(usuarioId: string): Promise<string[]> {
+    const manager = this.transactionContext.getManager();
+    const vinculos = await manager.find(UserUnit, {
+      where: { usuarioId, ativo: true },
+      select: { unidadeId: true },
+    });
+    return vinculos.map((v) => v.unidadeId);
+  }
+
+  async atualizarDados(
+    id: string,
+    dados: { nomeCompleto?: string; email?: string },
+  ): Promise<UsuarioModeloDominio> {
+    const manager = this.transactionContext.getManager();
+    const updatePayload: Partial<User> = { updated_at: new Date() };
+    if (dados.nomeCompleto !== undefined) {
+      updatePayload.nome_completo = dados.nomeCompleto.trim();
+    }
+    if (dados.email !== undefined) {
+      updatePayload.email = dados.email.trim().toLowerCase();
+    }
+    await manager.update(User, { id }, updatePayload);
+    const atualizado = await this.buscarPorId(id);
+    if (!atualizado) {
+      throw new Error(`Usuário ${id} não encontrado após atualização`);
+    }
+    return atualizado;
+  }
+
+  async atualizarPerfilEUbs(
+    usuarioId: string,
+    perfilId: string,
+    ubsIds: string[],
+  ): Promise<void> {
+    const manager = this.transactionContext.getManager();
+    await manager.update(
+      User,
+      { id: usuarioId },
+      { perfil_id: perfilId, updated_at: new Date() },
+    );
+
+    const ubsSet = new Set(ubsIds);
+    const vinculosAtuais = await manager.find(UserUnit, {
+      where: { usuarioId },
+    });
+    const idsAtuais = new Set(vinculosAtuais.map((v) => v.unidadeId));
+
+    const paraRemover = vinculosAtuais.filter((v) => !ubsSet.has(v.unidadeId));
+    if (paraRemover.length > 0) {
+      await manager.remove(UserUnit, paraRemover);
+    }
+
+    const paraInserir = ubsIds
+      .filter((id) => !idsAtuais.has(id))
+      .map((unidadeId) => {
+        const uu = new UserUnit();
+        uu.id = randomUUID();
+        uu.usuarioId = usuarioId;
+        uu.unidadeId = unidadeId;
+        uu.ativo = true;
+        return uu;
+      });
+    if (paraInserir.length > 0) {
+      await manager.save(UserUnit, paraInserir);
+    }
+  }
+
+  async atualizarStatus(
+    id: string,
+    ativo: boolean,
+  ): Promise<UsuarioModeloDominio> {
+    const manager = this.transactionContext.getManager();
+    await manager.update(User, { id }, { ativo, updated_at: new Date() });
+    const atualizado = await this.buscarPorId(id);
+    if (!atualizado) {
+      throw new Error(`Usuário ${id} não encontrado após alteração de status`);
+    }
+    return atualizado;
+  }
+
+  async atualizarSenhaProvisoria(id: string, senhaHash: string): Promise<void> {
+    const manager = this.transactionContext.getManager();
+    await manager.update(
+      User,
+      { id },
+      {
+        senha_hash: senhaHash,
+        deve_trocar_senha: true,
+        tentativas_login_falhas: 0,
+        bloqueado_ate: null,
+        senha_atualizada_em: new Date(),
+        updated_at: new Date(),
+      },
+    );
+  }
+
+  async contarAdministradoresAtivos(): Promise<number> {
+    const manager = this.transactionContext.getManager();
+    return await manager
+      .createQueryBuilder(User, "u")
+      .innerJoin(PerfilEntity, "p", "p.id = u.perfil_id")
+      .where("p.codigo = :codigo", { codigo: "ADMINISTRADOR" })
+      .andWhere("u.ativo = true")
+      .getCount();
+  }
+
   private mapearParaDominio(user: User): UsuarioModeloDominio {
     const criadoEm = user.created_at ?? new Date();
     const atualizadoEm = user.updated_at ?? new Date();
