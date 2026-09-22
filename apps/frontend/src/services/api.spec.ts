@@ -124,4 +124,110 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
       unsubscribe();
     });
   });
+
+  describe("authService.obterSessaoAtual (AC-19 / #196)", () => {
+    it("deve lançar AuthError SESSION_EXPIRED se não houver token no localStorage", async () => {
+      await expect(authService.obterSessaoAtual()).rejects.toThrow(
+        "Nenhum token de autenticação encontrado.",
+      );
+    });
+
+    it("deve chamar GET /acesso/me com Bearer token e retornar SessaoUsuarioDto canônico", async () => {
+      localStorage.setItem("@FarmaUBS:token", "me-valid-token");
+
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "usr-canonico-1",
+            nomeCompleto: "Dra. Beatriz Santos",
+            email: "beatriz@ubs.gov.br",
+            perfilCodigo: "ADMINISTRADOR",
+            municipioId: "mun-123",
+            unidadeIds: ["ubs-1", "ubs-2"],
+            deveTrocarSenha: false,
+            expiresAt: "2026-09-22T18:00:00.000Z",
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "X-Session-Expires-At": "2026-09-22T18:00:00.000Z",
+            },
+          },
+        ),
+      );
+
+      const sessao = await authService.obterSessaoAtual();
+
+      expect(sessao).toEqual({
+        id: "usr-canonico-1",
+        usuarioId: "usr-canonico-1",
+        nomeCompleto: "Dra. Beatriz Santos",
+        email: "beatriz@ubs.gov.br",
+        perfilCodigo: "ADMINISTRADOR",
+        municipioId: "mun-123",
+        unidadeIds: ["ubs-1", "ubs-2"],
+        deveTrocarSenha: false,
+        expiresAt: "2026-09-22T18:00:00.000Z",
+      });
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/acesso/me"),
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({
+            Authorization: "Bearer me-valid-token",
+          }),
+        }),
+      );
+    });
+
+    it("deve lançar SESSION_EXPIRED quando o servidor responder 401", async () => {
+      localStorage.setItem("@FarmaUBS:token", "me-expired-token");
+
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: "Sessão inválida" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      await expect(authService.obterSessaoAtual()).rejects.toThrow(
+        "Sua sessão expirou no servidor.",
+      );
+    });
+  });
+
+  describe("authService.logout (AC-06 / RF004)", () => {
+    it("deve disparar POST /acesso/logout com token de autenticação", async () => {
+      localStorage.setItem("@FarmaUBS:token", "token-to-revoke");
+
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 204,
+          statusText: "No Content",
+        }),
+      );
+
+      await authService.logout();
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/acesso/logout"),
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer token-to-revoke",
+          }),
+        }),
+      );
+    });
+
+    it("deve ser resiliente e silenciar erro caso a rota retorne 404 ou falhe a rede", async () => {
+      localStorage.setItem("@FarmaUBS:token", "token-fail");
+
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network Failure"));
+
+      // Não deve lançar erro
+      await expect(authService.logout()).resolves.toBeUndefined();
+    });
+  });
 });

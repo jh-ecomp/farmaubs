@@ -7,22 +7,30 @@ interface RoleRouteProps {
 }
 
 export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
-  const { isAuthenticated, usuario } = useAuth();
+  const { status, isAuthenticated, usuario, hasRole } = useAuth();
+
+  if (status === "carregando") {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <span>Carregando informações da sessão...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  const rawPerfil = usuario.perfil as unknown;
-  const perfisUsuario = Array.isArray(rawPerfil)
-    ? rawPerfil.map((p) => String(p).toUpperCase())
-    : typeof rawPerfil === "string"
-      ? [rawPerfil.toUpperCase()]
-      : [];
-
-  const temPermissao = allowedRoles.some((role) =>
-    perfisUsuario.includes(role.toUpperCase()),
-  );
+  const temPermissao = hasRole(allowedRoles);
 
   if (!temPermissao) {
     return <Navigate to="/403" replace />;

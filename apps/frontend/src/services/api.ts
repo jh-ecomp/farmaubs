@@ -4,7 +4,7 @@ import type {
   TrocarSenhaComando,
   RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
-import type { LoginResponse } from "../types/auth";
+import type { LoginResponse, SessaoUsuarioDto } from "../types/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -152,21 +152,26 @@ export const authService = {
     const token = authHeader ? authHeader.replace(/^Bearer\s+/i, "") : "";
     const body: BackendLoginResponse = await resposta.json();
 
-    // Determina o perfil e nome do usuário autenticado
+    // Determina o perfil e nome do usuário autenticado (com fallback para branch 193)
     const emailLower = dadosLogin.email.trim().toLowerCase();
+    let perfilCodigo = "FARMACEUTICO";
     let perfil = ["FARMACEUTICO"];
     let nome = "Profissional de Saúde";
 
     if (emailLower.includes("admin")) {
+      perfilCodigo = "ADMINISTRADOR";
       perfil = ["ADMINISTRADOR"];
       nome = "Administrador Geral";
     } else if (emailLower.includes("gestor")) {
+      perfilCodigo = "GESTOR";
       perfil = ["GESTOR"];
       nome = "Gestor Municipal";
     } else if (emailLower.includes("residente")) {
+      perfilCodigo = "FARMACEUTICO_RESIDENTE";
       perfil = ["FARMACEUTICO_RESIDENTE"];
       nome = "Farmacêutico Residente";
     } else if (emailLower.includes("responsavel")) {
+      perfilCodigo = "FARMACEUTICO_RESPONSAVEL";
       perfil = ["FARMACEUTICO_RESPONSAVEL"];
       nome = "Farmacêutico Responsável";
     }
@@ -180,13 +185,94 @@ export const authService = {
       redirectUrl: body.redirectUrl,
       usuario: {
         id: body.usuarioId,
+        nomeCompleto: nome,
         nome,
         email: dadosLogin.email,
+        perfilCodigo,
         perfil,
+        municipioId: "1",
         municipio_id: 1,
+        unidadeIds: ["1"],
         unidade_id: 1,
       },
     };
+  },
+
+  async obterSessaoAtual(tokenParam?: string): Promise<SessaoUsuarioDto> {
+    const token = tokenParam || localStorage.getItem("@FarmaUBS:token");
+    if (!token) {
+      throw new AuthError(
+        "Nenhum token de autenticação encontrado.",
+        "SESSION_EXPIRED",
+      );
+    }
+
+    let resposta: Response;
+    try {
+      resposta = await fetch(`${API_BASE_URL}/acesso/me`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      resposta = inspectSessionExpiresHeader(resposta);
+    } catch {
+      throw new AuthError(
+        "Não foi possível conectar ao servidor para validar a sessão.",
+        "NETWORK_ERROR",
+      );
+    }
+
+    if (resposta.status === 401) {
+      throw new AuthError("Sua sessão expirou no servidor.", "SESSION_EXPIRED");
+    }
+
+    if (!resposta.ok) {
+      throw new AuthError("Falha ao obter dados da sessão.", "UNKNOWN");
+    }
+
+    const data = await resposta.json().catch(() => ({}));
+    const headerExpiresAt =
+      resposta.headers.get("X-Session-Expires-At") ||
+      resposta.headers.get("x-session-expires-at");
+
+    return {
+      id: data.id || data.usuarioId || "",
+      usuarioId: data.usuarioId || data.id || "",
+      nomeCompleto: data.nomeCompleto || data.nome || "Usuário FarmaUBS",
+      email: data.email || "",
+      perfilCodigo:
+        data.perfilCodigo ||
+        (data.perfilId ? String(data.perfilId) : "FARMACEUTICO"),
+      municipioId: data.municipioId ? String(data.municipioId) : "",
+      unidadeIds: Array.isArray(data.unidadeIds)
+        ? data.unidadeIds.map(String)
+        : [],
+      deveTrocarSenha: Boolean(data.deveTrocarSenha),
+      expiresAt:
+        data.expiresAt ||
+        headerExpiresAt ||
+        new Date(Date.now() + 60 * 60_000).toISOString(),
+    };
+  },
+
+  async logout(): Promise<void> {
+    const token = localStorage.getItem("@FarmaUBS:token");
+    if (!token) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/acesso/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch {
+      // Resiliência: erros de conexão ou 404 (endpoint ainda não publicado no backend)
+      // não interrompem o expurgo local e limpeza de cache de memória RAM
+    }
   },
 
   async renovarSessao(): Promise<{
