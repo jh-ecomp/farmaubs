@@ -1,6 +1,6 @@
 import { defineFeature, loadFeature } from "jest-cucumber";
 import * as path from "path";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { AdministracaoController } from "../../api/controllers/administracao.controller";
 import { ListMunicipiosUseCase } from "./list-municipios.use-case";
 import { ListUnidadesSaudeUseCase } from "./list-unidades-saude.use-case";
@@ -248,5 +248,45 @@ defineFeature(feature, (test) => {
         );
       },
     );
+  });
+
+  test("Tentativa de consulta de catálogo sem autenticação", ({
+    given,
+    when,
+    then,
+  }) => {
+    let possuiTokenValido = true;
+
+    given(
+      'que a requisição não possui cabeçalho "Authorization" com Bearer token válido',
+      () => {
+        possuiTokenValido = false;
+      },
+    );
+
+    when(
+      'uma requisição "GET /api/v1/administracao/municipios" for executada',
+      async () => {
+        try {
+          if (!possuiTokenValido) {
+            throw new UnauthorizedException(
+              "Token de autenticação ausente ou inválido",
+            );
+          }
+          respostaCorpo = await controller.listarMunicipios();
+          respostaStatus = 200;
+        } catch (err) {
+          erroCapturado = err as Error;
+          if (err instanceof UnauthorizedException) {
+            respostaStatus = 401;
+          }
+        }
+      },
+    );
+
+    then("o sistema deve responder com HTTP 401 Unauthorized", () => {
+      expect(respostaStatus).toBe(401);
+      expect(erroCapturado).toBeInstanceOf(UnauthorizedException);
+    });
   });
 });

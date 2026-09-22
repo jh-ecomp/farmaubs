@@ -26,3 +26,9 @@ Funcionalidade: Catálogo de Administração (Municípios e UBSs)
     Então o sistema deve responder com HTTP 400 Bad Request
     E a mensagem deve indicar "O parâmetro 'municipioId' é obrigatório para consulta de unidades de saúde."
 
+  Cenário: Tentativa de consulta de catálogo sem autenticação
+    Dado que a requisição não possui cabeçalho "Authorization" com Bearer token válido
+    Quando uma requisição "GET /api/v1/administracao/municipios" for executada
+    Então o sistema deve responder com HTTP 401 Unauthorized
+
+
