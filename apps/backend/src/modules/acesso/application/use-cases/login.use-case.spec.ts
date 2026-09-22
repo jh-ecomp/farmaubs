@@ -94,11 +94,52 @@ describe("LoginUseCase", () => {
       expect(result.token).toBe("token-plain-abc");
       expect(result.usuario.id).toBe("usuario-uuid-1");
       expect(result.usuario.municipioId).toBe("municipio-uuid-1");
-      expect(result.usuario.perfilCodigo).toBe("ADMINISTRADOR"); // ajuste pro valor real do mock
-      expect(result.usuario.unidadeIds).toEqual(["unidade-uuid-1"]); // ajuste pro valor real do mock
-      expect(result.usuario.deveTrocarSenha).toBe(false); // ajuste pro valor real do mock
+      expect(result.usuario.perfilCodigo).toBe("ADMINISTRADOR");
+      expect(result.usuario.unidadeIds).toEqual(["unidade-uuid-1"]);
+      expect(result.usuario.deveTrocarSenha).toBe(false);
       expect(result.redirectUrl).toBe("/dashboard");
       expect(result.sessao.ttlSeconds).toBe(3600);
+      expect(result.sessao.warningSeconds).toBe(300);
+    });
+
+    it("retorna redirectUrl = '/trocar-senha' quando usuario.deveTrocarSenha é true", async () => {
+      const repo = makeRepo({
+        buscarUsuarioPorEmail: jest.fn().mockResolvedValue(
+          makeUsuario({ deveTrocarSenha: true }),
+        ),
+      });
+      const sut = await buildSut(repo);
+
+      const result = await sut.executar(
+        "ana.souza@farmaubs.local",
+        SENHA_PLAIN,
+      );
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.usuario.deveTrocarSenha).toBe(true);
+      expect(result.redirectUrl).toBe("/trocar-senha");
+    });
+
+    it("retorna redirectUrl = '/dashboard' quando usuario.deveTrocarSenha é false", async () => {
+      const repo = makeRepo({
+        buscarUsuarioPorEmail: jest.fn().mockResolvedValue(
+          makeUsuario({ deveTrocarSenha: false }),
+        ),
+      });
+      const sut = await buildSut(repo);
+
+      const result = await sut.executar(
+        "ana.souza@farmaubs.local",
+        SENHA_PLAIN,
+      );
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.usuario.deveTrocarSenha).toBe(false);
+      expect(result.redirectUrl).toBe("/dashboard");
     });
 
     it("normaliza o e-mail (trim + lowercase) antes de buscar", async () => {

@@ -72,38 +72,15 @@ export class GrantDmlFarmaubsApp1788525896383 implements MigrationInterface {
          REVOKE EXECUTE ON FUNCTIONS FROM farmaubs_app`,
     );
 
-    // Migrations posteriores podem ter dropado estas funções antes de chegar
-    // aqui na ordem de reversão — o DO $$ evita erro se já não existirem.
-    await queryRunner.query(`
-      DO $$
-      BEGIN
-        IF EXISTS (
-          SELECT 1 FROM pg_proc p
-          JOIN pg_namespace n ON n.oid = p.pronamespace
-          WHERE n.nspname = 'public'
-            AND p.proname = 'auth_buscar_sessao_por_token'
-        ) THEN
-          REVOKE EXECUTE ON FUNCTION auth_buscar_sessao_por_token(text) FROM farmaubs_app;
-        END IF;
-        IF EXISTS (
-          SELECT 1 FROM pg_proc p
-          JOIN pg_namespace n ON n.oid = p.pronamespace
-          WHERE n.nspname = 'public'
-            AND p.proname = 'auth_registrar_falha_login'
-        ) THEN
-          REVOKE EXECUTE ON FUNCTION auth_registrar_falha_login(uuid) FROM farmaubs_app;
-        END IF;
-        IF EXISTS (
-          SELECT 1 FROM pg_proc p
-          JOIN pg_namespace n ON n.oid = p.pronamespace
-          WHERE n.nspname = 'public'
-            AND p.proname = 'auth_buscar_usuario_por_email'
-        ) THEN
-          REVOKE EXECUTE ON FUNCTION auth_buscar_usuario_por_email(text) FROM farmaubs_app;
-        END IF;
-      END
-      $$
-    `);
+    await queryRunner.query(
+      `REVOKE EXECUTE ON FUNCTION auth_buscar_sessao_por_token(text) FROM farmaubs_app`,
+    );
+    await queryRunner.query(
+      `REVOKE EXECUTE ON FUNCTION auth_registrar_falha_login(uuid) FROM farmaubs_app`,
+    );
+    await queryRunner.query(
+      `REVOKE EXECUTE ON FUNCTION auth_buscar_usuario_por_email(text) FROM farmaubs_app`,
+    );
 
     await queryRunner.query(
       `REVOKE SELECT, INSERT, UPDATE, DELETE ON TABLE sessions FROM farmaubs_app`,

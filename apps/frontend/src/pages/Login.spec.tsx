@@ -324,6 +324,36 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
         expect(mockNavigate).toHaveBeenCalledWith("/em-desenvolvimento");
       });
     });
+
+    it("deve redirecionar para /trocar-senha se deveTrocarSenha for true", async () => {
+      const user = userEvent.setup();
+      mockAuthService.login.mockResolvedValueOnce({
+        token: "token-sessao-123",
+        expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+        ttlSeconds: 3600,
+        warningSeconds: 300,
+        redirectUrl: "/trocar-senha",
+        usuario: {
+          id: "uuid-user-1",
+          nomeCompleto: "Maria Farmacêutica",
+          email: "maria@saude.parnaiba.pi.gov.br",
+          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          municipioId: "uuid-municipio-1",
+          unidadeIds: ["uuid-ubs-1"],
+          deveTrocarSenha: true,
+        },
+      });
+
+      renderWithProviders(<Login />);
+
+      await user.type(screen.getByLabelText(/e-mail institucional/i), "maria@saude.parnaiba.pi.gov.br");
+      await user.type(screen.getByLabelText(/^senha/i), "SegredoForte123@");
+      await user.click(screen.getByRole("button", { name: /entrar no farmaubs/i }));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/trocar-senha");
+      });
+    });
   });
 
   describe("6. Funcionalidades Auxiliares de Interface", () => {
@@ -384,11 +414,12 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
         "@FarmaUBS:usuario",
         JSON.stringify({
           id: "usr-admin",
-          nome: "Administrador Teste",
+          nomeCompleto: "Administrador Teste",
           email: "admin@farmaubs.gov.br",
-          perfil: ["ADMINISTRADOR"],
-          municipio_id: 1,
-          unidade_id: 1,
+          perfilCodigo: "ADMINISTRADOR",
+          municipioId: "uuid-mun-1",
+          unidadeIds: ["uuid-ubs-1"],
+          deveTrocarSenha: false,
         }),
       );
 
@@ -415,11 +446,12 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
         "@FarmaUBS:usuario",
         JSON.stringify({
           id: "usr-farm",
-          nome: "Farmacêutico Teste",
+          nomeCompleto: "Farmacêutico Teste",
           email: "farmaceutico@farmaubs.gov.br",
-          perfil: ["FARMACEUTICO_RESPONSAVEL"],
-          municipio_id: 1,
-          unidade_id: 1,
+          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          municipioId: "uuid-mun-1",
+          unidadeIds: ["uuid-ubs-1"],
+          deveTrocarSenha: false,
         }),
       );
 

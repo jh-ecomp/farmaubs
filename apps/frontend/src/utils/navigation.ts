@@ -10,8 +10,14 @@ export function getDefaultRouteForUser(
 ): string {
   if (!usuario) return "/login";
 
-  const perfilCodigo = (usuario.perfilCodigo ?? "").toUpperCase();
-  const isAdmin = perfilCodigo === "ADMINISTRADOR";
+  const rawPerfil = (usuario as any).perfilCodigo ?? (usuario as any).perfil;
+  const perfis = Array.isArray(rawPerfil)
+    ? rawPerfil.map((p) => String(p).toUpperCase())
+    : typeof rawPerfil === "string" && rawPerfil.length > 0
+      ? [rawPerfil.toUpperCase()]
+      : [];
+
+  const isAdmin = perfis.some((p) => p === "ADMINISTRADOR" || p === "ADMIN");
 
   if (isAdmin) {
     return "/admin/usuarios";

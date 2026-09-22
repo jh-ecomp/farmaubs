@@ -21,17 +21,6 @@ export class AcessoPgRepository implements IAcessoRepository {
     if (!rows[0]) return null;
     const r = rows[0];
 
-    const [perfilRows, unidadeRows] = await Promise.all([
-      this.ds.query<{ codigo: PerfilCodigo }[]>(
-        `SELECT codigo FROM perfis WHERE id = $1::uuid`,
-        [r.perfil_id],
-      ),
-      this.ds.query<{ unidade_id: string }[]>(
-        `SELECT unidade_id FROM user_units WHERE usuario_id = $1::uuid AND ativo = true`,
-        [r.id],
-      ),
-    ]);
-
     return {
       id: r.id,
       municipioId: r.municipio_id,
@@ -41,8 +30,8 @@ export class AcessoPgRepository implements IAcessoRepository {
       tentativasLoginFalhas: r.tentativas_login_falhas,
       bloqueadoAte: r.bloqueado_ate ? new Date(r.bloqueado_ate) : null,
       nomeCompleto: r.nome_completo,
-      perfilCodigo: perfilRows[0]?.codigo,
-      unidadeIds: unidadeRows.map((u) => u.unidade_id),
+      perfilCodigo: r.perfil_codigo as PerfilCodigo,
+      unidadeIds: r.unidade_ids ?? [],
       deveTrocarSenha: r.deve_trocar_senha,
     };
   }
@@ -79,20 +68,16 @@ export class AcessoPgRepository implements IAcessoRepository {
   async buscarEscopoUsuario(
     usuarioId: string,
   ): Promise<{ perfilId: string; unidadeIds: string[] }> {
-    const userRows = await this.ds.query<any[]>(
-      `SELECT perfil_id FROM users WHERE id = $1::uuid`,
+    const rows = await this.ds.query<any[]>(
+      `SELECT * FROM auth_buscar_escopo_usuario($1::uuid)`,
       [usuarioId],
     );
-    if (!userRows[0]) {
+    if (!rows[0]) {
       throw new Error(`Usuário "${usuarioId}" não encontrado`);
     }
-    const unitRows = await this.ds.query<any[]>(
-      `SELECT unidade_id FROM user_units WHERE usuario_id = $1::uuid AND ativo = true`,
-      [usuarioId],
-    );
     return {
-      perfilId: userRows[0].perfil_id,
-      unidadeIds: unitRows.map((u) => u.unidade_id),
+      perfilId: rows[0].perfil_id,
+      unidadeIds: rows[0].unidade_ids ?? [],
     };
   }
 }

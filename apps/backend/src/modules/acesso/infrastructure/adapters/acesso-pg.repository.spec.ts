@@ -13,14 +13,11 @@
  *   - Usuário admin@farmaubs.dev disponível com senha Admin@123456
  */
 
-import * as path from "path";
-import * as dotenv from "dotenv";
+import "../../../../../test/setup-env";
 import { DataSource } from "typeorm";
 import * as crypto from "crypto";
 import { AcessoPgRepository } from "./acesso-pg.repository";
 import { SessionPgRepository } from "./session-pg.repository";
-
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
 // ─── conexão com banco real ──────────────────────────────────────────────────
 

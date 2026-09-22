@@ -13,9 +13,15 @@ export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  const perfilCodigo = (usuario.perfilCodigo ?? "").toUpperCase();
-  const temPermissao = allowedRoles.some(
-    (role) => role.toUpperCase() === perfilCodigo,
+  const rawPerfil = (usuario as any).perfilCodigo ?? (usuario as any).perfil;
+  const perfisUsuario = Array.isArray(rawPerfil)
+    ? rawPerfil.map((p) => String(p).toUpperCase())
+    : typeof rawPerfil === "string" && rawPerfil.length > 0
+      ? [rawPerfil.toUpperCase()]
+      : [];
+
+  const temPermissao = allowedRoles.some((role) =>
+    perfisUsuario.includes(role.toUpperCase()),
   );
 
   if (!temPermissao) {

@@ -15,16 +15,13 @@
  *   - Seed de desenvolvimento executado (TAREFA-12)
  */
 
-import * as path from "path";
-import * as dotenv from "dotenv";
+import "../../../../../test/setup-env";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 const request = require("supertest");
 import { DataSource } from "typeorm";
 import { AppModule } from "../../../../app.module";
 import { configureApp } from "../../../../app.setup";
-
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
 // ─── Credenciais do seed (TAREFA-12) ────────────────────────────────────────
 const ADMIN_EMAIL = "admin@farmaubs.dev";
@@ -121,11 +118,11 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
         usuario: expect.objectContaining({
           id: expect.any(String),
           nomeCompleto: expect.any(String),
-          email: expect.any(String),
-          perfilCodigo: expect.any(String),
+          email: ADMIN_EMAIL,
+          perfilCodigo: "ADMINISTRADOR",
           municipioId: expect.any(String),
           unidadeIds: expect.any(Array),
-          deveTrocarSenha: expect.any(Boolean),
+          deveTrocarSenha: false,
         }),
         sessao: expect.objectContaining({
           expiresAt: expect.any(String),
@@ -134,6 +131,7 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
         }),
         redirectUrl: "/dashboard",
       });
+      expect(res.body.usuario.unidadeIds.length).toBeGreaterThan(0);
     });
 
     it("inclui token Bearer no cabeçalho Authorization", async () => {
@@ -302,10 +300,14 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res.body).toMatchObject({
         usuarioId: expect.any(String),
         municipioId: expect.any(String),
-        perfilCodigo: expect.any(String),
+        perfilCodigo: "ADMINISTRADOR",
         unidadeIds: expect.any(Array),
+        nomeCompleto: expect.any(String),
+        email: ADMIN_EMAIL,
+        deveTrocarSenha: false,
         expiresAt: expect.any(String),
       });
+      expect(res.body.unidadeIds.length).toBeGreaterThan(0);
 
       expect(res.headers["x-session-expires-at"]).toBeDefined();
       const expiresAtHeader = new Date(res.headers["x-session-expires-at"]);
