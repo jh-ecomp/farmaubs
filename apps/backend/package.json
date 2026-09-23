@@ -85,6 +85,11 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.(spec|steps)\\.ts$",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "\\.e2e\\.spec\\.ts$",
+      "acesso-pg\\.repository\\.spec\\.ts$"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
