@@ -13,10 +13,10 @@ export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  const rawPerfil = usuario.perfil as unknown;
+  const rawPerfil = (usuario as any).perfilCodigo ?? (usuario as any).perfil;
   const perfisUsuario = Array.isArray(rawPerfil)
     ? rawPerfil.map((p) => String(p).toUpperCase())
-    : typeof rawPerfil === "string"
+    : typeof rawPerfil === "string" && rawPerfil.length > 0
       ? [rawPerfil.toUpperCase()]
       : [];
 

@@ -1,3 +1,5 @@
+import type { PerfilCodigo } from "@farmaubs/shared";
+
 export interface UserAcessoRecord {
   id: string;
   municipioId: string;
@@ -6,6 +8,10 @@ export interface UserAcessoRecord {
   ativo: boolean;
   tentativasLoginFalhas: number;
   bloqueadoAte: Date | null;
+  nomeCompleto: string;
+  perfilCodigo: PerfilCodigo;
+  unidadeIds: string[];
+  deveTrocarSenha: boolean;
 }
 
 export interface CreateSessionParams {

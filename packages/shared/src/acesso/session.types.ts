@@ -34,7 +34,10 @@ export interface RenovarSessaoResponse {
 export interface SessaoUsuarioResponse {
   usuarioId: string;
   municipioId: string;
-  perfilId: string;
+  perfilCodigo: string;
   unidadeIds: string[];
+  nomeCompleto: string;
+  email: string;
+  deveTrocarSenha: boolean;
   expiresAt: string;
 }
