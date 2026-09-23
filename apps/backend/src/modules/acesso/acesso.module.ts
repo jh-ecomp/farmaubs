@@ -10,6 +10,7 @@ import { ToggleUserStatusUseCase } from "./application/use-cases/toggle-user-sta
 import { SetTemporaryPasswordUseCase } from "./application/use-cases/set-temporary-password.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "./application/use-cases/renew-session.use-case";
+import { LogoutUseCase } from "./application/use-cases/logout.use-case";
 import { RolesGuard } from "../../common/guards/roles.guard";
 
 import { TypeOrmUserRepository } from "./infrastructure/adapters/typeorm-user.repository";
@@ -35,6 +36,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
   providers: [
     LoginUseCase,
     RenewSessionUseCase,
+    LogoutUseCase,
     ListUsersUseCase,
     EditUserUseCase,
     UpdateAssociationsUseCase,
@@ -108,6 +110,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
   exports: [
     LoginUseCase,
     RenewSessionUseCase,
+    LogoutUseCase,
     ListUsersUseCase,
     EditUserUseCase,
     UpdateAssociationsUseCase,

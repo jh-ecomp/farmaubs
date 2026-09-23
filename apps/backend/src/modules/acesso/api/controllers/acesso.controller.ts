@@ -7,6 +7,7 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -22,6 +23,7 @@ import type {
 } from "@farmaubs/shared";
 import { LoginUseCase } from "../../application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "../../application/use-cases/renew-session.use-case";
+import { LogoutUseCase } from "../../application/use-cases/logout.use-case";
 import { SkipAuth } from "../../../../common/guards/skip-auth.decorator";
 import { SkipTransaction } from "../../../../common/transaction/skip-transaction.decorator";
 import {
@@ -37,6 +39,7 @@ export class AcessoController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly renewSessionUseCase: RenewSessionUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
   ) {}
 
   @Post("login")
@@ -154,4 +157,45 @@ export class AcessoController {
           : new Date(sessao.expiraEm).toISOString(),
     };
   }
+
+  /**
+   * [RF004 / Logout]: Encerra a sessão ativa do usuário invalidando o token no servidor.
+   * @param req - Objeto de requisição HTTP contendo o cabeçalho Authorization Bearer.
+   * @returns Resposta HTTP 204 No Content sem corpo.
+   * @throws {UnauthorizedException} Caso o cabeçalho Authorization seja ausente ou inválido.
+   */
+  @Post("logout")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipAuth()
+  @SkipTransaction()
+  @ApiOperation({
+    summary: "Encerra a sessão ativa do usuário (logout com revogação no servidor)",
+  })
+  @ApiBearerAuth("access-token")
+  @ApiResponse({
+    status: 204,
+    description: "Sessão revogada com sucesso (ou já inexistente — idempotência).",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Não autorizado — cabeçalho Authorization ausente ou formato inválido.",
+  })
+  async logout(@Req() req: Request): Promise<void> {
+    const authHeader = req.headers["authorization"];
+    if (
+      !authHeader ||
+      typeof authHeader !== "string" ||
+      !authHeader.startsWith("Bearer ")
+    ) {
+      throw new UnauthorizedException("Token de autenticação ausente ou inválido");
+    }
+
+    const token = authHeader.substring(7).trim();
+    if (!token) {
+      throw new UnauthorizedException("Token de autenticação ausente ou inválido");
+    }
+
+    await this.logoutUseCase.executar(token);
+  }
 }
+

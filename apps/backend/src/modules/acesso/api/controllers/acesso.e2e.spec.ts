@@ -364,4 +364,103 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res.body.status).toBe("ok");
     });
   });
+
+  // ── Cenário 7: Logout com Encerramento da Sessão (AC-06 — Camada C) ──────
+
+  describe("Logout com Encerramento de Sessão (AC-06 — Camada C)", () => {
+    let validToken: string;
+
+    beforeEach(async () => {
+      await resetarUsuario(ADMIN_EMAIL);
+      const loginRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      expect(loginRes.status).toBe(200);
+      validToken = loginRes.headers["authorization"];
+    });
+
+    it("POST /api/v1/acesso/logout revoga a sessão no servidor e responde 204 No Content, invalidando o token para chamadas futuras", async () => {
+      // 1. Logout com sucesso
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+
+      // 2. O mesmo token deve ser rejeitado com 401 em /me
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", validToken)
+        .expect(401);
+
+      // 3. Verifica no banco que a sessão física está com status = 'revogada'
+      const rows = await dsAdmin.query(
+        `SELECT status, revogada_em FROM sessions WHERE usuario_id = (SELECT id FROM users WHERE email = $1)`,
+        [ADMIN_EMAIL],
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      expect(rows[0].status).toBe("revogada");
+      expect(rows[0].revogada_em).not.toBeNull();
+    });
+
+    it("POST /api/v1/acesso/logout é idempotente em chamadas repetidas (204 No Content)", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+    });
+
+    it("POST /api/v1/acesso/logout é idempotente para token inexistente (204 No Content)", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", "Bearer token-inexistente-1234567890")
+        .expect(204);
+    });
+
+    it("POST /api/v1/acesso/logout responde 401 sem o cabeçalho Authorization", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .expect(401);
+    });
+
+    it("POST /api/v1/acesso/logout responde 401 para cabeçalho Authorization malformado", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", "Basic token-invalido")
+        .expect(401);
+    });
+
+    it("POST /api/v1/acesso/logout revoga exclusivamente a sessão do token utilizado (isolamento de sessões)", async () => {
+      // Cria uma segunda sessão para o mesmo usuário
+      const login2 = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      expect(login2.status).toBe(200);
+      const token2 = login2.headers["authorization"];
+
+      // Logout apenas da primeira sessão (validToken)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+
+      // A primeira sessão foi revogada
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", validToken)
+        .expect(401);
+
+      // A segunda sessão continua ativa e válida
+      const res2 = await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", token2)
+        .expect(200);
+      expect(res2.body.email).toBe(ADMIN_EMAIL);
+    });
+  });
 });
+
