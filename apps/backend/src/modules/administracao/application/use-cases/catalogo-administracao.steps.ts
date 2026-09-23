@@ -1,12 +1,20 @@
 import { defineFeature, loadFeature } from "jest-cucumber";
 import * as path from "path";
-import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ExecutionContext,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { ConfigService } from "@nestjs/config";
 import { AdministracaoController } from "../../api/controllers/administracao.controller";
 import { ListMunicipiosUseCase } from "./list-municipios.use-case";
 import { ListUnidadesSaudeUseCase } from "./list-unidades-saude.use-case";
 import type { RepositorioMunicipioPort } from "../../domain/ports/municipio.repository.port";
 import type { RepositorioUnidadeSaudePort } from "../../domain/ports/unidade-saude.repository.port";
 import type { MunicipioDto, UnidadeSaudeDto } from "@farmaubs/shared";
+import { SessionAuthGuard } from "../../../../common/guards/session-auth.guard";
+import type { ISessionRepository } from "../../../acesso/domain/ports/session.repository.port";
 
 const feature = loadFeature(
   path.resolve(__dirname, "catalogo-administracao.feature"),
@@ -18,6 +26,9 @@ defineFeature(feature, (test) => {
   let listUnidadesSaudeUseCase: ListUnidadesSaudeUseCase;
   let municipioRepoMock: jest.Mocked<RepositorioMunicipioPort>;
   let unidadeSaudeRepoMock: jest.Mocked<RepositorioUnidadeSaudePort>;
+  let sessionAuthGuard: SessionAuthGuard;
+  let sessionRepoMock: jest.Mocked<ISessionRepository>;
+  let configServiceMock: Partial<ConfigService>;
 
   let respostaStatus: number | null = null;
   let respostaCorpo: unknown = null;
@@ -75,6 +86,25 @@ defineFeature(feature, (test) => {
     unidadeSaudeRepoMock = {
       buscarPorMunicipio: jest.fn(),
     };
+    sessionRepoMock = {
+      buscarPorTokenHash: jest.fn(),
+      renovarAtividade: jest.fn(),
+      revogar: jest.fn(),
+      revogarTodas: jest.fn(),
+    };
+    configServiceMock = {
+      get: jest.fn().mockImplementation((key: string, def?: string) => {
+        if (key === "SESSION_TTL_MINUTES") return "60";
+        if (key === "SESSION_THROTTLE_SECONDS") return "30";
+        return def;
+      }),
+    };
+
+    sessionAuthGuard = new SessionAuthGuard(
+      new Reflector(),
+      sessionRepoMock as unknown as ISessionRepository,
+      configServiceMock as ConfigService,
+    );
 
     listMunicipiosUseCase = new ListMunicipiosUseCase(municipioRepoMock);
     listUnidadesSaudeUseCase = new ListUnidadesSaudeUseCase(
@@ -268,11 +298,25 @@ defineFeature(feature, (test) => {
       'uma requisição "GET /api/v1/administracao/municipios" for executada',
       async () => {
         try {
-          if (!possuiTokenValido) {
-            throw new UnauthorizedException(
-              "Token de autenticação ausente ou inválido",
-            );
+          const mockRequest: any = {
+            headers: possuiTokenValido
+              ? { authorization: "Bearer token-valido" }
+              : {},
+          };
+          const mockContext = {
+            getType: () => "http",
+            switchToHttp: () => ({
+              getRequest: () => mockRequest,
+            }),
+            getHandler: () => controller.listarMunicipios,
+            getClass: () => AdministracaoController,
+          } as unknown as ExecutionContext;
+
+          const canActivate = await sessionAuthGuard.canActivate(mockContext);
+          if (!canActivate) {
+            throw new UnauthorizedException("Sessão inválida ou expirada");
           }
+
           respostaCorpo = await controller.listarMunicipios();
           respostaStatus = 200;
         } catch (err) {

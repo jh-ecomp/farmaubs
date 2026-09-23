@@ -22,8 +22,11 @@ describe("SessionPgRepository (Testes Unitários em Memória — Camada A)", () 
         id: "session-1",
         usuario_id: "user-1",
         municipio_id: "muni-1",
-        perfil_id: "perfil-1",
+        perfil_codigo: "FARMACEUTICO_RESPONSAVEL",
         unidade_ids: ["ubs-1"],
+        nome_completo: "Carlos",
+        email: "carlos@ubs.gov.br",
+        deve_trocar_senha: false,
         status: "ativa",
         expira_em: expira.toISOString(),
         criado_em: now.toISOString(),
@@ -35,15 +38,18 @@ describe("SessionPgRepository (Testes Unitários em Memória — Camada A)", () 
       const resultado = await repository.buscarPorTokenHash("hash123");
 
       expect(dataSourceMock.query).toHaveBeenCalledWith(
-        "SELECT * FROM auth_buscar_sessao_por_token($1)",
+        "SELECT * FROM auth_buscar_sessao_por_token($1::text)",
         ["hash123"],
       );
       expect(resultado).toEqual({
         id: "session-1",
         usuarioId: "user-1",
         municipioId: "muni-1",
-        perfilId: "perfil-1",
+        perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
         unidadeIds: ["ubs-1"],
+        nomeCompleto: "Carlos",
+        email: "carlos@ubs.gov.br",
+        deveTrocarSenha: false,
         status: "ativa",
         expiraEm: expira,
         criadoEm: now,
