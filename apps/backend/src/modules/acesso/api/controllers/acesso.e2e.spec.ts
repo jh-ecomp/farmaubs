@@ -15,16 +15,13 @@
  *   - Seed de desenvolvimento executado (TAREFA-12)
  */
 
-import * as path from "path";
-import * as dotenv from "dotenv";
+import "../../../../../test/setup-env";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 const request = require("supertest");
 import { DataSource } from "typeorm";
 import { AppModule } from "../../../../app.module";
 import { configureApp } from "../../../../app.setup";
-
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
 // ─── Credenciais do seed (TAREFA-12) ────────────────────────────────────────
 const ADMIN_EMAIL = "admin@farmaubs.dev";
@@ -51,11 +48,18 @@ beforeAll(async () => {
   // (farmaubs_app tem RLS — sem GUC setado o UPDATE não afeta nenhuma linha)
   dsAdmin = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST ?? "localhost",
-    port: parseInt(process.env.DB_PORT ?? "5434", 10),
-    database: process.env.POSTGRES_DB ?? "farmaubs",
+    host: process.env.TEST_DB_HOST ?? process.env.DB_HOST ?? "localhost",
+    port: parseInt(
+      process.env.TEST_DB_PORT ?? process.env.DB_PORT ?? "5435",
+      10,
+    ),
+    database:
+      process.env.TEST_DB_DATABASE ?? process.env.POSTGRES_DB ?? "farmaubs",
     username: process.env.MIGRATION_DB_USER ?? "farmaubs_admin",
-    password: process.env.MIGRATION_DB_PASSWORD ?? "",
+    password:
+      process.env.TEST_ADMIN_DB_PASSWORD ??
+      process.env.MIGRATION_DB_PASSWORD ??
+      "farmaubs_test_password",
     synchronize: false,
     logging: false,
   });
@@ -111,9 +115,23 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
         .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
 
       expect(res.body).toMatchObject({
-        usuarioId: expect.any(String),
+        usuario: expect.objectContaining({
+          id: expect.any(String),
+          nomeCompleto: expect.any(String),
+          email: ADMIN_EMAIL,
+          perfilCodigo: "ADMINISTRADOR",
+          municipioId: expect.any(String),
+          unidadeIds: expect.any(Array),
+          deveTrocarSenha: false,
+        }),
+        sessao: expect.objectContaining({
+          expiresAt: expect.any(String),
+          ttlSeconds: expect.any(Number),
+          warningSeconds: expect.any(Number),
+        }),
         redirectUrl: "/dashboard",
       });
+      expect(res.body.usuario.unidadeIds.length).toBeGreaterThan(0);
     });
 
     it("inclui token Bearer no cabeçalho Authorization", async () => {
@@ -282,10 +300,14 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res.body).toMatchObject({
         usuarioId: expect.any(String),
         municipioId: expect.any(String),
-        perfilId: expect.any(String),
+        perfilCodigo: "ADMINISTRADOR",
         unidadeIds: expect.any(Array),
+        nomeCompleto: expect.any(String),
+        email: ADMIN_EMAIL,
+        deveTrocarSenha: false,
         expiresAt: expect.any(String),
       });
+      expect(res.body.unidadeIds.length).toBeGreaterThan(0);
 
       expect(res.headers["x-session-expires-at"]).toBeDefined();
       const expiresAtHeader = new Date(res.headers["x-session-expires-at"]);

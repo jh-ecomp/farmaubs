@@ -14,13 +14,13 @@ export type {
 };
 
 export interface UsuarioPayload {
-  id?: string;
-  nome: string;
+  id: string;
+  nomeCompleto: string;
   email: string;
-  perfil: string[] | string;
-  municipio_id: number;
-  unidade_id: number;
-  deveTrocarSenha?: boolean;
+  perfilCodigo: string;
+  municipioId: string;
+  unidadeIds: string[];
+  deveTrocarSenha: boolean;
 }
 
 export interface LoginResponse {
@@ -29,8 +29,7 @@ export interface LoginResponse {
   ttlSeconds: number;
   warningSeconds: number;
   usuario: UsuarioPayload;
-  usuarioId?: string;
-  redirectUrl?: string;
+  redirectUrl: string;
 }
 
 export interface ApiErrorResponse {

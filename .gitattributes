@@ -1,0 +1,2 @@
+# Garante que scripts shell mantenham quebra de linha LF (evita erro de interpretador no Docker)
+*.sh text eol=lf

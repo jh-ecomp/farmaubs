@@ -93,8 +93,13 @@ export class AcessoController {
     res.setHeader("Authorization", `Bearer ${resultado.token}`);
 
     return {
-      usuarioId: resultado.usuarioId,
-      redirectUrl: "/dashboard",
+      usuario: resultado.usuario,
+      sessao: {
+        expiresAt: resultado.sessao.expiresAt.toISOString(),
+        ttlSeconds: resultado.sessao.ttlSeconds,
+        warningSeconds: resultado.sessao.warningSeconds,
+      },
+      redirectUrl: resultado.redirectUrl,
     };
   }
 
@@ -138,8 +143,11 @@ export class AcessoController {
     return {
       usuarioId: sessao.usuarioId,
       municipioId: sessao.municipioId,
-      perfilId: sessao.perfilId,
+      perfilCodigo: sessao.perfilCodigo,
       unidadeIds: sessao.unidadeIds ?? [],
+      nomeCompleto: sessao.nomeCompleto,
+      email: sessao.email,
+      deveTrocarSenha: sessao.deveTrocarSenha,
       expiresAt:
         sessao.expiraEm instanceof Date
           ? sessao.expiraEm.toISOString()

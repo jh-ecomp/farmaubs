@@ -13,7 +13,7 @@ export class SessionPgRepository implements ISessionRepository {
 
   async buscarPorTokenHash(tokenHash: string): Promise<SessionRecord | null> {
     const rows = await this.ds.query<any[]>(
-      `SELECT * FROM auth_buscar_sessao_por_token($1)`,
+      `SELECT * FROM auth_buscar_sessao_por_token($1::text)`,
       [tokenHash],
     );
     if (!rows[0]) return null;
@@ -22,8 +22,11 @@ export class SessionPgRepository implements ISessionRepository {
       id: r.id,
       usuarioId: r.usuario_id,
       municipioId: r.municipio_id,
-      perfilId: r.perfil_id,
+      perfilCodigo: r.perfil_codigo,
       unidadeIds: r.unidade_ids ?? [],
+      nomeCompleto: r.nome_completo,
+      email: r.email,
+      deveTrocarSenha: r.deve_trocar_senha,
       status: r.status,
       expiraEm: new Date(r.expira_em),
       criadoEm: new Date(r.criado_em),

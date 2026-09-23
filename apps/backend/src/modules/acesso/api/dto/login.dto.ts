@@ -3,8 +3,11 @@ import { IsEmail, IsString, MinLength } from "class-validator";
 import type {
   LoginRequest,
   LoginResponse,
+  UsuarioAutenticado,
+  SessaoLoginInfo,
   ContaBloqueadaResponse,
   ErroCredenciaisResponse,
+  PerfilCodigo,
 } from "@farmaubs/shared";
 
 export class LoginDto implements LoginRequest {
@@ -24,16 +27,62 @@ export class LoginDto implements LoginRequest {
   senha: string;
 }
 
-export class LoginResponseDto implements LoginResponse {
+export class UsuarioAutenticadoDto implements UsuarioAutenticado {
+  @ApiProperty({ example: "01919a77-3e15-7000-8000-000000000020" })
+  id: string;
+
+  @ApiProperty({ example: "Carlos Eduardo da Silva" })
+  nomeCompleto: string;
+
+  @ApiProperty({ example: "carlos.silva@ubs.gov.br" })
+  email: string;
+
   @ApiProperty({
-    example: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    description: "ID único do usuário autenticado",
+    example: "ADMINISTRADOR",
+    enum: [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "FARMACEUTICO_RESPONSAVEL",
+      "FARMACEUTICO_RESIDENTE",
+    ],
   })
-  usuarioId: string;
+  perfilCodigo: PerfilCodigo;
+
+  @ApiProperty({ example: "01919a77-3e15-7000-8000-000000000001" })
+  municipioId: string;
+
+  @ApiProperty({
+    example: ["01919a77-3e15-7000-8000-000000000010"],
+    type: [String],
+  })
+  unidadeIds: string[];
+
+  @ApiProperty({ example: false })
+  deveTrocarSenha: boolean;
+}
+
+export class SessaoLoginInfoDto implements SessaoLoginInfo {
+  @ApiProperty({ example: "2026-09-19T18:15:00.000Z" })
+  expiresAt: string;
+
+  @ApiProperty({ example: 3600 })
+  ttlSeconds: number;
+
+  @ApiProperty({ example: 300 })
+  warningSeconds: number;
+}
+
+export class LoginResponseDto implements LoginResponse {
+  @ApiProperty({ type: UsuarioAutenticadoDto })
+  usuario: UsuarioAutenticadoDto;
+
+  @ApiProperty({ type: SessaoLoginInfoDto })
+  sessao: SessaoLoginInfoDto;
 
   @ApiProperty({
     example: "/dashboard",
-    description: "Rota de redirecionamento pós-login",
+    description:
+      "Rota de redirecionamento pós-login (/trocar-senha se deveTrocarSenha for true)",
   })
   redirectUrl: string;
 }
