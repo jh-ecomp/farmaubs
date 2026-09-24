@@ -10,7 +10,9 @@ export function getDefaultRouteForUser(
 ): string {
   if (!usuario) return "/login";
 
-  const perfilCodigo = usuario.perfilCodigo ? String(usuario.perfilCodigo).toUpperCase() : "";
+  const perfilCodigo = usuario.perfilCodigo
+    ? String(usuario.perfilCodigo).toUpperCase()
+    : "";
   const rawPerfil = usuario.perfil as unknown;
   const perfis = Array.isArray(rawPerfil)
     ? rawPerfil.map((p) => String(p).toUpperCase())

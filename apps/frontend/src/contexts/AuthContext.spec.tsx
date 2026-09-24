@@ -24,12 +24,14 @@ function TestConsumer() {
       <span data-testid="is-authenticated">
         {isAuthenticated ? "true" : "false"}
       </span>
-      <span data-testid="user-name">{usuario?.nomeCompleto || usuario?.nome || "nenhum"}</span>
-      <span data-testid="user-role">{usuario?.perfilCodigo || "sem-perfil"}</span>
-      <span data-testid="is-admin">{isAdmin ? "sim" : "nao"}</span>
-      <span data-testid="has-gestor">
-        {hasRole("gestor") ? "sim" : "nao"}
+      <span data-testid="user-name">
+        {usuario?.nomeCompleto || usuario?.nome || "nenhum"}
       </span>
+      <span data-testid="user-role">
+        {usuario?.perfilCodigo || "sem-perfil"}
+      </span>
+      <span data-testid="is-admin">{isAdmin ? "sim" : "nao"}</span>
+      <span data-testid="has-gestor">{hasRole("gestor") ? "sim" : "nao"}</span>
       <span data-testid="has-admin-array">
         {hasRole(["GESTOR", "ADMINISTRADOR"]) ? "sim" : "nao"}
       </span>
@@ -125,7 +127,9 @@ describe("AuthContext — Contexto Canônico de Autenticação & Logout Seguro (
 
       // Durante o carregamento da sessão, exibe o indicador acessível (NF001 / WCAG 2.1 AA)
       expect(screen.getByRole("status")).toBeInTheDocument();
-      expect(screen.getByText("Carregando informações da sessão...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Carregando informações da sessão..."),
+      ).toBeInTheDocument();
 
       // Após a resolução de obterSessaoAtual
       await waitFor(() => {
@@ -295,7 +299,11 @@ describe("AuthContext — Contexto Canônico de Autenticação & Logout Seguro (
       localStorage.setItem("@FarmaUBS:token", "token-timeout");
       localStorage.setItem(
         "@FarmaUBS:usuario",
-        JSON.stringify({ id: "usr-4", nome: "Operador", perfil: ["FARMACEUTICO"] }),
+        JSON.stringify({
+          id: "usr-4",
+          nome: "Operador",
+          perfil: ["FARMACEUTICO"],
+        }),
       );
 
       vi.spyOn(authService, "logout").mockResolvedValueOnce();
@@ -320,7 +328,11 @@ describe("AuthContext — Contexto Canônico de Autenticação & Logout Seguro (
       localStorage.setItem("@FarmaUBS:token", "token-resiliente");
       localStorage.setItem(
         "@FarmaUBS:usuario",
-        JSON.stringify({ id: "usr-5", nome: "Offline User", perfil: ["ADMINISTRADOR"] }),
+        JSON.stringify({
+          id: "usr-5",
+          nome: "Offline User",
+          perfil: ["ADMINISTRADOR"],
+        }),
       );
 
       vi.spyOn(authService, "logout").mockRejectedValueOnce(

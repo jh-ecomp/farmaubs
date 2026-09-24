@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { authService, inspectSessionExpiresHeader, onSessionExpiresUpdate } from "./api";
+import {
+  authService,
+  inspectSessionExpiresHeader,
+  onSessionExpiresUpdate,
+} from "./api";
 import { usuarioService } from "./usuario.service";
 
 describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
@@ -66,9 +70,7 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         ),
       );
 
-      const resultado = await authService.redefinirSenhaProvisoria(
-        "usr-456",
-      );
+      const resultado = await authService.redefinirSenhaProvisoria("usr-456");
 
       expect(resultado).toEqual({
         usuarioId: "usr-456",
@@ -224,7 +226,9 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
     it("deve ser resiliente e silenciar erro caso a rota retorne 404 ou falhe a rede", async () => {
       localStorage.setItem("@FarmaUBS:token", "token-fail");
 
-      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network Failure"));
+      globalThis.fetch = vi
+        .fn()
+        .mockRejectedValue(new Error("Network Failure"));
 
       // Não deve lançar erro
       await expect(authService.logout()).resolves.toBeUndefined();
