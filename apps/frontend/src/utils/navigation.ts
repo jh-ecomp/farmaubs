@@ -1,9 +1,11 @@
 import type { UsuarioPayload } from "../types/auth";
 
 /**
- * Retorna a rota inicial padrão do usuário de acordo com o perfil de acesso (RBAC).
+ * [RF002 / RBAC]: Retorna a rota inicial padrão do usuário de acordo com o perfil de acesso (RBAC).
  * Administrador -> /admin/usuarios
  * Demais perfis (Farmacêutico, Gestor, etc.) -> /em-desenvolvimento
+ * @param usuario - Objeto do usuário autenticado no contexto global.
+ * @returns Rota padrão para redirecionamento após autenticação.
  */
 export function getDefaultRouteForUser(
   usuario?: UsuarioPayload | null,
@@ -16,7 +18,7 @@ export function getDefaultRouteForUser(
   const rawPerfil = usuario.perfil as unknown;
   const perfis = Array.isArray(rawPerfil)
     ? rawPerfil.map((p) => String(p).toUpperCase())
-    : typeof rawPerfil === "string"
+    : typeof rawPerfil === "string" && rawPerfil.length > 0
       ? [rawPerfil.toUpperCase()]
       : [];
 

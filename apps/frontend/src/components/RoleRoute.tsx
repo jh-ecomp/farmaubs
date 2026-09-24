@@ -6,6 +6,11 @@ interface RoleRouteProps {
   children?: React.ReactNode;
 }
 
+/**
+ * [RF002 / RBAC]: Guarda de rotas protegidas por papéis de acesso do usuário autenticado.
+ * @param props - Propriedades com perfis permitidos e componentes filhos opcionais.
+ * @returns Elemento de rota, splash de carregamento acessível ou redirecionamento (/login ou /403).
+ */
 export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
   const { status, isAuthenticated, usuario, hasRole } = useAuth();
 
@@ -38,3 +43,4 @@ export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
 
   return children ? <>{children}</> : <Outlet />;
 }
+

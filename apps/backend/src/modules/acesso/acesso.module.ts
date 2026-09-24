@@ -10,7 +10,10 @@ import { ToggleUserStatusUseCase } from "./application/use-cases/toggle-user-sta
 import { SetTemporaryPasswordUseCase } from "./application/use-cases/set-temporary-password.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "./application/use-cases/renew-session.use-case";
+import { LogoutUseCase } from "./application/use-cases/logout.use-case";
+import { ChangePasswordUseCase } from "./application/use-cases/change-password.use-case";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { MustChangePasswordGuard } from "./api/guards/must-change-password.guard";
 
 import { TypeOrmUserRepository } from "./infrastructure/adapters/typeorm-user.repository";
 import { TypeOrmProfileRepository } from "./infrastructure/adapters/typeorm-profile.repository";
@@ -35,12 +38,15 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
   providers: [
     LoginUseCase,
     RenewSessionUseCase,
+    LogoutUseCase,
+    ChangePasswordUseCase,
     ListUsersUseCase,
     EditUserUseCase,
     UpdateAssociationsUseCase,
     ToggleUserStatusUseCase,
     SetTemporaryPasswordUseCase,
     RolesGuard,
+    MustChangePasswordGuard,
     {
       provide: ACESSO_REPOSITORY,
       useClass: AcessoPgRepository,
@@ -108,12 +114,15 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
   exports: [
     LoginUseCase,
     RenewSessionUseCase,
+    LogoutUseCase,
+    ChangePasswordUseCase,
     ListUsersUseCase,
     EditUserUseCase,
     UpdateAssociationsUseCase,
     ToggleUserStatusUseCase,
     SetTemporaryPasswordUseCase,
     RolesGuard,
+    MustChangePasswordGuard,
     SESSION_REPOSITORY,
     CadastrarUsuarioUseCase,
     REPOSITORIO_USUARIO_PORT,

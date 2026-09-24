@@ -2,8 +2,11 @@ export interface SessionRecord {
   id: string;
   usuarioId: string;
   municipioId: string;
-  perfilId: string;
+  perfilCodigo: string;
   unidadeIds: string[];
+  nomeCompleto: string;
+  email: string;
+  deveTrocarSenha: boolean;
   status: string;
   expiraEm: Date;
   criadoEm: Date;
@@ -17,11 +20,8 @@ export interface RenovarSessaoParams {
 
 export interface ISessionRepository {
   buscarPorTokenHash(tokenHash: string): Promise<SessionRecord | null>;
-
   renovarAtividade(params: RenovarSessaoParams): Promise<void>;
-
   revogar(sessionId: string): Promise<void>;
-
   revogarTodas(usuarioId: string): Promise<void>;
 }
 

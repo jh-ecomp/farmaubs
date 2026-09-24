@@ -22,6 +22,10 @@ export function configureApp(app: INestApplication): void {
     .setVersion("1.0")
     .addTag("Acesso", "Autenticação e controle de sessão (RF002)")
     .addTag("Usuários", "Operações de gestão e cadastro de usuários (RF001)")
+    .addTag(
+      "Administração",
+      "Consultas de catálogo e topologia municipal (RF001, RF026)",
+    )
     .addTag("health", "Verificação de saúde do serviço e banco de dados")
     // Configura o suporte a Bearer Token no cabeçalho das requisições
     .addBearerAuth(

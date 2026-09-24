@@ -15,16 +15,13 @@
  *   - Seed de desenvolvimento executado (TAREFA-12)
  */
 
-import * as path from "path";
-import * as dotenv from "dotenv";
+import "../../../../../test/setup-env";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 const request = require("supertest");
 import { DataSource } from "typeorm";
 import { AppModule } from "../../../../app.module";
 import { configureApp } from "../../../../app.setup";
-
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
 // ─── Credenciais do seed (TAREFA-12) ────────────────────────────────────────
 const ADMIN_EMAIL = "admin@farmaubs.dev";
@@ -51,11 +48,18 @@ beforeAll(async () => {
   // (farmaubs_app tem RLS — sem GUC setado o UPDATE não afeta nenhuma linha)
   dsAdmin = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST ?? "localhost",
-    port: parseInt(process.env.DB_PORT ?? "5434", 10),
-    database: process.env.POSTGRES_DB ?? "farmaubs",
+    host: process.env.TEST_DB_HOST ?? process.env.DB_HOST ?? "localhost",
+    port: parseInt(
+      process.env.TEST_DB_PORT ?? process.env.DB_PORT ?? "5435",
+      10,
+    ),
+    database:
+      process.env.TEST_DB_DATABASE ?? process.env.POSTGRES_DB ?? "farmaubs",
     username: process.env.MIGRATION_DB_USER ?? "farmaubs_admin",
-    password: process.env.MIGRATION_DB_PASSWORD ?? "",
+    password:
+      process.env.TEST_ADMIN_DB_PASSWORD ??
+      process.env.MIGRATION_DB_PASSWORD ??
+      "farmaubs_test_password",
     synchronize: false,
     logging: false,
   });
@@ -111,9 +115,23 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
         .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
 
       expect(res.body).toMatchObject({
-        usuarioId: expect.any(String),
+        usuario: expect.objectContaining({
+          id: expect.any(String),
+          nomeCompleto: expect.any(String),
+          email: ADMIN_EMAIL,
+          perfilCodigo: "ADMINISTRADOR",
+          municipioId: expect.any(String),
+          unidadeIds: expect.any(Array),
+          deveTrocarSenha: false,
+        }),
+        sessao: expect.objectContaining({
+          expiresAt: expect.any(String),
+          ttlSeconds: expect.any(Number),
+          warningSeconds: expect.any(Number),
+        }),
         redirectUrl: "/dashboard",
       });
+      expect(res.body.usuario.unidadeIds.length).toBeGreaterThan(0);
     });
 
     it("inclui token Bearer no cabeçalho Authorization", async () => {
@@ -282,10 +300,14 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res.body).toMatchObject({
         usuarioId: expect.any(String),
         municipioId: expect.any(String),
-        perfilId: expect.any(String),
+        perfilCodigo: "ADMINISTRADOR",
         unidadeIds: expect.any(Array),
+        nomeCompleto: expect.any(String),
+        email: ADMIN_EMAIL,
+        deveTrocarSenha: false,
         expiresAt: expect.any(String),
       });
+      expect(res.body.unidadeIds.length).toBeGreaterThan(0);
 
       expect(res.headers["x-session-expires-at"]).toBeDefined();
       const expiresAtHeader = new Date(res.headers["x-session-expires-at"]);
@@ -342,4 +364,209 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res.body.status).toBe("ok");
     });
   });
+
+  // ── Cenário 7: Logout com Encerramento da Sessão (AC-06 — Camada C) ──────
+
+  describe("Logout com Encerramento de Sessão (AC-06 — Camada C)", () => {
+    let validToken: string;
+
+    beforeEach(async () => {
+      await resetarUsuario(ADMIN_EMAIL);
+      const loginRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      expect(loginRes.status).toBe(200);
+      validToken = loginRes.headers["authorization"];
+    });
+
+    it("POST /api/v1/acesso/logout revoga a sessão no servidor e responde 204 No Content, invalidando o token para chamadas futuras", async () => {
+      // 1. Logout com sucesso
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+
+      // 2. O mesmo token deve ser rejeitado com 401 em /me
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", validToken)
+        .expect(401);
+
+      // 3. Verifica no banco que a sessão física está com status = 'revogada'
+      const rows = await dsAdmin.query(
+        `SELECT status, revogada_em FROM sessions WHERE usuario_id = (SELECT id FROM users WHERE email = $1)`,
+        [ADMIN_EMAIL],
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      expect(rows[0].status).toBe("revogada");
+      expect(rows[0].revogada_em).not.toBeNull();
+    });
+
+    it("POST /api/v1/acesso/logout é idempotente em chamadas repetidas (204 No Content)", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+    });
+
+    it("POST /api/v1/acesso/logout é idempotente para token inexistente (204 No Content)", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", "Bearer token-inexistente-1234567890")
+        .expect(204);
+    });
+
+    it("POST /api/v1/acesso/logout responde 401 sem o cabeçalho Authorization", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .expect(401);
+    });
+
+    it("POST /api/v1/acesso/logout responde 401 para cabeçalho Authorization malformado", async () => {
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", "Basic token-invalido")
+        .expect(401);
+    });
+
+    it("POST /api/v1/acesso/logout revoga exclusivamente a sessão do token utilizado (isolamento de sessões)", async () => {
+      // Cria uma segunda sessão para o mesmo usuário
+      const login2 = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      expect(login2.status).toBe(200);
+      const token2 = login2.headers["authorization"];
+
+      // Logout apenas da primeira sessão (validToken)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", validToken)
+        .expect(204);
+
+      // A primeira sessão foi revogada
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", validToken)
+        .expect(401);
+
+      // A segunda sessão continua ativa e válida
+      const res2 = await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", token2)
+        .expect(200);
+      expect(res2.body.email).toBe(ADMIN_EMAIL);
+    });
+  });
+
+  // ── Cenário 8: Troca Obrigatória de Senha e MustChangePasswordGuard (AC-23) ─
+
+  describe("Troca Obrigatória de Senha e MustChangePasswordGuard (AC-23 — Camada C)", () => {
+    it("valida ciclo completo de emissão provisória, bloqueio de rotas de negócio, permissão de logout e troca definitiva", async () => {
+      // 1. Obter id do usuário admin no banco
+      const userRows = await dsAdmin.query(
+        `SELECT id FROM users WHERE email = $1`,
+        [ADMIN_EMAIL],
+      );
+      const userId = userRows[0].id;
+
+      // 2. Autenticar como Admin para obter token
+      const loginAdminRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      const adminToken = loginAdminRes.headers["authorization"];
+
+      // 3. Admin define senha provisória
+      const provisoria = "Provisoria#2026";
+      await request(app.getHttpServer())
+        .post(`/api/v1/usuarios/${userId}/senha-provisoria`)
+        .set("Authorization", adminToken)
+        .send({ senhaProvisoria: provisoria })
+        .expect(204);
+
+      // 4. Usuário faz login com a senha provisória
+      const loginProvRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: provisoria });
+
+      expect(loginProvRes.status).toBe(200);
+      expect(loginProvRes.body.usuario.deveTrocarSenha).toBe(true);
+      expect(loginProvRes.body.redirectUrl).toBe("/trocar-senha");
+      let provToken = loginProvRes.headers["authorization"];
+
+      // 5. Token provisório tenta acessar rota restrita e é bloqueado pelo MustChangePasswordGuard (403)
+      await request(app.getHttpServer())
+        .get("/api/v1/usuarios")
+        .set("Authorization", provToken)
+        .expect(403);
+
+      // 6. Token provisório pode acessar GET /api/v1/acesso/me (@PermitirSenhaProvisoriaRoute)
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", provToken)
+        .expect(200);
+
+      // 7. Token provisório pode executar POST /api/v1/acesso/logout (@PermitirSenhaProvisoriaRoute - AC-23 Regra 3)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", provToken)
+        .expect(204);
+
+      // 8. Re-autentica com senha provisória para prosseguir com a troca
+      const reloginProv = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: provisoria });
+      expect(reloginProv.status).toBe(200);
+      provToken = reloginProv.headers["authorization"];
+
+      // 9. Tentativa de reusar a senha provisória como nova senha falha (400 Bad Request)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/trocar-senha")
+        .set("Authorization", provToken)
+        .send({ novaSenha: provisoria, confirmacaoSenha: provisoria })
+        .expect(400);
+
+      // 10. Tentativa com confirmação divergente falha (400 Bad Request)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/trocar-senha")
+        .set("Authorization", provToken)
+        .send({ novaSenha: "NovaSenhaValida@2026", confirmacaoSenha: "Divergente@2026" })
+        .expect(400);
+
+      // 11. Troca definitiva com nova senha válida responde 200 OK com TrocarSenhaResultado
+      const novaSenhaDefinitiva = "NovaSenhaSegura#2026";
+      const trocarRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/trocar-senha")
+        .set("Authorization", provToken)
+        .send({
+          novaSenha: novaSenhaDefinitiva,
+          confirmacaoSenha: novaSenhaDefinitiva,
+        })
+        .expect(200);
+
+      expect(trocarRes.body).toMatchObject({
+        sucesso: true,
+        mensagem: "Senha alterada com sucesso.",
+      });
+
+      // 12. Após a troca, a rota restrita de negócio (/usuarios) agora responde 200 com o mesmo token
+      await request(app.getHttpServer())
+        .get("/api/v1/usuarios")
+        .set("Authorization", provToken)
+        .expect(200);
+
+      // 13. Restaura a senha padrão do seed no banco para os próximos testes
+      const bcrypt = require("bcrypt");
+      const adminHash = await bcrypt.hash(ADMIN_SENHA, 12);
+      await dsAdmin.query(
+        `UPDATE users SET senha_hash = $1, deve_trocar_senha = false WHERE id = $2`,
+        [adminHash, userId],
+      );
+    });
+  });
 });
+

@@ -34,17 +34,18 @@ export interface SessaoUsuarioDto {
 }
 
 export interface UsuarioPayload {
-  id?: string;
-  nomeCompleto?: string;
-  nome: string;
+  id: string;
+  nomeCompleto: string;
   email: string;
-  perfilCodigo?: string;
-  perfil: string[] | string;
-  municipioId?: string;
-  municipio_id: number | string;
-  unidadeIds?: string[];
-  unidade_id: number | string;
-  deveTrocarSenha?: boolean;
+  perfilCodigo: string;
+  municipioId: string;
+  unidadeIds: string[];
+  deveTrocarSenha: boolean;
+  // Campos auxiliares opcionais para compatibilidade retroativa
+  nome?: string;
+  perfil?: string[] | string;
+  municipio_id?: number | string;
+  unidade_id?: number | string;
 }
 
 export interface LoginResponse {
@@ -53,8 +54,7 @@ export interface LoginResponse {
   ttlSeconds: number;
   warningSeconds: number;
   usuario: UsuarioPayload;
-  usuarioId?: string;
-  redirectUrl?: string;
+  redirectUrl: string;
 }
 
 export interface ApiErrorResponse {

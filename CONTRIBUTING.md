@@ -12,16 +12,26 @@
    - [1.2 Frontend (`@farmaubs/frontend`)](#12-frontend-farmaubsfrontend---react--vite)
    - [1.3 Pacote Compartilhado (`@farmaubs/shared`)](#13-pacote-compartilhado-farmaubsshared)
    - [1.4 Infraestrutura (`infra/`)](#14-infraestrutura-infra)
-2. [Regras Rígidas de Estrutura de Pastas (Guia para Humanos e IA)](#2-regras-rígidas-de-estrutura-de-pastas-guia-para-humanos-e-ia)
+2. [Regras Rígidas de Estrutura de Pastas e Fronteira de Escopo (Guia para Humanos e IA)](#2-regras-rígidas-de-estrutura-de-pastas-e-fronteira-de-escopo-guia-para-humanos-e-ia)
+   - [2.1 Princípio Rígido de Isolamento de Escopo (Backend vs Frontend)](#21-princípio-rígido-de-isolamento-de-escopo-backend-vs-frontend)
+   - [2.2 Tabela de Correspondência Canônica de Pastas](#22-tabela-de-correspondência-canônica-de-pastas)
+   - [2.3 Padrão Canônico de Comentários de Funções (Micro-TSDoc)](#23-padrão-canônico-de-comentários-de-funções-micro-tsdoc)
 3. [Política de Retenção de Dados: Soft Delete em vez de Hard Delete](#3-política-de-retenção-de-dados-soft-delete-em-vez-de-hard-delete)
-4. [Fluxo de Trabalho do Desenvolvedor](#4-fluxo-de-trabalho-do-desenvolvedor)
-   - [4.1 Atualizar a main](#41-atualizar-a-branch-main)
-   - [4.2 Sincronizar Variáveis de Ambiente](#42-sincronizar-variáveis-de-ambiente-env)
-   - [4.3 Criar a Branch de Trabalho](#43-criar-a-branch-de-trabalho)
-   - [4.4 Ciclo de Desenvolvimento](#44-ciclo-de-desenvolvimento)
-   - [4.5 Como Rodar os Testes (Camadas A, B, C, D)](#45-como-rodar-os-testes-camadas-a-b-c-d)
+4. [Fluxo de Trabalho Sequencial do Desenvolvedor](#4-fluxo-de-trabalho-sequencial-do-desenvolvedor)
+   - [Passo 0: Leitura Obrigatória de Atualizações](#passo-0-leitura-obrigatória-de-atualizações)
+   - [Passo 1: Atualizar a branch main](#passo-1-atualizar-a-branch-main)
+   - [Passo 2: Sincronizar Variáveis de Ambiente (.env e .env.example)](#passo-2-sincronizar-variáveis-de-ambiente-env-e-envexample)
+   - [Passo 3: Criar a Branch de Trabalho](#passo-3-criar-a-branch-de-trabalho)
+   - [Passo 4: Ciclo de Desenvolvimento e Infraestrutura Docker](#passo-4-ciclo-de-desenvolvimento-e-infraestrutura-docker)
+   - [Passo 5: Como Rodar a Suíte Completa de Testes (Camadas A, B, C, D)](#passo-5-como-rodar-a-suíte-completa-de-testes-camadas-a-b-c-d)
+   - [Passo 6: Validação Manual Obrigatória (Swagger, Banco e Interface Docker)](#passo-6-validação-manual-obrigatória-swagger-banco-e-interface-docker)
+   - [Passo 7: Checklist Pré-Push Sequencial Obrigatório](#passo-7-checklist-pré-push-sequencial-obrigatório)
 5. [Padrão de Commits](#5-padrão-de-commits-conventional-commits)
 6. [Padrão de Pull Request](#6-padrão-de-pull-request-pr)
+   - [6.1 Requisitos para Aprovação](#61-requisitos-para-aprovação)
+   - [6.2 Prints e Evidências Obrigatórias por Escopo](#62-prints-e-evidências-obrigatórias-por-escopo)
+   - [6.3 Gestão de Débitos Técnicos (Escopo Atual vs Outros Escopos)](#63-gestão-de-débitos-técnicos-escopo-atual-vs-outros-escopos)
+   - [6.4 Template Canônico do Corpo do PR](#64-template-canônico-do-corpo-do-pr)
 7. [Troubleshooting (Resolução de Problemas Frequentes)](#7-troubleshooting-resolução-de-problemas-frequentes)
 
 ---
@@ -158,11 +168,26 @@ packages/shared/src/
 
 ---
 
-## 2. Regras Rígidas de Estrutura de Pastas (Guia para Humanos e IA)
+## 2. Regras Rígidas de Estrutura de Pastas e Fronteira de Escopo (Guia para Humanos e IA)
+
+### 2.1 Princípio Rígido de Isolamento de Escopo (Backend vs Frontend)
 
 > [!CAUTION]
-> **Instrução Crítica para Desenvolvedores e Agentes de IA:**
-> NUNCA crie pastas arbitrárias no projeto. Ao adicionar novas funcionalidades, consulte a tabela de correspondência abaixo:
+> **Fronteira Inviolável de Pacotes:**
+> Desenvolvedores e agentes de IA **NUNCA** devem misturar escopos de Backend e Frontend em uma mesma tarefa ou Pull Request.
+>
+> 1. **Tarefa de Backend:**
+>    - Pode criar ou modificar arquivos **exclusivamente** em `apps/backend/` e `packages/shared/`.
+>    - É **expressamente proibido** alterar, criar ou deletar qualquer arquivo em `apps/frontend/`.
+> 2. **Tarefa de Frontend:**
+>    - Pode criar ou modificar arquivos **exclusivamente** em `apps/frontend/` e `packages/shared/`.
+>    - É **expressamente proibido** alterar, criar ou deletar qualquer arquivo em `apps/backend/`.
+> 3. **Alterações no `@farmaubs/shared`:**
+>    - Devem ser rigorosamente aditivas ou manter retrocompatibilidade com a ponta oposta, garantindo que a compilação global (`pnpm build`) nunca quebre.
+
+### 2.2 Tabela de Correspondência Canônica de Pastas
+
+NUNCA crie pastas arbitrárias no projeto. Ao adicionar novas funcionalidades, consulte a tabela de correspondência abaixo:
 
 | Se você precisa criar...                        | Onde DEVE ficar                                                                                | O que NÃO fazer                                                                        |
 | :---------------------------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
@@ -176,6 +201,36 @@ packages/shared/src/
 | **Script de Migração SQL**                      | `apps/backend/src/modules/<modulo>/infrastructure/persistence/migrations/<timestamp><Nome>.ts` | ❌ Não utilize `synchronize: true` do TypeORM em hipótese alguma.                      |
 | **Tipagem, DTO de Contrato ou Enum no Shared**  | `packages/shared/src/<modulo>/<recurso>.types.ts`                                              | ❌ NUNCA crie pastas `dto/` ou arquivos soltos na raiz de `packages/shared/src/`.      |
 | **Componente de Tela React**                    | `apps/frontend/src/pages/<NomeDaPagina>/index.tsx`                                             | ❌ Não misture views inteiras na pasta `components/ui`.                                |
+
+### 2.3 Padrão Canônico de Comentários de Funções (Micro-TSDoc)
+
+Ao escrever ou refatorar funções, use cases, repositórios, handlers e helpers de negócio, inclua **obrigatoriamente** um cabeçalho TSDoc conciso (de 3 a 6 linhas) no início da função. O objetivo é fornecer contexto semântico direto e desprovido de prolixidade para desenvolvedores e agentes de IA:
+
+- **Estrutura Canônica:**
+  ```typescript
+  /**
+   * [Regra de Negócio / RF]: Descreve de forma direta o propósito e a regra central da operação.
+   * @param paramNome - Descrição concisa do papel do parâmetro.
+   * @returns O resultado entregue pela função em caso de sucesso.
+   * @throws {TipoDeErro} Quando a condição X ocorre violando a regra Y.
+   */
+  ```
+
+- **Exemplo Real no Backend:**
+  ```typescript
+  /**
+   * [RF026 / Topologia UBS]: Consulta as UBSs ativas vinculadas a um município específico ordenadas por nome.
+   * @param municipioId - Identificador único UUID do município de lotação.
+   * @returns Lista de unidades de saúde formatadas no contrato UnidadeSaudeDto.
+   * @throws {BadRequestException} Caso o municipioId seja nulo, vazio ou inválido.
+   */
+  async executar(municipioId?: string): Promise<UnidadeSaudeDto[]> {
+    if (!municipioId?.trim()) {
+      throw new BadRequestException("O parâmetro 'municipioId' é obrigatório.");
+    }
+    return this.unidadeSaudeRepo.buscarPorMunicipio(municipioId.trim());
+  }
+  ```
 
 ---
 
@@ -245,67 +300,70 @@ WHERE usuario_id = $1;
 
 ---
 
-## 4. Fluxo de Trabalho do Desenvolvedor
+## 4. Fluxo de Trabalho Sequencial do Desenvolvedor
 
-### 4.1 Atualizar a branch `main`
+> [!IMPORTANT]
+> **Fluxo Obrigatório para Desenvolvedores e Agentes de IA:**
+> Siga rigorosamente os passos abaixo em ordem sequencial. Não pule etapas nem inverta a ordem das verificações.
 
-Sempre comece seu dia de trabalho ou uma nova tarefa sincronizando com a `main` remota:
+### Passo 0: Leitura Obrigatória de Atualizações
+Antes de iniciar qualquer análise ou codificação, verifique se há novas instruções, regras de arquitetura ou checklists atualizados no `CONTRIBUTING.md` da branch `main`.
+
+### Passo 1: Atualizar a branch `main`
+Sempre comece o dia de trabalho ou uma nova tarefa sincronizando o repositório local com a `main` remota:
 
 ```bash
 git checkout main
 git pull origin main
 ```
 
-### 4.2 Sincronizar Variáveis de Ambiente (`.env`)
-
-Se novas variáveis forem introduzidas, elas estarão listadas no `.env.example`:
-
+### Passo 2: Sincronizar Variáveis de Ambiente (`.env` e `.env.example`)
 1. Compare o seu `.env` local com o `.env.example`.
-2. Para novos segredos criptográficos, utilize:
+2. **Ao introduzir novas variáveis de ambiente:**
+   - Adicione imediatamente a chave com valor mock/padrão seguro e descrição no `.env.example`.
+   - Comunique explicitamente na descrição do PR a inclusão da nova variável para que os demais membros da equipe atualizem seus arquivos `.env`.
+3. Para novos segredos criptográficos, utilize:
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-3. Cole as chaves geradas em `SESSION_SECRET` e `ENCRYPTION_KEY` se aplicável.
+4. Cole as chaves geradas em `SESSION_SECRET` e `ENCRYPTION_KEY` se aplicável.
 
-### 4.3 Criar a Branch de Trabalho
-
-Padrão obrigatório de nomenclatura de branches:  
+### Passo 3: Criar a Branch de Trabalho
+Respeite a regra de isolamento de escopo (Seção 2.1) e o padrão obrigatório de nomenclatura:  
 `<tipo>/<numero-da-issue>-<descricao-curta>`
 
 Exemplos:
-
-- Com issue no GitHub Projects:
+- **Backend:**
   ```bash
   git checkout -b feat/42-cadastro-medicamentos
   git checkout -b fix/58-ajuste-validacao-cpf
   ```
-- Sem issue vinculada (apenas correções pequenas):
+- **Frontend:**
   ```bash
+  git checkout -b feat/105-gestao-usuarios-tabela
   git checkout -b fix/corrige-padding-tabela
   ```
 
-### 4.4 Ciclo de Desenvolvimento
-
-1. **Subir a stack de desenvolvimento com Docker:**
+### Passo 4: Ciclo de Desenvolvimento e Infraestrutura Docker
+1. **Subir a stack completa com Docker Compose:**
+   A infraestrutura Docker deve estar de pé e operacional durante o desenvolvimento:
    ```bash
    docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
    ```
-2. **Acompanhar os logs da API:**
+2. **Acompanhar os logs dos serviços:**
    ```bash
    docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f frontend
    ```
-3. **Atualização de dependências com Docker em execução:**
-   Os containers de desenvolvimento utilizam volumes nomeados para isolar os diretórios `node_modules` (`node_modules_backend`, `node_modules_frontend`, etc. definidos no `infra/docker-compose.dev.yml`).  
-   Quando novas dependências forem adicionadas ao monorepo (após um `git pull`, `git merge` ou `pnpm add`), elas **não entram automaticamente nos containers apenas rodando `pnpm install` no host**. Para sincronizá-las:
-
+3. **Verificar a saúde dos containers:**
+   Certifique-se de que os containers (`farmaubs-postgres-1`, `farmaubs-api-1`, `farmaubs-frontend-1`) permanecem saudáveis (`healthy` ou ativos sem reiniciar em loop).
+4. **Sincronização de dependências com Docker em execução:**
+   Quando novas dependências forem adicionadas ao monorepo (após um `git pull`, `git merge` ou `pnpm add`), sincronize os volumes dos containers:
    ```bash
-   # Opção rápida (com os containers em execução):
    docker exec -i farmaubs-api-1 pnpm install && docker restart farmaubs-api-1
    docker exec -i farmaubs-frontend-1 pnpm install && docker restart farmaubs-frontend-1
    ```
-
-4. **Rodar localmente (sem container para debug rápido):**
-
+5. **Debug local alternativo (sem containers para investigações isoladas):**
    ```bash
    # Terminal 1: compilação contínua do shared
    pnpm --filter @farmaubs/shared dev
@@ -317,11 +375,9 @@ Exemplos:
    pnpm dev:frontend
    ```
 
----
+### Passo 5: Como Rodar a Suíte Completa de Testes (Camadas A, B, C, D)
 
-### 4.5 Como Rodar os Testes (Camadas A, B, C, D)
-
-O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (ADR-030):
+O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (ADR-030). Desenvolvedores e agentes de IA **devem executar os comandos prescritos sem omitir suítes nem utilizar flags que mascarem falhas**:
 
 | Camada       | Nome                           | Onde executa    | Comando                                      | Objetivo                                                             |
 | :----------- | :----------------------------- | :-------------- | :------------------------------------------- | :------------------------------------------------------------------- |
@@ -333,13 +389,42 @@ O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (AD
 
 > [!NOTE]
 > Ao finalizar testes na porta 5435 (Camada B), derrube o banco de teste efêmero com:
->
 > ```bash
 > pnpm --filter @farmaubs/backend test:schema:down
 > ```
 
 > [!TIP]
-> **Padrão BDD/Cucumber para novas funcionalidades (Camada A):** A partir da issue de cadastro de usuários (#53), casos de uso e regras de negócio devem ser preferencialmente especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.spec.ts` ou `*.steps.ts`). Testes criados antes desse marco permanecem em formato Jest `.spec.ts` sem necessidade de migração retroativa.
+> **Padrão BDD/Cucumber (Camada A):** Casos de uso e regras de negócio devem ser especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.ts`).
+
+### Passo 6: Validação Manual Obrigatória (Swagger, Banco e Interface Docker)
+
+A execução com sucesso dos testes automatizados **não substitui** a validação manual. Antes de finalizar o trabalho:
+
+- **Se a tarefa for de Backend:**
+  1. **Testar via Swagger:** Acesse a documentação interativa em `http://localhost:3000/api/v1/docs` e dispare requisições manuais para os novos endpoints ou rotas modificadas (testando tanto o fluxo feliz quanto cenários de erro 400, 401 e 403).
+  2. **Auditar o Banco de Dados:** Conecte-se ao PostgreSQL de desenvolvimento (porta `5434`) via cliente SQL (`psql`, DBeaver, etc.) e inspecione as tabelas afetadas. Certifique-se de que os dados foram persistidos, atualizados ou marcados com soft delete conforme as regras de negócio e de auditoria.
+- **Se a tarefa for de Frontend:**
+  1. **Obrigatoriedade do Docker Compose:** O desenvolvedor ou agente de IA **DEVE priorizar a aplicação frontend que sobe via Docker Compose** (`http://localhost:5173`), servida pelo container `farmaubs-frontend-1` integrado com o proxy da API, e **NÃO** uma instância local isolada no host. Isso garante a validação no ambiente conteinerizado idêntico ao de produção.
+  2. **Testar o Fluxo Visual e Interativo:** Navegue pelas telas afetadas, preenchendo formulários, validando mensagens de erro, estados de carregamento (*loading*), fechamento de modais com a tecla `Escape` e navegação via teclado/foco (WCAG 2.1 AA).
+- **Relato Obrigatório:** Ambos os papéis devem relatar explicitamente na descrição do PR se a validação manual foi concluída com sucesso ou se foram encontrados débitos técnicos.
+
+### Passo 7: Checklist Pré-Push Sequencial Obrigatório
+
+> [!CAUTION]
+> **Ordem Estrita de Execução Pré-Push:**
+> Execute as 4 etapas a seguir rigorosamente nesta sequência antes de qualquer `git push`:
+>
+> 1. **Sincronizar com a `main`:**
+>    Faça `git fetch origin main` e integre a versão mais recente da `main` (`git merge origin/main` ou `git rebase origin/main`) caso ela tenha avançado desde a criação da sua branch.
+> 2. **Resolver Conflitos com Prioridade à `main`:**
+>    Em caso de conflitos de merge/rebase, **priorize sempre o código já estabelecido e aprovado na `main`** em detrimento de código recém-adicionado especulativo.
+> 3. **Auditar Contra Relaxamento de Regras e Testes:**
+>    Verifique o diff final (`git diff origin/main`) e assegure que:
+>    - Nenhuma regra de negócio foi relaxada ou desativada.
+>    - Nenhum teste automatizado foi enfraquecido, burlado com `.skip` ou tornado tautológico (ex: mocks que apenas jogam exceção sem executar guards ou regras reais).
+>    - Nenhuma tipagem estrita foi substituída por `any`.
+> 4. **Conferir Cobertura da História de Usuário:**
+>    Confira se as alterações cobrem **100% dos critérios de aceite (BDD)** e requisitos descritos na história de usuário atribuída. Se faltar algum cenário, implemente-o antes de enviar.
 
 ---
 
@@ -365,7 +450,7 @@ Formato obrigatório:
 - **`frontend`**: Código da SPA React.
 - **`shared`**: Tipos e contratos do `@farmaubs/shared`.
 - **`infra`**: Docker, Docker Compose, Nginx e CI/CD.
-- Ou o nome específico do módulo: `(acesso)`, `(medicamentos)`, `(estoque)`.
+- Ou o nome específico do módulo: `(acesso)`, `(administracao)`, `(medicamentos)`, `(estoque)`.
 
 ### Exemplos Válidos:
 
@@ -388,10 +473,11 @@ Closes #78
 ### 6.1 Requisitos para Aprovação
 
 1. O título do PR deve seguir o mesmo padrão do commit: `<tipo>(<escopo>): <descrição>`.
-2. A branch deve estar atualizada em relação à `main`.
-3. Todos os testes relevantes devem estar passando com **prints anexados** na descrição do PR.
+2. A branch deve estar atualizada em relação à `main` com conflitos resolvidos com prioridade para a `main`.
+3. Todos os testes automatizados relevantes devem estar passando com **prints anexados** na descrição do PR.
+4. Validação manual (Swagger/Banco ou Interface Docker) relatada.
 
-### 6.2 Prints Obrigatórios por Escopo
+### 6.2 Prints e Evidências Obrigatórias por Escopo
 
 | Mudança                         | Evidências Necessárias no PR                                        |
 | :------------------------------ | :------------------------------------------------------------------ |
@@ -400,7 +486,16 @@ Closes #78
 | **Frontend (Telas)**            | Screenshots das telas afetadas (desktop/mobile) e do build.         |
 | **Shared**                      | Print do `pnpm --filter @farmaubs/shared build` sem erros.          |
 
-### 6.3 Template do Corpo do PR
+### 6.3 Gestão de Débitos Técnicos (Escopo Atual vs Outros Escopos)
+
+- **Débitos do Escopo da História Atual:**
+  Devem ser **obrigatoriamente resolvidos** antes de abrir ou marcar o PR como pronto para revisão. Não transfira débitos da sua própria tarefa para o futuro.
+- **Débitos de Outras Histórias ou Código Legado:**
+  Se durante o desenvolvimento você identificar bugs, débitos técnicos ou inconsistências fora do escopo da sua história:
+  - **NÃO** altere o código alheio nesta branch (evita inflar o PR e criar conflitos desnecessários).
+  - **Registre** os pontos identificados na seção dedicada do PR (`### Débitos Técnicos Identificados (Fora de Escopo)`). Assim, o Gerente de Projetos poderá criar novas histórias e tarefas no backlog.
+
+### 6.4 Template Canônico do Corpo do PR
 
 ```markdown
 ## O que mudou
@@ -409,17 +504,34 @@ Closes #78
 
 ## Como foi testado
 
+### Testes Automatizados
 - [ ] Testes unitários (`pnpm test`) — <anexar print>
 - [ ] Testes de schema (`pnpm test:schema`) — <anexar print>
 - [ ] Build global do monorepo (`pnpm build`) — <anexar print>
 - [ ] Evidências visuais de tela (frontend) — <anexar screenshots>
 
+### Validação Manual Obrigatória
+- [ ] **Backend**: Testado via Swagger (`http://localhost:3000/api/v1/docs`) e auditado diretamente no banco PostgreSQL.
+- [ ] **Frontend**: Testado na aplicação servida pelo Docker Compose (`http://localhost:5173`).
+- **Relato da validação manual**: <Descreva brevemente as operações testadas e os resultados obtidos>
+
+## Débitos Técnicos Identificados (Fora de Escopo)
+
+> Liste aqui inconsistências ou débitos de outros módulos/histórias encontrados durante o trabalho (se houver), para abertura de novas issues:
+- [ ] <Descrição do débito técnico fora de escopo / sugestão de issue futura>
+
 ## Checklist
 
-- [ ] Branch criada a partir da `main` atualizada
+- [ ] Passo 0 a 7 do CONTRIBUTING.md seguidos rigorosamente
+- [ ] Isolamento de escopo respeitado (Backend/Frontend não misturados)
+- [ ] Branch sincronizada com a `main` mais recente com conflitos resolvidos priorizando a `main`
+- [ ] Nenhuma regra de negócio ou teste foi relaxado / enfraquecido
+- [ ] 100% dos critérios de aceite da história de usuário foram cobertos
+- [ ] Funções documentadas com cabeçalho Micro-TSDoc
 - [ ] Commits seguindo o padrão Conventional Commits
 - [ ] Issue vinculada (`Closes #<numero>` ou `Refs #<numero>`)
 - [ ] Arquivos alocados nas pastas canônicas da Arquitetura Hexagonal
+- [ ] Novas variáveis de ambiente (se houver) documentadas no `.env.example`
 ```
 
 ---

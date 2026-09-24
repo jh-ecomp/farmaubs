@@ -5,8 +5,9 @@ import { adminDatabaseUrl, appDatabaseUrl } from "../test-db";
 import { AcessoPgRepository } from "../../src/modules/acesso/infrastructure/adapters/acesso-pg.repository";
 
 const MUNICIPIO_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-const PERFIL_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const PERFIL_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbe";
 const USER_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const UNIDADE_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const EMAIL = "acesso.integration@farmaubs.test";
 const SENHA = "Teste@123456";
 
@@ -26,7 +27,9 @@ describe("AcessoPgRepository — integração (camada B)", () => {
     const senhaHash = await bcrypt.hash(SENHA, 4);
 
     await admin.query(`DELETE FROM sessions WHERE usuario_id = $1`, [USER_ID]);
+    await admin.query(`DELETE FROM user_units WHERE usuario_id = $1`, [USER_ID]);
     await admin.query(`DELETE FROM users    WHERE id = $1`, [USER_ID]);
+    await admin.query(`DELETE FROM unidades_saude WHERE id = $1`, [UNIDADE_ID]);
 
     await admin.query(
       `INSERT INTO perfis (id, codigo, nome)
@@ -41,17 +44,32 @@ describe("AcessoPgRepository — integração (camada B)", () => {
       [MUNICIPIO_ID],
     );
     await admin.query(
+      `INSERT INTO unidades_saude (id, municipio_id, nome, endereco, responsavel_tecnico, caf_lead_time_days)
+       VALUES ($1, $2, 'UBS Integração', 'Rua Teste', 'Resp Teste', 10)
+       ON CONFLICT (id) DO NOTHING`,
+      [UNIDADE_ID, MUNICIPIO_ID],
+    );
+    await admin.query(
       `INSERT INTO users
          (id, nome_completo, email, senha_hash, perfil_id, municipio_id,
-          tentativas_login_falhas, bloqueado_ate)
-       VALUES ($1, 'Usuário Integração', $2, $3, $4, $5, 0, NULL)`,
+          deve_trocar_senha, tentativas_login_falhas, bloqueado_ate)
+       VALUES ($1, 'Usuário Integração', $2, $3, $4, $5, false, 0, NULL)`,
       [USER_ID, EMAIL, senhaHash, PERFIL_ID, MUNICIPIO_ID],
+    );
+    await admin.query(
+      `INSERT INTO user_units (usuario_id, unidade_id, ativo)
+       VALUES ($1, $2, true)
+       ON CONFLICT (usuario_id, unidade_id) DO UPDATE SET ativo = true`,
+      [USER_ID, UNIDADE_ID],
     );
   });
 
   afterAll(async () => {
     await admin.query(`DELETE FROM sessions WHERE usuario_id = $1`, [USER_ID]);
+    await admin.query(`DELETE FROM user_units WHERE usuario_id = $1`, [USER_ID]);
     await admin.query(`DELETE FROM users    WHERE id = $1`, [USER_ID]);
+    await admin.query(`DELETE FROM unidades_saude WHERE id = $1`, [UNIDADE_ID]);
+    await admin.query(`DELETE FROM perfis WHERE id = $1`, [PERFIL_ID]);
     await admin?.destroy();
     await app?.destroy();
   });
@@ -61,6 +79,10 @@ describe("AcessoPgRepository — integração (camada B)", () => {
     expect(usuario).not.toBeNull();
     expect(usuario!.id).toBe(USER_ID);
     expect(usuario!.senhaHash).toBeTruthy();
+    expect(usuario!.perfilCodigo).toBe("FARMACEUTICO_TEST");
+    expect(usuario!.nomeCompleto).toBe("Usuário Integração");
+    expect(usuario!.deveTrocarSenha).toBe(false);
+    expect(usuario!.unidadeIds).toContain(UNIDADE_ID);
   });
 
   it("buscarUsuarioPorEmail retorna null para e-mail inexistente", async () => {

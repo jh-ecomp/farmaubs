@@ -6,7 +6,9 @@ import * as path from "node:path";
 import { CommonModule } from "./common/common.module";
 import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
+import { AdministracaoModule } from "./modules/administracao/administracao.module";
 import { SessionAuthGuard } from "./common/guards/session-auth.guard";
+import { MustChangePasswordGuard } from "./modules/acesso/api/guards/must-change-password.guard";
 import { TenantInterceptor } from "./common/tenant/tenant.interceptor";
 import { TransactionInterceptor } from "./common/transaction/transaction.interceptor";
 import { SessionHeaderInterceptor } from "./common/interceptors/session-header.interceptor";
@@ -51,9 +53,11 @@ import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persi
     CommonModule,
     HealthModule,
     AcessoModule,
+    AdministracaoModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionAuthGuard },
+    { provide: APP_GUARD, useClass: MustChangePasswordGuard },
     { provide: APP_INTERCEPTOR, useClass: TenantInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransactionInterceptor },
     { provide: APP_INTERCEPTOR, useClass: SessionHeaderInterceptor },

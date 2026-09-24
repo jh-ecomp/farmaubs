@@ -78,6 +78,12 @@ export function inspectSessionExpiresHeader(response: Response): Response {
 }
 
 export const authService = {
+  /**
+   * [RF001 / Autenticação]: Efetua autenticação do usuário com credenciais e obtém sessão ativa.
+   * @param dadosLogin - Credenciais de login (e-mail e senha).
+   * @returns Resposta com token JWT, dados canônicos do usuário autenticado e parâmetros de sessão.
+   * @throws {AuthError} Quando as credenciais são inválidas, conta bloqueada ou erro de rede.
+   */
   async login(dadosLogin: LoginRequest): Promise<LoginResponse> {
     let resposta: Response;
     try {
@@ -152,52 +158,35 @@ export const authService = {
     const token = authHeader ? authHeader.replace(/^Bearer\s+/i, "") : "";
     const body: BackendLoginResponse = await resposta.json();
 
-    // Determina o perfil e nome do usuário autenticado (com fallback para branch 193)
-    const emailLower = dadosLogin.email.trim().toLowerCase();
-    let perfilCodigo = "FARMACEUTICO";
-    let perfil = ["FARMACEUTICO"];
-    let nome = "Profissional de Saúde";
-
-    if (emailLower.includes("admin")) {
-      perfilCodigo = "ADMINISTRADOR";
-      perfil = ["ADMINISTRADOR"];
-      nome = "Administrador Geral";
-    } else if (emailLower.includes("gestor")) {
-      perfilCodigo = "GESTOR";
-      perfil = ["GESTOR"];
-      nome = "Gestor Municipal";
-    } else if (emailLower.includes("residente")) {
-      perfilCodigo = "FARMACEUTICO_RESIDENTE";
-      perfil = ["FARMACEUTICO_RESIDENTE"];
-      nome = "Farmacêutico Residente";
-    } else if (emailLower.includes("responsavel")) {
-      perfilCodigo = "FARMACEUTICO_RESPONSAVEL";
-      perfil = ["FARMACEUTICO_RESPONSAVEL"];
-      nome = "Farmacêutico Responsável";
-    }
-
     return {
       token,
-      expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
-      ttlSeconds: 3600,
-      warningSeconds: 300,
-      usuarioId: body.usuarioId,
-      redirectUrl: body.redirectUrl,
+      expiresAt: body.sessao.expiresAt,
+      ttlSeconds: body.sessao.ttlSeconds,
+      warningSeconds: body.sessao.warningSeconds,
       usuario: {
-        id: body.usuarioId,
-        nomeCompleto: nome,
-        nome,
-        email: dadosLogin.email,
-        perfilCodigo,
-        perfil,
-        municipioId: "1",
-        municipio_id: 1,
-        unidadeIds: ["1"],
-        unidade_id: 1,
+        id: body.usuario.id,
+        nomeCompleto: body.usuario.nomeCompleto,
+        email: body.usuario.email,
+        perfilCodigo: body.usuario.perfilCodigo,
+        municipioId: body.usuario.municipioId,
+        unidadeIds: body.usuario.unidadeIds,
+        deveTrocarSenha: body.usuario.deveTrocarSenha,
+        // Compatibilidade retroativa
+        nome: body.usuario.nomeCompleto,
+        perfil: [body.usuario.perfilCodigo],
+        municipio_id: body.usuario.municipioId,
+        unidade_id: body.usuario.unidadeIds?.[0] ?? "",
       },
+      redirectUrl: body.redirectUrl,
     };
   },
 
+  /**
+   * [RF002 / Sessão]: Recupera e valida a sessão ativa do usuário no servidor via GET /api/v1/acesso/me.
+   * @param tokenParam - Token de autenticação JWT opcional (busca no localStorage se omitido).
+   * @returns Snapshot dos dados do usuário e perfil RBAC no contrato SessaoUsuarioDto.
+   * @throws {AuthError} Caso não haja token ou o servidor retorne 401 (sessão expirada/inválida).
+   */
   async obterSessaoAtual(tokenParam?: string): Promise<SessaoUsuarioDto> {
     const token = tokenParam || localStorage.getItem("@FarmaUBS:token");
     if (!token) {
@@ -257,6 +246,10 @@ export const authService = {
     };
   },
 
+  /**
+   * [RF004 / Logout]: Dispara a revogação da sessão ativa no servidor via POST /api/v1/acesso/logout.
+   * Resiliente a erros de conexão para garantir que a saída local ocorra mesmo offline.
+   */
   async logout(): Promise<void> {
     const token = localStorage.getItem("@FarmaUBS:token");
     if (!token) return;
