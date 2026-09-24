@@ -190,22 +190,27 @@ export function AuthProvider({ children, initialStatus }: AuthProviderProps) {
         const sessao = await authService.obterSessaoAtual(token);
         if (isMounted) {
           setAuthState((prev) => {
-            const usuarioBase = prev.usuario || {
+            const usuarioBase: UsuarioPayload = prev.usuario || {
               id: sessao.id,
+              nomeCompleto: sessao.nomeCompleto,
               nome: sessao.nomeCompleto,
               email: sessao.email,
+              perfilCodigo: sessao.perfilCodigo,
               perfil: [sessao.perfilCodigo],
+              municipioId: sessao.municipioId,
               municipio_id: sessao.municipioId,
+              unidadeIds: sessao.unidadeIds,
               unidade_id: sessao.unidadeIds[0] || "",
+              deveTrocarSenha: sessao.deveTrocarSenha,
             };
 
-            const usuarioAtualizado = {
-              ...usuarioBase,
+            const usuarioAtualizado: UsuarioPayload = {
               id: sessao.id || usuarioBase.id,
               nomeCompleto:
                 sessao.nomeCompleto ||
                 usuarioBase.nomeCompleto ||
-                usuarioBase.nome,
+                usuarioBase.nome ||
+                "",
               nome: sessao.nomeCompleto || usuarioBase.nome,
               email: sessao.email || usuarioBase.email,
               perfilCodigo: sessao.perfilCodigo || usuarioBase.perfilCodigo,
