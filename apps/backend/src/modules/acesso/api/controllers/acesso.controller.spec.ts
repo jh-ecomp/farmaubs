@@ -5,12 +5,20 @@ import { AcessoController } from "./acesso.controller";
 import { LoginUseCase } from "../../application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "../../application/use-cases/renew-session.use-case";
 import { LogoutUseCase } from "../../application/use-cases/logout.use-case";
+import { ChangePasswordUseCase } from "../../application/use-cases/change-password.use-case";
+import { BadRequestException } from "@nestjs/common";
+import {
+  ConfirmacaoSenhaDivergenteException,
+  NovaSenhaNaoPodeSerIgualProvisoriaException,
+  SenhaFracaException,
+} from "../../domain/errors/password.errors";
 
 describe("AcessoController (Camada A — Teste Unitário)", () => {
   let controller: AcessoController;
   let loginUseCaseMock: jest.Mocked<LoginUseCase>;
   let renewSessionUseCaseMock: jest.Mocked<RenewSessionUseCase>;
   let logoutUseCaseMock: jest.Mocked<LogoutUseCase>;
+  let changePasswordUseCaseMock: jest.Mocked<ChangePasswordUseCase>;
 
   beforeEach(async () => {
     loginUseCaseMock = {
@@ -25,12 +33,20 @@ describe("AcessoController (Camada A — Teste Unitário)", () => {
       executar: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<LogoutUseCase>;
 
+    changePasswordUseCaseMock = {
+      executar: jest.fn().mockResolvedValue({
+        sucesso: true,
+        mensagem: "Senha alterada com sucesso.",
+      }),
+    } as unknown as jest.Mocked<ChangePasswordUseCase>;
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AcessoController],
       providers: [
         { provide: LoginUseCase, useValue: loginUseCaseMock },
         { provide: RenewSessionUseCase, useValue: renewSessionUseCaseMock },
         { provide: LogoutUseCase, useValue: logoutUseCaseMock },
+        { provide: ChangePasswordUseCase, useValue: changePasswordUseCaseMock },
       ],
     }).compile();
 
@@ -152,6 +168,72 @@ describe("AcessoController (Camada A — Teste Unitário)", () => {
 
       expect(renewSessionUseCaseMock.executar).toHaveBeenCalledWith("session-1");
       expect(res.ttlSeconds).toBe(3600);
+    });
+  });
+
+  describe("POST /acesso/trocar-senha", () => {
+    const mockReq = {
+      sessao: {
+        usuarioId: "user-1",
+      },
+    } as unknown as Request;
+
+    it("deve delegar a troca de senha ao ChangePasswordUseCase e retornar TrocarSenhaResultado", async () => {
+      const dto = {
+        novaSenha: "NovaSenhaSegura@2026",
+        confirmacaoSenha: "NovaSenhaSegura@2026",
+      };
+
+      const res = await controller.trocarSenha(mockReq, dto);
+
+      expect(changePasswordUseCaseMock.executar).toHaveBeenCalledWith({
+        usuarioId: "user-1",
+        novaSenha: "NovaSenhaSegura@2026",
+        confirmacaoSenha: "NovaSenhaSegura@2026",
+      });
+      expect(res).toEqual({
+        sucesso: true,
+        mensagem: "Senha alterada com sucesso.",
+      });
+    });
+
+    it("deve converter ConfirmacaoSenhaDivergenteException em BadRequestException", async () => {
+      changePasswordUseCaseMock.executar.mockRejectedValueOnce(
+        new ConfirmacaoSenhaDivergenteException(),
+      );
+
+      await expect(
+        controller.trocarSenha(mockReq, {
+          novaSenha: "Senha@1",
+          confirmacaoSenha: "Senha@2",
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("deve converter NovaSenhaNaoPodeSerIgualProvisoriaException em BadRequestException", async () => {
+      changePasswordUseCaseMock.executar.mockRejectedValueOnce(
+        new NovaSenhaNaoPodeSerIgualProvisoriaException(),
+      );
+
+      await expect(
+        controller.trocarSenha(mockReq, {
+          novaSenha: "Provisoria@1",
+          confirmacaoSenha: "Provisoria@1",
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("deve converter SenhaFracaException em BadRequestException", async () => {
+      changePasswordUseCaseMock.executar.mockRejectedValueOnce(
+        new SenhaFracaException(),
+      );
+
+      await expect(
+        controller.trocarSenha(mockReq, {
+          novaSenha: "123",
+          confirmacaoSenha: "123",
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

@@ -32,6 +32,12 @@ export interface RepositorioUsuarioPort {
   atualizarStatus(id: string, ativo: boolean): Promise<UsuarioModeloDominio>;
   atualizarSenhaProvisoria(id: string, senhaHash: string): Promise<void>;
   contarAdministradoresAtivos(): Promise<number>;
+  buscarSenhaHashPorId(id: string): Promise<string | null>;
+  concluirTrocaDeSenha(
+    id: string,
+    senhaHash: string,
+    atualizadoEm: Date,
+  ): Promise<void>;
 }
 
 export type UserRepositoryPort = RepositorioUsuarioPort;

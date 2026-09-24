@@ -15,3 +15,4 @@ export class RedefinirSenhaProvisoriaDto implements RedefinirSenhaProvisoriaComa
 }
 
 export type SetTemporaryPasswordDto = RedefinirSenhaProvisoriaDto;
+export type DefinirSenhaProvisoriaDto = RedefinirSenhaProvisoriaDto;

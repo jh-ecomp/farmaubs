@@ -462,5 +462,111 @@ describe("POST /api/v1/acesso/login (e2e — camada C)", () => {
       expect(res2.body.email).toBe(ADMIN_EMAIL);
     });
   });
+
+  // ── Cenário 8: Troca Obrigatória de Senha e MustChangePasswordGuard (AC-23) ─
+
+  describe("Troca Obrigatória de Senha e MustChangePasswordGuard (AC-23 — Camada C)", () => {
+    it("valida ciclo completo de emissão provisória, bloqueio de rotas de negócio, permissão de logout e troca definitiva", async () => {
+      // 1. Obter id do usuário admin no banco
+      const userRows = await dsAdmin.query(
+        `SELECT id FROM users WHERE email = $1`,
+        [ADMIN_EMAIL],
+      );
+      const userId = userRows[0].id;
+
+      // 2. Autenticar como Admin para obter token
+      const loginAdminRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: ADMIN_SENHA });
+      const adminToken = loginAdminRes.headers["authorization"];
+
+      // 3. Admin define senha provisória
+      const provisoria = "Provisoria#2026";
+      await request(app.getHttpServer())
+        .post(`/api/v1/usuarios/${userId}/senha-provisoria`)
+        .set("Authorization", adminToken)
+        .send({ senhaProvisoria: provisoria })
+        .expect(204);
+
+      // 4. Usuário faz login com a senha provisória
+      const loginProvRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: provisoria });
+
+      expect(loginProvRes.status).toBe(200);
+      expect(loginProvRes.body.usuario.deveTrocarSenha).toBe(true);
+      expect(loginProvRes.body.redirectUrl).toBe("/trocar-senha");
+      let provToken = loginProvRes.headers["authorization"];
+
+      // 5. Token provisório tenta acessar rota restrita e é bloqueado pelo MustChangePasswordGuard (403)
+      await request(app.getHttpServer())
+        .get("/api/v1/usuarios")
+        .set("Authorization", provToken)
+        .expect(403);
+
+      // 6. Token provisório pode acessar GET /api/v1/acesso/me (@PermitirSenhaProvisoriaRoute)
+      await request(app.getHttpServer())
+        .get("/api/v1/acesso/me")
+        .set("Authorization", provToken)
+        .expect(200);
+
+      // 7. Token provisório pode executar POST /api/v1/acesso/logout (@PermitirSenhaProvisoriaRoute - AC-23 Regra 3)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/logout")
+        .set("Authorization", provToken)
+        .expect(204);
+
+      // 8. Re-autentica com senha provisória para prosseguir com a troca
+      const reloginProv = await request(app.getHttpServer())
+        .post("/api/v1/acesso/login")
+        .send({ email: ADMIN_EMAIL, senha: provisoria });
+      expect(reloginProv.status).toBe(200);
+      provToken = reloginProv.headers["authorization"];
+
+      // 9. Tentativa de reusar a senha provisória como nova senha falha (400 Bad Request)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/trocar-senha")
+        .set("Authorization", provToken)
+        .send({ novaSenha: provisoria, confirmacaoSenha: provisoria })
+        .expect(400);
+
+      // 10. Tentativa com confirmação divergente falha (400 Bad Request)
+      await request(app.getHttpServer())
+        .post("/api/v1/acesso/trocar-senha")
+        .set("Authorization", provToken)
+        .send({ novaSenha: "NovaSenhaValida@2026", confirmacaoSenha: "Divergente@2026" })
+        .expect(400);
+
+      // 11. Troca definitiva com nova senha válida responde 200 OK com TrocarSenhaResultado
+      const novaSenhaDefinitiva = "NovaSenhaSegura#2026";
+      const trocarRes = await request(app.getHttpServer())
+        .post("/api/v1/acesso/trocar-senha")
+        .set("Authorization", provToken)
+        .send({
+          novaSenha: novaSenhaDefinitiva,
+          confirmacaoSenha: novaSenhaDefinitiva,
+        })
+        .expect(200);
+
+      expect(trocarRes.body).toMatchObject({
+        sucesso: true,
+        mensagem: "Senha alterada com sucesso.",
+      });
+
+      // 12. Após a troca, a rota restrita de negócio (/usuarios) agora responde 200 com o mesmo token
+      await request(app.getHttpServer())
+        .get("/api/v1/usuarios")
+        .set("Authorization", provToken)
+        .expect(200);
+
+      // 13. Restaura a senha padrão do seed no banco para os próximos testes
+      const bcrypt = require("bcrypt");
+      const adminHash = await bcrypt.hash(ADMIN_SENHA, 12);
+      await dsAdmin.query(
+        `UPDATE users SET senha_hash = $1, deve_trocar_senha = false WHERE id = $2`,
+        [adminHash, userId],
+      );
+    });
+  });
 });
 

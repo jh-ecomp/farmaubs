@@ -354,6 +354,33 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       .getCount();
   }
 
+  async buscarSenhaHashPorId(id: string): Promise<string | null> {
+    const manager = this.transactionContext.getManager();
+    const user = await manager.findOne(User, {
+      select: { id: true, senha_hash: true },
+      where: { id },
+    });
+    return user?.senha_hash ?? null;
+  }
+
+  async concluirTrocaDeSenha(
+    id: string,
+    senhaHash: string,
+    atualizadoEm: Date,
+  ): Promise<void> {
+    const manager = this.transactionContext.getManager();
+    await manager.update(
+      User,
+      { id },
+      {
+        senha_hash: senhaHash,
+        deve_trocar_senha: false,
+        senha_atualizada_em: atualizadoEm,
+        updated_at: new Date(),
+      },
+    );
+  }
+
   private mapearParaDominio(user: User): UsuarioModeloDominio {
     const criadoEm = user.created_at ?? new Date();
     const atualizadoEm = user.updated_at ?? new Date();
