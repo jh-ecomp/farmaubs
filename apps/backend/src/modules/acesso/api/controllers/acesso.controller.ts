@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -20,10 +21,12 @@ import type { Request, Response } from "express";
 import type {
   RenovarSessaoResponse,
   SessaoUsuarioResponse,
+  TrocarSenhaResultado,
 } from "@farmaubs/shared";
 import { LoginUseCase } from "../../application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "../../application/use-cases/renew-session.use-case";
 import { LogoutUseCase } from "../../application/use-cases/logout.use-case";
+import { ChangePasswordUseCase } from "../../application/use-cases/change-password.use-case";
 import { SkipAuth } from "../../../../common/guards/skip-auth.decorator";
 import { SkipTransaction } from "../../../../common/transaction/skip-transaction.decorator";
 import {
@@ -32,6 +35,13 @@ import {
   ContaBloqueadaDto,
   ErroCredenciaisDto,
 } from "../dto/login.dto";
+import { ChangePasswordDto } from "../dto/change-password.dto";
+import { PermitirSenhaProvisoriaRoute } from "../guards/must-change-password.guard";
+import {
+  ConfirmacaoSenhaDivergenteException,
+  NovaSenhaNaoPodeSerIgualProvisoriaException,
+  SenhaFracaException,
+} from "../../domain/errors/password.errors";
 
 @ApiTags("Acesso")
 @Controller("acesso")
@@ -40,6 +50,7 @@ export class AcessoController {
     private readonly loginUseCase: LoginUseCase,
     private readonly renewSessionUseCase: RenewSessionUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
   ) {}
 
   @Post("login")
@@ -129,6 +140,7 @@ export class AcessoController {
   @Get("me")
   @HttpCode(HttpStatus.OK)
   @SkipTransaction()
+  @PermitirSenhaProvisoriaRoute()
   @ApiOperation({
     summary: "Retorna os dados da sessão do usuário autenticado",
   })
@@ -160,6 +172,7 @@ export class AcessoController {
 
   /**
    * [RF004 / Logout]: Encerra a sessão ativa do usuário invalidando o token no servidor.
+   * Permite sessões provisórias para permitir abandono/saída graciosa do fluxo (AC-23 Regra 3).
    * @param req - Objeto de requisição HTTP contendo o cabeçalho Authorization Bearer.
    * @returns Resposta HTTP 204 No Content sem corpo.
    * @throws {UnauthorizedException} Caso o cabeçalho Authorization seja ausente ou inválido.
@@ -168,6 +181,7 @@ export class AcessoController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @SkipAuth()
   @SkipTransaction()
+  @PermitirSenhaProvisoriaRoute()
   @ApiOperation({
     summary: "Encerra a sessão ativa do usuário (logout com revogação no servidor)",
   })
@@ -196,6 +210,45 @@ export class AcessoController {
     }
 
     await this.logoutUseCase.executar(token);
+  }
+
+  @Post("trocar-senha")
+  @HttpCode(HttpStatus.OK)
+  @PermitirSenhaProvisoriaRoute()
+  @ApiBearerAuth("access-token")
+  @ApiOperation({
+    summary: "Troca a senha provisória por uma senha definitiva",
+    description:
+      "Obrigatório quando deve_trocar_senha === true. " +
+      "A nova senha não pode ser igual à provisória (NF011).",
+  })
+  @ApiResponse({ status: 200, description: "Senha alterada com sucesso." })
+  @ApiResponse({
+    status: 400,
+    description: "Senha inválida, fraca ou igual à provisória.",
+  })
+  @ApiResponse({ status: 401, description: "Não autenticado." })
+  async trocarSenha(
+    @Req() req: Request,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<TrocarSenhaResultado> {
+    const sessao = (req as any).sessao ?? (req as any).session;
+    try {
+      return await this.changePasswordUseCase.executar({
+        usuarioId: sessao.usuarioId,
+        novaSenha: dto.novaSenha,
+        confirmacaoSenha: dto.confirmacaoSenha,
+      });
+    } catch (error) {
+      if (
+        error instanceof ConfirmacaoSenhaDivergenteException ||
+        error instanceof NovaSenhaNaoPodeSerIgualProvisoriaException ||
+        error instanceof SenhaFracaException
+      ) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
   }
 }
 
