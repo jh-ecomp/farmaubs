@@ -4,7 +4,7 @@ import type {
   TrocarSenhaComando,
   RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
-import type { LoginResponse } from "../types/auth";
+import type { LoginResponse, SessaoUsuarioDto } from "../types/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -78,6 +78,12 @@ export function inspectSessionExpiresHeader(response: Response): Response {
 }
 
 export const authService = {
+  /**
+   * [RF001 / Autenticação]: Efetua autenticação do usuário com credenciais e obtém sessão ativa.
+   * @param dadosLogin - Credenciais de login (e-mail e senha).
+   * @returns Resposta com token JWT, dados canônicos do usuário autenticado e parâmetros de sessão.
+   * @throws {AuthError} Quando as credenciais são inválidas, conta bloqueada ou erro de rede.
+   */
   async login(dadosLogin: LoginRequest): Promise<LoginResponse> {
     let resposta: Response;
     try {
@@ -165,9 +171,101 @@ export const authService = {
         municipioId: body.usuario.municipioId,
         unidadeIds: body.usuario.unidadeIds,
         deveTrocarSenha: body.usuario.deveTrocarSenha,
+        // Compatibilidade retroativa
+        nome: body.usuario.nomeCompleto,
+        perfil: [body.usuario.perfilCodigo],
+        municipio_id: body.usuario.municipioId,
+        unidade_id: body.usuario.unidadeIds?.[0] ?? "",
       },
       redirectUrl: body.redirectUrl,
     };
+  },
+
+  /**
+   * [RF002 / Sessão]: Recupera e valida a sessão ativa do usuário no servidor via GET /api/v1/acesso/me.
+   * @param tokenParam - Token de autenticação JWT opcional (busca no localStorage se omitido).
+   * @returns Snapshot dos dados do usuário e perfil RBAC no contrato SessaoUsuarioDto.
+   * @throws {AuthError} Caso não haja token ou o servidor retorne 401 (sessão expirada/inválida).
+   */
+  async obterSessaoAtual(tokenParam?: string): Promise<SessaoUsuarioDto> {
+    const token = tokenParam || localStorage.getItem("@FarmaUBS:token");
+    if (!token) {
+      throw new AuthError(
+        "Nenhum token de autenticação encontrado.",
+        "SESSION_EXPIRED",
+      );
+    }
+
+    let resposta: Response;
+    try {
+      resposta = await fetch(`${API_BASE_URL}/acesso/me`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      resposta = inspectSessionExpiresHeader(resposta);
+    } catch {
+      throw new AuthError(
+        "Não foi possível conectar ao servidor para validar a sessão.",
+        "NETWORK_ERROR",
+      );
+    }
+
+    if (resposta.status === 401) {
+      throw new AuthError("Sua sessão expirou no servidor.", "SESSION_EXPIRED");
+    }
+
+    if (!resposta.ok) {
+      throw new AuthError("Falha ao obter dados da sessão.", "UNKNOWN");
+    }
+
+    const data = await resposta.json().catch(() => ({}));
+    const headerExpiresAt =
+      resposta.headers.get("X-Session-Expires-At") ||
+      resposta.headers.get("x-session-expires-at");
+
+    return {
+      id: data.id || data.usuarioId || "",
+      usuarioId: data.usuarioId || data.id || "",
+      nomeCompleto: data.nomeCompleto || data.nome || "Usuário FarmaUBS",
+      email: data.email || "",
+      perfilCodigo:
+        data.perfilCodigo ||
+        (data.perfilId ? String(data.perfilId) : "FARMACEUTICO"),
+      municipioId: data.municipioId ? String(data.municipioId) : "",
+      unidadeIds: Array.isArray(data.unidadeIds)
+        ? data.unidadeIds.map(String)
+        : [],
+      deveTrocarSenha: Boolean(data.deveTrocarSenha),
+      expiresAt:
+        data.expiresAt ||
+        headerExpiresAt ||
+        new Date(Date.now() + 60 * 60_000).toISOString(),
+    };
+  },
+
+  /**
+   * [RF004 / Logout]: Dispara a revogação da sessão ativa no servidor via POST /api/v1/acesso/logout.
+   * Resiliente a erros de conexão para garantir que a saída local ocorra mesmo offline.
+   */
+  async logout(): Promise<void> {
+    const token = localStorage.getItem("@FarmaUBS:token");
+    if (!token) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/acesso/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch {
+      // Resiliência: erros de conexão ou 404 (endpoint ainda não publicado no backend)
+      // não interrompem o expurgo local e limpeza de cache de memória RAM
+    }
   },
 
   async renovarSessao(): Promise<{

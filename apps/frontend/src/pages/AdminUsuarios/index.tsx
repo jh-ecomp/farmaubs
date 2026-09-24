@@ -353,7 +353,7 @@ export function AdminUsuarios() {
               <button
                 type="button"
                 onClick={() => {
-                  logout("Sessão finalizada pelo usuário.");
+                  logout();
                   navigate("/login");
                 }}
                 className="p-1.5 text-text-tertiary hover:text-error hover:bg-error-container/20 rounded-lg transition-colors ml-1"

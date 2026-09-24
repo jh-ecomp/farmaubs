@@ -6,23 +6,36 @@ interface RoleRouteProps {
   children?: React.ReactNode;
 }
 
+/**
+ * [RF002 / RBAC]: Guarda de rotas protegidas por papéis de acesso do usuário autenticado.
+ * @param props - Propriedades com perfis permitidos e componentes filhos opcionais.
+ * @returns Elemento de rota, splash de carregamento acessível ou redirecionamento (/login ou /403).
+ */
 export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
-  const { isAuthenticated, usuario } = useAuth();
+  const { status, isAuthenticated, usuario, hasRole } = useAuth();
+
+  if (status === "carregando") {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <span>Carregando informações da sessão...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  const rawPerfil = (usuario as any).perfilCodigo ?? (usuario as any).perfil;
-  const perfisUsuario = Array.isArray(rawPerfil)
-    ? rawPerfil.map((p) => String(p).toUpperCase())
-    : typeof rawPerfil === "string" && rawPerfil.length > 0
-      ? [rawPerfil.toUpperCase()]
-      : [];
-
-  const temPermissao = allowedRoles.some((role) =>
-    perfisUsuario.includes(role.toUpperCase()),
-  );
+  const temPermissao = hasRole(allowedRoles);
 
   if (!temPermissao) {
     return <Navigate to="/403" replace />;
