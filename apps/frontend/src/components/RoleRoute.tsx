@@ -43,4 +43,3 @@ export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
 
   return children ? <>{children}</> : <Outlet />;
 }
-
