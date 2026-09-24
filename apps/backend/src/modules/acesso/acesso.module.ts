@@ -4,6 +4,7 @@ import { UserController } from "./api/controllers/user.controller";
 import { AcessoController } from "./api/controllers/acesso.controller";
 import { CadastrarUsuarioUseCase } from "./application/use-cases/register-user.use-case";
 import { ListUsersUseCase } from "./application/use-cases/list-users.use-case";
+import { GetUserByIdUseCase } from "./application/use-cases/get-user-by-id.use-case";
 import { EditUserUseCase } from "./application/use-cases/edit-user.use-case";
 import { UpdateAssociationsUseCase } from "./application/use-cases/update-associations.use-case";
 import { ToggleUserStatusUseCase } from "./application/use-cases/toggle-user-status.use-case";
@@ -41,6 +42,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     LogoutUseCase,
     ChangePasswordUseCase,
     ListUsersUseCase,
+    GetUserByIdUseCase,
     EditUserUseCase,
     UpdateAssociationsUseCase,
     ToggleUserStatusUseCase,
@@ -117,6 +119,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     LogoutUseCase,
     ChangePasswordUseCase,
     ListUsersUseCase,
+    GetUserByIdUseCase,
     EditUserUseCase,
     UpdateAssociationsUseCase,
     ToggleUserStatusUseCase,

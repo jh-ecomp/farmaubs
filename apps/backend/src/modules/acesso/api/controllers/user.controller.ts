@@ -8,6 +8,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -28,9 +29,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import type { ListagemUsuariosResultado } from "@farmaubs/shared";
+import type {
+  ListagemUsuariosResultado,
+  UsuarioDetalheDto,
+} from "@farmaubs/shared";
 import { CadastrarUsuarioUseCase } from "../../application/use-cases/register-user.use-case";
 import { ListUsersUseCase } from "../../application/use-cases/list-users.use-case";
+import { GetUserByIdUseCase } from "../../application/use-cases/get-user-by-id.use-case";
 import { EditUserUseCase } from "../../application/use-cases/edit-user.use-case";
 import { UpdateAssociationsUseCase } from "../../application/use-cases/update-associations.use-case";
 import { ToggleUserStatusUseCase } from "../../application/use-cases/toggle-user-status.use-case";
@@ -39,6 +44,7 @@ import { SetTemporaryPasswordUseCase } from "../../application/use-cases/set-tem
 import { CadastrarUsuarioDto } from "../dto/create-user.dto";
 import { ListUsersQueryDto } from "../dto/list-users-query.dto";
 import { UsuarioCadastradoResponseDto } from "../dto/user-response.dto";
+import { UserDetailResponseDto } from "../dto/user-detail-response.dto";
 import { EditarUsuarioDto } from "../dto/edit-user.dto";
 import { AtualizarAssociacoesUsuarioDto } from "../dto/update-associations.dto";
 import { AlterarStatusUsuarioDto } from "../dto/toggle-status.dto";
@@ -68,6 +74,7 @@ export class UserController {
   constructor(
     private readonly cadastrarUsuarioUseCase: CadastrarUsuarioUseCase,
     private readonly listUsersUseCase: ListUsersUseCase,
+    private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly editUserUseCase: EditUserUseCase,
     private readonly updateAssociationsUseCase: UpdateAssociationsUseCase,
     private readonly toggleUserStatusUseCase: ToggleUserStatusUseCase,
@@ -145,6 +152,55 @@ export class UserController {
     @Query() query: ListUsersQueryDto,
   ): Promise<ListagemUsuariosResultado> {
     return this.listUsersUseCase.executar(query);
+  }
+
+  @Get(":id")
+  @UseGuards(RolesGuard)
+  @Roles("ADMINISTRADOR")
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({
+    summary:
+      "Consulta o detalhe completo de um usuário por ID com suas UBSs vinculadas",
+    description:
+      "Retorna os dados cadastrais, município de lotação, perfil de acesso e a lista de unidades de saúde vinculadas. Acesso restrito a administradores (RF025, NF009, NF010, NF017).",
+  })
+  @ApiOkResponse({
+    description: "Detalhes do usuário retornados com sucesso.",
+    type: UserDetailResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Identificador inválido (não é um UUID válido).",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Não autorizado — token de autenticação ausente ou inválido.",
+  })
+  @ApiForbiddenResponse({
+    description: "Acesso proibido — perfil sem permissão para este recurso.",
+  })
+  @ApiNotFoundResponse({
+    description: "Usuário não encontrado.",
+  })
+  async buscarPorId(
+    @Param(
+      "id",
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
+  ): Promise<UsuarioDetalheDto> {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!id || !uuidRegex.test(id)) {
+      throw new BadRequestException("O parâmetro id deve ser um UUID válido.");
+    }
+    try {
+      return await this.getUserByIdUseCase.executar(id);
+    } catch (error) {
+      if (error instanceof UsuarioNaoEncontradoException) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Patch(":id")

@@ -76,6 +76,71 @@ export interface UsuarioItemTabela {
   createdAt: Date | string;
 }
 
+// 1. Filtros e Paginação de Entrada
+export interface ListarUsuariosQuery {
+  pagina?: number;
+  limite?: number;
+  termoBusca?: string;
+  municipioId?: string;
+  perfilCodigo?: PerfilCodigo;
+  ativo?: boolean;
+}
+
+// 2. Resumo para Linha da Listagem Paginada
+export interface UsuarioItemListaDto {
+  id: string;
+  nomeCompleto: string;
+  email: string;
+  perfilCodigo: PerfilCodigo | string;
+  perfilNome: string;
+  municipioId: string;
+  municipioNome: string;
+  ativo: boolean;
+  deveTrocarSenha: boolean;
+  totalUbsAssociadas: number;
+  criadoEm: Date | string;
+}
+
+// 3. Envelope Paginado
+export interface UsuariosPaginadosResultado {
+  itens: UsuarioItemListaDto[];
+  totalItens: number;
+  pagina: number;
+  limite: number;
+  totalPaginas: number;
+}
+
+// 4. Detalhe Completo do Usuário por ID
+export interface UsuarioDetalheUbsDto {
+  id: string;
+  cnes: string;
+  nome: string;
+  ativo: boolean;
+}
+
+export interface UsuarioDetalheDto {
+  id: string;
+  nomeCompleto: string;
+  email: string;
+  ativo: boolean;
+  deveTrocarSenha: boolean;
+  municipio: {
+    id: string;
+    nome: string;
+    uf: string;
+  };
+  perfil: {
+    id: string;
+    codigo: PerfilCodigo | string;
+    nome: string;
+  };
+  unidadesSaude: UsuarioDetalheUbsDto[];
+  ubsList?: UsuarioDetalheUbsDto[];
+  ultimoLoginEm?: Date | string | null;
+  criadoEm: Date | string;
+  atualizadoEm: Date | string;
+}
+
 export interface ListagemUsuariosFiltros {
   page?: number;
   limit?: number;
@@ -83,6 +148,11 @@ export interface ListagemUsuariosFiltros {
   perfilId?: string;
   municipioId?: string;
   status?: string;
+  pagina?: number;
+  limite?: number;
+  termoBusca?: string;
+  perfilCodigo?: PerfilCodigo;
+  ativo?: boolean;
 }
 
 export interface ListagemUsuariosResultado {
@@ -91,6 +161,11 @@ export interface ListagemUsuariosResultado {
   page: number;
   limit: number;
   totalPages: number;
+  itens?: UsuarioItemListaDto[];
+  totalItens?: number;
+  pagina?: number;
+  limite?: number;
+  totalPaginas?: number;
 }
 
 export interface AlterarStatusUsuarioComando {

@@ -5,6 +5,7 @@ import { Reflector } from "@nestjs/core";
 import { UserController } from "./user.controller";
 import { CadastrarUsuarioUseCase } from "../../application/use-cases/register-user.use-case";
 import { ListUsersUseCase } from "../../application/use-cases/list-users.use-case";
+import { GetUserByIdUseCase } from "../../application/use-cases/get-user-by-id.use-case";
 import { EditUserUseCase } from "../../application/use-cases/edit-user.use-case";
 import { UpdateAssociationsUseCase } from "../../application/use-cases/update-associations.use-case";
 import { ToggleUserStatusUseCase } from "../../application/use-cases/toggle-user-status.use-case";
@@ -25,6 +26,10 @@ describe("Swagger Documentation - UserController", () => {
         },
         {
           provide: ListUsersUseCase,
+          useValue: { executar: jest.fn() },
+        },
+        {
+          provide: GetUserByIdUseCase,
           useValue: { executar: jest.fn() },
         },
         {
@@ -82,9 +87,17 @@ describe("Swagger Documentation - UserController", () => {
     expect(basePathItem.post).toBeDefined();
     expect(basePathItem.get).toBeDefined();
 
-    // PATCH /api/v1/usuarios/{id}
+    // GET e PATCH /api/v1/usuarios/{id}
     const idPathItem = document.paths["/api/v1/usuarios/{id}"];
     expect(idPathItem).toBeDefined();
+    expect(idPathItem.get).toBeDefined();
+    expect(idPathItem.get!.summary).toContain("Consulta o detalhe completo");
+    expect(idPathItem.get!.responses["200"]).toBeDefined();
+    expect(idPathItem.get!.responses["400"]).toBeDefined();
+    expect(idPathItem.get!.responses["401"]).toBeDefined();
+    expect(idPathItem.get!.responses["403"]).toBeDefined();
+    expect(idPathItem.get!.responses["404"]).toBeDefined();
+
     expect(idPathItem.patch).toBeDefined();
     expect(idPathItem.patch!.summary).toContain("Edita dados cadastrais");
     expect(idPathItem.patch!.responses["200"]).toBeDefined();
