@@ -193,6 +193,45 @@ describe("AuthContext — Contexto Canônico de Autenticação & Logout Seguro (
       );
       expect(screen.getByTestId("is-authenticated")).toHaveTextContent("false");
     });
+
+    it("Cenário 5: Com falha de rede (NETWORK_ERROR) no F5 e dados locais válidos, faz fallback resiliente para autenticado", async () => {
+      localStorage.setItem("@FarmaUBS:token", "network-token");
+      localStorage.setItem(
+        "@FarmaUBS:usuario",
+        JSON.stringify({
+          id: "usr-offline",
+          nomeCompleto: "Farmacêutico Offline",
+          email: "offline@ubs.gov.br",
+          perfilCodigo: "FARMACEUTICO",
+          municipioId: "mun-1",
+          unidadeIds: ["ubs-1"],
+        }),
+      );
+      localStorage.setItem(
+        "@FarmaUBS:expiresAt",
+        new Date(Date.now() + 3600_000).toISOString(),
+      );
+
+      vi.spyOn(authService, "obterSessaoAtual").mockRejectedValueOnce({
+        type: "NETWORK_ERROR",
+        message: "Não foi possível conectar ao servidor para validar a sessão.",
+      });
+
+      renderAuthContext();
+
+      // Não deve ficar travado no spinner; deve transicionar para autenticado usando cache
+      await waitFor(() => {
+        expect(screen.getByTestId("auth-status")).toHaveTextContent(
+          "autenticado",
+        );
+      });
+
+      expect(screen.getByTestId("is-authenticated")).toHaveTextContent("true");
+      expect(screen.getByTestId("user-name")).toHaveTextContent(
+        "Farmacêutico Offline",
+      );
+      expect(localStorage.getItem("@FarmaUBS:token")).toBe("network-token");
+    });
   });
 
   // =========================================================================

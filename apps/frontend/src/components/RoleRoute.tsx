@@ -12,24 +12,7 @@ interface RoleRouteProps {
  * @returns Elemento de rota, splash de carregamento acessível ou redirecionamento (/login ou /403).
  */
 export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
-  const { status, isAuthenticated, usuario, hasRole } = useAuth();
-
-  if (status === "carregando") {
-    return (
-      <div
-        role="status"
-        aria-live="polite"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <span>Carregando informações da sessão...</span>
-      </div>
-    );
-  }
+  const { isAuthenticated, usuario, hasRole } = useAuth();
 
   if (!isAuthenticated || !usuario) {
     return <Navigate to="/login" replace />;

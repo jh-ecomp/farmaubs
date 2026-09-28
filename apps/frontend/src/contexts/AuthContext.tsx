@@ -39,11 +39,10 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 
 interface AuthProviderProps {
   children: ReactNode;
-  initialStatus?: AuthStatus;
 }
 
 // 3. Provider que vai envelopar a aplicação
-export function AuthProvider({ children, initialStatus }: AuthProviderProps) {
+export function AuthProvider({ children }: AuthProviderProps) {
   let queryClient: ReturnType<typeof useQueryClient> | null = null;
   try {
     queryClient = useQueryClient();
@@ -63,24 +62,6 @@ export function AuthProvider({ children, initialStatus }: AuthProviderProps) {
     const savedWarningSeconds = localStorage.getItem(
       "@FarmaUBS:warningSeconds",
     );
-
-    if (initialStatus) {
-      let usuario: UsuarioPayload | null = null;
-      try {
-        if (savedUser) usuario = JSON.parse(savedUser);
-      } catch {}
-      return {
-        token: savedToken,
-        expiresAt: savedExpiresAt,
-        ttlSeconds: savedTtlSeconds ? parseInt(savedTtlSeconds, 10) : 3600,
-        warningSeconds: savedWarningSeconds
-          ? parseInt(savedWarningSeconds, 10)
-          : 300,
-        usuario,
-        isAuthenticated: initialStatus === "autenticado",
-        status: initialStatus,
-      };
-    }
 
     if (!savedToken) {
       return {
@@ -272,6 +253,18 @@ export function AuthProvider({ children, initialStatus }: AuthProviderProps) {
               usuario: null,
               isAuthenticated: false,
               status: "nao_autenticado",
+            });
+          }
+        } else {
+          // Erro de rede ou indisponibilidade do backend (NETWORK_ERROR): fallback resiliente para evitar spinner infinito
+          if (isMounted) {
+            setAuthState((prev) => {
+              const hasCachedUser = Boolean(prev.usuario);
+              return {
+                ...prev,
+                status: hasCachedUser ? "autenticado" : "nao_autenticado",
+                isAuthenticated: hasCachedUser,
+              };
             });
           }
         }
