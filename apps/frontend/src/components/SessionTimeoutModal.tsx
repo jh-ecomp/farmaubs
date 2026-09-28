@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useSessionTimeout } from "../hooks/useSessionTimeout";
 
 export default function SessionTimeoutModal() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { expiresAt, warningSeconds, isAuthenticated, extendSession, logout } =
     useAuth();
 
@@ -15,7 +13,6 @@ export default function SessionTimeoutModal() {
   const secondaryButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const handleTimeout = () => {
-    queryClient.clear();
     logout(
       "Sua sessão expirou por inatividade. Faça login novamente para continuar.",
     );
@@ -50,7 +47,6 @@ export default function SessionTimeoutModal() {
   };
 
   const handleLogout = () => {
-    queryClient.clear();
     logout();
     navigate("/login");
   };

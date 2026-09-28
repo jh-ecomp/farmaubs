@@ -3,6 +3,7 @@ import type {
   LoginResponse as BackendLoginResponse,
   ContaBloqueadaResponse,
   ErroCredenciaisResponse,
+  SessaoUsuarioDto,
 } from "@farmaubs/shared";
 
 // Re-exporta os contratos oficiais compartilhados de @farmaubs/shared (ADR-022)
@@ -11,7 +12,16 @@ export type {
   BackendLoginResponse,
   ContaBloqueadaResponse,
   ErroCredenciaisResponse,
+  SessaoUsuarioDto,
 };
+
+export type AuthStatus = "carregando" | "autenticado" | "nao_autenticado";
+
+export interface EscopoAtivo {
+  municipioId: string;
+  unidadeIds: string[];
+  isGlobalAdmin: boolean;
+}
 
 export interface UsuarioPayload {
   id: string;
@@ -21,6 +31,11 @@ export interface UsuarioPayload {
   municipioId: string;
   unidadeIds: string[];
   deveTrocarSenha: boolean;
+  // Campos auxiliares opcionais para compatibilidade retroativa
+  nome?: string;
+  perfil?: string[] | string;
+  municipio_id?: number | string;
+  unidade_id?: number | string;
 }
 
 export interface LoginResponse {
