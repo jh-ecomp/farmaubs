@@ -138,8 +138,25 @@ export class CreateAuthFunctions1788600000000 implements MigrationInterface {
     await queryRunner.query(
       `DROP FUNCTION IF EXISTS auth_resetar_estado_login(uuid)`,
     );
+    await queryRunner.query(`
+      CREATE OR REPLACE FUNCTION auth_buscar_sessao_por_token(p_token_hash text)
+      RETURNS TABLE (
+        id uuid, usuario_id uuid, municipio_id uuid, status character varying,
+        expira_em timestamptz, criado_em timestamptz
+      )
+      LANGUAGE sql
+      SECURITY DEFINER
+      SET search_path = public, pg_temp
+      AS $$
+        SELECT s.id, s.usuario_id, u.municipio_id, s.status, s.expira_em, s.criado_em
+        FROM sessions s
+        JOIN users u ON u.id = s.usuario_id
+        WHERE s.token_hash = p_token_hash::bpchar
+        LIMIT 1;
+      $$
+    `);
     await queryRunner.query(
-      `DROP FUNCTION IF EXISTS auth_buscar_sessao_por_token(text)`,
+      `GRANT EXECUTE ON FUNCTION auth_buscar_sessao_por_token(text) TO farmaubs_app`,
     );
     await queryRunner.query(
       `DROP FUNCTION IF EXISTS auth_renovar_sessao(uuid, timestamptz)`,

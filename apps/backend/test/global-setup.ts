@@ -51,10 +51,22 @@ export default async function globalSetup(): Promise<void> {
 
     // Perfis
     const perfis = [
-      { codigo: "ADMINISTRADOR", nome: "Administrador", descricao: "Acesso total" },
+      {
+        codigo: "ADMINISTRADOR",
+        nome: "Administrador",
+        descricao: "Acesso total",
+      },
       { codigo: "GESTOR", nome: "Gestor", descricao: "Gestor municipal" },
-      { codigo: "FARMACEUTICO_RESPONSAVEL", nome: "Farmacêutico Responsável", descricao: "RT" },
-      { codigo: "FARMACEUTICO_RESIDENTE", nome: "Farmacêutico Residente", descricao: "Residente" },
+      {
+        codigo: "FARMACEUTICO_RESPONSAVEL",
+        nome: "Farmacêutico Responsável",
+        descricao: "RT",
+      },
+      {
+        codigo: "FARMACEUTICO_RESIDENTE",
+        nome: "Farmacêutico Residente",
+        descricao: "Residente",
+      },
     ];
     const perfilIds = new Map<string, string>();
     for (const p of perfis) {
@@ -69,7 +81,9 @@ export default async function globalSetup(): Promise<void> {
     }
 
     // Município
-    const { rows: [mun] } = await client.query<{ id: string }>(
+    const {
+      rows: [mun],
+    } = await client.query<{ id: string }>(
       `INSERT INTO municipios (nome, uf, ibge_code)
        VALUES ('São Paulo', 'SP', '3550308')
        ON CONFLICT (ibge_code) DO UPDATE SET nome = EXCLUDED.nome
@@ -78,29 +92,61 @@ export default async function globalSetup(): Promise<void> {
     const municipioId = mun.id;
 
     // Unidade de saúde
-    const { rows: [uni] } = await client.query<{ id: string }>(
+    const {
+      rows: [uni],
+    } = await client.query<{ id: string }>(
       `INSERT INTO unidades_saude (municipio_id, nome, endereco, responsavel_tecnico, caf_lead_time_days)
        VALUES ($1, 'UBS Jardim Primavera', 'Rua das Flores, 100', 'Dra. Ana', 15)
        ON CONFLICT DO NOTHING
        RETURNING id`,
       [municipioId],
     );
-    const unidadeId = uni?.id ?? (await client.query<{ id: string }>(
-      `SELECT id FROM unidades_saude WHERE municipio_id = $1 AND nome = 'UBS Jardim Primavera'`,
-      [municipioId],
-    )).rows[0].id;
+    const unidadeId =
+      uni?.id ??
+      (
+        await client.query<{ id: string }>(
+          `SELECT id FROM unidades_saude WHERE municipio_id = $1 AND nome = 'UBS Jardim Primavera'`,
+          [municipioId],
+        )
+      ).rows[0].id;
 
     // Usuários
     const usuarios = [
-      { email: "admin@farmaubs.dev", nome: "Admin Sistema", senha: "Admin@123456", perfil: "ADMINISTRADOR", ativo: true },
-      { email: "gestor@farmaubs.dev", nome: "Gestor SP", senha: "Gestor@123456", perfil: "GESTOR", ativo: true },
-      { email: "inativo@farmaubs.dev", nome: "Inativo", senha: "Inativ@123456", perfil: "GESTOR", ativo: false },
+      {
+        email: "admin@farmaubs.dev",
+        nome: "Admin Sistema",
+        senha: "Admin@123456",
+        perfil: "ADMINISTRADOR",
+        ativo: true,
+      },
+      {
+        email: "gestor@farmaubs.dev",
+        nome: "Gestor SP",
+        senha: "Gestor@123456",
+        perfil: "GESTOR",
+        ativo: true,
+      },
+      {
+        email: "inativo@farmaubs.dev",
+        nome: "Inativo",
+        senha: "Inativ@123456",
+        perfil: "GESTOR",
+        ativo: false,
+      },
+      {
+        email: "farmaceutico.residente@farmaubs.dev",
+        nome: "Farmacêutico Residente",
+        senha: "Reside@123456",
+        perfil: "FARMACEUTICO_RESIDENTE",
+        ativo: true,
+      },
     ];
     const usuarioIds = new Map<string, string>();
     for (const u of usuarios) {
       const senhaHash = await bcrypt.hash(u.senha, 4); // custo baixo para testes
       const existing = await client.query<{ id: string }>(
-        `SELECT id FROM users WHERE email = $1`, [u.email],
+        `SELECT id FROM users WHERE email = $1`,
+        [u.email],
       );
       let id: string;
       if (existing.rowCount && existing.rowCount > 0) {
@@ -114,7 +160,14 @@ export default async function globalSetup(): Promise<void> {
           `INSERT INTO users (municipio_id, nome_completo, email, senha_hash, perfil_id, ativo, deve_trocar_senha, tentativas_login_falhas, senha_atualizada_em)
            VALUES ($1, $2, $3, $4, $5, $6, false, 0, now())
            RETURNING id`,
-          [municipioId, u.nome, u.email, senhaHash, perfilIds.get(u.perfil), u.ativo],
+          [
+            municipioId,
+            u.nome,
+            u.email,
+            senhaHash,
+            perfilIds.get(u.perfil),
+            u.ativo,
+          ],
         );
         id = rows[0].id;
       }
