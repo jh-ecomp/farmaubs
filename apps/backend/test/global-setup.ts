@@ -70,9 +70,9 @@ export default async function globalSetup(): Promise<void> {
 
     // Município
     const { rows: [mun] } = await client.query<{ id: string }>(
-      `INSERT INTO municipios (nome, uf, ibge_code)
-       VALUES ('São Paulo', 'SP', '3550308')
-       ON CONFLICT (ibge_code) DO UPDATE SET nome = EXCLUDED.nome
+      `INSERT INTO municipios (nome, uf, codigo_ibge, ativo)
+       VALUES ('São Paulo', 'SP', '3550308', true)
+       ON CONFLICT (codigo_ibge) DO UPDATE SET nome = EXCLUDED.nome
        RETURNING id`,
     );
     const municipioId = mun.id;

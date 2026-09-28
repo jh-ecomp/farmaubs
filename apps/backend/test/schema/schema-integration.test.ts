@@ -28,7 +28,8 @@ const COLUNAS_ESPERADAS: Record<string, Record<string, string>> = {
     id: 'uuid',
     nome: 'text',
     uf: 'bpchar',
-    ibge_code: 'bpchar',
+    codigo_ibge: 'bpchar',
+    ativo: 'bool',
     created_at: 'timestamptz',
     updated_at: 'timestamptz',
   },
@@ -226,7 +227,7 @@ describe('TAREFA-13 — Testes de integração de schema (AC-01)', () => {
     const municipios = await getConstraints(ds, 'municipios');
     expect(
       municipios.some(
-        (c) => c.contype === 'u' && c.definition.includes('(ibge_code)'),
+        (c) => c.contype === 'u' && c.definition.includes('(codigo_ibge)'),
       ),
     ).toBe(true);
 
@@ -333,7 +334,7 @@ describe('TAREFA-13 — Testes de integração de schema (AC-01)', () => {
 
   it('TC-12 — unicidade de e-mail com normalização de caixa', async () => {
     const [municipio] = await ds.query(
-      `INSERT INTO municipios (nome, uf, ibge_code) VALUES ('Teste TC12', 'TE', '9999999') RETURNING id`,
+      `INSERT INTO municipios (nome, uf, codigo_ibge) VALUES ('Teste TC12', 'TE', '9999999') RETURNING id`,
     );
     const [perfil] = await ds.query(
       `INSERT INTO perfis (codigo, nome) VALUES ('TESTE_TC12', 'Perfil TC-12') RETURNING id`,
@@ -355,7 +356,7 @@ describe('TAREFA-13 — Testes de integração de schema (AC-01)', () => {
 
   it('TC-13 — associação user_units duplicada rejeitada', async () => {
     const [municipio] = await ds.query(
-      `INSERT INTO municipios (nome, uf, ibge_code) VALUES ('Teste TC13', 'TE', '9999998') RETURNING id`,
+      `INSERT INTO municipios (nome, uf, codigo_ibge) VALUES ('Teste TC13', 'TE', '9999998') RETURNING id`,
     );
     const [perfil] = await ds.query(
       `INSERT INTO perfis (codigo, nome) VALUES ('TESTE_TC13', 'Perfil TC-13') RETURNING id`,
