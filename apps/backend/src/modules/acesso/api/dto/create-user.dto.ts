@@ -1,8 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MinLength,
@@ -66,6 +68,33 @@ export class CadastrarUsuarioDto implements CadastrarUsuarioComando {
   @IsUUID('all', { each: true })
   @IsNotEmpty({ each: true })
   ubsIds!: string[];
+
+  @ApiPropertyOptional({
+    description: 'CPF do usuário (opcional)',
+    example: '123.456.789-00',
+  })
+  @IsOptional()
+  @IsString()
+  cpf?: string;
+
+  @ApiPropertyOptional({
+    description: 'Registro profissional CRF do farmacêutico (opcional)',
+    example: '12345/SP',
+  })
+  @IsOptional()
+  @IsString()
+  crf?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Indica se o usuário deve obrigatoriamente redefinir a senha no primeiro acesso (padrão: true)',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  deveTrocarSenha?: boolean;
 }
 
 export type CreateUserDto = CadastrarUsuarioDto;
+

@@ -53,11 +53,11 @@ const PERFIS = [
   },
 ] as const;
 
-/** Municípios de teste — chave natural: ibge_code (UNIQUE) */
+/** Municípios de teste — chave natural: codigo_ibge (UNIQUE) */
 const MUNICIPIOS = [
-  { nome: 'São Paulo', uf: 'SP', ibge_code: '3550308' },
-  { nome: 'Rio de Janeiro', uf: 'RJ', ibge_code: '3304557' },
-  { nome: 'Belo Horizonte', uf: 'MG', ibge_code: '3106200' },
+  { nome: 'São Paulo', uf: 'SP', codigo_ibge: '3550308' },
+  { nome: 'Rio de Janeiro', uf: 'RJ', codigo_ibge: '3304557' },
+  { nome: 'Belo Horizonte', uf: 'MG', codigo_ibge: '3106200' },
 ] as const;
 
 /** Unidades de saúde — referenciadas por (municipio_ibge, nome) */
@@ -183,6 +183,11 @@ async function seedPerfis(client: PoolClient): Promise<Map<string, string>> {
   return ids;
 }
 
+/**
+ * [RF001 / RF026]: Popula o catálogo de municípios com as capitais de teste (chave única codigo_ibge).
+ * @param client - Conexão PoolClient com o PostgreSQL.
+ * @returns Mapa com codigo_ibge -> id UUID gerado para cada município.
+ */
 async function seedMunicipios(
   client: PoolClient,
 ): Promise<Map<string, string>> {
@@ -191,16 +196,17 @@ async function seedMunicipios(
 
   for (const m of MUNICIPIOS) {
     const { rows } = await client.query<{ id: string }>(
-      `INSERT INTO municipios (nome, uf, ibge_code)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (ibge_code) DO UPDATE
+      `INSERT INTO municipios (nome, uf, codigo_ibge, ativo)
+       VALUES ($1, $2, $3, true)
+       ON CONFLICT (codigo_ibge) DO UPDATE
          SET nome       = EXCLUDED.nome,
              uf         = EXCLUDED.uf,
+             ativo      = EXCLUDED.ativo,
              updated_at = now()
         RETURNING id`,
-      [m.nome, m.uf, m.ibge_code],
+      [m.nome, m.uf, m.codigo_ibge],
     );
-    ids.set(m.ibge_code, rows[0].id);
+    ids.set(m.codigo_ibge, rows[0].id);
   }
   console.log(`     ✔ ${MUNICIPIOS.length} municípios inseridos/atualizados.`);
   return ids;

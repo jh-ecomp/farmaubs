@@ -38,8 +38,8 @@ describe("AcessoPgRepository — integração (camada B)", () => {
       [PERFIL_ID],
     );
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf)
-       VALUES ($1, 'Município Test', 'PI')
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge)
+       VALUES ($1, 'Município Test', 'PI', '2200006')
        ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_ID],
     );

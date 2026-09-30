@@ -141,6 +141,19 @@ describe("UserController", () => {
       expect(resultado).toEqual(mockUsuarioResultado);
     });
 
+    it("deve aceitar deveTrocarSenha, cpf e crf opcionais no payload de cadastro", async () => {
+      useCaseMock.executar.mockResolvedValue(mockUsuarioResultado as any);
+      const dtoComOpcionais: CadastrarUsuarioDto = {
+        ...dtoValido,
+        cpf: "123.456.789-00",
+        crf: "12345/SP",
+        deveTrocarSenha: true,
+      };
+      const resultado = await controller.cadastrar(dtoComOpcionais);
+      expect(resultado).toEqual(mockUsuarioResultado);
+      expect(useCaseMock.executar).toHaveBeenCalledWith(dtoComOpcionais);
+    });
+
     it("deve converter UsuarioEmailJaExisteException em ConflictException (409)", async () => {
       useCaseMock.executar.mockRejectedValue(
         new UsuarioEmailJaExisteException(dtoValido.email),

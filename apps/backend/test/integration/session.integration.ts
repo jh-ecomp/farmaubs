@@ -37,8 +37,8 @@ describe("SessionPgRepository — integração (camada B)", () => {
       [PERFIL_ID],
     );
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf)
-       VALUES ($1, 'Município Session Test', 'PI')
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge)
+       VALUES ($1, 'Município Session Test', 'PI', '2200005')
        ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_ID],
     );

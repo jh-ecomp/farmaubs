@@ -82,7 +82,7 @@ describe("Gestão de Usuários e Auditoria no PostgreSQL Real (Camada B, ADR-030
 
     // Seed dos dados base
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf) VALUES ($1, 'Município Gestão Test', 'PI') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge) VALUES ($1, 'Município Gestão Test', 'PI', '2200004') ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_ID],
     );
 

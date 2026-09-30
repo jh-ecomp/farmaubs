@@ -78,7 +78,7 @@ export class CadastrarUsuarioUseCase {
         senhaHash,
         perfilId: perfil.id,
         ativo: true,
-        deveTrocarSenha: true,
+        deveTrocarSenha: comando.deveTrocarSenha ?? true,
         tentativasLoginFalhas: 0,
         bloqueadoAte: null,
         senhaAtualizadaEm: null,
