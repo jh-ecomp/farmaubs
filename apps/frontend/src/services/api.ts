@@ -223,6 +223,27 @@ export const authService = {
     };
   },
 
+  /**
+   * [RF004 / AC-06]: Encerra a sessão ativa no backend via POST /api/v1/acesso/logout.
+   * Operação idempotente e com tolerância a falhas de rede.
+   * @param tokenExplicit - Token Bearer da sessão a revogar (ou lê do localStorage).
+   */
+  async logout(tokenExplicit?: string): Promise<void> {
+    const token = tokenExplicit || localStorage.getItem("@FarmaUBS:token");
+    if (!token) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/acesso/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch {
+      // Ignora falhas de conexão no encerramento para não bloquear a experiência do usuário
+    }
+  },
+
   async trocarSenha(dados: TrocarSenhaComando): Promise<{ mensagem: string }> {
     const token = localStorage.getItem("@FarmaUBS:token");
     let resposta: Response;

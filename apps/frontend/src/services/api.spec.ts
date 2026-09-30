@@ -124,4 +124,64 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
       unsubscribe();
     });
   });
+
+  describe("authService.logout (RF004 / AC-06)", () => {
+    it("deve disparar POST /api/v1/acesso/logout com cabeçalho Authorization Bearer", async () => {
+      localStorage.setItem("@FarmaUBS:token", "jwt-token-ativo");
+
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 204,
+          statusText: "No Content",
+        }),
+      );
+
+      await authService.logout();
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/acesso/logout"),
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer jwt-token-ativo",
+          }),
+        }),
+      );
+    });
+
+    it("deve priorizar token explicitamente passado no argumento", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 204,
+        }),
+      );
+
+      await authService.logout("token-passado-diretamente");
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/acesso/logout"),
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer token-passado-diretamente",
+          }),
+        }),
+      );
+    });
+
+    it("não deve disparar requisição se não houver token disponível", async () => {
+      globalThis.fetch = vi.fn();
+
+      await authService.logout();
+
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
+
+    it("deve tolerar falha de rede sem propagar exceção", async () => {
+      localStorage.setItem("@FarmaUBS:token", "token-com-falha-de-rede");
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network Error"));
+
+      await expect(authService.logout()).resolves.toBeUndefined();
+    });
+  });
 });

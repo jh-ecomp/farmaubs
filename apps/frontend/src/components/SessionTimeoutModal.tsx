@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
@@ -14,13 +14,13 @@ export default function SessionTimeoutModal() {
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   const secondaryButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleTimeout = () => {
+  const handleTimeout = useCallback(() => {
     queryClient.clear();
     logout(
       "Sua sessão expirou por inatividade. Faça login novamente para continuar.",
     );
     navigate("/login");
-  };
+  }, [queryClient, logout, navigate]);
 
   const { isWarning, formattedTime, secondsRemaining } = useSessionTimeout({
     expiresAt,

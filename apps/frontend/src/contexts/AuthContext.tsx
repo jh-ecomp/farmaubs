@@ -115,6 +115,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
+  // Sincronização multi-aba e de alterações externas via evento storage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "@FarmaUBS:expiresAt" && e.newValue) {
+        setAuthState((prev) => ({
+          ...prev,
+          expiresAt: e.newValue,
+        }));
+      }
+      if (e.key === "@FarmaUBS:token" && !e.newValue) {
+        setAuthState({
+          token: null,
+          expiresAt: null,
+          ttlSeconds: null,
+          warningSeconds: null,
+          usuario: null,
+          isAuthenticated: false,
+        });
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const updateExpiresAt = (novoExpiresAt: string) => {
     localStorage.setItem("@FarmaUBS:expiresAt", novoExpiresAt);
     setAuthState((prev) => ({
@@ -156,6 +181,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = (motivo?: string) => {
+    const tokenAtual =
+      authState.token || localStorage.getItem("@FarmaUBS:token");
+
+    // 1. Limpa o estado local para garantir feedback de saída imediato na interface
     setAuthState({
       token: null,
       expiresAt: null,
@@ -173,6 +202,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof motivo === "string" && motivo.trim().length > 0) {
       sessionStorage.setItem("@FarmaUBS:logoutReason", motivo);
       setLogoutReason(motivo);
+    }
+
+    // 2. [RF004 / AC-06]: Revoga a sessão ativa no PostgreSQL via backend
+    if (tokenAtual) {
+      void authService.logout(tokenAtual).catch(() => {});
     }
   };
 

@@ -166,4 +166,39 @@ describe("useSessionTimeout — Hook de Timeout de Sessão (Camada D / NF012)", 
 
     expect(onTimeout).toHaveBeenCalledTimes(1);
   });
+
+  it("deve sincronizar o tempo restante imediatamente ao disparar evento visibilitychange", () => {
+    const now = new Date("2026-09-16T12:00:00.000Z").getTime();
+    vi.setSystemTime(now);
+
+    const expiresAt = new Date(now + 1000 * 1000).toISOString(); // 1000s restantes (sem warning)
+    const onTimeout = vi.fn();
+
+    const { result } = renderHook(() =>
+      useSessionTimeout({
+        expiresAt,
+        warningSeconds: 300,
+        isAuthenticated: true,
+        onTimeout,
+      }),
+    );
+
+    expect(result.current.isWarning).toBe(false);
+
+    // Simula passagem de tempo sem tick do setInterval (ex: aba em background)
+    vi.setSystemTime(now + 850 * 1000); // restam 150s (dentro de 300s)
+
+    // Dispara retorno da visibilidade da aba
+    act(() => {
+      Object.defineProperty(document, "visibilityState", {
+        value: "visible",
+        configurable: true,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(result.current.isWarning).toBe(true);
+    expect(result.current.secondsRemaining).toBe(150);
+    expect(result.current.formattedTime).toBe("02:30");
+  });
 });
