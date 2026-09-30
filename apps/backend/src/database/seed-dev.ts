@@ -55,9 +55,9 @@ const PERFIS = [
 
 /** Municípios de teste — chave natural: codigo_ibge (UNIQUE) */
 const MUNICIPIOS = [
-  { nome: 'São Paulo', uf: 'SP', codigo_ibge: '3550308' },
-  { nome: 'Rio de Janeiro', uf: 'RJ', codigo_ibge: '3304557' },
-  { nome: 'Belo Horizonte', uf: 'MG', codigo_ibge: '3106200' },
+  { nome: 'São Paulo', uf: 'SP', codigo_ibge: '3550308', ativo: true },
+  { nome: 'Rio de Janeiro', uf: 'RJ', codigo_ibge: '3304557', ativo: true },
+  { nome: 'Belo Horizonte', uf: 'MG', codigo_ibge: '3106200', ativo: true },
 ] as const;
 
 /** Unidades de saúde — referenciadas por (municipio_ibge, nome) */
@@ -197,14 +197,14 @@ async function seedMunicipios(
   for (const m of MUNICIPIOS) {
     const { rows } = await client.query<{ id: string }>(
       `INSERT INTO municipios (nome, uf, codigo_ibge, ativo)
-       VALUES ($1, $2, $3, true)
+       VALUES ($1, $2, $3, $4)
        ON CONFLICT (codigo_ibge) DO UPDATE
          SET nome       = EXCLUDED.nome,
              uf         = EXCLUDED.uf,
              ativo      = EXCLUDED.ativo,
              updated_at = now()
         RETURNING id`,
-      [m.nome, m.uf, m.codigo_ibge],
+      [m.nome, m.uf, m.codigo_ibge, m.ativo],
     );
     ids.set(m.codigo_ibge, rows[0].id);
   }

@@ -1,3 +1,5 @@
+import type { PerfilCodigo } from "./perfil.types";
+
 export enum SessionStatus {
   ATIVA = "ativa",
   PENDENTE_2FA = "pendente_2fa",
@@ -40,4 +42,16 @@ export interface SessaoUsuarioResponse {
   email: string;
   deveTrocarSenha: boolean;
   expiresAt: string;
+}
+
+export interface SessaoUsuarioDto {
+  id: string;
+  nomeCompleto: string;
+  email: string;
+  perfilCodigo: PerfilCodigo | string;
+  municipioId: string;
+  unidadeIds: string[];
+  deveTrocarSenha: boolean;
+  expiresAt: string;
+  usuarioId?: string;
 }

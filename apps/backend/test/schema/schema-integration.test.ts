@@ -28,7 +28,7 @@ const COLUNAS_ESPERADAS: Record<string, Record<string, string>> = {
     id: 'uuid',
     nome: 'text',
     uf: 'bpchar',
-    codigo_ibge: 'varchar',
+    codigo_ibge: 'bpchar',
     ativo: 'bool',
     created_at: 'timestamptz',
     updated_at: 'timestamptz',
