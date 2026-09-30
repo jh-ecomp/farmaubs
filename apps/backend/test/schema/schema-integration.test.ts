@@ -92,7 +92,7 @@ const COLUNAS_ESPERADAS: Record<string, Record<string, string>> = {
 };
 
 const NOT_NULL_ESPERADAS: Record<string, string[]> = {
-  municipios: ['id', 'nome', 'uf', 'created_at', 'updated_at'],
+  municipios: ['id', 'nome', 'uf', 'codigo_ibge', 'ativo', 'created_at', 'updated_at'],
   perfis: ['id', 'codigo', 'nome', 'ativo', 'created_at', 'updated_at'],
   unidades_saude: [
     'id',

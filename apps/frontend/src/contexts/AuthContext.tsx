@@ -295,6 +295,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return unsubscribe;
   }, []);
 
+  // Sincronização multi-aba e de alterações externas via evento storage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "@FarmaUBS:expiresAt" && e.newValue) {
+        setAuthState((prev) => ({
+          ...prev,
+          expiresAt: e.newValue,
+        }));
+      }
+      if (e.key === "@FarmaUBS:token" && !e.newValue) {
+        setAuthState({
+          token: null,
+          expiresAt: null,
+          ttlSeconds: null,
+          warningSeconds: null,
+          usuario: null,
+          isAuthenticated: false,
+          status: "nao_autenticado",
+        });
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const updateExpiresAt = (novoExpiresAt: string) => {
     localStorage.setItem("@FarmaUBS:expiresAt", novoExpiresAt);
     setAuthState((prev) => ({
@@ -337,6 +363,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = (motivo?: string) => {
+    const tokenAtual =
+      authState.token || localStorage.getItem("@FarmaUBS:token");
+
     // NF012 / AC-06: Expurgo imediato e obrigatório do cache de memória RAM
     if (queryClient) {
       queryClient.clear();
@@ -366,10 +395,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLogoutReason(null);
     }
 
-    // Revoga a sessão no backend em segundo plano (resiliente a falhas de rede)
-    authService.logout().catch(() => {
-      // Falha de rede não impede o logout local
-    });
+    // [RF004 / AC-06]: Revoga a sessão ativa no PostgreSQL via backend (resiliente a falhas de rede)
+    if (tokenAtual) {
+      authService.logout(tokenAtual).catch(() => {
+        // Falha de rede não impede o logout local
+      });
+    }
   };
 
   const extendSession = async () => {

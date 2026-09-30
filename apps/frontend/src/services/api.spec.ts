@@ -223,6 +223,34 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
       );
     });
 
+    it("deve priorizar token explicitamente passado no argumento", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 204,
+        }),
+      );
+
+      await authService.logout("token-passado-diretamente");
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/acesso/logout"),
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer token-passado-diretamente",
+          }),
+        }),
+      );
+    });
+
+    it("não deve disparar requisição se não houver token disponível", async () => {
+      globalThis.fetch = vi.fn();
+
+      await authService.logout();
+
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
+
     it("deve ser resiliente e silenciar erro caso a rota retorne 404 ou falhe a rede", async () => {
       localStorage.setItem("@FarmaUBS:token", "token-fail");
 
@@ -230,7 +258,6 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         .fn()
         .mockRejectedValue(new Error("Network Failure"));
 
-      // Não deve lançar erro
       await expect(authService.logout()).resolves.toBeUndefined();
     });
   });

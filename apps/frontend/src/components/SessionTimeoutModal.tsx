@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSessionTimeout } from "../hooks/useSessionTimeout";
@@ -12,12 +12,12 @@ export default function SessionTimeoutModal() {
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   const secondaryButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleTimeout = () => {
+  const handleTimeout = useCallback(() => {
     logout(
       "Sua sessão expirou por inatividade. Faça login novamente para continuar.",
     );
     navigate("/login");
-  };
+  }, [logout, navigate]);
 
   const { isWarning, formattedTime, secondsRemaining } = useSessionTimeout({
     expiresAt,

@@ -37,6 +37,8 @@ export function useSessionTimeout({
   );
 
   const timeoutTriggeredRef = useRef(false);
+  const onTimeoutRef = useRef(onTimeout);
+  onTimeoutRef.current = onTimeout;
 
   useEffect(() => {
     timeoutTriggeredRef.current = false;
@@ -51,15 +53,38 @@ export function useSessionTimeout({
 
       if (remaining <= 0 && !timeoutTriggeredRef.current) {
         timeoutTriggeredRef.current = true;
-        onTimeout();
+        onTimeoutRef.current();
       }
     };
 
     tick();
 
     const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [expiresAt, isAuthenticated, onTimeout]);
+
+    // NF012 / AC-20: Sincronização imediata ao reativar a aba (evita atraso por timer throttling do navegador)
+    const handleReactivation = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        tick();
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleReactivation);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("focus", handleReactivation);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleReactivation);
+      }
+      if (typeof window !== "undefined") {
+        window.removeEventListener("focus", handleReactivation);
+      }
+    };
+  }, [expiresAt, isAuthenticated]);
 
   const currentRemaining =
     !isAuthenticated || !expiresAt ? 0 : secondsRemaining;

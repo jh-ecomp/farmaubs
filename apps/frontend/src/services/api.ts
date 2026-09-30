@@ -250,8 +250,8 @@ export const authService = {
    * [RF004 / Logout]: Dispara a revogação da sessão ativa no servidor via POST /api/v1/acesso/logout.
    * Resiliente a erros de conexão para garantir que a saída local ocorra mesmo offline.
    */
-  async logout(): Promise<void> {
-    const token = localStorage.getItem("@FarmaUBS:token");
+  async logout(tokenExplicit?: string): Promise<void> {
+    const token = tokenExplicit || localStorage.getItem("@FarmaUBS:token");
     if (!token) return;
 
     try {

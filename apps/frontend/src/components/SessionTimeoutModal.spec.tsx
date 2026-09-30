@@ -123,6 +123,7 @@ describe("SessionTimeoutModal — Camada D (NF012 / AC-20)", () => {
 
     const testQueryClient = createTestQueryClient();
     const clearSpy = vi.spyOn(testQueryClient, "clear");
+    const logoutSpy = vi.spyOn(authService, "logout").mockResolvedValue();
 
     renderWithProviders(
       <Routes>
@@ -151,6 +152,7 @@ describe("SessionTimeoutModal — Camada D (NF012 / AC-20)", () => {
       fireEvent.click(logoutBtn);
     });
 
+    expect(logoutSpy).toHaveBeenCalledWith("jwt-token-ativo");
     expect(clearSpy).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem("@FarmaUBS:token")).toBeNull();
     expect(localStorage.getItem("@FarmaUBS:usuario")).toBeNull();

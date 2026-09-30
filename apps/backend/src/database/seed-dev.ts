@@ -183,6 +183,11 @@ async function seedPerfis(client: PoolClient): Promise<Map<string, string>> {
   return ids;
 }
 
+/**
+ * [RF001 / RF026]: Popula o catálogo de municípios com as capitais de teste (chave única codigo_ibge).
+ * @param client - Conexão PoolClient com o PostgreSQL.
+ * @returns Mapa com codigo_ibge -> id UUID gerado para cada município.
+ */
 async function seedMunicipios(
   client: PoolClient,
 ): Promise<Map<string, string>> {
