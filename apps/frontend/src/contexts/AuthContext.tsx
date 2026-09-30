@@ -312,6 +312,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           warningSeconds: null,
           usuario: null,
           isAuthenticated: false,
+          status: "nao_autenticado",
         });
       }
     };
