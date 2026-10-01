@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import type {
   ListagemUsuariosFiltros,
   ListagemUsuariosResultado,
+  PerfilCodigo,
 } from "@farmaubs/shared";
 import {
   REPOSITORIO_USUARIO_PORT,
@@ -63,7 +64,7 @@ export class ListUsersUseCase {
       pagina: page,
       limite: limit,
       termoBusca: busca,
-      perfilCodigo: perfilId as any,
+      perfilCodigo: perfilId ? (perfilId as PerfilCodigo) : undefined,
       ativo: filtros.ativo,
     });
   }

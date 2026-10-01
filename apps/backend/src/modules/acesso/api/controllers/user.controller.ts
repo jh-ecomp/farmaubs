@@ -148,6 +148,13 @@ export class UserController {
   @ApiForbiddenResponse({
     description: "Acesso proibido — perfil sem permissão para este recurso.",
   })
+  /**
+   * [RF025 / AC-12]: Lista usuários do sistema de forma paginada e filtrada (acesso exclusivo ADMINISTRADOR).
+   * @param query - Parâmetros opcionais de paginação, busca textual, município, perfil e status.
+   * @returns ListagemUsuariosResultado contendo itens paginados e metadados.
+   * @throws {UnauthorizedException} Caso o token esteja ausente ou inválido.
+   * @throws {ForbiddenException} Caso o usuário não tenha o perfil ADMINISTRADOR.
+   */
   async listar(
     @Query() query: ListUsersQueryDto,
   ): Promise<ListagemUsuariosResultado> {
@@ -181,6 +188,13 @@ export class UserController {
   @ApiNotFoundResponse({
     description: "Usuário não encontrado.",
   })
+  /**
+   * [RF025 / AC-12]: Consulta os detalhes completos de um usuário por ID (acesso exclusivo ADMINISTRADOR).
+   * @param id - Identificador UUID do usuário.
+   * @returns UsuarioDetalheDto com dados cadastrais, perfil, município e UBSs associadas.
+   * @throws {BadRequestException} Caso o ID informado não seja um UUID válido.
+   * @throws {NotFoundException} Caso o usuário não seja localizado no repositório.
+   */
   async buscarPorId(
     @Param(
       "id",

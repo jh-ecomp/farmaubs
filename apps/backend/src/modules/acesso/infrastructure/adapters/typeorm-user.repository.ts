@@ -272,6 +272,11 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     };
   }
 
+  /**
+   * [RF025 / AC-12]: Consulta os detalhes cadastrais completos de um usuário por ID com dados de município, perfil e lista de UBSs vinculadas.
+   * @param id - Identificador UUID do usuário.
+   * @returns Contrato UsuarioDetalheDto preenchido com dados sanitizados (sem hash), ou null se inexistente.
+   */
   async buscarDetalhesPorId(id: string): Promise<UsuarioDetalheDto | null> {
     const manager = this.transactionContext.getManager();
 
@@ -302,16 +307,23 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       return null;
     }
 
+    interface VinculoRaw {
+      id: string;
+      nome: string;
+      ativo: boolean;
+      cnes?: string;
+    }
+
     const vinculos = await manager
       .createQueryBuilder(UserUnit, "uu")
       .innerJoin(UnidadeSaudeEntity, "us", "us.id = uu.unidade_id")
       .select(['us.id AS "id"', 'us.nome AS "nome"', 'uu.ativo AS "ativo"'])
       .where("uu.usuario_id = :id", { id })
-      .getRawMany();
+      .getRawMany<VinculoRaw>();
 
     const unidades = vinculos.map((v) => ({
       id: v.id,
-      cnes: (v as any).cnes ?? "",
+      cnes: v.cnes ?? "",
       nome: v.nome,
       ativo: Boolean(v.ativo),
     }));
