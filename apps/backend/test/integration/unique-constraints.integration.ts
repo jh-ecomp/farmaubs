@@ -76,7 +76,7 @@ describe('Constraints de integridade — unicidade no banco real', () => {
     // Seed — municipio e perfil persistem entre execuções (ON CONFLICT);
     // os demais são recriados após a limpeza acima.
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf) VALUES ($1, 'Município Constraints', 'PI') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge) VALUES ($1, 'Município Constraints', 'PI', '2200003') ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_C],
     );
     await admin.query(

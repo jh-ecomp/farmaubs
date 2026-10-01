@@ -52,7 +52,7 @@ export default async function globalSetup(): Promise<void> {
     // Perfis
     const perfis = [
       { codigo: "ADMINISTRADOR", nome: "Administrador", descricao: "Acesso total" },
-      { codigo: "GESTOR", nome: "Gestor", descricao: "Gestor municipal" },
+      { codigo: "GERENTE", nome: "Gerente", descricao: "Gerente municipal" },
       { codigo: "FARMACEUTICO_RESPONSAVEL", nome: "Farmacêutico Responsável", descricao: "RT" },
       { codigo: "FARMACEUTICO_RESIDENTE", nome: "Farmacêutico Residente", descricao: "Residente" },
     ];
@@ -70,9 +70,9 @@ export default async function globalSetup(): Promise<void> {
 
     // Município
     const { rows: [mun] } = await client.query<{ id: string }>(
-      `INSERT INTO municipios (nome, uf, ibge_code)
-       VALUES ('São Paulo', 'SP', '3550308')
-       ON CONFLICT (ibge_code) DO UPDATE SET nome = EXCLUDED.nome
+      `INSERT INTO municipios (nome, uf, codigo_ibge, ativo)
+       VALUES ('São Paulo', 'SP', '3550308', true)
+       ON CONFLICT (codigo_ibge) DO UPDATE SET nome = EXCLUDED.nome
        RETURNING id`,
     );
     const municipioId = mun.id;
@@ -93,8 +93,8 @@ export default async function globalSetup(): Promise<void> {
     // Usuários
     const usuarios = [
       { email: "admin@farmaubs.dev", nome: "Admin Sistema", senha: "Admin@123456", perfil: "ADMINISTRADOR", ativo: true },
-      { email: "gestor@farmaubs.dev", nome: "Gestor SP", senha: "Gestor@123456", perfil: "GESTOR", ativo: true },
-      { email: "inativo@farmaubs.dev", nome: "Inativo", senha: "Inativ@123456", perfil: "GESTOR", ativo: false },
+      { email: "gerente@farmaubs.dev", nome: "Gerente SP", senha: "Gerente@123456", perfil: "GERENTE", ativo: true },
+      { email: "inativo@farmaubs.dev", nome: "Inativo", senha: "Inativ@123456", perfil: "GERENTE", ativo: false },
       { email: "farmaceutico.residente@farmaubs.dev", nome: "Farmacêutico Residente", senha: "Reside@123456", perfil: "FARMACEUTICO_RESIDENTE", ativo: true },
     ];
     const usuarioIds = new Map<string, string>();
@@ -123,7 +123,7 @@ export default async function globalSetup(): Promise<void> {
     }
 
     // Vínculos user_units
-    for (const email of ["admin@farmaubs.dev", "gestor@farmaubs.dev"]) {
+    for (const email of ["admin@farmaubs.dev", "gerente@farmaubs.dev"]) {
       await client.query(
         `INSERT INTO user_units (usuario_id, unidade_id, ativo)
          VALUES ($1, $2, true)

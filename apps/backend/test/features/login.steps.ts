@@ -146,7 +146,7 @@ defineFeature(feature, (test) => {
     given(
       /^que o usuário "(.*)" possui 4 tentativas inválidas registradas$/,
       async (email) => {
-        const senhaHash = await hashSenha("Gestor@123456");
+        const senhaHash = await hashSenha("Gerente@123456");
         repo = makeRepo({
           buscarUsuarioPorEmail: jest
             .fn()
@@ -159,7 +159,7 @@ defineFeature(feature, (test) => {
     );
 
     when("eu informar a senha errada pela 5ª vez", async () => {
-      resultado = await useCase.executar("gestor@farmaubs.dev", "senhaerrada");
+      resultado = await useCase.executar("gerente@farmaubs.dev", "senhaerrada");
     });
 
     then("o sistema bloqueia a conta", () => {
@@ -184,7 +184,7 @@ defineFeature(feature, (test) => {
     let resultado: Awaited<ReturnType<LoginUseCase["executar"]>>;
 
     given(/^que a conta "(.*)" está bloqueada$/, async (email) => {
-      const senhaHash = await hashSenha("Gestor@123456");
+      const senhaHash = await hashSenha("Gerente@123456");
       const bloqueadoAte = new Date(Date.now() + 10 * 60_000);
       repo = makeRepo({
         buscarUsuarioPorEmail: jest
@@ -196,8 +196,8 @@ defineFeature(feature, (test) => {
 
     when("eu tentar logar com credenciais corretas", async () => {
       resultado = await useCase.executar(
-        "gestor@farmaubs.dev",
-        "Gestor@123456",
+        "gerente@farmaubs.dev",
+        "Gerente@123456",
       );
     });
 

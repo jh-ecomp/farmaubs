@@ -15,7 +15,7 @@ Funcionalidade: Gestão de Usuários, Senha Provisória e Auditoria (RF025, RF00
 
   Cenário: Atualização atômica de perfil e associações de UBSs
     Dado que existe um usuário vinculado à UBS "UBS Central" com perfil "FARMACEUTICO"
-    Quando o Administrador altera o perfil para "GESTOR" e vincula às UBSs "UBS Central" e "UBS Norte"
+    Quando o Administrador altera o perfil para "GERENTE" e vincula às UBSs "UBS Central" e "UBS Norte"
     Então as novas associações devem ser sincronizadas
     E um evento de auditoria "MUDANCA_PERFIL_UBSS" deve ser registrado
 

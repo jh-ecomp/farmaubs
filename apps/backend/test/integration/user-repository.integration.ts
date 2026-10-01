@@ -71,7 +71,7 @@ defineFeature(feature, (test) => {
 
     // Seed dos pré-requisitos reais (município, perfil e unidades de saúde)
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf) VALUES ($1, 'Município Repo Test', 'SP') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge) VALUES ($1, 'Município Repo Test', 'SP', '3500001') ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_ID],
     );
     await admin.query(

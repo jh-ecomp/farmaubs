@@ -430,6 +430,21 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
 
   async atualizarSenhaProvisoria(id: string, senhaHash: string): Promise<void> {
     const manager = this.transactionContext.getManager();
+
+    if (typeof manager.query === "function") {
+      try {
+        const rows = await manager.query(
+          `SELECT auth_definir_senha_provisoria($1::uuid, $2::text) as sucesso`,
+          [id, senhaHash],
+        );
+        if (rows?.[0]?.sucesso) {
+          return;
+        }
+      } catch {
+        // Fallback para update padrão em ambientes sem a função
+      }
+    }
+
     await manager.update(
       User,
       { id },
@@ -469,6 +484,21 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
     atualizadoEm: Date,
   ): Promise<void> {
     const manager = this.transactionContext.getManager();
+
+    if (typeof manager.query === "function") {
+      try {
+        const rows = await manager.query(
+          `SELECT auth_concluir_troca_de_senha($1::uuid, $2::text, $3::timestamptz) as sucesso`,
+          [id, senhaHash, atualizadoEm],
+        );
+        if (rows?.[0]?.sucesso) {
+          return;
+        }
+      } catch {
+        // Fallback para update padrão em ambientes sem a função
+      }
+    }
+
     await manager.update(
       User,
       { id },

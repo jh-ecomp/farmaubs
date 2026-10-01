@@ -37,9 +37,9 @@ const PERFIS = [
     descricao: 'Acesso total ao sistema e configurações globais',
   },
   {
-    codigo: 'GESTOR',
-    nome: 'Gestor/Coordenador',
-    descricao: 'Gestor ou coordenador da assistência farmacêutica municipal',
+    codigo: 'GERENTE',
+    nome: 'Gerente/Coordenador',
+    descricao: 'Gerente ou coordenador da assistência farmacêutica municipal',
   },
   {
     codigo: 'FARMACEUTICO_RESPONSAVEL',
@@ -53,11 +53,11 @@ const PERFIS = [
   },
 ] as const;
 
-/** Municípios de teste — chave natural: ibge_code (UNIQUE) */
+/** Municípios de teste — chave natural: codigo_ibge (UNIQUE) */
 const MUNICIPIOS = [
-  { nome: 'São Paulo', uf: 'SP', ibge_code: '3550308' },
-  { nome: 'Rio de Janeiro', uf: 'RJ', ibge_code: '3304557' },
-  { nome: 'Belo Horizonte', uf: 'MG', ibge_code: '3106200' },
+  { nome: 'São Paulo', uf: 'SP', codigo_ibge: '3550308', ativo: true },
+  { nome: 'Rio de Janeiro', uf: 'RJ', codigo_ibge: '3304557', ativo: true },
+  { nome: 'Belo Horizonte', uf: 'MG', codigo_ibge: '3106200', ativo: true },
 ] as const;
 
 /** Unidades de saúde — referenciadas por (municipio_ibge, nome) */
@@ -101,10 +101,10 @@ const USUARIOS_PLAIN = [
     deve_trocar_senha: false,
   },
   {
-    email: 'gestor@farmaubs.dev',
-    nome_completo: 'Gestor São Paulo',
-    senha: 'Gestor@123456',
-    perfil_codigo: 'GESTOR',
+    email: 'gerente@farmaubs.dev',
+    nome_completo: 'Gerente São Paulo',
+    senha: 'Gerente@123456',
+    perfil_codigo: 'GERENTE',
     municipio_ibge: '3550308',
     ativo: true,
     deve_trocar_senha: false,
@@ -131,7 +131,7 @@ const USUARIOS_PLAIN = [
     email: 'inativo@farmaubs.dev',
     nome_completo: 'Usuário Inativo Teste',
     senha: 'Inativ@123456',
-    perfil_codigo: 'GESTOR',
+    perfil_codigo: 'GERENTE',
     municipio_ibge: '3550308',
     ativo: false,
     deve_trocar_senha: false,
@@ -143,9 +143,9 @@ const USER_UNITS = [
   // Admin: acesso a todas as UBS de SP
   { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
   { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
-  // Gestor: acesso às UBS do município
-  { email: 'gestor@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
-  { email: 'gestor@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
+  // Gerente: acesso às UBS do município
+  { email: 'gerente@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
+  { email: 'gerente@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
   // Farmacêutico Responsável: apenas sua UBS
   {
     email: 'farmaceutico.responsavel@farmaubs.dev',
@@ -183,6 +183,11 @@ async function seedPerfis(client: PoolClient): Promise<Map<string, string>> {
   return ids;
 }
 
+/**
+ * [RF001 / RF026]: Popula o catálogo de municípios com as capitais de teste (chave única codigo_ibge).
+ * @param client - Conexão PoolClient com o PostgreSQL.
+ * @returns Mapa com codigo_ibge -> id UUID gerado para cada município.
+ */
 async function seedMunicipios(
   client: PoolClient,
 ): Promise<Map<string, string>> {
@@ -191,16 +196,17 @@ async function seedMunicipios(
 
   for (const m of MUNICIPIOS) {
     const { rows } = await client.query<{ id: string }>(
-      `INSERT INTO municipios (nome, uf, ibge_code)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (ibge_code) DO UPDATE
+      `INSERT INTO municipios (nome, uf, codigo_ibge, ativo)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (codigo_ibge) DO UPDATE
          SET nome       = EXCLUDED.nome,
              uf         = EXCLUDED.uf,
+             ativo      = EXCLUDED.ativo,
              updated_at = now()
         RETURNING id`,
-      [m.nome, m.uf, m.ibge_code],
+      [m.nome, m.uf, m.codigo_ibge, m.ativo],
     );
-    ids.set(m.ibge_code, rows[0].id);
+    ids.set(m.codigo_ibge, rows[0].id);
   }
   console.log(`     ✔ ${MUNICIPIOS.length} municípios inseridos/atualizados.`);
   return ids;

@@ -49,10 +49,10 @@ defineFeature(feature, (test) => {
     ativo: true,
   };
 
-  const perfilGestor: PerfilModeloDominio = {
-    id: "perfil-gestor-uuid",
-    codigo: "GESTOR",
-    nome: "Gestor",
+  const perfilGerente: PerfilModeloDominio = {
+    id: "perfil-gerente-uuid",
+    codigo: "GERENTE",
+    nome: "Gerente",
     ativo: true,
   };
 
@@ -111,14 +111,14 @@ defineFeature(feature, (test) => {
 
     profileRepoMock = {
       buscarPorId: jest.fn().mockImplementation((id) => {
-        if (id === perfilGestor.id || id === "GESTOR")
-          return Promise.resolve(perfilGestor);
+        if (id === perfilGerente.id || id === "GERENTE")
+          return Promise.resolve(perfilGerente);
         if (id === perfilAdmin.id || id === "ADMINISTRADOR")
           return Promise.resolve(perfilAdmin);
         return Promise.resolve(perfilFarmaceutico);
       }),
       buscarPorCodigoOuNome: jest.fn().mockImplementation((codigo) => {
-        if (codigo === "GESTOR") return Promise.resolve(perfilGestor);
+        if (codigo === "GERENTE") return Promise.resolve(perfilGerente);
         if (codigo === "ADMINISTRADOR") return Promise.resolve(perfilAdmin);
         return Promise.resolve(perfilFarmaceutico);
       }),
@@ -289,7 +289,7 @@ defineFeature(feature, (test) => {
     then("as novas associações devem ser sincronizadas", () => {
       expect(usuarioRepoMock.atualizarPerfilEUbs).toHaveBeenCalledWith(
         "user-1",
-        perfilGestor.id,
+        perfilGerente.id,
         ["UBS Central", "UBS Norte"],
       );
     });

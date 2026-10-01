@@ -50,8 +50,8 @@ describe('CreatePerfis1787681200000 (migration unit)', () => {
       );
       expect(seedQuery).toContain('ADMINISTRADOR');
       expect(seedQuery).toContain('Administrador');
-      expect(seedQuery).toContain('GESTOR');
-      expect(seedQuery).toContain('Gestor/Coordenador');
+      expect(seedQuery).toContain('GERENTE');
+      expect(seedQuery).toContain('Gerente/Coordenador');
       expect(seedQuery).toContain('FARMACEUTICO_RESPONSAVEL');
       expect(seedQuery).toContain('Farmacêutico Responsável');
       expect(seedQuery).toContain('FARMACEUTICO_RESIDENTE');

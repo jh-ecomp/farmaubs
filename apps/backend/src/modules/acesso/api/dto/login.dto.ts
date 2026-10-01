@@ -41,7 +41,7 @@ export class UsuarioAutenticadoDto implements UsuarioAutenticado {
     example: "ADMINISTRADOR",
     enum: [
       "ADMINISTRADOR",
-      "GESTOR",
+      "GERENTE",
       "FARMACEUTICO_RESPONSAVEL",
       "FARMACEUTICO_RESIDENTE",
     ],
@@ -73,6 +73,14 @@ export class SessaoLoginInfoDto implements SessaoLoginInfo {
 }
 
 export class LoginResponseDto implements LoginResponse {
+  @ApiProperty({
+    example: "4f2a89c1...",
+    description:
+      "Bearer token de sessão retornado para autenticação nas próximas requisições",
+    required: false,
+  })
+  token?: string;
+
   @ApiProperty({ type: UsuarioAutenticadoDto })
   usuario: UsuarioAutenticadoDto;
 

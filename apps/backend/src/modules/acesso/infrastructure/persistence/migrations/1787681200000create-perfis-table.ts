@@ -26,7 +26,7 @@ export class CreatePerfis1787681200000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO perfis (codigo, nome, descricao) VALUES
         ('ADMINISTRADOR', 'Administrador', 'Acesso total ao sistema e configurações globais'),
-        ('GESTOR', 'Gestor/Coordenador', 'Gestor ou coordenador da assistência farmacêutica municipal'),
+        ('GERENTE', 'Gerente/Coordenador', 'Gerente ou coordenador da assistência farmacêutica municipal'),
         ('FARMACEUTICO_RESPONSAVEL', 'Farmacêutico Responsável', 'Farmacêutico responsável técnico pela farmácia/UBS'),
         ('FARMACEUTICO_RESIDENTE', 'Farmacêutico Residente', 'Farmacêutico residente em atuação na UBS')
       ON CONFLICT (codigo) DO NOTHING;

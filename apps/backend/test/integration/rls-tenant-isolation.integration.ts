@@ -76,11 +76,11 @@ describe('RLS — isolamento de tenant (conexão como farmaubs_app)', () => {
       [PERFIL_ID],
     );
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf) VALUES ($1, 'Município Alpha', 'PI') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge) VALUES ($1, 'Município Alpha', 'PI', '2200001') ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_A],
     );
     await admin.query(
-      `INSERT INTO municipios (id, nome, uf) VALUES ($1, 'Município Beta', 'PI') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO municipios (id, nome, uf, codigo_ibge) VALUES ($1, 'Município Beta', 'PI', '2200002') ON CONFLICT (id) DO NOTHING`,
       [MUNICIPIO_B],
     );
     await admin.query(
