@@ -153,10 +153,15 @@ export const authService = {
       );
     }
 
-    // Sucesso: No backend do FarmaUBS, o token é emitido no cabeçalho Authorization
-    const authHeader = resposta.headers.get("Authorization");
-    const token = authHeader ? authHeader.replace(/^Bearer\s+/i, "") : "";
+    // Sucesso: obtém token do corpo (preferencial e imune a proxies) ou do cabeçalho Authorization
     const body: BackendLoginResponse = await resposta.json();
+    const authHeader =
+      resposta.headers.get("Authorization") ||
+      resposta.headers.get("authorization");
+    const tokenFromHeader = authHeader
+      ? authHeader.replace(/^Bearer\s+/i, "")
+      : "";
+    const token = body.token || tokenFromHeader;
 
     return {
       token,

@@ -22,6 +22,7 @@ export interface SessaoLoginInfo {
 }
 
 export interface LoginResponse {
+  token?: string;
   usuario: UsuarioAutenticado;
   sessao: SessaoLoginInfo;
   redirectUrl: string;
