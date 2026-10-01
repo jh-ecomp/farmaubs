@@ -10,6 +10,8 @@ import type {
   ListagemUsuariosFiltros,
   ListagemUsuariosResultado,
   UsuarioItemTabela,
+  UsuarioItemListaDto,
+  UsuarioDetalheDto,
 } from "@farmaubs/shared";
 import { User } from "../../../administracao/infrastructure/persistence/entities/user.entity";
 import { UserUnit } from "../../../administracao/infrastructure/persistence/entities/UserUnit.entity";
@@ -144,12 +146,14 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
         'p.codigo AS "perfilCodigo"',
         'p.nome AS "perfilNome"',
         "u.ativo AS ativo",
+        'u.deve_trocar_senha AS "deveTrocarSenha"',
         'u.ultimo_login_em AS "ultimoLoginEm"',
         'u.created_at AS "createdAt"',
       ]);
 
-    if (filtros.busca) {
-      const termo = `%${filtros.busca.trim().toLowerCase()}%`;
+    const termoBusca = filtros.termoBusca || filtros.busca;
+    if (termoBusca) {
+      const termo = `%${termoBusca.trim().toLowerCase()}%`;
       qb.andWhere(
         "(LOWER(u.nome_completo) LIKE :termo OR LOWER(u.email) LIKE :termo)",
         { termo },
@@ -162,8 +166,9 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       });
     }
 
-    if (filtros.perfilId) {
-      const perfilValor = filtros.perfilId.trim();
+    const perfilFiltro = filtros.perfilCodigo || filtros.perfilId;
+    if (perfilFiltro) {
+      const perfilValor = perfilFiltro.trim();
       qb.andWhere(
         "(u.perfil_id = :perfilValor OR UPPER(p.codigo) = :perfilUpper)",
         {
@@ -173,7 +178,9 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       );
     }
 
-    if (filtros.status) {
+    if (filtros.ativo !== undefined) {
+      qb.andWhere("u.ativo = :ativo", { ativo: Boolean(filtros.ativo) });
+    } else if (filtros.status) {
       const statusUpper = filtros.status.trim().toUpperCase();
       if (statusUpper === "ATIVO") {
         qb.andWhere("u.ativo = :ativo", { ativo: true });
@@ -182,7 +189,11 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       }
     }
 
-    qb.orderBy("u.created_at", "DESC");
+    if (filtros.pagina !== undefined || filtros.termoBusca !== undefined) {
+      qb.orderBy("u.nome_completo", "ASC");
+    } else {
+      qb.orderBy("u.created_at", "DESC");
+    }
 
     const total = await qb.getCount();
     const rawUsers = await qb.offset(offset).limit(limit).getRawMany();
@@ -231,6 +242,20 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       createdAt: new Date(u.createdAt),
     }));
 
+    const itens: UsuarioItemListaDto[] = rawUsers.map((u) => ({
+      id: u.id,
+      nomeCompleto: u.nomeCompleto,
+      email: u.email,
+      perfilCodigo: u.perfilCodigo ?? "DESCONHECIDO",
+      perfilNome: u.perfilNome ?? "Desconhecido",
+      municipioId: u.municipioId,
+      municipioNome: u.municipioNome ?? "Desconhecido",
+      ativo: Boolean(u.ativo),
+      deveTrocarSenha: Boolean(u.deveTrocarSenha),
+      totalUbsAssociadas: (ubsPorUsuario.get(u.id) ?? []).length,
+      criadoEm: new Date(u.createdAt),
+    }));
+
     const totalPages = Math.ceil(total / limit) || (total === 0 ? 0 : 1);
 
     return {
@@ -239,6 +264,93 @@ export class TypeOrmUserRepository implements RepositorioUsuarioPort {
       page,
       limit,
       totalPages,
+      itens,
+      totalItens: total,
+      pagina: page,
+      limite: limit,
+      totalPaginas: totalPages,
+    };
+  }
+
+  /**
+   * [RF025 / AC-12]: Consulta os detalhes cadastrais completos de um usuário por ID com dados de município, perfil e lista de UBSs vinculadas.
+   * @param id - Identificador UUID do usuário.
+   * @returns Contrato UsuarioDetalheDto preenchido com dados sanitizados (sem hash), ou null se inexistente.
+   */
+  async buscarDetalhesPorId(id: string): Promise<UsuarioDetalheDto | null> {
+    const manager = this.transactionContext.getManager();
+
+    const rawUser = await manager
+      .createQueryBuilder(User, "u")
+      .leftJoin(MunicipioEntity, "m", "m.id = u.municipio_id")
+      .leftJoin(PerfilEntity, "p", "p.id = u.perfil_id")
+      .select([
+        "u.id AS id",
+        'u.nome_completo AS "nomeCompleto"',
+        "u.email AS email",
+        "u.ativo AS ativo",
+        'u.deve_trocar_senha AS "deveTrocarSenha"',
+        'm.id AS "municipioId"',
+        'm.nome AS "municipioNome"',
+        'm.uf AS "municipioUf"',
+        'p.id AS "perfilId"',
+        'p.codigo AS "perfilCodigo"',
+        'p.nome AS "perfilNome"',
+        'u.ultimo_login_em AS "ultimoLoginEm"',
+        'u.created_at AS "criadoEm"',
+        'u.updated_at AS "atualizadoEm"',
+      ])
+      .where("u.id = :id", { id })
+      .getRawOne();
+
+    if (!rawUser) {
+      return null;
+    }
+
+    interface VinculoRaw {
+      id: string;
+      nome: string;
+      ativo: boolean;
+      cnes?: string;
+    }
+
+    const vinculos = await manager
+      .createQueryBuilder(UserUnit, "uu")
+      .innerJoin(UnidadeSaudeEntity, "us", "us.id = uu.unidade_id")
+      .select(['us.id AS "id"', 'us.nome AS "nome"', 'uu.ativo AS "ativo"'])
+      .where("uu.usuario_id = :id", { id })
+      .getRawMany<VinculoRaw>();
+
+    const unidades = vinculos.map((v) => ({
+      id: v.id,
+      cnes: v.cnes ?? "",
+      nome: v.nome,
+      ativo: Boolean(v.ativo),
+    }));
+
+    return {
+      id: rawUser.id,
+      nomeCompleto: rawUser.nomeCompleto,
+      email: rawUser.email,
+      ativo: Boolean(rawUser.ativo),
+      deveTrocarSenha: Boolean(rawUser.deveTrocarSenha),
+      municipio: {
+        id: rawUser.municipioId,
+        nome: rawUser.municipioNome ?? "Desconhecido",
+        uf: rawUser.municipioUf ?? "",
+      },
+      perfil: {
+        id: rawUser.perfilId,
+        codigo: rawUser.perfilCodigo,
+        nome: rawUser.perfilNome ?? "Desconhecido",
+      },
+      unidadesSaude: unidades,
+      ubsList: unidades,
+      ultimoLoginEm: rawUser.ultimoLoginEm
+        ? new Date(rawUser.ultimoLoginEm)
+        : null,
+      criadoEm: new Date(rawUser.criadoEm),
+      atualizadoEm: new Date(rawUser.atualizadoEm),
     };
   }
 

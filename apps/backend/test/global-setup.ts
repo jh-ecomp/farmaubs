@@ -95,6 +95,7 @@ export default async function globalSetup(): Promise<void> {
       { email: "admin@farmaubs.dev", nome: "Admin Sistema", senha: "Admin@123456", perfil: "ADMINISTRADOR", ativo: true },
       { email: "gerente@farmaubs.dev", nome: "Gerente SP", senha: "Gerente@123456", perfil: "GERENTE", ativo: true },
       { email: "inativo@farmaubs.dev", nome: "Inativo", senha: "Inativ@123456", perfil: "GERENTE", ativo: false },
+      { email: "farmaceutico.residente@farmaubs.dev", nome: "Farmacêutico Residente", senha: "Reside@123456", perfil: "FARMACEUTICO_RESIDENTE", ativo: true },
     ];
     const usuarioIds = new Map<string, string>();
     for (const u of usuarios) {

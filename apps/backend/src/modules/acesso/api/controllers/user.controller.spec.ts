@@ -10,6 +10,7 @@ import { Reflector } from "@nestjs/core";
 import { UserController } from "./user.controller";
 import { CadastrarUsuarioUseCase } from "../../application/use-cases/register-user.use-case";
 import { ListUsersUseCase } from "../../application/use-cases/list-users.use-case";
+import { GetUserByIdUseCase } from "../../application/use-cases/get-user-by-id.use-case";
 import { EditUserUseCase } from "../../application/use-cases/edit-user.use-case";
 import { UpdateAssociationsUseCase } from "../../application/use-cases/update-associations.use-case";
 import { ToggleUserStatusUseCase } from "../../application/use-cases/toggle-user-status.use-case";
@@ -42,6 +43,7 @@ describe("UserController", () => {
   let controller: UserController;
   let useCaseMock: jest.Mocked<CadastrarUsuarioUseCase>;
   let listUsersUseCaseMock: jest.Mocked<ListUsersUseCase>;
+  let getUserByIdUseCaseMock: jest.Mocked<GetUserByIdUseCase>;
   let editUserUseCaseMock: jest.Mocked<EditUserUseCase>;
   let updateAssociationsUseCaseMock: jest.Mocked<UpdateAssociationsUseCase>;
   let toggleUserStatusUseCaseMock: jest.Mocked<ToggleUserStatusUseCase>;
@@ -75,6 +77,10 @@ describe("UserController", () => {
       executar: jest.fn(),
     } as unknown as jest.Mocked<ListUsersUseCase>;
 
+    getUserByIdUseCaseMock = {
+      executar: jest.fn(),
+    } as unknown as jest.Mocked<GetUserByIdUseCase>;
+
     editUserUseCaseMock = {
       executar: jest.fn(),
     } as unknown as jest.Mocked<EditUserUseCase>;
@@ -100,6 +106,7 @@ describe("UserController", () => {
       providers: [
         { provide: CadastrarUsuarioUseCase, useValue: useCaseMock },
         { provide: ListUsersUseCase, useValue: listUsersUseCaseMock },
+        { provide: GetUserByIdUseCase, useValue: getUserByIdUseCaseMock },
         { provide: EditUserUseCase, useValue: editUserUseCaseMock },
         {
           provide: UpdateAssociationsUseCase,
@@ -420,6 +427,64 @@ describe("UserController", () => {
     });
   });
 
+  describe("GET /api/v1/usuarios/:id (buscar por ID)", () => {
+    const validUuid = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+    const mockDetalheResultado: any = {
+      id: validUuid,
+      nomeCompleto: "Carlos Eduardo da Silva",
+      email: "carlos.silva@ubs.gov.br",
+      ativo: true,
+      deveTrocarSenha: false,
+      municipio: {
+        id: "muni-uuid-1",
+        nome: "Santos",
+        uf: "SP",
+      },
+      perfil: {
+        id: "perfil-uuid-1",
+        codigo: "ADMINISTRADOR",
+        nome: "Administrador",
+      },
+      unidadesSaude: [
+        {
+          id: "ubs-uuid-1",
+          cnes: "2401824",
+          nome: "UBS Gonzaga",
+          ativo: true,
+        },
+      ],
+      ultimoLoginEm: null,
+      criadoEm: new Date(),
+      atualizadoEm: new Date(),
+    };
+
+    it("deve retornar detalhes do usuário com status 200 OK quando ID existir", async () => {
+      getUserByIdUseCaseMock.executar.mockResolvedValue(mockDetalheResultado);
+
+      const resultado = await controller.buscarPorId(validUuid);
+
+      expect(getUserByIdUseCaseMock.executar).toHaveBeenCalledWith(validUuid);
+      expect(resultado).toEqual(mockDetalheResultado);
+    });
+
+    it("deve converter UsuarioNaoEncontradoException em NotFoundException (404)", async () => {
+      getUserByIdUseCaseMock.executar.mockRejectedValue(
+        new UsuarioNaoEncontradoException(validUuid),
+      );
+
+      await expect(controller.buscarPorId(validUuid)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("deve lançar BadRequestException (400) quando ID não for um UUID válido", async () => {
+      await expect(
+        controller.buscarPorId("id-invalido-nao-uuid"),
+      ).rejects.toThrow(BadRequestException);
+      expect(getUserByIdUseCaseMock.executar).not.toHaveBeenCalled();
+    });
+  });
+
   describe("RolesGuard (RBAC nas rotas)", () => {
     let guard: RolesGuard;
     let reflector: Reflector;
@@ -441,6 +506,43 @@ describe("UserController", () => {
         }),
       };
     }
+
+    it("deve permitir acesso para perfil ADMINISTRADOR no endpoint de buscar por ID", async () => {
+      perfilRepoMock.buscarPorId.mockResolvedValue({
+        id: "perfil-admin-uuid",
+        codigo: "ADMINISTRADOR",
+        nome: "Administrador",
+        ativo: true,
+      });
+
+      const context = criarMockContext(controller.buscarPorId, {
+        id: "sessao-1",
+        usuarioId: "user-1",
+        perfilId: "perfil-admin-uuid",
+      });
+
+      const canActivate = await guard.canActivate(context);
+      expect(canActivate).toBe(true);
+    });
+
+    it("deve rejeitar com ForbiddenException (403) para perfil FARMACEUTICO_RESPONSAVEL no buscar por ID", async () => {
+      perfilRepoMock.buscarPorId.mockResolvedValue({
+        id: "perfil-farm-uuid",
+        codigo: "FARMACEUTICO_RESPONSAVEL",
+        nome: "Farmacêutico",
+        ativo: true,
+      });
+
+      const context = criarMockContext(controller.buscarPorId, {
+        id: "sessao-2",
+        usuarioId: "user-2",
+        perfilId: "perfil-farm-uuid",
+      });
+
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
 
     it("deve permitir acesso para perfil ADMINISTRADOR no endpoint de senha provisória", async () => {
       perfilRepoMock.buscarPorId.mockResolvedValue({

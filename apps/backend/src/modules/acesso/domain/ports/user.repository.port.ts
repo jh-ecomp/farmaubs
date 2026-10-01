@@ -5,6 +5,7 @@ import {
 import type {
   ListagemUsuariosFiltros,
   ListagemUsuariosResultado,
+  UsuarioDetalheDto,
 } from "@farmaubs/shared";
 
 export const REPOSITORIO_USUARIO_PORT = Symbol("REPOSITORIO_USUARIO_PORT");
@@ -13,6 +14,7 @@ export const USER_REPOSITORY_PORT = REPOSITORIO_USUARIO_PORT;
 export interface RepositorioUsuarioPort {
   buscarPorEmail(email: string): Promise<UsuarioModeloDominio | null>;
   buscarPorId(id: string): Promise<UsuarioModeloDominio | null>;
+  buscarDetalhesPorId(id: string): Promise<UsuarioDetalheDto | null>;
   buscarUbsIds(usuarioId: string): Promise<string[]>;
   existePorEmail(email: string): Promise<boolean>;
   salvar(
