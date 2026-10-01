@@ -85,3 +85,5 @@ scratch/
 # Arquivos genéricos de histórico e logs de LLMs
 *.prompt
 *.llm.log
+docs/
+

@@ -107,6 +107,7 @@ export class AcessoController {
     res.setHeader("Authorization", `Bearer ${resultado.token}`);
 
     return {
+      token: resultado.token,
       usuario: resultado.usuario,
       sessao: {
         expiresAt: resultado.sessao.expiresAt.toISOString(),
