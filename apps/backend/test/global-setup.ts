@@ -52,7 +52,7 @@ export default async function globalSetup(): Promise<void> {
     // Perfis
     const perfis = [
       { codigo: "ADMINISTRADOR", nome: "Administrador", descricao: "Acesso total" },
-      { codigo: "GESTOR", nome: "Gestor", descricao: "Gestor municipal" },
+      { codigo: "GERENTE", nome: "Gerente", descricao: "Gerente municipal" },
       { codigo: "FARMACEUTICO_RESPONSAVEL", nome: "Farmacêutico Responsável", descricao: "RT" },
       { codigo: "FARMACEUTICO_RESIDENTE", nome: "Farmacêutico Residente", descricao: "Residente" },
     ];
@@ -93,8 +93,8 @@ export default async function globalSetup(): Promise<void> {
     // Usuários
     const usuarios = [
       { email: "admin@farmaubs.dev", nome: "Admin Sistema", senha: "Admin@123456", perfil: "ADMINISTRADOR", ativo: true },
-      { email: "gestor@farmaubs.dev", nome: "Gestor SP", senha: "Gestor@123456", perfil: "GESTOR", ativo: true },
-      { email: "inativo@farmaubs.dev", nome: "Inativo", senha: "Inativ@123456", perfil: "GESTOR", ativo: false },
+      { email: "gerente@farmaubs.dev", nome: "Gerente SP", senha: "Gerente@123456", perfil: "GERENTE", ativo: true },
+      { email: "inativo@farmaubs.dev", nome: "Inativo", senha: "Inativ@123456", perfil: "GERENTE", ativo: false },
     ];
     const usuarioIds = new Map<string, string>();
     for (const u of usuarios) {
@@ -122,7 +122,7 @@ export default async function globalSetup(): Promise<void> {
     }
 
     // Vínculos user_units
-    for (const email of ["admin@farmaubs.dev", "gestor@farmaubs.dev"]) {
+    for (const email of ["admin@farmaubs.dev", "gerente@farmaubs.dev"]) {
       await client.query(
         `INSERT INTO user_units (usuario_id, unidade_id, ativo)
          VALUES ($1, $2, true)

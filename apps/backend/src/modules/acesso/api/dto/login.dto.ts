@@ -41,7 +41,7 @@ export class UsuarioAutenticadoDto implements UsuarioAutenticado {
     example: "ADMINISTRADOR",
     enum: [
       "ADMINISTRADOR",
-      "GESTOR",
+      "GERENTE",
       "FARMACEUTICO_RESPONSAVEL",
       "FARMACEUTICO_RESIDENTE",
     ],

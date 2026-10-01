@@ -428,8 +428,8 @@ export function UsuarioModalForm({
                   <option value={PerfilCodigo.FARMACEUTICO_RESIDENTE}>
                     Farmacêutico Residente (Dispensação & Estoque)
                   </option>
-                  <option value={PerfilCodigo.GESTOR}>
-                    Gestor de Unidade (Visualização Gerencial)
+                  <option value={PerfilCodigo.GERENTE}>
+                    Gerente de Unidade (Visualização Gerencial)
                   </option>
                   <option value={PerfilCodigo.ADMINISTRADOR}>
                     Administrador Municipal da Saúde (Acesso Total)

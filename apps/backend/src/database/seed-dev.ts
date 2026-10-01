@@ -37,9 +37,9 @@ const PERFIS = [
     descricao: 'Acesso total ao sistema e configurações globais',
   },
   {
-    codigo: 'GESTOR',
-    nome: 'Gestor/Coordenador',
-    descricao: 'Gestor ou coordenador da assistência farmacêutica municipal',
+    codigo: 'GERENTE',
+    nome: 'Gerente/Coordenador',
+    descricao: 'Gerente ou coordenador da assistência farmacêutica municipal',
   },
   {
     codigo: 'FARMACEUTICO_RESPONSAVEL',
@@ -101,10 +101,10 @@ const USUARIOS_PLAIN = [
     deve_trocar_senha: false,
   },
   {
-    email: 'gestor@farmaubs.dev',
-    nome_completo: 'Gestor São Paulo',
-    senha: 'Gestor@123456',
-    perfil_codigo: 'GESTOR',
+    email: 'gerente@farmaubs.dev',
+    nome_completo: 'Gerente São Paulo',
+    senha: 'Gerente@123456',
+    perfil_codigo: 'GERENTE',
     municipio_ibge: '3550308',
     ativo: true,
     deve_trocar_senha: false,
@@ -131,7 +131,7 @@ const USUARIOS_PLAIN = [
     email: 'inativo@farmaubs.dev',
     nome_completo: 'Usuário Inativo Teste',
     senha: 'Inativ@123456',
-    perfil_codigo: 'GESTOR',
+    perfil_codigo: 'GERENTE',
     municipio_ibge: '3550308',
     ativo: false,
     deve_trocar_senha: false,
@@ -143,9 +143,9 @@ const USER_UNITS = [
   // Admin: acesso a todas as UBS de SP
   { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
   { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
-  // Gestor: acesso às UBS do município
-  { email: 'gestor@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
-  { email: 'gestor@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
+  // Gerente: acesso às UBS do município
+  { email: 'gerente@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
+  { email: 'gerente@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
   // Farmacêutico Responsável: apenas sua UBS
   {
     email: 'farmaceutico.responsavel@farmaubs.dev',

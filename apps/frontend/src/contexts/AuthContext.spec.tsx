@@ -31,9 +31,9 @@ function TestConsumer() {
         {usuario?.perfilCodigo || "sem-perfil"}
       </span>
       <span data-testid="is-admin">{isAdmin ? "sim" : "nao"}</span>
-      <span data-testid="has-gestor">{hasRole("gestor") ? "sim" : "nao"}</span>
+      <span data-testid="has-gerente">{hasRole("gerente") ? "sim" : "nao"}</span>
       <span data-testid="has-admin-array">
-        {hasRole(["GESTOR", "ADMINISTRADOR"]) ? "sim" : "nao"}
+        {hasRole(["GERENTE", "ADMINISTRADOR"]) ? "sim" : "nao"}
       </span>
       <span data-testid="escopo-municipio">{escopoAtivo.municipioId}</span>
       <span data-testid="escopo-unidades">
@@ -258,7 +258,7 @@ describe("AuthContext — Contexto Canônico de Autenticação & Logout Seguro (
       renderAuthContext();
 
       expect(screen.getByTestId("is-admin")).toHaveTextContent("sim");
-      expect(screen.getByTestId("has-gestor")).toHaveTextContent("nao");
+      expect(screen.getByTestId("has-gerente")).toHaveTextContent("nao");
       expect(screen.getByTestId("has-admin-array")).toHaveTextContent("sim");
       expect(screen.getByTestId("escopo-municipio")).toHaveTextContent("mun-1");
       expect(screen.getByTestId("escopo-unidades")).toHaveTextContent(
@@ -300,7 +300,7 @@ describe("AuthContext — Contexto Canônico de Autenticação & Logout Seguro (
       localStorage.setItem("@FarmaUBS:token", "token-voluntario");
       localStorage.setItem(
         "@FarmaUBS:usuario",
-        JSON.stringify({ id: "usr-3", nome: "Voluntário", perfil: ["GESTOR"] }),
+        JSON.stringify({ id: "usr-3", nome: "Voluntário", perfil: ["GERENTE"] }),
       );
       sessionStorage.setItem("@FarmaUBS:logoutReason", "aviso-antigo");
 
