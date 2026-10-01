@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
  * AC-02 #39 — GRANTs de DML para a role de aplicação farmaubs_app (ADR-016).
@@ -14,7 +14,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  *   owner recebem os mesmos grants automaticamente.
  */
 export class GrantDmlFarmaubsApp1788525896383 implements MigrationInterface {
-  name = "GrantDmlFarmaubsApp1788525896383";
+  name = 'GrantDmlFarmaubsApp1788525896383';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Acesso ao schema — defensivo: em PG 15+ o PUBLIC já tem USAGE, mas o
@@ -75,17 +75,16 @@ export class GrantDmlFarmaubsApp1788525896383 implements MigrationInterface {
     await queryRunner.query(`
       DO $$
       BEGIN
-        IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'auth_buscar_sessao_por_token') THEN
-          REVOKE EXECUTE ON FUNCTION auth_buscar_sessao_por_token(text) FROM farmaubs_app;
-        END IF;
-        IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'auth_registrar_falha_login') THEN
-          REVOKE EXECUTE ON FUNCTION auth_registrar_falha_login(uuid) FROM farmaubs_app;
-        END IF;
-        IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'auth_buscar_usuario_por_email') THEN
-          REVOKE EXECUTE ON FUNCTION auth_buscar_usuario_por_email(text) FROM farmaubs_app;
-        END IF;
+        REVOKE EXECUTE ON FUNCTION auth_buscar_sessao_por_token(text) FROM farmaubs_app;
+      EXCEPTION WHEN undefined_function THEN NULL;
       END $$;
     `);
+    await queryRunner.query(
+      `REVOKE EXECUTE ON FUNCTION auth_registrar_falha_login(uuid) FROM farmaubs_app`,
+    );
+    await queryRunner.query(
+      `REVOKE EXECUTE ON FUNCTION auth_buscar_usuario_por_email(text) FROM farmaubs_app`,
+    );
 
     await queryRunner.query(
       `REVOKE SELECT, INSERT, UPDATE, DELETE ON TABLE sessions FROM farmaubs_app`,

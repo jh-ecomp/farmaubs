@@ -156,9 +156,6 @@ export class CreateAuthFunctions1788600000000 implements MigrationInterface {
       $$
     `);
     await queryRunner.query(
-      `GRANT EXECUTE ON FUNCTION auth_buscar_sessao_por_token(text) TO farmaubs_app`,
-    );
-    await queryRunner.query(
       `DROP FUNCTION IF EXISTS auth_renovar_sessao(uuid, timestamptz)`,
     );
     await queryRunner.query(
