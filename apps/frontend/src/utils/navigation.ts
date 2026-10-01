@@ -3,7 +3,7 @@ import type { UsuarioPayload } from "../types/auth";
 /**
  * [RF002 / RBAC]: Retorna a rota inicial padrão do usuário de acordo com o perfil de acesso (RBAC).
  * Administrador -> /admin/usuarios
- * Demais perfis (Farmacêutico, Gestor, etc.) -> /em-desenvolvimento
+ * Demais perfis (Farmacêutico, Gerente, etc.) -> /em-desenvolvimento
  * @param usuario - Objeto do usuário autenticado no contexto global.
  * @returns Rota padrão para redirecionamento após autenticação.
  */

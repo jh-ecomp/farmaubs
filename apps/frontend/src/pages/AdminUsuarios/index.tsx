@@ -210,12 +210,12 @@ export function AdminUsuarios() {
             <span>{perfilNome || "Farmacêutico Residente"}</span>
           </span>
         );
-      case PerfilCodigo.GESTOR:
-      case "GESTOR":
+      case PerfilCodigo.GERENTE:
+      case "GERENTE":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-badge text-label-badge">
             <span className="material-symbols-outlined text-[14px]">badge</span>
-            <span>{perfilNome || "Gestor de Unidade"}</span>
+            <span>{perfilNome || "Gerente de Unidade"}</span>
           </span>
         );
       default:
@@ -469,8 +469,8 @@ export function AdminUsuarios() {
                     <option value={PerfilCodigo.FARMACEUTICO_RESIDENTE}>
                       Farmacêutico Residente
                     </option>
-                    <option value={PerfilCodigo.GESTOR}>
-                      Gestor de Unidade
+                    <option value={PerfilCodigo.GERENTE}>
+                      Gerente de Unidade
                     </option>
                     <option value={PerfilCodigo.ADMINISTRADOR}>
                       Administrador Geral SMS

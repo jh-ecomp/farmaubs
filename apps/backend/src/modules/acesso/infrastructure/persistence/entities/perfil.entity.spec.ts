@@ -37,11 +37,11 @@ describe('PerfilEntity (unit)', () => {
 
     it('deve remover espaços em branco nas extremidades do código', () => {
       const perfil = new PerfilEntity();
-      perfil.codigo = '  gestor  ';
+      perfil.codigo = '  gerente  ';
 
       perfil.normalizeCodigo();
 
-      expect(perfil.codigo).toBe('GESTOR');
+      expect(perfil.codigo).toBe('GERENTE');
     });
 
     it('deve converter para maiúsculas e remover espaços simultaneamente', () => {
