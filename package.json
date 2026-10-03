@@ -10,6 +10,7 @@
     "test": "pnpm -r test",
     "test:backend": "pnpm --filter @farmaubs/backend test",
     "test:integration": "pnpm --filter @farmaubs/backend test:integration",
+    "test:bdd": "pnpm --filter @farmaubs/backend test:bdd",
     "db:seed": "pnpm --filter @farmaubs/backend db:seed"
   },
   "keywords": [],

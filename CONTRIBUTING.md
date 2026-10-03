@@ -381,10 +381,11 @@ O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (AD
 
 | Camada       | Nome                           | Onde executa    | Comando                                      | Objetivo                                                             |
 | :----------- | :----------------------------- | :-------------- | :------------------------------------------- | :------------------------------------------------------------------- |
-| **Camada A** | Testes Unitários de Domínio    | `apps/backend`  | `pnpm test` ou `pnpm test <arquivo.spec.ts>` | Valida Use Cases e regras puras sem necessidade de banco de dados.   |
+| **Camadas A e C (BDD)** | **Especificação Viva BDD / Aceitação** | Raiz ou `apps/backend` | `pnpm test:bdd`                              | Executa cenários Gherkin com Cucumber.js + Chai para Casos de Uso e fluxos E2E. |
+| **Camada A** | Testes Unitários de Domínio    | `apps/backend`  | `pnpm test` ou `pnpm test <arquivo.spec.ts>` | Valida Use Cases e regras puras isoladas.                            |
 | **Camada B** | Testes de Integração de Schema | `apps/backend`  | `pnpm test:schema`                           | Sobe banco efêmero na porta 5435 e testa todas as migrações do zero. |
 | **Camada C** | Testes de Integração / E2E     | `apps/backend`  | `pnpm test:integration`                      | Valida repositórios e endpoints com banco de dados real.             |
-| **Camada D** | Testes de Componentes          | `apps/frontend` | `pnpm test`                                  | Valida componentes e interações de tela no React.                    |
+| **Camada D** | Testes de Componentes          | `apps/frontend` | `pnpm test`                                  | Valida componentes e interações de tela no React com Testing Library.|
 | **Build**    | Verificação de Compilação      | Raiz            | `pnpm build`                                 | Compila `@farmaubs/shared`, backend e frontend simultaneamente.      |
 
 > [!NOTE]
@@ -393,8 +394,15 @@ O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (AD
 > pnpm --filter @farmaubs/backend test:schema:down
 > ```
 
-> [!TIP]
-> **Padrão BDD/Cucumber (Camada A):** Casos de uso e regras de negócio devem ser especificados em Gherkin (`.feature` em português) e executados via `jest-cucumber` (`*.steps.ts`).
+> [!IMPORTANT]
+> **Padrão Obrigatório de BDD / Cucumber (Camadas A e C — Qualidade e Negócio):**
+> Ao implementar testes que validam **regras de negócio, casos de uso (Camada A) ou fluxos de aceitação/E2E da API (Camada C)**, é **obrigatório seguir o padrão Cucumber.js + Chai**:
+> 1. **Especificação Gherkin:** Arquivos `.feature` localizados em `apps/backend/test/features/<modulo>.feature`, escritos em português (`# language: pt`) com palavras-chave canônicas (`Funcionalidade`, `Cenário`, `Dado`, `Quando`, `Então`, `E`, `Esquema do Cenário`).
+> 2. **Definição dos Passos (Step Definitions):** Arquivos `.steps.ts` em `apps/backend/test/features/step_definitions/<modulo>.steps.ts`, utilizando `@cucumber/cucumber` (`Given`, `When`, `Then`, `Before`) e asserções com `chai` (`expect`, `assert`).
+> 3. **Execução:** Os cenários devem ser validados pelo comando `pnpm test:bdd`.
+> 
+> **Por que testes técnicos não vão para o Cucumber?**
+> Testes de migrations puras (`create-*.spec.ts`), isolamento de RLS PostgreSQL (`rls-tenant-isolation.integration.ts`), decorators do NestJS e renderização de componentes React com JSDOM (Camada D) permanecem em Jest/Vitest. O Cucumber destina-se à especificação de comportamento e requisitos de negócio legíveis por stakeholders; forçar detalhes técnicos de baixo nível em Gherkin é um anti-padrão de projeto.
 
 ### Passo 6: Validação Manual Obrigatória (Swagger, Banco e Interface Docker)
 

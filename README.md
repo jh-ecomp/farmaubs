@@ -20,8 +20,9 @@
 2. [Instalação](#2-instalação)
 3. [Estrutura de pastas completa](#3-estrutura-de-pastas-completa)
 4. [Como usar](#4-como-usar)
-5. [Autores](#5-autores)
-6. [Licença](#6-licença)
+5. [Testes e Qualidade de Software](#5-testes-e-qualidade-de-software)
+6. [Autores](#6-autores)
+7. [Licença](#7-licença)
 
 ## 1. Sobre
 
@@ -155,7 +156,37 @@ Acessos:
 - Frontend em http://localhost:5173
 - Postgres em localhost:5434.
 
-## 5. Autores
+## 5. Testes e Qualidade de Software
+
+O FarmaUBS adota uma estratégia de testes em múltiplas camadas ([ADR-030](file:///c:/Users/jaohe/projetos/farmaubs/docs/adrs/adr-030-estrategia-de-testes.md)), combinando **BDD (Behavior-Driven Development)** com Cucumber.js para regras de negócio e testes técnicos com Jest e Vitest:
+
+### 5.1 Testes de Negócio e Casos de Uso (BDD / Cucumber.js)
+
+Os requisitos funcionais, regras de negócio e fluxos de aceitação (**Camadas A e C**) são especificados em **Gherkin (`.feature` em português)** e automatizados com **`@cucumber/cucumber`** e asserções com **`chai`**, localizados em `apps/backend/test/features/`.
+
+Para executar a suíte BDD completa a partir da raiz do repositório:
+
+```bash
+# Executa todos os cenários BDD (.feature) via Cucumber.js
+pnpm test:bdd
+```
+
+### 5.2 Testes Técnicos e Infraestrutura (Jest / Vitest)
+
+Testes de migrations PostgreSQL, isolamento multi-tenant (RLS) e adaptadores de banco (**Camada B**), além de componentes de interface React (**Camada D**), são mantidos em Jest e Vitest:
+
+```bash
+# Executa a suíte de testes do backend com Jest
+pnpm test:backend
+
+# Executa testes de migrações e schema em banco efêmero isolado
+pnpm --filter @farmaubs/backend test:schema
+
+# Executa testes unitários e de componentes do frontend com Vitest
+pnpm --filter @farmaubs/frontend test
+```
+
+## 6. Autores
 
 <div align="center">
     <table>
@@ -203,6 +234,6 @@ Acessos:
     </table>
 </div>
 
-## 6. Licença
+## 7. Licença
 
 Este projeto está sobre a licença [GNU GPL 3](./LICENSE).
