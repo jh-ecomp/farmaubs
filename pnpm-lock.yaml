@@ -205,7 +205,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      '@moonrepo/cli':
+        specifier: ^2.5.6
+        version: 2.5.6
 
   apps/backend:
     dependencies:
@@ -2132,6 +2136,49 @@ packages:
 
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
+
+  '@moonrepo/cli@2.5.6':
+    resolution: {integrity: sha512-Wkwzbx8ZbXQVCo0SA2KGxDw4FwrbiLZr9HaqxNQLa/LUmziLQZBoXbmgYFDqE8a9gE73HxNtac0CFNMZUQ5x6A==}
+    hasBin: true
+
+  '@moonrepo/core-linux-arm64-gnu@2.5.6':
+    resolution: {integrity: sha512-G8cq1eBEr7gz2GBMgj2q7kgyeIKvyQnTJkvSVdFAIvpUpRCKDfIibp2xqVGQxAWA54ZaMDiIWq78mgmpuQycjw==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@moonrepo/core-linux-arm64-musl@2.5.6':
+    resolution: {integrity: sha512-1MuCAHRiEd4D4Onoeo/zcAtyVlEStc4AigMC7ekgI+1UgsYAbwL+/poz6ry71iRFZm8qVnt1TGkaUpyl+XrL8g==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@moonrepo/core-linux-x64-gnu@2.5.6':
+    resolution: {integrity: sha512-ZZYKTr4Sjgl0pi8cbQhaxf22nwr46wrkmF3s9xRq9pahFT/ZTeWVg7c5tMJ36Tv9nkk958fTnoUdX795A25HYA==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@moonrepo/core-linux-x64-musl@2.5.6':
+    resolution: {integrity: sha512-73VGovApf4jsA7PY0jjKq3A6YFZ5kjuKBBL1LBqoknqMZU1a5+P85WTw3z36lDnv1Uw3O9bfM+0GDUk2pfkv7Q==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@moonrepo/core-macos-arm64@2.5.6':
+    resolution: {integrity: sha512-VUyq46qsUX32XzHso+CDmRPvjolCQ0/t4HyAZxOVPbjHqH6DDJOcTalSJExTWa5gfX+yHUNWndyNFxIMhu1tPw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@moonrepo/core-macos-x64@2.5.6':
+    resolution: {integrity: sha512-DYSl8493eWI+VVk92mFDyqVRg1akU/lnxoEOmvxCKGkZrC+rcT3T/Z2VyuOrhGD8Gfy3EDrjebdDg09MYn0JMQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@moonrepo/core-windows-x64-msvc@2.5.6':
+    resolution: {integrity: sha512-fcC3g3A7ckPTgv0/+aDU0aiwb/LwpV58tfhBQw4PXe7sSohk88SlmHLV31lUMbTjOmKiXegc8A9IEUhxsa92dA==}
+    cpu: [x64]
+    os: [win32]
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -10313,6 +10360,39 @@ snapshots:
   '@lukeed/csprng@1.1.0': {}
 
   '@microsoft/tsdoc@0.16.0': {}
+
+  '@moonrepo/cli@2.5.6':
+    dependencies:
+      detect-libc: 2.1.2
+    optionalDependencies:
+      '@moonrepo/core-linux-arm64-gnu': 2.5.6
+      '@moonrepo/core-linux-arm64-musl': 2.5.6
+      '@moonrepo/core-linux-x64-gnu': 2.5.6
+      '@moonrepo/core-linux-x64-musl': 2.5.6
+      '@moonrepo/core-macos-arm64': 2.5.6
+      '@moonrepo/core-macos-x64': 2.5.6
+      '@moonrepo/core-windows-x64-msvc': 2.5.6
+
+  '@moonrepo/core-linux-arm64-gnu@2.5.6':
+    optional: true
+
+  '@moonrepo/core-linux-arm64-musl@2.5.6':
+    optional: true
+
+  '@moonrepo/core-linux-x64-gnu@2.5.6':
+    optional: true
+
+  '@moonrepo/core-linux-x64-musl@2.5.6':
+    optional: true
+
+  '@moonrepo/core-macos-arm64@2.5.6':
+    optional: true
+
+  '@moonrepo/core-macos-x64@2.5.6':
+    optional: true
+
+  '@moonrepo/core-windows-x64-msvc@2.5.6':
+    optional: true
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true

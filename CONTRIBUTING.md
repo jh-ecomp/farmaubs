@@ -1,7 +1,11 @@
 # CONTRIBUTING — Guia do Desenvolvedor e Padrões de Engenharia (FarmaUBS)
 
-> **Documento Vivo de Engenharia de Software.**  
-> Este guia orienta desenvolvedores (de iniciantes a seniores) e **agentes de Inteligência Artificial** sobre a arquitetura do FarmaUBS, padrões de código, organização de diretórios, execução de testes e ciclo de vida de contribuição no monorepo.
+> **Documento Vivo de Engenharia de Software e Diretriz Padrão de Operação.**  
+> Este guia é o **arquivo padrão de diretrizes** para qualquer desenvolvedor e **agente de Inteligência Artificial** operar no monorepo FarmaUBS.
+> 
+> ⚠️ **REGRA MANDATÓRIA DE EXECUÇÃO:**  
+> **Todos os builds e testes devem ser executados OBRIGATORIAMENTE através do Moonrepo** (`moon run <projeto>:<tarefa>`, `moon run :<tarefa>` ou `pnpm moon run ...`), e **NUNCA** via comandos diretos isolados nos pacotes.  
+> O Moonrepo garante a compilação ordenada do grafo DAG (ex: `@farmaubs/shared` antes de dependentes), controle de cache criptográfico inteligente e validação estrita dos limites arquiteturais.
 
 ---
 
@@ -180,11 +184,14 @@ O FarmaUBS adota oficialmente o **Moonrepo (`moon`)** como sistema de build, orq
     # Ou no Linux / macOS:
     curl -fsSL https://moonrepo.dev/install.sh | bash
     ```
-  - Execução alternativa sem instalação global:
+  - Execução no repositório (via dependência local ou PNPM):
     ```bash
-    npx moon <comando>
-    # ou
-    pnpm dlx @moonrepo/cli <comando>
+    # Via script configurado na raiz:
+    pnpm moon <comando>
+    # ou diretamente via pnpm exec:
+    pnpm exec moon <comando>
+    # ou via pnpm dlx:
+    pnpm --package=@moonrepo/cli dlx moon <comando>
     ```
 
 - **Governança de Toolchain (`.moon/toolchain.yml`):**
