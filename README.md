@@ -20,13 +20,14 @@
 2. [Instalação](#2-instalação)
 3. [Estrutura de pastas completa](#3-estrutura-de-pastas-completa)
 4. [Como usar](#4-como-usar)
-5. [Testes e Qualidade de Software](#5-testes-e-qualidade-de-software)
-6. [Autores](#6-autores)
-7. [Licença](#7-licença)
+5. [Autores](#5-autores)
+6. [Licença](#6-licença)
 
 ## 1. Sobre
 
-O FarmaUBS é uma aplicação web voltada para profissionais farmacêuticos que atuam nas farmácias públicas das Unidades Básicas de Saúde (UBS) de Parnaíba-Piauí. O sistema tem como objetivo central prover controle de estoque de medicamentos com rastreabilidade por lote e validade, previsão de demanda e indicadores operacionais, eliminando a dependência de planilhas manuais e reduzindo o desperdício por vencimento de medicamentos.
+O FarmaUBS é uma aplicação voltada para profissionais farmacêuticos e operadores de saúde que atuam nas farmácias públicas das Unidades Básicas de Saúde (UBS) de Parnaíba-Piauí. O sistema tem como objetivo central prover controle de estoque de medicamentos com rastreabilidade por lote e validade, previsão de demanda e indicadores operacionais, eliminando a dependência de planilhas manuais e reduzindo o desperdício por vencimento de medicamentos.
+
+O projeto é estruturado como um **Monorepo com Clean Architecture** orientado pelo modelo do **moonrepo/moon**, suportando múltiplos clientes (Web e Mobile) alimentados pela mesma API central.
 
 ## 2. Instalação
 
@@ -42,80 +43,48 @@ A instalação do projeto FarmaUBS está documentada no arquivo `/docs/onboardin
 
 ## 3. Estrutura de pastas completa
 
-A árvore de diretórios abaixo reflete a organização do monorepo, separando aplicações de pacotes compartilhados e configurações de infraestrutura.
+A árvore de diretórios abaixo reflete a organização do monorepo escalável, separando aplicações clientes, servidor, pacotes compartilhados e orquestração de tarefas:
 
 ```text
 farmaubs/
-├── .github/                # Workflows de CI/CD (ADR-024 - Futuro)
-├── apps/                   # Aplicações principais
-│   ├── backend/            # API NestJS (Hexagonal + Migrations)
-│   └── frontend/           # SPA React + Vite
+├── .github/                # Workflows de CI/CD (ADR-024)
+├── apps/                   # Aplicações do Monorepo
+│   ├── backend/            # API NestJS (Clean Architecture Pura + Ports & Adapters + RLS)
+│   ├── frontend/           # SPA Web (React 19 + Vite + Tailwind CSS + TanStack Query)
+│   └── mobile/             # App Móvel (React Native + Expo SDK 52 + SecureStore)
 ├── packages/               # Pacotes compartilhados
-│   └── shared/             # Tipos, DTOs e constantes comuns
+│   └── shared/             # Contratos DTO, Schemas Zod, Enums e Regras de Negócio puras
 ├── infra/                  # Configurações de infraestrutura (ADR-023)
-│   ├── nginx/              # Configurações do servidor web (Produção)
-│   │   └── frontend.conf
+│   ├── nginx/              # Servidor web (Produção)
 │   ├── docker-compose.yml  # Base comum
 │   ├── docker-compose.dev.yml
 │   └── docker-compose.prod.yml
-├── .gitignore              # Regras de exclusão do Git
-├── .npmrc                  # Configurações do pnpm
-├── .env.example            # Modelo de variáveis de ambiente (ADR-027)
-├── package.json            # Manifesto raiz do monorepo
-├── pnpm-workspace.yaml     # Definição dos workspaces
+├── docs/                   # Documentação arquitetural viva e histórias de usuário
+│   ├── adrs/               # Registros de Decisões de Arquitetura (ADR-001 a ADR-035)
+│   └── historias-usuario/  # Especificações funcionais em BDD/Gherkin
+├── pnpm-workspace.yaml     # Topologia de workspaces do pnpm
 └── README.md               # Documentação principal
 ```
 
 ---
 
-#### 3.1 Estrutura Interna do Backend (Hexagonal — ADR-003)
+#### 3.1 Arquitetura do Backend (Clean Architecture Pura — ADR-003, ADR-033)
 
-O backend segue a Arquitetura Hexagonal, onde o domínio é isolado de tecnologias externas. O banco de dados e suas migrações são tratados como detalhes de implementação dentro da camada de infraestrutura.
+O backend segue a **Clean Architecture** e o padrão **Ports & Adapters**, mantendo os Casos de Uso totalmente desacoplados de frameworks (zero decorators NestJS na regra de negócio). O NestJS atua puramente como adaptador de infraestrutura na borda:
 
 ```text
-apps/backend/src/
-├── main.ts                 # Ponto de entrada da aplicação
-├── app.module.ts           # Módulo raiz
-├── common/                 # Filtros, interceptors e decorators globais
-└── modules/                # Módulos de domínio (Vertical Slicing)
-    ├── acesso/             # Auth, RBAC, Usuários
-    ├── medicamentos/       # Catálogo, RENAME, REMUME
-    ├── estoque/            # Entradas e Saídas
-    ├── inventario/         # Contagem e ajustes
-    ├── pedidos/            # Requisições entre unidades
-    ├── indicadores/        # Lógica de BI e KPIs
-    ├── alertas/            # Notificações e gatilhos
-    ├── relatorios/         # Geração de documentos
-    └── administracao/      # Configurações do sistema
-        ├── domain/         # Entidades e Regras de Negócio
-        ├── application/    # Casos de Uso e Portas (Interfaces)
-        ├── infrastructure/ # Adaptador de Repositório Oficial (TypeORM)
-        │   ├── persistence/ # TypeORM (Escolha Definitiva - ADR-016/008), Repositories, Migrations
-        │   │   ├── entities/
-        │   │   └── migrations/
-        └── api/            # Adaptadores de Entrada (Controllers, DTOs)
+apps/backend/src/modules/<modulo>/
+├── domain/                 # Regras puras, Entidades, Value Objects e Portas (Interfaces)
+├── application/            # Casos de Uso puros (Classes TypeScript sem decorators)
+└── infrastructure/         # Adaptadores (TypeORM, Postgres, Repositórios, Controllers)
 ```
 
 ---
 
-#### 3.2 Estrutura Interna do Frontend (React + Vite)
+#### 3.2 Arquitetura dos Clientes (Frontend Web & Mobile Expo — ADR-011, ADR-034)
 
-O frontend é organizado para suportar escalabilidade e o uso intensivo de estados assíncronos com TanStack Query.
-
-```text
-apps/frontend/src/
-├── assets/                 # Imagens, ícones e fontes
-├── components/             # Componentes reutilizáveis (UI/Common)
-├── contexts/               # Provedores de contexto (Auth, Theme)
-├── hooks/                  # Custom hooks lógicos
-├── lib/                    # Configurações de libs (Axios, QueryClient)
-├── pages/                  # Componentes de rota (Views)
-├── services/               # Clientes de API (Consumo do Backend)
-├── styles/                 # CSS Global e temas (Tailwind)
-├── types/                  # Definições de tipos locais
-├── App.tsx                 # Componente raiz e roteamento
-└── main.tsx                # Ponto de montagem React
-```
+- **Frontend (`apps/frontend`):** SPA React 19 + Vite voltada para desktop nas farmácias e almoxarifados.
+- **Mobile (`apps/mobile`):** Aplicativo nativo em React Native com Expo, consumindo os mesmos contratos de `@farmaubs/shared` com armazenamento seguro em Keystore/Keychain via `expo-secure-store`.
 
 ## 4. Como usar
 
@@ -137,7 +106,7 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --force-recreate
 
 # 3. Acompanhar os logs dos serviços
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f # <escolha um: api/frontend/postgres>
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api # <escolha um: api/frontend/postgres>
 
 # 4. Acompanhar saúde dos serviços
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml ps
@@ -154,39 +123,10 @@ Acessos:
 - API em http://localhost:3000/api/v1
 - Swagger em http://localhost:3000/api/v1/docs
 - Frontend em http://localhost:5173
+- Mobile: `pnpm dev:mobile` (Expo DevTools)
 - Postgres em localhost:5434.
 
-## 5. Testes e Qualidade de Software
-
-O FarmaUBS adota uma estratégia de testes em múltiplas camadas ([ADR-030](file:///c:/Users/jaohe/projetos/farmaubs/docs/adrs/adr-030-estrategia-de-testes.md)), combinando **BDD (Behavior-Driven Development)** com Cucumber.js para regras de negócio e testes técnicos com Jest e Vitest:
-
-### 5.1 Testes de Negócio e Casos de Uso (BDD / Cucumber.js)
-
-Os requisitos funcionais, regras de negócio e fluxos de aceitação (**Camadas A e C**) são especificados em **Gherkin (`.feature` em português)** e automatizados com **`@cucumber/cucumber`** e asserções com **`chai`**, localizados em `apps/backend/test/features/`.
-
-Para executar a suíte BDD completa a partir da raiz do repositório:
-
-```bash
-# Executa todos os cenários BDD (.feature) via Cucumber.js
-pnpm test:bdd
-```
-
-### 5.2 Testes Técnicos e Infraestrutura (Jest / Vitest)
-
-Testes de migrations PostgreSQL, isolamento multi-tenant (RLS) e adaptadores de banco (**Camada B**), além de componentes de interface React (**Camada D**), são mantidos em Jest e Vitest:
-
-```bash
-# Executa a suíte de testes do backend com Jest
-pnpm test:backend
-
-# Executa testes de migrações e schema em banco efêmero isolado
-pnpm --filter @farmaubs/backend test:schema
-
-# Executa testes unitários e de componentes do frontend com Vitest
-pnpm --filter @farmaubs/frontend test
-```
-
-## 6. Autores
+## 5. Autores
 
 <div align="center">
     <table>
@@ -234,6 +174,7 @@ pnpm --filter @farmaubs/frontend test
     </table>
 </div>
 
-## 7. Licença
+## 6. Licença
 
 Este projeto está sobre a licença [GNU GPL 3](./LICENSE).
+

@@ -8,10 +8,12 @@
 ## Sumário
 
 1. [Visão Geral e Arquitetura dos Projetos](#1-visão-geral-e-arquitetura-dos-projetos)
-   - [1.1 Backend (`@farmaubs/backend`)](#11-backend-farmaubsbackend---nestjs--arquitetura-hexagonal)
-   - [1.2 Frontend (`@farmaubs/frontend`)](#12-frontend-farmaubsfrontend---react--vite)
-   - [1.3 Pacote Compartilhado (`@farmaubs/shared`)](#13-pacote-compartilhado-farmaubsshared)
-   - [1.4 Infraestrutura (`infra/`)](#14-infraestrutura-infra)
+   - [1.1 Backend (`@farmaubs/backend`)](#11-backend-farmaubsbackend---clean-architecture-pura--nestjs-adr-003-adr-033)
+   - [1.2 Frontend (`@farmaubs/frontend`)](#12-frontend-farmaubsfrontend---react--vite-adr-011-adr-012)
+   - [1.3 Mobile (`@farmaubs/mobile`)](#13-mobile-farmaubsmobile---react-native--expo-adr-034)
+   - [1.4 Pacote Compartilhado (`@farmaubs/shared`)](#14-pacote-compartilhado-farmaubsshared---o-núcleo-agnóstico)
+   - [1.5 Orquestração e Governança com Moonrepo (`moon`)](#15-orquestração-e-governança-com-moonrepo-moon-adr-035)
+   - [1.6 Infraestrutura (`infra/`)](#16-infraestrutura-infra)
 2. [Regras Rígidas de Estrutura de Pastas e Fronteira de Escopo (Guia para Humanos e IA)](#2-regras-rígidas-de-estrutura-de-pastas-e-fronteira-de-escopo-guia-para-humanos-e-ia)
    - [2.1 Princípio Rígido de Isolamento de Escopo (Backend vs Frontend)](#21-princípio-rígido-de-isolamento-de-escopo-backend-vs-frontend)
    - [2.2 Tabela de Correspondência Canônica de Pastas](#22-tabela-de-correspondência-canônica-de-pastas)
@@ -22,8 +24,8 @@
    - [Passo 1: Atualizar a branch main](#passo-1-atualizar-a-branch-main)
    - [Passo 2: Sincronizar Variáveis de Ambiente (.env e .env.example)](#passo-2-sincronizar-variáveis-de-ambiente-env-e-envexample)
    - [Passo 3: Criar a Branch de Trabalho](#passo-3-criar-a-branch-de-trabalho)
-   - [Passo 4: Ciclo de Desenvolvimento e Infraestrutura Docker](#passo-4-ciclo-de-desenvolvimento-e-infraestrutura-docker)
-   - [Passo 5: Como Rodar a Suíte Completa de Testes (Camadas A, B, C, D)](#passo-5-como-rodar-a-suíte-completa-de-testes-camadas-a-b-c-d)
+   - [Passo 4: Ciclo de Desenvolvimento com Moonrepo e Docker](#passo-4-ciclo-de-desenvolvimento-com-moonrepo-e-docker)
+   - [Passo 5: Execução de Tarefas, Testes e CI com Moonrepo](#passo-5-execução-de-tarefas-testes-e-ci-com-moonrepo)
    - [Passo 6: Validação Manual Obrigatória (Swagger, Banco e Interface Docker)](#passo-6-validação-manual-obrigatória-swagger-banco-e-interface-docker)
    - [Passo 7: Checklist Pré-Push Sequencial Obrigatório](#passo-7-checklist-pré-push-sequencial-obrigatório)
 5. [Padrão de Commits](#5-padrão-de-commits-conventional-commits)
@@ -33,108 +35,110 @@
    - [6.3 Gestão de Débitos Técnicos (Escopo Atual vs Outros Escopos)](#63-gestão-de-débitos-técnicos-escopo-atual-vs-outros-escopos)
    - [6.4 Template Canônico do Corpo do PR](#64-template-canônico-do-corpo-do-pr)
 7. [Troubleshooting (Resolução de Problemas Frequentes)](#7-troubleshooting-resolução-de-problemas-frequentes)
+   - [7.1 Como Instalar e Executar o Moonrepo CLI (`moon`)](#71-como-instalar-e-executar-o-moonrepo-cli-moon)
+   - [7.2 Invalidação e Limpeza do Cache do Moonrepo](#72-invalidação-e-limpeza-do-cache-do-moonrepo)
+   - [7.3 Visualização do Grafo de Dependências e Ações do Moon](#73-visualização-do-grafo-de-dependências-e-ações-do-moon)
+   - [7.4 `fatal: .git/index: index file smaller than expected` (Windows / OneDrive)](#74-fatal-gitindex-index-file-smaller-than-expected-windows--onedrive)
+   - [7.5 Erro de módulo `@farmaubs/shared` não encontrado](#75-erro-de-módulo-farmaubsshared-não-encontrado)
+   - [7.6 Conflito de Portas no PostgreSQL (`5432` / `5434` / `5435`)](#76-conflito-de-portas-no-postgresql-5432--5434--5435)
+   - [7.7 `Seed de desenvolvimento só pode rodar com NODE_ENV=development`](#77-seed-de-desenvolvimento-só-pode-rodar-com-node_envdevelopment)
+   - [7.8 Containers Docker desatualizados ou instáveis](#78-containers-docker-desatualizados-ou-instáveis)
+   - [7.9 Erro `Failed to resolve import` ou módulo ausente no container](#79-erro-failed-to-resolve-import-ou-módulo-ausente-no-container)
 
 ---
 
 ## 1. Visão Geral e Arquitetura dos Projetos
 
-O **FarmaUBS** é organizado como um **Monorepo PNPM** com tipagem estrita em TypeScript:
+O **FarmaUBS** é organizado como um **Monorepo gerenciado oficialmente pelo Moonrepo (`moon`)** sobre a infraestrutura de pacotes do PNPM ([ADR-022](./docs/adrs/adr-022-organizacao-de-repositorios.md), [ADR-035](./docs/adrs/adr-035-governanca-e-orquestracao-de-monorepo.md)):
 
 ```text
 farmaubs/
+├── .moon/              # Configuração global do Moonrepo
+│   ├── workspace.yml   # Registro de projetos (backend, frontend, mobile, shared) e VCS git
+│   └── toolchain.yml   # Governança de versões (Node.js 20 LTS, PNPM 11)
 ├── apps/
-│   ├── backend/        # API REST NestJS (Arquitetura Hexagonal + PostgreSQL TypeORM + RLS)
-│   └── frontend/       # SPA React 19 + Vite + Tailwind CSS + TanStack Query
+│   ├── backend/        # API REST NestJS (Clean Architecture Pura + Ports & Adapters + RLS)
+│   │   └── moon.yml    # Tarefas atômicas (dev, build, test, test-bdd, test-schema, test-integration)
+│   ├── frontend/       # SPA Web (React 19 + Vite + Tailwind CSS + TanStack Query)
+│   │   └── moon.yml    # Tarefas atômicas (dev, build, test, lint, preview)
+│   └── mobile/         # App Nativo (React Native + Expo SDK 52 + SecureStore)
+│       └── moon.yml    # Tarefas atômicas (start, android, ios, web, typecheck, test)
 ├── packages/
 │   └── shared/         # Tipos, contratos DTO, enums de domínio e utilitários agnósticos
+│       └── moon.yml    # Tarefas da biblioteca (build, dev, lint, clean)
 ├── infra/              # Docker Compose (dev, test, prod) e configurações Nginx
-├── pnpm-workspace.yaml # Definição dos pacotes do monorepo
-└── package.json        # Scripts unificados da raiz
+├── pnpm-workspace.yaml # Definição dos workspaces PNPM
+└── package.json        # Manifest raiz
 ```
 
-### 1.1 Backend (`@farmaubs/backend`) — NestJS + Arquitetura Hexagonal
+### 1.1 Backend (`@farmaubs/backend`) — Clean Architecture Pura + NestJS (ADR-003, ADR-033)
 
-O backend adota a **Arquitetura Hexagonal (Ports & Adapters)** combinada com **Vertical Slicing** (fatiamento por módulos de domínio).
+O backend adota a **Clean Architecture clássica (inspirada no repositório `royib/clean-architecture-nestJS`)** combinada com **Vertical Slicing** por módulos de domínio.
 
-- **Objetivo da arquitetura:** Isolar a regra de negócio do mundo externo. Banco de dados, frameworks HTTP e bibliotecas são tratados como meros detalhes de implementação (adaptadores plugáveis).
-- **Multi-tenancy com Row-Level Security (RLS):** As tabelas com dados municipais/unidades utilizam RLS nativo do PostgreSQL. Cada requisição recebe o escopo do tenant via `TenantInterceptor` e aplica `SET LOCAL farmaubs.current_tenant_id` via `TransactionInterceptor`.
+- **Regra Fundamental de Pureza:** A camada de **Domínio** e os **Casos de Uso** (`application/use-cases/`) são **100% agnósticos de framework**. É expressamente proibido o uso de `@Injectable()`, `@Inject()`, decorators do NestJS ou TypeORM dentro dos Use Cases.
+- **NestJS como Adaptador de Infraestrutura:** O NestJS atua exclusivamente na borda (Controllers HTTP, Guards, Interceptors) e na amarração de dependências via *Custom Providers* (`useFactory`).
+- **Multi-tenancy com Row-Level Security (RLS):** As tabelas com dados municipais/unidades utilizam RLS nativo do PostgreSQL com propagação via `TenantInterceptor` e `SET LOCAL farmaubs.current_tenant_id`.
 
 #### Anatomia Canônica de um Módulo do Backend:
 
 ```text
 apps/backend/src/modules/<modulo>/
-├── <modulo>.module.ts          # Módulo NestJS: declara providers, vincula Portas aos Adaptadores e expõe controllers
+├── <modulo>.module.ts          # Módulo NestJS: provê useFactory vinculando Portas concretas aos Use Cases
 │
 ├── api/                        # Adaptadores de Entrada (Driving / Inbound)
 │   ├── controllers/            # Controllers NestJS (@Controller, @Get, @Post)
-│   │   ├── <modulo>.controller.ts
-│   │   └── <modulo>.e2e.spec.ts # Testes de integração de endpoints
-│   └── dto/                    # Validação de payload (class-validator) e Swagger (@ApiProperty)
-│       └── <recurso>.dto.ts    # DEVE implementar interfaces do @farmaubs/shared
+│   └── dto/                    # Validação de payload e Swagger (implementando @farmaubs/shared)
 │
-├── application/                # Camada de Aplicação
-│   └── use-cases/              # Casos de uso orquestradores da regra de negócio
-│       ├── <acao>.use-case.ts
-│       └── <acao>.use-case.spec.ts # Testes unitários puros (sem banco de dados)
+├── application/                # Camada de Aplicação Pura
+│   └── use-cases/              # Casos de uso PUROS (sem decorators de framework)
+│       ├── <acao>.use-case.ts  # Instanciável diretamente em testes sem NestJS Test Module
+│       └── <acao>.use-case.spec.ts
 │
-├── domain/                     # O Coração do Negócio (TypeScript Puro, sem TypeORM nem NestJS)
-│   ├── entities/               # Entidades de Domínio puras e objetos de valor
+├── domain/                     # O Coração do Negócio (TypeScript Puro)
+│   ├── entities/               # Entidades de Domínio ricas e Value Objects
 │   ├── ports/                  # Interfaces que ditam contratos de persistência e serviços
-│   │   └── <recurso>.repository.port.ts
 │   └── errors/                 # Erros de domínio customizados
 │
 └── infrastructure/             # Adaptadores de Saída (Driven / Outbound)
-    ├── adapters/               # Implementações concretas das portas
-    │   ├── <recurso>-pg.repository.ts # Repositório oficial TypeORM/Postgres
-    │   └── <recurso>-pg.repository.spec.ts
-    └── persistence/
-        ├── entities/           # Entidades físicas do TypeORM (@Entity, @Column)
-        │   └── <tabela>.entity.ts
-        └── migrations/         # Migrações versionadas do schema PostgreSQL
-            └── <timestamp><nome>.ts
+    ├── adapters/               # Implementações concretas das portas (ex: TypeORM, Bcrypt)
+    └── persistence/            # Entidades físicas TypeORM e Migrações PostgreSQL
 ```
 
 ---
 
-### 1.2 Frontend (`@farmaubs/frontend`) — React + Vite
+### 1.2 Frontend (`@farmaubs/frontend`) — React + Vite (ADR-011, ADR-012)
 
-O frontend é uma SPA moderna focada em alta responsividade, feedback instantâneo ao farmacêutico e suporte a conexões instáveis.
+O frontend é uma SPA moderna focada em alta responsividade para as farmácias e almoxarifados municipais.
 
 - **Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query (React Query) e React Router DOM.
-- **Comunicação com Backend:** As chamadas HTTP consomem `/api/v1` via Axios, tipadas com os contratos de `@farmaubs/shared`.
-- **Gerenciamento de Estado de Servidor:** Utiliza TanStack Query com cache inteligente para inventários, listas de medicamentos e dispensações.
-
-#### Estrutura de Pastas do Frontend:
-
-```text
-apps/frontend/src/
-├── assets/                     # Imagens, SVGs e ícones estáticos
-├── components/                 # Componentes reutilizáveis
-│   ├── ui/                     # Botões, inputs, modais (componentes visuais puros)
-│   └── common/                 # Header, Sidebar, layouts e guardas de rota
-├── contexts/                   # React Contexts (AuthContext, TenantContext)
-├── hooks/                      # Custom hooks reutilizáveis (useAuth, useDebounce)
-├── lib/                        # Instâncias de bibliotecas (axios instance, queryClient)
-├── pages/                      # Views correspondentes às rotas da aplicação
-├── services/                   # Funções de requisição HTTP da API
-├── styles/                     # Temas e Tailwind CSS global
-├── App.tsx                     # Roteador principal e provedores
-└── main.tsx                    # Ponto de entrada React
-```
+- **Isolamento de Contratos:** Utiliza estritamente os contratos importados de `@farmaubs/shared`, desacoplando a camada de visualização de tipos privados do servidor.
+- **Gerenciamento de Estado de Servidor:** Utiliza TanStack Query com hooks lógicos (`src/hooks/`) e serviços de API (`src/services/`).
 
 ---
 
-### 1.3 Pacote Compartilhado (`@farmaubs/shared`)
+### 1.3 Mobile (`@farmaubs/mobile`) — React Native + Expo (ADR-034)
 
-O `@farmaubs/shared` é o elo que garante que Frontend e Backend compartilhem a **mesma fonte da verdade** sem duplicação de contratos.
+O aplicativo móvel atende aos farmacêuticos e operadores de saúde em campo e no trânsito das UBSs.
+
+- **Stack:** React Native 0.76+, Expo SDK 52 (Managed Workflow), TypeScript e `expo-secure-store`.
+- **Componentes Nativos:** A camada de UI utiliza componentes visuais nativos (`<View>`, `<Text>`, `<TextInput>`, `<SafeAreaView>`) em vez de tentar compartilhar JSX/DOM com a Web.
+- **Compartilhamento Arquitetural:** Compartilha com o backend e frontend todos os DTOs, enums de status e validações através do pacote `@farmaubs/shared`, e adota tokens de cores institucionais do SUS compartilhados conceitualmente.
+- **Segurança Mobile:** Tokens de sessão são gravados de forma criptografada por hardware (Keystore no Android e Keychain no iOS) via `sessionService`.
+
+---
+
+### 1.4 Pacote Compartilhado (`@farmaubs/shared`) — O Núcleo Agnóstico
+
+O `@farmaubs/shared` é a única fonte da verdade de contratos entre Backend, Frontend e Mobile.
 
 - **O que DEVE estar no shared:**
-  1. **Interfaces de Contrato de API:** Request e Response DTOs, Commands e Results (ex: `LoginRequest`, `LoginResponse`, `CadastrarUsuarioComando`, `CadastrarUsuarioResultado`).
+  1. **Interfaces de Contrato de API:** Request e Response DTOs, Comandos e Resultados (ex: `LoginRequest`, `LoginResponseDto`, `CadastrarUsuarioComando`).
   2. **Enums de Domínio:** Papéis de acesso (`PerfilCodigo`), status de sessão (`SessionStatus`), status de lote e movimentação.
-  3. **Constantes de Sistema e Rotas:** Mapa centralizado de rotas da API (`API_ROUTES`), limites de paginação.
-  4. **Utilitários Puros:** Validação e formatação de CPF (`validarCPF`, `formatarCPF`), normalização de e-mail, funções agnósticas de formatação de datas.
+  3. **Constantes e Rotas:** Mapa de rotas e códigos de erro de negócio.
+  4. **Utilitários e Validações Puras:** Validação de CPF/CNS, funções matemáticas de consumo médio e formatações agnósticas.
 - **O que NUNCA deve estar no shared:**
-  - Dependências de frameworks como NestJS (`@Injectable`, `@Controller`), TypeORM (`@Entity`, `@Column`) ou React (`useState`, JSX).
+  - Código executável acoplado a frameworks (NestJS, React, TypeORM, Expo).
+  - Casos de uso de servidor que manipulem banco de dados ou hashing de senhas.
 
 #### Estrutura Canônica do `@farmaubs/shared`:
 
@@ -160,7 +164,67 @@ packages/shared/src/
 
 ---
 
-### 1.4 Infraestrutura (`infra/`)
+### 1.5 Orquestração e Governança com Moonrepo (`moon`) (ADR-035)
+
+O FarmaUBS adota oficialmente o **Moonrepo (`moon`)** como sistema de build, orquestrador de tarefas e gerador do Grafo Direcionado Acíclico (DAG) de dependências do monorepo:
+
+- **Instalação do Moon CLI:**
+  - Instalação recomendada (Global):
+    ```bash
+    # Via NPM global:
+    npm install -g @moonrepo/cli
+
+    # Ou no Windows (PowerShell):
+    irm https://moonrepo.dev/install.ps1 | iex
+
+    # Ou no Linux / macOS:
+    curl -fsSL https://moonrepo.dev/install.sh | bash
+    ```
+  - Execução alternativa sem instalação global:
+    ```bash
+    npx moon <comando>
+    # ou
+    pnpm dlx @moonrepo/cli <comando>
+    ```
+
+- **Governança de Toolchain (`.moon/toolchain.yml`):**
+  - O Moonrepo padroniza o ambiente de execução em todos os sistemas operacionais, amarrando estritamente **Node.js 20 LTS** e **PNPM 11**.
+  - Evita inconsistências de versão entre desenvolvedores e agentes de IA ("na minha máquina funciona").
+
+- **Topologia do Grafo e Resolução Automática de Dependências:**
+  - Cada workspace declara suas relações via `moon.yml` (`dependsOn: ['shared']`).
+  - Quando um desenvolvedor dispara `moon run backend:dev` ou `moon run frontend:test`, o Moon detecta que o projeto depende de `shared:build` e **compila o pacote compartilhado automaticamente** caso esteja desatualizado, eliminando o erro recorrente de módulos não compilados em `dist/`.
+
+- **Cache Inteligente de Tarefas (Task Hashing & `.moon/cache`):**
+  - O Moon calcula hashes criptográficos baseando-se estritamente nos arquivos de entrada (`inputs`), variáveis de ambiente e dependências do pacote.
+  - Se um arquivo foi modificado apenas no frontend ou mobile, a execução de testes e build do backend retornará **`CACHE HIT (0ms)`**, economizando tempo de CPU e acelerando a esteira de desenvolvimento.
+
+- **Detecção de Alterações Git (`--affected`):**
+  - Permite validar com precisão cirúrgica apenas os workspaces impactados pela branch em relação à `main`:
+    ```bash
+    # Roda testes apenas dos pacotes modificados:
+    moon run :test --affected
+
+    # Valida tipos e lint apenas dos pacotes modificados:
+    moon check --affected
+    ```
+
+- **Inspeção Interativa do Grafo:**
+  - Visualizar o grafo de projetos no terminal ou navegador:
+    ```bash
+    moon project-graph
+    ```
+  - Visualizar o grafo de ações e paralelismo de uma tarefa:
+    ```bash
+    moon action-graph :test
+    ```
+
+- **Controle Estrito de Fronteiras Arquiteturais:**
+  - O Moon impede que workspaces clientes importem arquivos privados ou infraestrutura de servidor, garantindo limites arquiteturais invioláveis.
+
+---
+
+### 1.6 Infraestrutura (`infra/`)
 
 - **`docker-compose.yml` + `docker-compose.dev.yml`:** Ambiente de desenvolvimento com PostgreSQL e API.
 - **`docker-compose.test.yml`:** Instância efêmera de PostgreSQL (porta `5435`) para testes automatizados de migrações e schema.
@@ -363,43 +427,107 @@ Exemplos:
    docker exec -i farmaubs-api-1 pnpm install && docker restart farmaubs-api-1
    docker exec -i farmaubs-frontend-1 pnpm install && docker restart farmaubs-frontend-1
    ```
-5. **Debug local alternativo (sem containers para investigações isoladas):**
+5. **Debug e desenvolvimento local via Moonrepo (Oficial):**
+   O Moonrepo gerencia automaticamente a ordem de compilação dos pacotes. Ao disparar uma tarefa de desenvolvimento, ele compila o `@farmaubs/shared` automaticamente antes de inicializar o servidor de desenvolvimento:
+   ```bash
+   # Iniciar o backend NestJS com live-reload (compila shared previamente):
+   moon run backend:dev
+
+   # Iniciar a SPA frontend React / Vite:
+   moon run frontend:dev
+
+   # Iniciar o aplicativo móvel Expo / React Native:
+   moon run mobile:start
+   ```
+
+   *Alternativa legada sem Moon (direto via PNPM):*
    ```bash
    # Terminal 1: compilação contínua do shared
    pnpm --filter @farmaubs/shared dev
 
-   # Terminal 2: API backend com live-reload
+   # Terminal 2: API backend
    pnpm dev:backend
 
    # Terminal 3: Frontend Vite
    pnpm dev:frontend
+
+   # Terminal 4: Mobile Expo
+   pnpm dev:mobile
    ```
 
-### Passo 5: Como Rodar a Suíte Completa de Testes (Camadas A, B, C, D)
+### Passo 5: Execução de Tarefas, Testes e CI com Moonrepo
 
-O projeto adota uma pirâmide de testes estrita com 4 camadas de validação (ADR-030). Desenvolvedores e agentes de IA **devem executar os comandos prescritos sem omitir suítes nem utilizar flags que mascarem falhas**:
+O FarmaUBS adota o **Moonrepo (`moon`)** como orquestrador oficial de tarefas do monorepo. O Moon oferece **execução paralela com respeito ao grafo DAG**, **cache inteligente de hashes criptográficos (`.moon/cache`)** e **detecção cirúrgica de projetos afetados (`--affected`)**.
 
-| Camada       | Nome                           | Onde executa    | Comando                                      | Objetivo                                                             |
-| :----------- | :----------------------------- | :-------------- | :------------------------------------------- | :------------------------------------------------------------------- |
-| **Camadas A e C (BDD)** | **Especificação Viva BDD / Aceitação** | Raiz ou `apps/backend` | `pnpm test:bdd`                              | Executa cenários Gherkin com Cucumber.js + Chai para Casos de Uso e fluxos E2E. |
-| **Camada A** | Testes Unitários de Domínio    | `apps/backend`  | `pnpm test` ou `pnpm test <arquivo.spec.ts>` | Valida Use Cases e regras puras isoladas.                            |
-| **Camada B** | Testes de Integração de Schema | `apps/backend`  | `pnpm test:schema`                           | Sobe banco efêmero na porta 5435 e testa todas as migrações do zero. |
-| **Camada C** | Testes de Integração / E2E     | `apps/backend`  | `pnpm test:integration`                      | Valida repositórios e endpoints com banco de dados real.             |
-| **Camada D** | Testes de Componentes          | `apps/frontend` | `pnpm test`                                  | Valida componentes e interações de tela no React com Testing Library.|
-| **Build**    | Verificação de Compilação      | Raiz            | `pnpm build`                                 | Compila `@farmaubs/shared`, backend e frontend simultaneamente.      |
+Desenvolvedores e agentes de IA **devem rodar as validações sem omitir suítes nem utilizar flags que mascarem falhas**:
 
-> [!NOTE]
-> Ao finalizar testes na porta 5435 (Camada B), derrube o banco de teste efêmero com:
-> ```bash
-> pnpm --filter @farmaubs/backend test:schema:down
-> ```
+#### 5.1 Sintaxe de Alvos e Comandos Canônicos do Moonrepo
+
+No Moonrepo, as tarefas são invocadas pelo formato `moon run <projeto>:<tarefa>` ou `moon run :<tarefa>` (para rodar a tarefa em todos os projetos que a implementam):
+
+```bash
+# ==============================================================================
+# 1. COMANDOS DO DIA A DIA (MAIS RÁPIDOS - COM CACHE E DETECÇÃO DE ALTERAÇÕES)
+# ==============================================================================
+
+# Executa testes apenas nos projetos afetados pelas alterações da branch atual em relação à main:
+moon run :test --affected
+
+# Executa checagem de tipos e lint apenas nos arquivos/projetos modificados:
+moon check --affected
+
+# ==============================================================================
+# 2. VALIDAÇÃO COMPLETA DO MONOREPO
+# ==============================================================================
+
+# Roda todos os testes de todos os workspaces em paralelo (backend, frontend, mobile):
+moon run :test
+
+# Compila todos os workspaces na ordem correta do grafo (shared -> backend, frontend):
+moon run :build
+
+# Executa checagem estática global (tipagem TypeScript e linting):
+moon check --all
+
+# Executa o pipeline de CI local completo simulando o servidor de integração contínua:
+moon ci
+
+# ==============================================================================
+# 3. FLAGS DE CONTROLE DE CACHE E DEPURAÇÃO DO MOON
+# ==============================================================================
+
+# Força a reexecução ignorando o cache local (.moon/cache):
+moon run :test --force
+# ou
+moon run :test --no-cache
+
+# Exibe um sumário detalhado de tempo de execução e status de cache (CACHE HIT / MISS):
+moon run :test --summary
+
+# Exibe logs em nível de depuração detalhado do Moon:
+moon run backend:test --log debug
+```
+
+#### 5.2 Tabela Canônica de Tarefas por Pacote (Moon Oficial vs PNPM Alternativo)
+
+| Camada / Workspace | Nome | Onde executa | Comando Moon (Oficial) | Comando PNPM (Alternativo) | Objetivo |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Camadas A e C (BDD)** | **Especificação Viva BDD / Aceitação** | Raiz / `apps/backend` | `moon run backend:test-bdd` | `pnpm test:bdd` | Executa cenários Gherkin com Cucumber.js + Chai para Casos de Uso e fluxos E2E. |
+| **Camada A** | Testes Unitários de Domínio | `apps/backend` | `moon run backend:test` | `pnpm test:backend` | Valida Use Cases e regras puras isoladas via Jest. |
+| **Camada B** | Testes de Integração de Schema | `apps/backend` | `moon run backend:test-schema` | `pnpm --filter @farmaubs/backend test:schema` | Sobe banco efêmero na porta 5435 e testa todas as migrações do zero. |
+| **Camada B (Limpeza)** | Derrubar Banco Efêmero de Teste | `apps/backend` | `moon run backend:test-schema-down` | `pnpm --filter @farmaubs/backend test:schema:down` | Para e remove o container PostgreSQL de testes na porta 5435. |
+| **Camada C** | Testes de Integração / E2E | `apps/backend` | `moon run backend:test-integration` | `pnpm test:integration` | Valida repositórios e endpoints com banco de dados real. |
+| **Camada D** | Testes de Componentes Web | `apps/frontend` | `moon run frontend:test` | `pnpm --filter @farmaubs/frontend test` | Valida componentes e interações de tela no React com Vitest. |
+| **Mobile** | Checagem de Tipos e Telas | `apps/mobile` | `moon run mobile:typecheck` | `pnpm test:mobile` | Validação estática de TypeScript e telas nativas do Expo. |
+| **Build Global** | Verificação de Compilação | Raiz | `moon run :build` | `pnpm build` | Compila `@farmaubs/shared`, backend e frontend respeitando o grafo DAG. |
+| **Seed de Dados** | Povoamento de Desenvolvimento | `apps/backend` | `moon run backend:db-seed` | `pnpm db:seed` | Popula o PostgreSQL dev (5434) com dados iniciais e usuários de teste. |
 
 > [!IMPORTANT]
 > **Padrão Obrigatório de BDD / Cucumber (Camadas A e C — Qualidade e Negócio):**
 > Ao implementar testes que validam **regras de negócio, casos de uso (Camada A) ou fluxos de aceitação/E2E da API (Camada C)**, é **obrigatório seguir o padrão Cucumber.js + Chai**:
 > 1. **Especificação Gherkin:** Arquivos `.feature` localizados em `apps/backend/test/features/<modulo>.feature`, escritos em português (`# language: pt`) com palavras-chave canônicas (`Funcionalidade`, `Cenário`, `Dado`, `Quando`, `Então`, `E`, `Esquema do Cenário`).
 > 2. **Definição dos Passos (Step Definitions):** Arquivos `.steps.ts` em `apps/backend/test/features/step_definitions/<modulo>.steps.ts`, utilizando `@cucumber/cucumber` (`Given`, `When`, `Then`, `Before`) e asserções com `chai` (`expect`, `assert`).
-> 3. **Execução:** Os cenários devem ser validados pelo comando `pnpm test:bdd`.
+> 3. **Execução:** Os cenários devem ser validados pelo comando oficial `moon run backend:test-bdd`.
 > 
 > **Por que testes técnicos não vão para o Cucumber?**
 > Testes de migrations puras (`create-*.spec.ts`), isolamento de RLS PostgreSQL (`rls-tenant-isolation.integration.ts`), decorators do NestJS e renderização de componentes React com JSDOM (Camada D) permanecem em Jest/Vitest. O Cucumber destina-se à especificação de comportamento e requisitos de negócio legíveis por stakeholders; forçar detalhes técnicos de baixo nível em Gherkin é um anti-padrão de projeto.
@@ -419,19 +547,29 @@ A execução com sucesso dos testes automatizados **não substitui** a validaç�
 ### Passo 7: Checklist Pré-Push Sequencial Obrigatório
 
 > [!CAUTION]
-> **Ordem Estrita de Execução Pré-Push:**
-> Execute as 4 etapas a seguir rigorosamente nesta sequência antes de qualquer `git push`:
+> **Ordem Estrita de Execução Pré-Push com Moonrepo:**
+> Execute as 5 etapas a seguir rigorosamente nesta sequência antes de qualquer `git push`:
 >
 > 1. **Sincronizar com a `main`:**
 >    Faça `git fetch origin main` e integre a versão mais recente da `main` (`git merge origin/main` ou `git rebase origin/main`) caso ela tenha avançado desde a criação da sua branch.
 > 2. **Resolver Conflitos com Prioridade à `main`:**
 >    Em caso de conflitos de merge/rebase, **priorize sempre o código já estabelecido e aprovado na `main`** em detrimento de código recém-adicionado especulativo.
-> 3. **Auditar Contra Relaxamento de Regras e Testes:**
+> 3. **Executar Testes Afetados e Compilação Global:**
+>    Rode a suíte afetada e o build com o Moonrepo:
+>    ```bash
+>    moon run :test --affected
+>    moon run :build
+>    ```
+>    Se sua tarefa implementou ou alterou regras de negócio de casos de uso do backend, valide obrigatoriamente a especificação viva:
+>    ```bash
+>    moon run backend:test-bdd
+>    ```
+> 4. **Auditar Contra Relaxamento de Regras e Testes:**
 >    Verifique o diff final (`git diff origin/main`) e assegure que:
 >    - Nenhuma regra de negócio foi relaxada ou desativada.
 >    - Nenhum teste automatizado foi enfraquecido, burlado com `.skip` ou tornado tautológico (ex: mocks que apenas jogam exceção sem executar guards ou regras reais).
 >    - Nenhuma tipagem estrita foi substituída por `any`.
-> 4. **Conferir Cobertura da História de Usuário:**
+> 5. **Conferir Cobertura da História de Usuário:**
 >    Confira se as alterações cobrem **100% dos critérios de aceite (BDD)** e requisitos descritos na história de usuário atribuída. Se faltar algum cenário, implemente-o antes de enviar.
 
 ---
@@ -482,17 +620,19 @@ Closes #78
 
 1. O título do PR deve seguir o mesmo padrão do commit: `<tipo>(<escopo>): <descrição>`.
 2. A branch deve estar atualizada em relação à `main` com conflitos resolvidos com prioridade para a `main`.
-3. Todos os testes automatizados relevantes devem estar passando com **prints anexados** na descrição do PR.
+3. Todos os testes automatizados relevantes devem estar passando via comandos oficiais do Moonrepo (`moon run ...` ou `moon ci`), com **prints anexados** na descrição do PR.
 4. Validação manual (Swagger/Banco ou Interface Docker) relatada.
 
 ### 6.2 Prints e Evidências Obrigatórias por Escopo
 
-| Mudança                         | Evidências Necessárias no PR                                        |
-| :------------------------------ | :------------------------------------------------------------------ |
-| **Backend (Regras/Use Cases)**  | Print do `pnpm test` (testes unitários passando) e do `pnpm build`. |
-| **Backend (Schema/Migrations)** | Print do `pnpm test:schema` provando execução em banco limpo.       |
-| **Frontend (Telas)**            | Screenshots das telas afetadas (desktop/mobile) e do build.         |
-| **Shared**                      | Print do `pnpm --filter @farmaubs/shared build` sem erros.          |
+| Mudança | Evidências Necessárias no PR |
+| :--- | :--- |
+| **Backend (Regras/Use Cases)** | Print do `moon run backend:test` (unitários) e `moon run backend:test-bdd` (Cucumber) passando. |
+| **Backend (Schema/Migrations)** | Print do `moon run backend:test-schema` provando execução em banco limpo porta 5435. |
+| **Frontend (Telas)** | Print do `moon run frontend:test` e screenshots das telas afetadas (desktop/mobile). |
+| **Mobile (React Native/Expo)** | Print do `moon run mobile:typecheck` e screenshot do app rodando no Expo/emulador. |
+| **Shared** | Print do `moon run shared:build` sem erros. |
+| **Monorepo / Geral** | Print do `moon run :build` ou `moon ci` concluído com sucesso. |
 
 ### 6.3 Gestão de Débitos Técnicos (Escopo Atual vs Outros Escopos)
 
@@ -512,11 +652,14 @@ Closes #78
 
 ## Como foi testado
 
-### Testes Automatizados
-- [ ] Testes unitários (`pnpm test`) — <anexar print>
-- [ ] Testes de schema (`pnpm test:schema`) — <anexar print>
-- [ ] Build global do monorepo (`pnpm build`) — <anexar print>
-- [ ] Evidências visuais de tela (frontend) — <anexar screenshots>
+### Testes Automatizados com Moonrepo
+- [ ] Testes unitários do backend (`moon run backend:test`) — <anexar print>
+- [ ] Especificação viva BDD (`moon run backend:test-bdd`) — <anexar print>
+- [ ] Testes de schema e migrações (`moon run backend:test-schema`) — <anexar print>
+- [ ] Testes unitários do frontend (`moon run frontend:test`) — <anexar print>
+- [ ] Validação estática e telas mobile (`moon run mobile:typecheck`) — <anexar print>
+- [ ] Build global do monorepo (`moon run :build` ou `moon ci`) — <anexar print>
+- [ ] Evidências visuais de tela (frontend/mobile) — <anexar screenshots>
 
 ### Validação Manual Obrigatória
 - [ ] **Backend**: Testado via Swagger (`http://localhost:3000/api/v1/docs`) e auditado diretamente no banco PostgreSQL.
@@ -532,6 +675,7 @@ Closes #78
 
 - [ ] Passo 0 a 7 do CONTRIBUTING.md seguidos rigorosamente
 - [ ] Isolamento de escopo respeitado (Backend/Frontend não misturados)
+- [ ] Validações pré-push executadas com Moonrepo (`moon run :test --affected` e `moon run :build`)
 - [ ] Branch sincronizada com a `main` mais recente com conflitos resolvidos priorizando a `main`
 - [ ] Nenhuma regra de negócio ou teste foi relaxado / enfraquecido
 - [ ] 100% dos critérios de aceite da história de usuário foram cobertos
@@ -546,7 +690,57 @@ Closes #78
 
 ## 7. Troubleshooting (Resolução de Problemas Frequentes)
 
-### 7.1 `fatal: .git/index: index file smaller than expected` (Windows / OneDrive)
+### 7.1 Como Instalar e Executar o Moonrepo CLI (`moon`)
+
+- **Se o comando `moon` não for reconhecido no terminal:**
+  Instale o CLI globalmente uma única vez:
+  ```bash
+  # Via NPM:
+  npm install -g @moonrepo/cli
+
+  # Ou no Windows PowerShell:
+  irm https://moonrepo.dev/install.ps1 | iex
+
+  # Ou no Linux/macOS:
+  curl -fsSL https://moonrepo.dev/install.sh | bash
+  ```
+- **Execução pontual sem instalar globalmente:**
+  Caso você não queira ou não possa instalar o binário global, utilize `npx` ou `pnpm dlx`:
+  ```bash
+  npx moon run :test --affected
+  # ou
+  pnpm dlx @moonrepo/cli run :test --affected
+  ```
+
+### 7.2 Invalidação e Limpeza do Cache do Moonrepo
+
+- **Causa:** O Moon armazena hashes de inputs e outputs no diretório `.moon/cache/`. Em situações raras de cache corrompido ou mudanças ambientais externas:
+- **Solução Rápida via Flag:** Execute a tarefa com a flag `--force` ou `--no-cache`:
+  ```bash
+  moon run :test --force
+  ```
+- **Solução Definitiva de Limpeza:**
+  ```bash
+  moon clean
+  # ou remova manualmente a pasta de cache:
+  rm -rf .moon/cache
+  ```
+
+### 7.3 Visualização do Grafo de Dependências e Ações do Moon
+
+- Para inspecionar as conexões entre os pacotes e certificar-se de que não há ciclos ou caminhos quebrados:
+  ```bash
+  # Visualizar o grafo de projetos no console:
+  moon project-graph
+
+  # Visualizar o grafo de dependências de um projeto específico:
+  moon project-graph backend
+
+  # Inspecionar o pipeline de execução e concorrência de uma tarefa:
+  moon action-graph :test
+  ```
+
+### 7.4 `fatal: .git/index: index file smaller than expected` (Windows / OneDrive)
 
 - **Causa:** O OneDrive tenta sincronizar arquivos dentro de `.git/` durante uma operação de escrita do Git, truncando o arquivo de índice para 0 bytes.
 - **Solução rápida (sem perda de dados):**
@@ -557,26 +751,30 @@ Closes #78
   ```
 - **Dica preventiva:** Pause a sincronização do OneDrive na pasta do repositório enquanto estiver codificando.
 
-### 7.2 Erro de módulo `@farmaubs/shared` não encontrado
+### 7.5 Erro de módulo `@farmaubs/shared` não encontrado
 
-- **Causa:** O TypeScript ou o Vite não encontraram os arquivos compilados em `packages/shared/dist`.
-- **Solução:**
+- **Causa:** O TypeScript ou o bundler não encontraram os arquivos compilados em `packages/shared/dist`.
+- **Solução com Moonrepo:**
+  ```bash
+  moon run shared:build
+  ```
+- **Solução legada com PNPM:**
   ```bash
   pnpm --filter @farmaubs/shared build
   pnpm install
   ```
 
-### 7.3 Conflito de Portas no PostgreSQL (`5432` / `5434` / `5435`)
+### 7.6 Conflito de Portas no PostgreSQL (`5432` / `5434` / `5435`)
 
 - Se você já possui um PostgreSQL instalado na sua máquina host na porta `5432`, o FarmaUBS foi configurado para rodar o banco de desenvolvimento na porta **`5434`** e o banco efêmero de testes na porta **`5435`**.
 - Verifique seu `.env` para garantir que `DB_PORT=5434`.
 
-### 7.4 `Seed de desenvolvimento só pode rodar com NODE_ENV=development`
+### 7.7 `Seed de desenvolvimento só pode rodar com NODE_ENV=development`
 
 - **Causa:** O script `seed-dev.ts` possui uma trava de segurança para não rodar em produção ou staging.
 - **Solução:** Certifique-se de que a variável `NODE_ENV=development` esteja definida no seu arquivo `.env`.
 
-### 7.5 Containers Docker desatualizados ou instáveis
+### 7.8 Containers Docker desatualizados ou instáveis
 
 - Para forçar uma reconstrução limpa dos containers:
   ```bash
@@ -584,7 +782,7 @@ Closes #78
   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --build --force-recreate
   ```
 
-### 7.6 Erro `Failed to resolve import "<pacote>"` ou módulo ausente no container
+### 7.9 Erro `Failed to resolve import "<pacote>"` ou módulo ausente no container
 
 - **Causa:** Novas dependências foram adicionadas no `package.json` (no seu host ou via PR/merge), mas os volumes Docker (`node_modules_backend`, `node_modules_frontend`, etc.) mantiveram a versão antiga dos pacotes instalados.
 - **Solução Rápida (com containers ativos):**

@@ -1,4 +1,3 @@
-import { Inject, Injectable } from "@nestjs/common";
 import {
   type EditarUsuarioComando,
   type UsuarioAtualizadoResultado,
@@ -17,12 +16,9 @@ import {
   UsuarioNaoEncontradoException,
 } from "../../domain/errors/user-management.errors";
 
-@Injectable()
 export class EditUserUseCase {
   constructor(
-    @Inject(REPOSITORIO_USUARIO_PORT)
     private readonly usuarioRepo: RepositorioUsuarioPort,
-    @Inject(AUDIT_REPOSITORY_PORT)
     private readonly auditRepo: AuditRepositoryPort,
   ) {}
 

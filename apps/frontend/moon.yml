@@ -1,0 +1,47 @@
+language: 'typescript'
+stack: 'frontend'
+
+dependsOn:
+  - 'shared'
+
+tasks:
+  dev:
+    command: 'pnpm exec vite'
+    options:
+      persistent: true
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  build:
+    command: 'pnpm run build'
+    inputs:
+      - 'src/**/*'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'tsconfig*.json'
+    outputs:
+      - 'dist'
+    deps:
+      - 'shared:build'
+
+  test:
+    command: 'pnpm exec vitest run'
+    inputs:
+      - 'src/**/*'
+      - 'vite.config.ts'
+      - 'tsconfig*.json'
+    deps:
+      - 'shared:build'
+
+  lint:
+    command: 'pnpm exec eslint .'
+    inputs:
+      - 'src/**/*'
+      - 'eslint.config.js'
+
+  preview:
+    command: 'pnpm exec vite preview'
+    options:
+      persistent: true
+      runInCI: false

@@ -28,6 +28,23 @@ export interface LoginResponse {
   redirectUrl: string;
 }
 
+export interface LoginResponseDto {
+  token?: string;
+  expiresAt: string;
+  ttlSeconds: number;
+  warningSeconds: number;
+  usuario: UsuarioAutenticado;
+  redirectUrl: string;
+}
+
+export interface ApiErrorResponse {
+  message?: string | string[];
+  error?: string;
+  statusCode?: number;
+  minutosRestantes?: number;
+  motivo?: string;
+}
+
 export interface ContaBloqueadaResponse {
   message: string;
   minutosRestantes: number;

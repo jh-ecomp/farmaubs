@@ -1,29 +1,23 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import type { RenovarSessaoResponse } from "@farmaubs/shared";
 import {
-  SESSION_REPOSITORY,
   type ISessionRepository,
 } from "../../domain/ports/session.repository.port";
 
-@Injectable()
+export interface RenewSessionUseCaseConfig {
+  ttlMinutos?: number;
+  warningMinutos?: number;
+}
+
 export class RenewSessionUseCase {
   private readonly ttlMinutos: number;
   private readonly warningMinutos: number;
 
   constructor(
-    @Inject(SESSION_REPOSITORY)
     private readonly sessionRepo: ISessionRepository,
-    private readonly config: ConfigService,
+    config?: RenewSessionUseCaseConfig,
   ) {
-    this.ttlMinutos = parseInt(
-      this.config.get<string>("SESSION_TTL_MINUTES", "60"),
-      10,
-    );
-    this.warningMinutos = parseInt(
-      this.config.get<string>("SESSION_WARNING_MINUTES", "5"),
-      10,
-    );
+    this.ttlMinutos = config?.ttlMinutos ?? 60;
+    this.warningMinutos = config?.warningMinutos ?? 5;
   }
 
   async executar(sessionId: string): Promise<RenovarSessaoResponse> {

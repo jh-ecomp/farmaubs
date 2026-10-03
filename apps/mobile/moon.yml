@@ -1,0 +1,56 @@
+language: 'typescript'
+stack: 'frontend'
+
+dependsOn:
+  - 'shared'
+
+tasks:
+  start:
+    command: 'pnpm exec expo start'
+    options:
+      persistent: true
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  android:
+    command: 'pnpm exec expo start --android'
+    options:
+      persistent: true
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  ios:
+    command: 'pnpm exec expo start --ios'
+    options:
+      persistent: true
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  web:
+    command: 'pnpm exec expo start --web'
+    options:
+      persistent: true
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  typecheck:
+    command: 'pnpm exec tsc --noEmit'
+    inputs:
+      - 'src/**/*'
+      - 'App.tsx'
+      - 'tsconfig.json'
+    deps:
+      - 'shared:build'
+
+  test:
+    command: 'pnpm exec tsc --noEmit'
+    inputs:
+      - 'src/**/*'
+      - 'App.tsx'
+      - 'tsconfig.json'
+    deps:
+      - 'shared:build'

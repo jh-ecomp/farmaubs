@@ -1,14 +1,10 @@
 import * as crypto from "node:crypto";
-import { Inject, Injectable } from "@nestjs/common";
 import {
-  SESSION_REPOSITORY,
   type ISessionRepository,
 } from "../../domain/ports/session.repository.port";
 
-@Injectable()
 export class LogoutUseCase {
   constructor(
-    @Inject(SESSION_REPOSITORY)
     private readonly sessionRepo: ISessionRepository,
   ) {}
 

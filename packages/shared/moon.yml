@@ -1,0 +1,27 @@
+language: 'typescript'
+stack: 'unknown'
+
+tasks:
+  build:
+    command: 'pnpm exec tsc'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig.json'
+    outputs:
+      - 'dist'
+
+  dev:
+    command: 'pnpm exec tsc --watch'
+    options:
+      persistent: true
+      runInCI: false
+
+  clean:
+    command: 'pnpm exec rimraf dist'
+    options:
+      runInCI: false
+
+  lint:
+    command: 'pnpm exec eslint src/'
+    inputs:
+      - 'src/**/*'

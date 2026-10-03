@@ -1,15 +1,11 @@
-import { Inject, Injectable } from "@nestjs/common";
 import type { UsuarioDetalheDto } from "@farmaubs/shared";
 import {
-  REPOSITORIO_USUARIO_PORT,
   type RepositorioUsuarioPort,
 } from "../../domain/ports/user.repository.port";
 import { UsuarioNaoEncontradoException } from "../../domain/errors/user-management.errors";
 
-@Injectable()
 export class GetUserByIdUseCase {
   constructor(
-    @Inject(REPOSITORIO_USUARIO_PORT)
     private readonly usuarioRepo: RepositorioUsuarioPort,
   ) {}
 
