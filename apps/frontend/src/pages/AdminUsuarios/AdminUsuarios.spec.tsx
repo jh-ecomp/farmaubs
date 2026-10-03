@@ -428,10 +428,10 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         within(modal).getByLabelText(/e-mail institucional/i),
         "beatriz.santos@saude.gov.br",
       );
-      await user.type(
-        within(modal).getByLabelText(/senha provisória/i),
-        "FarmaUBS2026",
-      );
+      // Senha provisória é gerada automaticamente pelo sistema e é readOnly
+      const inputSenha = within(modal).getByLabelText(/senha provisória/i);
+      expect(inputSenha).toHaveAttribute("readonly");
+      expect(inputSenha).not.toHaveValue("");
 
       // Aguarda opções de município no modal
       await waitFor(() => {
@@ -470,7 +470,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         expect(mockUsuarioService.cadastrarUsuario).toHaveBeenCalledWith({
           nomeCompleto: "Dra. Beatriz Santos",
           email: "beatriz.santos@saude.gov.br",
-          senha: "FarmaUBS2026",
+          senha: expect.any(String),
           municipioId: "mun-parnaiba",
           perfil: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
           ubsIds: ["ubs-frei-higino"],
@@ -549,7 +549,9 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
 
       await user.type(inputNome, "Dra. Mariana Vasconcelos");
       await user.type(inputEmail, "mariana.vasconcelos@saude.gov.br");
-      await user.type(inputSenha, "SenhaForte123");
+      expect(inputSenha).toHaveAttribute("readonly");
+      const senhaGerada = (inputSenha as HTMLInputElement).value;
+      expect(senhaGerada.length).toBeGreaterThanOrEqual(8);
 
       await waitFor(() => {
         expect(
@@ -588,7 +590,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       // Os outros campos preenchidos devem ser integralmente PRESERVADOS
       expect(inputNome).toHaveValue("Dra. Mariana Vasconcelos");
       expect(inputEmail).toHaveValue("mariana.vasconcelos@saude.gov.br");
-      expect(inputSenha).toHaveValue("SenhaForte123");
+      expect(inputSenha).toHaveValue(senhaGerada);
       expect(selectMunicipio).toHaveValue("mun-parnaiba");
     });
   });

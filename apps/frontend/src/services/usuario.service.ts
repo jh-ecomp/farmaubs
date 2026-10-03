@@ -5,7 +5,6 @@ import type {
   ListagemUsuariosResultado,
   MunicipioDto,
   UnidadeSaudeDto,
-  UsuarioItemTabela,
   RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
 
@@ -196,20 +195,16 @@ export const usuarioService = {
     }
   },
 
-  async atualizarUsuario(
-    usuarioId: string,
-    dados: Partial<CadastrarUsuarioComando>,
-  ): Promise<UsuarioItemTabela> {
+  async buscarUsuarioPorId(usuarioId: string): Promise<any> {
     let res: Response;
     try {
       res = await fetch(
         `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}`,
         {
-          method: "PUT",
           headers: getAuthHeaders(),
-          body: JSON.stringify(dados),
         },
       );
+      res = inspectSessionExpiresHeader(res);
     } catch {
       throw new UsuarioApiError(
         "Não foi possível conectar ao servidor. Verifique sua conexão.",
@@ -220,13 +215,98 @@ export const usuarioService = {
     if (!res.ok) {
       const erro = await res.json().catch(() => ({}));
       throw new UsuarioApiError(
-        erro.message || "Erro ao atualizar usuário.",
+        erro.message || "Erro ao consultar usuário.",
         res.status,
         erro,
       );
     }
 
     return await res.json();
+  },
+
+  async atualizarUsuario(
+    usuarioId: string,
+    dados: Partial<CadastrarUsuarioComando>,
+  ): Promise<any> {
+    // 1. Atualiza dados cadastrais (nome, email) via PATCH /api/v1/usuarios/:id se informados
+    if (dados.nomeCompleto || dados.email) {
+      let res: Response;
+      try {
+        res = await fetch(
+          `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}`,
+          {
+            method: "PATCH",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              nomeCompleto: dados.nomeCompleto,
+              email: dados.email,
+            }),
+          },
+        );
+        res = inspectSessionExpiresHeader(res);
+      } catch {
+        throw new UsuarioApiError(
+          "Não foi possível conectar ao servidor. Verifique sua conexão.",
+          0,
+        );
+      }
+
+      if (res.status === 409) {
+        throw new UsuarioApiError(
+          "Este e-mail já está em uso por outro usuário.",
+          409,
+        );
+      }
+
+      if (!res.ok) {
+        const erro = await res.json().catch(() => ({}));
+        throw new UsuarioApiError(
+          erro.message || "Erro ao atualizar dados do usuário.",
+          res.status,
+          erro,
+        );
+      }
+    }
+
+    // 2. Atualiza associações (perfil, ubsIds) via PUT /api/v1/usuarios/:id/associacoes se informados
+    if (dados.perfil || (dados.ubsIds && dados.ubsIds.length > 0)) {
+      let res: Response;
+      try {
+        res = await fetch(
+          `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/associacoes`,
+          {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              perfilId: dados.perfil,
+              ubsIds: dados.ubsIds,
+            }),
+          },
+        );
+        res = inspectSessionExpiresHeader(res);
+      } catch {
+        throw new UsuarioApiError(
+          "Não foi possível conectar ao servidor. Verifique sua conexão.",
+          0,
+        );
+      }
+
+      if (!res.ok) {
+        const erro = await res.json().catch(() => ({}));
+        throw new UsuarioApiError(
+          erro.message || "Erro ao atualizar associações do usuário.",
+          res.status,
+          erro,
+        );
+      }
+    }
+
+    // 3. Se foi informada uma nova senha provisória na edição, define via POST /api/v1/usuarios/:id/senha-provisoria
+    if (dados.senha && dados.senha.trim().length > 0) {
+      await authService.redefinirSenhaProvisoria(usuarioId, dados.senha.trim());
+    }
+
+    return { id: usuarioId, ...dados };
   },
 
   async redefinirSenha(

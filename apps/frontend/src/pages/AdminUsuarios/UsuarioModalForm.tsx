@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,6 +11,10 @@ import {
   useUnidadesSaude,
 } from "../../hooks/useUsuarios";
 import { UsuarioApiError } from "../../services/usuario.service";
+import {
+  RedefinirSenhaModal,
+  gerarSenhaSegura,
+} from "./components/RedefinirSenhaModal";
 
 const usuarioSchema = z.object({
   nomeCompleto: z
@@ -77,6 +81,9 @@ export function UsuarioModalForm({
 
   const selectedMunicipioId = watch("municipioId");
   const selectedUbsIds = watch("ubsIds") || [];
+  const municipioAnteriorRef = useRef<string | null>(null);
+  const [isRedefinirModalOpen, setIsRedefinirModalOpen] = useState(false);
+  const [senhaCopiada, setSenhaCopiada] = useState(false);
 
   const { data: unidades = [], isLoading: isLoadingUnidades } =
     useUnidadesSaude(selectedMunicipioId);
@@ -85,6 +92,7 @@ export function UsuarioModalForm({
   useEffect(() => {
     if (isOpen) {
       if (usuarioParaEditar) {
+        municipioAnteriorRef.current = usuarioParaEditar.municipioId;
         reset({
           nomeCompleto: usuarioParaEditar.nomeCompleto,
           email: usuarioParaEditar.email,
@@ -97,32 +105,44 @@ export function UsuarioModalForm({
           deveTrocarSenha: false,
         });
       } else {
+        municipioAnteriorRef.current = null;
+        const senhaAleatoria = gerarSenhaSegura();
         reset({
           nomeCompleto: "",
           email: "",
           cpf: "",
           crf: "",
-          senha: "",
+          senha: senhaAleatoria,
           municipioId: "",
           perfil: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
           ubsIds: [],
           deveTrocarSenha: true,
         });
       }
+    } else {
+      municipioAnteriorRef.current = null;
     }
   }, [isOpen, usuarioParaEditar, reset]);
 
-  // Cascata: ao mudar o município, limpa a seleção de UBSs anteriores (RF026) se for diferente do original
+  // Cascata: ao mudar o município durante a interação, limpa a seleção de UBSs anteriores (RF026)
   useEffect(() => {
-    if (
-      selectedMunicipioId &&
-      usuarioParaEditar &&
-      selectedMunicipioId === usuarioParaEditar.municipioId
-    ) {
+    if (!isOpen) return;
+
+    if (municipioAnteriorRef.current === null) {
+      if (selectedMunicipioId) {
+        municipioAnteriorRef.current = selectedMunicipioId;
+      }
       return;
     }
-    setValue("ubsIds", []);
-  }, [selectedMunicipioId, setValue, usuarioParaEditar]);
+
+    if (
+      selectedMunicipioId &&
+      selectedMunicipioId !== municipioAnteriorRef.current
+    ) {
+      municipioAnteriorRef.current = selectedMunicipioId;
+      setValue("ubsIds", [], { shouldValidate: true });
+    }
+  }, [selectedMunicipioId, isOpen, setValue]);
 
   // Acessibilidade WCAG 2.1 AA (ADR-032): Fechamento via tecla Escape
   useEffect(() => {
@@ -152,43 +172,12 @@ export function UsuarioModalForm({
 
   const onSubmit = async (values: UsuarioFormValues) => {
     try {
-      // Validação de senha na criação ou se informada na edição
-      if (!isEditing) {
-        if (
-          !values.senha ||
-          values.senha.length < 8 ||
-          !/[a-zA-Z]/.test(values.senha) ||
-          !/[0-9]/.test(values.senha)
-        ) {
-          setError("senha", {
-            type: "manual",
-            message:
-              "A senha deve conter no mínimo 8 caracteres com letras e números.",
-          });
-          return;
-        }
-      } else if (values.senha && values.senha.trim().length > 0) {
-        if (
-          values.senha.length < 8 ||
-          !/[a-zA-Z]/.test(values.senha) ||
-          !/[0-9]/.test(values.senha)
-        ) {
-          setError("senha", {
-            type: "manual",
-            message:
-              "A nova senha deve conter no mínimo 8 caracteres com letras e números.",
-          });
-          return;
-        }
-      }
-
       if (isEditing && usuarioParaEditar) {
         await atualizarMutation.mutateAsync({
           id: usuarioParaEditar.id,
           dados: {
             nomeCompleto: values.nomeCompleto.trim(),
             email: values.email.trim().toLowerCase(),
-            senha: values.senha || undefined,
             perfil: values.perfil,
             municipioId: values.municipioId,
             ubsIds: values.ubsIds,
@@ -201,10 +190,13 @@ export function UsuarioModalForm({
         return;
       }
 
+      // No cadastro, a senha provisória é sempre uma senha forte gerada aleatoriamente
+      const senhaEfetiva = values.senha?.trim() || gerarSenhaSegura();
+
       await cadastrarMutation.mutateAsync({
         nomeCompleto: values.nomeCompleto.trim(),
         email: values.email.trim().toLowerCase(),
-        senha: values.senha || "",
+        senha: senhaEfetiva,
         perfil: values.perfil,
         municipioId: values.municipioId,
         ubsIds: values.ubsIds,
@@ -380,33 +372,106 @@ export function UsuarioModalForm({
               </div>
             </div>
 
-            {/* Senha Provisória */}
-            <div>
-              <label
-                htmlFor="formUserPassword"
-                className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1"
-              >
-                Senha Provisória {isEditing ? "(Opcional na edição)" : "*"}
-              </label>
-              <input
-                id="formUserPassword"
-                type="password"
-                placeholder={
-                  isEditing
-                    ? "Deixe em branco para manter a senha atual"
-                    : "Mínimo 8 caracteres com letras e números"
-                }
-                className={`w-full px-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all ${
-                  errors.senha ? "border border-error ring-1 ring-error" : ""
-                }`}
-                {...register("senha")}
-              />
-              {errors.senha && (
-                <p className="text-error text-caption-micro mt-1">
-                  {errors.senha.message}
+            {/* Senha Provisória: no cadastro é sempre gerada pelo sistema; na edição é um botão opcional */}
+            {isEditing ? (
+              <div className="p-3.5 bg-surface-subtle border border-border-crisp/40 rounded-xl flex items-center justify-between gap-4">
+                <div>
+                  <label className="block font-label-caps text-label-caps text-text-secondary uppercase">
+                    Senha Provisória (Opcional)
+                  </label>
+                  <p className="text-caption-micro text-text-tertiary mt-0.5">
+                    A senha atual do profissional é mantida. Caso queira emitir uma nova senha de acesso, clique ao lado.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsRedefinirModalOpen(true)}
+                  className="px-3 py-2 rounded-lg bg-surface-container-highest text-primary hover:bg-surface-bright border border-primary/20 font-body-md-medium text-caption-micro flex items-center gap-1.5 transition-colors shrink-0"
+                >
+                  <span className="material-symbols-outlined text-[18px]">key</span>
+                  <span>Gerar Senha Aleatória</span>
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label
+                    htmlFor="formUserPassword"
+                    className="block font-label-caps text-label-caps text-text-secondary uppercase"
+                  >
+                    Senha Provisória (Gerada Automaticamente) *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const novaSenha = gerarSenhaSegura();
+                      setValue("senha", novaSenha, { shouldValidate: true });
+                    }}
+                    className="text-primary hover:underline font-caption-micro text-caption-micro flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">
+                      casino
+                    </span>
+                    <span>Gerar Outra Senha</span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="formUserPassword"
+                    type="text"
+                    readOnly
+                    value={watch("senha") || ""}
+                    className="w-full font-mono text-body-md px-3 py-2 bg-surface-subtle border border-border-crisp/50 rounded-lg text-text-primary select-all cursor-default focus:outline-none"
+                    {...register("senha")}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const senhaAtual = watch("senha");
+                      if (senhaAtual) {
+                        if (
+                          navigator.clipboard &&
+                          navigator.clipboard.writeText
+                        ) {
+                          await navigator.clipboard.writeText(senhaAtual);
+                        }
+                        setSenhaCopiada(true);
+                        setTimeout(() => setSenhaCopiada(false), 2000);
+                      }
+                    }}
+                    className={`px-3 py-2 rounded-lg text-caption-micro font-body-md-medium flex items-center gap-1 shrink-0 transition-colors border border-border-crisp ${
+                      senhaCopiada
+                        ? "bg-status-optimal-fg text-on-primary border-status-optimal-fg"
+                        : "bg-surface-subtle text-text-secondary hover:text-text-primary hover:bg-surface-container"
+                    }`}
+                    title={
+                      senhaCopiada
+                        ? "Copiado!"
+                        : "Copiar senha para área de transferência"
+                    }
+                    aria-label={
+                      senhaCopiada
+                        ? "Senha copiada"
+                        : "Copiar senha para área de transferência"
+                    }
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {senhaCopiada ? "done" : "content_copy"}
+                    </span>
+                    <span>{senhaCopiada ? "Copiado!" : "Copiar"}</span>
+                  </button>
+                </div>
+                <p className="text-caption-micro text-text-tertiary mt-1">
+                  Senha segura gerada pelo sistema para evitar erros humanos. O
+                  profissional será forçado a alterá-la no primeiro acesso.
                 </p>
-              )}
-            </div>
+                {errors.senha && (
+                  <p className="text-error text-caption-micro mt-1">
+                    {errors.senha.message}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Perfil de Acesso e Município (Cascata Trigger) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -579,6 +644,18 @@ export function UsuarioModalForm({
           </form>
         </div>
       </div>
+
+      {/* Modal opcional de redefinição de senha para edição */}
+      {isEditing && usuarioParaEditar && (
+        <RedefinirSenhaModal
+          isOpen={isRedefinirModalOpen}
+          usuario={usuarioParaEditar}
+          onClose={() => setIsRedefinirModalOpen(false)}
+          onSuccess={(msg) => {
+            onSuccess(`${usuarioParaEditar.nomeCompleto} (${msg})`);
+          }}
+        />
+      )}
     </div>
   );
 }
