@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { UserController } from "./api/controllers/user.controller";
 import { AcessoController } from "./api/controllers/acesso.controller";
 import { CadastrarUsuarioUseCase } from "./application/use-cases/register-user.use-case";
@@ -37,16 +37,6 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
   imports: [ConfigModule],
   controllers: [AcessoController, UserController],
   providers: [
-    LoginUseCase,
-    RenewSessionUseCase,
-    LogoutUseCase,
-    ChangePasswordUseCase,
-    ListUsersUseCase,
-    GetUserByIdUseCase,
-    EditUserUseCase,
-    UpdateAssociationsUseCase,
-    ToggleUserStatusUseCase,
-    SetTemporaryPasswordUseCase,
     RolesGuard,
     MustChangePasswordGuard,
     {
@@ -86,6 +76,117 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     {
       provide: SERVICO_EMAIL_PORT,
       useExisting: ConsoleEmailServiceAdapter,
+    },
+    {
+      provide: LoginUseCase,
+      useFactory: (acessoRepo: AcessoPgRepository, config: ConfigService) => {
+        return new LoginUseCase(acessoRepo, {
+          maxTentativas: parseInt(config.get<string>("LOGIN_MAX_ATTEMPTS", "5"), 10),
+          ttlMinutos: parseInt(config.get<string>("SESSION_TTL_MINUTES", "60"), 10),
+          warningSeconds: parseInt(config.get<string>("SESSION_WARNING_SECONDS", "300"), 10),
+        });
+      },
+      inject: [ACESSO_REPOSITORY, ConfigService],
+    },
+    {
+      provide: RenewSessionUseCase,
+      useFactory: (sessionRepo: SessionPgRepository, config: ConfigService) => {
+        return new RenewSessionUseCase(sessionRepo, {
+          ttlMinutos: parseInt(config.get<string>("SESSION_TTL_MINUTES", "60"), 10),
+          warningMinutos: parseInt(config.get<string>("SESSION_WARNING_MINUTES", "5"), 10),
+        });
+      },
+      inject: [SESSION_REPOSITORY, ConfigService],
+    },
+    {
+      provide: LogoutUseCase,
+      useFactory: (sessionRepo: SessionPgRepository) => {
+        return new LogoutUseCase(sessionRepo);
+      },
+      inject: [SESSION_REPOSITORY],
+    },
+    {
+      provide: ChangePasswordUseCase,
+      useFactory: (
+        userRepo: TypeOrmUserRepository,
+        hasher: BcryptPasswordHasherAdapter,
+        auditRepo: TypeOrmAuditRepository,
+      ) => {
+        return new ChangePasswordUseCase(userRepo, hasher, auditRepo);
+      },
+      inject: [REPOSITORIO_USUARIO_PORT, GERADOR_HASH_SENHA_PORT, AUDIT_REPOSITORY_PORT],
+    },
+    {
+      provide: ListUsersUseCase,
+      useFactory: (userRepo: TypeOrmUserRepository) => {
+        return new ListUsersUseCase(userRepo);
+      },
+      inject: [REPOSITORIO_USUARIO_PORT],
+    },
+    {
+      provide: GetUserByIdUseCase,
+      useFactory: (userRepo: TypeOrmUserRepository) => {
+        return new GetUserByIdUseCase(userRepo);
+      },
+      inject: [REPOSITORIO_USUARIO_PORT],
+    },
+    {
+      provide: EditUserUseCase,
+      useFactory: (userRepo: TypeOrmUserRepository, auditRepo: TypeOrmAuditRepository) => {
+        return new EditUserUseCase(userRepo, auditRepo);
+      },
+      inject: [REPOSITORIO_USUARIO_PORT, AUDIT_REPOSITORY_PORT],
+    },
+    {
+      provide: UpdateAssociationsUseCase,
+      useFactory: (
+        userRepo: TypeOrmUserRepository,
+        profileRepo: TypeOrmProfileRepository,
+        healthUnitRepo: TypeOrmHealthUnitRepository,
+        auditRepo: TypeOrmAuditRepository,
+      ) => {
+        return new UpdateAssociationsUseCase(userRepo, profileRepo, healthUnitRepo, auditRepo);
+      },
+      inject: [
+        REPOSITORIO_USUARIO_PORT,
+        REPOSITORIO_PERFIL_PORT,
+        REPOSITORIO_UNIDADE_SAUDE_PORT,
+        AUDIT_REPOSITORY_PORT,
+      ],
+    },
+    {
+      provide: ToggleUserStatusUseCase,
+      useFactory: (
+        userRepo: TypeOrmUserRepository,
+        profileRepo: TypeOrmProfileRepository,
+        sessionRepo: SessionPgRepository,
+        auditRepo: TypeOrmAuditRepository,
+      ) => {
+        return new ToggleUserStatusUseCase(userRepo, profileRepo, sessionRepo, auditRepo);
+      },
+      inject: [
+        REPOSITORIO_USUARIO_PORT,
+        REPOSITORIO_PERFIL_PORT,
+        SESSION_REPOSITORY,
+        AUDIT_REPOSITORY_PORT,
+      ],
+    },
+    {
+      provide: SetTemporaryPasswordUseCase,
+      useFactory: (
+        userRepo: TypeOrmUserRepository,
+        hasher: BcryptPasswordHasherAdapter,
+        sessionRepo: SessionPgRepository,
+        auditRepo: TypeOrmAuditRepository,
+      ) => {
+        return new SetTemporaryPasswordUseCase(userRepo, hasher, sessionRepo, auditRepo);
+      },
+      inject: [
+        REPOSITORIO_USUARIO_PORT,
+        GERADOR_HASH_SENHA_PORT,
+        SESSION_REPOSITORY,
+        AUDIT_REPOSITORY_PORT,
+      ],
     },
     {
       provide: CadastrarUsuarioUseCase,

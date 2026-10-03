@@ -1,9 +1,6 @@
 import * as bcrypt from "bcrypt";
-import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import type { UsuarioAutenticado } from "@farmaubs/shared";
 import type { IAcessoRepository } from "../../domain/ports/acesso.repository.port";
-import { ACESSO_REPOSITORY } from "../../domain/ports/acesso.repository.port";
 
 export type LoginResult =
   | {
@@ -16,29 +13,24 @@ export type LoginResult =
   | { ok: false; motivo: "CREDENCIAIS_INVALIDAS" }
   | { ok: false; motivo: "CONTA_BLOQUEADA"; minutosRestantes: number };
 
-@Injectable()
+export interface LoginUseCaseConfig {
+  maxTentativas?: number;
+  ttlMinutos?: number;
+  warningSeconds?: number;
+}
+
 export class LoginUseCase {
   private readonly maxTentativas: number;
   private readonly ttlMinutos: number;
   private readonly warningSeconds: number;
 
   constructor(
-    @Inject(ACESSO_REPOSITORY)
     private readonly acessoRepo: IAcessoRepository,
-    private readonly config: ConfigService,
+    config?: LoginUseCaseConfig,
   ) {
-    this.maxTentativas = parseInt(
-      this.config.get<string>("LOGIN_MAX_ATTEMPTS", "5"),
-      10,
-    );
-    this.ttlMinutos = parseInt(
-      this.config.get<string>("SESSION_TTL_MINUTES", "60"),
-      10,
-    );
-    this.warningSeconds = parseInt(
-      this.config.get<string>("SESSION_WARNING_SECONDS", "300"),
-      10,
-    );
+    this.maxTentativas = config?.maxTentativas ?? 5;
+    this.ttlMinutos = config?.ttlMinutos ?? 60;
+    this.warningSeconds = config?.warningSeconds ?? 300;
   }
 
   async executar(

@@ -61,7 +61,7 @@ export default function Login() {
       setErroApi("");
       // Armazenando sessão completa no contexto de autenticação (ADR-013 / AC-10)
       login({
-        token: data.token,
+        token: data.token ?? null,
         expiresAt: data.expiresAt,
         ttlSeconds: data.ttlSeconds,
         warningSeconds: data.warningSeconds,

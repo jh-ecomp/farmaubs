@@ -1,4 +1,3 @@
-import { Inject, Injectable } from "@nestjs/common";
 import {
   type AlterarStatusUsuarioComando,
   type UsuarioAtualizadoResultado,
@@ -26,16 +25,11 @@ import {
   UsuarioNaoEncontradoException,
 } from "../../domain/errors/user-management.errors";
 
-@Injectable()
 export class ToggleUserStatusUseCase {
   constructor(
-    @Inject(REPOSITORIO_USUARIO_PORT)
     private readonly usuarioRepo: RepositorioUsuarioPort,
-    @Inject(REPOSITORIO_PERFIL_PORT)
     private readonly profileRepo: RepositorioPerfilPort,
-    @Inject(SESSION_REPOSITORY)
     private readonly sessionRepo: ISessionRepository,
-    @Inject(AUDIT_REPOSITORY_PORT)
     private readonly auditRepo: AuditRepositoryPort,
   ) {}
 

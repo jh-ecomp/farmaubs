@@ -1,4 +1,3 @@
-import { Inject, Injectable } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import {
   type RedefinirSenhaProvisoriaComando,
@@ -29,16 +28,11 @@ import {
 const SENHA_COMPLEXA_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
 
-@Injectable()
 export class SetTemporaryPasswordUseCase {
   constructor(
-    @Inject(REPOSITORIO_USUARIO_PORT)
     private readonly usuarioRepo: RepositorioUsuarioPort,
-    @Inject(GERADOR_HASH_SENHA_PORT)
     private readonly passwordHasher: GeradorHashSenhaPort,
-    @Inject(SESSION_REPOSITORY)
     private readonly sessionRepo: ISessionRepository,
-    @Inject(AUDIT_REPOSITORY_PORT)
     private readonly auditRepo: AuditRepositoryPort,
   ) {}
 

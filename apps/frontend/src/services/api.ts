@@ -4,7 +4,7 @@ import type {
   TrocarSenhaComando,
   RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
-import type { LoginResponse, SessaoUsuarioDto } from "../types/auth";
+import type { LoginResponse, SessaoUsuarioDto, UsuarioPayload } from "../types/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -163,25 +163,27 @@ export const authService = {
       : "";
     const token = body.token || tokenFromHeader;
 
+    const usuarioRetornado: UsuarioPayload = {
+      id: body.usuario.id,
+      nomeCompleto: body.usuario.nomeCompleto,
+      email: body.usuario.email,
+      perfilCodigo: body.usuario.perfilCodigo,
+      municipioId: body.usuario.municipioId,
+      unidadeIds: body.usuario.unidadeIds,
+      deveTrocarSenha: body.usuario.deveTrocarSenha,
+      // Compatibilidade retroativa
+      nome: body.usuario.nomeCompleto,
+      perfil: [body.usuario.perfilCodigo],
+      municipio_id: body.usuario.municipioId,
+      unidade_id: body.usuario.unidadeIds?.[0] ?? "",
+    };
+
     return {
       token,
       expiresAt: body.sessao.expiresAt,
       ttlSeconds: body.sessao.ttlSeconds,
       warningSeconds: body.sessao.warningSeconds,
-      usuario: {
-        id: body.usuario.id,
-        nomeCompleto: body.usuario.nomeCompleto,
-        email: body.usuario.email,
-        perfilCodigo: body.usuario.perfilCodigo,
-        municipioId: body.usuario.municipioId,
-        unidadeIds: body.usuario.unidadeIds,
-        deveTrocarSenha: body.usuario.deveTrocarSenha,
-        // Compatibilidade retroativa
-        nome: body.usuario.nomeCompleto,
-        perfil: [body.usuario.perfilCodigo],
-        municipio_id: body.usuario.municipioId,
-        unidade_id: body.usuario.unidadeIds?.[0] ?? "",
-      },
+      usuario: usuarioRetornado,
       redirectUrl: body.redirectUrl,
     };
   },

@@ -1,0 +1,65 @@
+language: 'typescript'
+stack: 'backend'
+
+dependsOn:
+  - 'shared'
+
+tasks:
+  dev:
+    command: 'pnpm exec nest start --watch'
+    options:
+      persistent: true
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  build:
+    command: 'pnpm exec nest build'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig*.json'
+      - 'nest-cli.json'
+    outputs:
+      - 'dist'
+    deps:
+      - 'shared:build'
+
+  test:
+    command: 'pnpm exec jest'
+    inputs:
+      - 'src/**/*'
+      - 'package.json'
+      - 'tsconfig*.json'
+    deps:
+      - 'shared:build'
+
+  test-bdd:
+    script: 'node --import tsx ./node_modules/@cucumber/cucumber/bin/cucumber.js'
+    inputs:
+      - 'src/**/*'
+      - 'test/features/**/*'
+      - 'cucumber.json'
+    deps:
+      - 'shared:build'
+
+  test-schema:
+    script: 'docker compose -f ../../infra/docker-compose.test.yml up -d --wait && pnpm exec jest --config test/schema/jest-schema.json --runInBand'
+    options:
+      runInCI: false
+
+  test-schema-down:
+    command: 'docker compose -f ../../infra/docker-compose.test.yml down'
+    options:
+      runInCI: false
+
+  test-integration:
+    command: 'pnpm exec jest --config ./test/jest-integration.json'
+    options:
+      runInCI: false
+    deps:
+      - 'shared:build'
+
+  db-seed:
+    script: 'pnpm exec ts-node src/database/seed-dev.ts'
+    options:
+      runInCI: false

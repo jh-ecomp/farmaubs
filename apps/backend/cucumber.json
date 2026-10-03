@@ -1,0 +1,18 @@
+{
+  "default": {
+    "import": [
+      "tsx",
+      "test/features/step_definitions/**/*.steps.ts"
+    ],
+    "paths": [
+      "test/features/**/*.feature"
+    ],
+    "format": [
+      "summary",
+      "progress-bar"
+    ],
+    "formatOptions": {
+      "snippetInterface": "synchronous"
+    }
+  }
+}

@@ -277,15 +277,41 @@ export function RedefinirSenhaModal({
                   <span>Gerar Senha Segura</span>
                 </button>
               </div>
-              <input
-                id="senha-provisoria-input"
-                ref={inputRef}
-                type="text"
-                value={senhaInput}
-                onChange={(e) => setSenhaInput(e.target.value)}
-                placeholder="Clique em Gerar Senha ou digite aqui..."
-                className="w-full font-mono text-body-md px-3.5 py-2.5 bg-surface-container-lowest border border-border-crisp rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-primary placeholder:text-text-tertiary"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  id="senha-provisoria-input"
+                  ref={inputRef}
+                  type="text"
+                  value={senhaInput}
+                  onChange={(e) => setSenhaInput(e.target.value)}
+                  placeholder="Clique em Gerar Senha ou digite aqui..."
+                  className="w-full font-mono text-body-md px-3.5 py-2.5 bg-surface-container-lowest border border-border-crisp rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-primary placeholder:text-text-tertiary"
+                />
+                {senhaInput && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(senhaInput);
+                      }
+                      setCopiado(true);
+                      setTimeout(() => setCopiado(false), 2000);
+                    }}
+                    className={`px-3 py-2.5 rounded-lg text-caption-micro font-body-md-medium flex items-center gap-1 shrink-0 transition-colors border border-border-crisp ${
+                      copiado
+                        ? "bg-status-optimal-fg text-on-primary border-status-optimal-fg"
+                        : "bg-surface-subtle text-text-secondary hover:text-text-primary hover:bg-surface-container"
+                    }`}
+                    title={copiado ? "Copiado!" : "Copiar para área de transferência"}
+                    aria-label={copiado ? "Senha copiada" : "Copiar senha para área de transferência"}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {copiado ? "done" : "content_copy"}
+                    </span>
+                    <span>{copiado ? "Copiado!" : "Copiar"}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-surface-subtle border border-border-crisp">

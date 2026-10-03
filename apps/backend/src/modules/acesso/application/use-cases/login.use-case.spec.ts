@@ -50,29 +50,15 @@ function makeRepo(
   };
 }
 
-async function buildSut(
+function buildSut(
   repo: IAcessoRepository,
   envVars: Record<string, string> = {},
 ) {
-  const moduleRef = await Test.createTestingModule({
-    providers: [
-      LoginUseCase,
-      { provide: ACESSO_REPOSITORY, useValue: repo },
-      {
-        provide: ConfigService,
-        useValue: {
-          get: (key: string, fallback?: string) =>
-            ({
-              LOGIN_MAX_ATTEMPTS: "5",
-              SESSION_TTL_MINUTES: "60",
-              ...envVars,
-            })[key] ?? fallback,
-        },
-      },
-    ],
-  }).compile();
-
-  return moduleRef.get(LoginUseCase);
+  return new LoginUseCase(repo, {
+    maxTentativas: parseInt(envVars.LOGIN_MAX_ATTEMPTS ?? "5", 10),
+    ttlMinutos: parseInt(envVars.SESSION_TTL_MINUTES ?? "60", 10),
+    warningSeconds: parseInt(envVars.SESSION_WARNING_SECONDS ?? "300", 10),
+  });
 }
 
 // ─── testes ──────────────────────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-import { Inject, Injectable } from "@nestjs/common";
 import {
   REPOSITORIO_USUARIO_PORT,
   type RepositorioUsuarioPort,
@@ -33,16 +32,10 @@ export interface ExecutarTrocaSenhaComando {
 
 export type TrocarSenhaComando = ExecutarTrocaSenhaComando;
 
-@Injectable()
 export class ChangePasswordUseCase {
   constructor(
-    @Inject(REPOSITORIO_USUARIO_PORT)
     private readonly usuarioRepo: RepositorioUsuarioPort,
-
-    @Inject(GERADOR_HASH_SENHA_PORT)
     private readonly passwordHasher: GeradorHashSenhaPort,
-
-    @Inject(AUDIT_REPOSITORY_PORT)
     private readonly auditRepo: AuditRepositoryPort,
   ) {}
 

@@ -6,10 +6,10 @@ import {
   useUsuarios,
   useMunicipios,
   useAlterarStatusUsuario,
-  useRedefinirSenha,
 } from "../../hooks/useUsuarios";
 import { UsuarioModalForm } from "./UsuarioModalForm";
 import { ConfirmarInativacaoModal } from "./ConfirmarInativacaoModal";
+import { RedefinirSenhaModal } from "./components/RedefinirSenhaModal";
 import iconeFarmaUbs from "../../assets/iconefarmaubs.svg";
 
 export function AdminUsuarios() {
@@ -74,7 +74,6 @@ export function AdminUsuarios() {
     isError,
   } = useUsuarios(filtrosQuery);
   const alterarStatusMutation = useAlterarStatusUsuario();
-  const redefinirSenhaMutation = useRedefinirSenha();
 
   // Estados dos Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,21 +153,14 @@ export function AdminUsuarios() {
     setIsModalOpen(true);
   };
 
-  // Redefinição de Senha Regulamentar (RF003)
-  const handleResetPassword = async (usuario: UsuarioItemTabela) => {
-    try {
-      await redefinirSenhaMutation.mutateAsync(usuario.id);
-      showToast(
-        "Senha Provisória Emitida",
-        `Um link de redefinição e credencial provisória foram enviados para ${usuario.email}.`,
-      );
-    } catch {
-      showToast(
-        "Erro na Redefinição",
-        "Não foi possível redefinir a senha do usuário. Tente novamente.",
-        "error",
-      );
-    }
+  // Redefinição de Senha Regulamentar (RF003) via Modal
+  const [usuarioParaRedefinir, setUsuarioParaRedefinir] =
+    useState<UsuarioItemTabela | null>(null);
+  const [isRedefinirModalOpen, setIsRedefinirModalOpen] = useState(false);
+
+  const handleOpenResetPasswordModal = (usuario: UsuarioItemTabela) => {
+    setUsuarioParaRedefinir(usuario);
+    setIsRedefinirModalOpen(true);
   };
 
   const usuarios = respostaUsuarios?.data || [];
@@ -736,8 +728,7 @@ export function AdminUsuarios() {
 
                                 <button
                                   type="button"
-                                  onClick={() => handleResetPassword(u)}
-                                  disabled={redefinirSenhaMutation.isPending}
+                                  onClick={() => handleOpenResetPasswordModal(u)}
                                   className="p-1.5 hover:bg-surface-subtle text-text-secondary hover:text-primary rounded transition-colors"
                                   title="Redefinir Senha Provisória"
                                   aria-label={`Redefinir senha de ${u.nomeCompleto}`}
@@ -855,6 +846,19 @@ export function AdminUsuarios() {
         onClose={() => setUserToInactivate(null)}
         onConfirm={handleConfirmStatusChange}
         isLoading={alterarStatusMutation.isPending}
+      />
+
+      {/* MODAL DE REDEFINIÇÃO DE SENHA PROVISÓRIA */}
+      <RedefinirSenhaModal
+        isOpen={isRedefinirModalOpen}
+        usuario={usuarioParaRedefinir}
+        onClose={() => {
+          setIsRedefinirModalOpen(false);
+          setUsuarioParaRedefinir(null);
+        }}
+        onSuccess={(msg) => {
+          showToast("Senha Provisória Emitida", msg);
+        }}
       />
 
       {/* TOAST DE FEEDBACK REGULATÓRIO */}

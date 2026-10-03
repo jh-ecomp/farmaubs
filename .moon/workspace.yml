@@ -1,0 +1,17 @@
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+# Mapeamento canônico dos projetos do monorepo FarmaUBS
+projects:
+  backend: 'apps/backend'
+  frontend: 'apps/frontend'
+  mobile: 'apps/mobile'
+  shared: 'packages/shared'
+
+# Sistema de controle de versão para detecção de arquivos afetados (--affected)
+vcs:
+  client: 'git'
+  defaultBranch: 'main'
+
+# Configuração do gerador de templates e hashing
+hasher:
+  optimization: 'accuracy'

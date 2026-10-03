@@ -6,11 +6,15 @@
   "scripts": {
     "dev:backend": "pnpm --filter @farmaubs/shared build && pnpm --filter @farmaubs/backend start:dev",
     "dev:frontend": "pnpm --filter @farmaubs/frontend dev",
+    "dev:mobile": "pnpm --filter @farmaubs/mobile start",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "test:backend": "pnpm --filter @farmaubs/backend test",
+    "test:mobile": "pnpm --filter @farmaubs/mobile typecheck",
     "test:integration": "pnpm --filter @farmaubs/backend test:integration",
-    "db:seed": "pnpm --filter @farmaubs/backend db:seed"
+    "test:bdd": "pnpm --filter @farmaubs/backend test:bdd",
+    "db:seed": "pnpm --filter @farmaubs/backend db:seed",
+    "moon": "moon"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +27,8 @@
       "onFail": "download"
     }
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@moonrepo/cli": "^2.5.6"
+  }
 }

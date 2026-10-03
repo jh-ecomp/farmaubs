@@ -1,0 +1,9 @@
+$schema: 'https://moonrepo.dev/schemas/toolchain.json'
+
+node:
+  version: '20.18.0'
+  packageManager: 'pnpm'
+  pnpm:
+    version: '11.21.0'
+  inferTasksFromScripts: false
+  syncProjectWorkspaceDependencies: true

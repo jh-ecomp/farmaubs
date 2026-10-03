@@ -1,18 +1,14 @@
-import { Inject, Injectable } from "@nestjs/common";
 import type {
   ListagemUsuariosFiltros,
   ListagemUsuariosResultado,
   PerfilCodigo,
 } from "@farmaubs/shared";
 import {
-  REPOSITORIO_USUARIO_PORT,
   type RepositorioUsuarioPort,
 } from "../../domain/ports/user.repository.port";
 
-@Injectable()
 export class ListUsersUseCase {
   constructor(
-    @Inject(REPOSITORIO_USUARIO_PORT)
     private readonly usuarioRepo: RepositorioUsuarioPort,
   ) {}
 
