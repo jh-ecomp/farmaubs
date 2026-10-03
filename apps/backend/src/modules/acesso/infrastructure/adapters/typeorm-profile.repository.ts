@@ -9,9 +9,17 @@ export class TypeOrmProfileRepository implements RepositorioPerfilPort {
   constructor(private readonly transactionContext: TransactionContext) {}
 
   async buscarPorId(id: string): Promise<PerfilModeloDominio | null> {
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id?.trim() ?? "",
+      );
+    if (!isUuid) {
+      return null;
+    }
+
     const manager = this.transactionContext.getManager();
     const perfil = await manager.findOne(PerfilEntity, {
-      where: { id },
+      where: { id: id.trim() },
     });
 
     if (!perfil) {

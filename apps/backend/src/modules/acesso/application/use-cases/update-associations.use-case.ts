@@ -51,12 +51,12 @@ export class UpdateAssociationsUseCase {
       );
     }
 
-    // Valida perfil no catálogo (por ID ou código)
-    let novoPerfil = await this.profileRepo.buscarPorId(comando.perfilId);
+    // Valida perfil no catálogo (por código ou por ID)
+    let novoPerfil = await this.profileRepo.buscarPorCodigoOuNome(
+      comando.perfilId,
+    );
     if (!novoPerfil) {
-      novoPerfil = await this.profileRepo.buscarPorCodigoOuNome(
-        comando.perfilId,
-      );
+      novoPerfil = await this.profileRepo.buscarPorId(comando.perfilId);
     }
     if (!novoPerfil || !novoPerfil.ativo) {
       throw new PerfilNaoEncontradoException(comando.perfilId);
