@@ -1,16 +1,10 @@
-export interface SessionRecord {
-  id: string;
+import type { SessaoUsuarioSnapshot } from "@farmaubs/shared";
+
+export interface CriarSessaoParams {
   usuarioId: string;
-  municipioId: string;
-  perfilCodigo: string;
-  unidadeIds: string[];
-  nomeCompleto: string;
-  email: string;
-  deveTrocarSenha: boolean;
-  status: string;
   expiraEm: Date;
-  criadoEm: Date;
-  ultimaAtividadeEm: Date;
+  ipOrigem?: string | null;
+  userAgent?: string | null;
 }
 
 export interface RenovarSessaoParams {
@@ -18,11 +12,18 @@ export interface RenovarSessaoParams {
   expiraEm: Date;
 }
 
+export interface SessaoAutenticada extends SessaoUsuarioSnapshot {
+  nomeCompleto: string;
+  email: string;
+}
+
 export interface ISessionRepository {
-  buscarPorTokenHash(tokenHash: string): Promise<SessionRecord | null>;
+  criarSessao(params: CriarSessaoParams): Promise<string>;
+  buscarPorTokenHash(tokenHash: string): Promise<SessaoAutenticada | null>;
   renovarAtividade(params: RenovarSessaoParams): Promise<void>;
   revogar(sessionId: string): Promise<void>;
   revogarTodas(usuarioId: string): Promise<void>;
+  limparExpiradas(diasRetencao?: number): Promise<number>;
 }
 
 export const SESSION_REPOSITORY = Symbol("ISessionRepository");

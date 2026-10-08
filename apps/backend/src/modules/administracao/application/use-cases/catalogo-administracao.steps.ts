@@ -87,6 +87,8 @@ defineFeature(feature, (test) => {
       buscarPorMunicipio: jest.fn(),
     };
     sessionRepoMock = {
+      criarSessao: jest.fn(),
+      limparExpiradas: jest.fn(),
       buscarPorTokenHash: jest.fn(),
       renovarAtividade: jest.fn(),
       revogar: jest.fn(),

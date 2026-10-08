@@ -1,6 +1,7 @@
 import * as bcrypt from "bcrypt";
 import type { UsuarioAutenticado } from "@farmaubs/shared";
 import type { IAcessoRepository } from "../../domain/ports/acesso.repository.port";
+import type { ISessionRepository } from "../../domain/ports/session.repository.port";
 
 export type LoginResult =
   | {
@@ -26,6 +27,7 @@ export class LoginUseCase {
 
   constructor(
     private readonly acessoRepo: IAcessoRepository,
+    private readonly sessionRepo: ISessionRepository,
     config?: LoginUseCaseConfig,
   ) {
     this.maxTentativas = config?.maxTentativas ?? 5;
@@ -65,7 +67,7 @@ export class LoginUseCase {
     const ttlSeconds = this.ttlMinutos * 60;
     const expiraEm = new Date(Date.now() + ttlSeconds * 1000);
 
-    const token = await this.acessoRepo.criarSessao({
+    const token = await this.sessionRepo.criarSessao({
       usuarioId: usuario.id,
       expiraEm,
       ipOrigem,

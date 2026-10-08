@@ -13,7 +13,6 @@ import { SKIP_AUTH_KEY } from "./skip-auth.decorator";
 import {
   SESSION_REPOSITORY,
   type ISessionRepository,
-  type SessionRecord,
 } from "../../modules/acesso/domain/ports/session.repository.port";
 
 @Injectable()

@@ -1,17 +1,37 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
+import * as crypto from "crypto";
 import type {
   ISessionRepository,
-  SessionRecord,
+  CriarSessaoParams,
   RenovarSessaoParams,
+  SessaoAutenticada,
 } from "../../domain/ports/session.repository.port";
 
 @Injectable()
 export class SessionPgRepository implements ISessionRepository {
   constructor(@InjectDataSource() private readonly ds: DataSource) {}
 
-  async buscarPorTokenHash(tokenHash: string): Promise<SessionRecord | null> {
+  async criarSessao(params: CriarSessaoParams): Promise<string> {
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    await this.ds.query(
+      `SELECT auth_criar_sessao($1::uuid, $2::text, $3::timestamptz, $4::inet, $5::text)`,
+      [
+        params.usuarioId,
+        tokenHash,
+        params.expiraEm,
+        params.ipOrigem || null,
+        params.userAgent || null,
+      ]
+    );
+
+    return token;
+  }
+
+  async buscarPorTokenHash(tokenHash: string): Promise<SessaoAutenticada | null> {
     const rows = await this.ds.query<any[]>(
       `SELECT * FROM auth_buscar_sessao_por_token($1::text)`,
       [tokenHash],
@@ -47,5 +67,13 @@ export class SessionPgRepository implements ISessionRepository {
 
   async revogarTodas(usuarioId: string): Promise<void> {
     await this.ds.query(`SELECT auth_revogar_todas_sessoes($1)`, [usuarioId]);
+  }
+
+  async limparExpiradas(diasRetencao: number = 7): Promise<number> {
+    const rows = await this.ds.query(
+      `SELECT auth_limpar_sessoes_expiradas($1::int) AS total`,
+      [diasRetencao]
+    );
+    return parseInt(rows?.[0]?.total ?? "0", 10);
   }
 }

@@ -193,7 +193,7 @@ describe("AcessoPgRepository (integração — camada B)", () => {
 
     it("retorna um token em texto plano (64 hex chars)", async () => {
       const expiraEm = new Date(Date.now() + 60 * 60_000);
-      const token = await acessoRepo.criarSessao({ usuarioId, expiraEm });
+      const token = await sessionRepo.criarSessao({ usuarioId, expiraEm });
 
       expect(typeof token).toBe("string");
       expect(token).toHaveLength(64); // 32 bytes → 64 hex
@@ -202,7 +202,7 @@ describe("AcessoPgRepository (integração — camada B)", () => {
 
     it("armazena apenas o hash SHA-256 do token na tabela sessions", async () => {
       const expiraEm = new Date(Date.now() + 60 * 60_000);
-      const token = await acessoRepo.criarSessao({ usuarioId, expiraEm });
+      const token = await sessionRepo.criarSessao({ usuarioId, expiraEm });
 
       const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -218,8 +218,8 @@ describe("AcessoPgRepository (integração — camada B)", () => {
     it("dois logins consecutivos geram token_hashes únicos", async () => {
       const expiraEm = new Date(Date.now() + 60 * 60_000);
 
-      const token1 = await acessoRepo.criarSessao({ usuarioId, expiraEm });
-      const token2 = await acessoRepo.criarSessao({ usuarioId, expiraEm });
+      const token1 = await sessionRepo.criarSessao({ usuarioId, expiraEm });
+      const token2 = await sessionRepo.criarSessao({ usuarioId, expiraEm });
 
       expect(token1).not.toBe(token2);
 
@@ -230,7 +230,7 @@ describe("AcessoPgRepository (integração — camada B)", () => {
 
     it("expires_at é gravado corretamente na sessão", async () => {
       const expiraEm = new Date(Date.now() + 60 * 60_000);
-      const token = await acessoRepo.criarSessao({ usuarioId, expiraEm });
+      const token = await sessionRepo.criarSessao({ usuarioId, expiraEm });
       const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
       const rows = await ds.query<{ expira_em: Date }[]>(
@@ -275,10 +275,10 @@ describe("SessionPgRepository (integração — camada B)", () => {
   });
 
   beforeEach(async () => {
-    // Cria uma sessão fresca via AcessoPgRepository para cada teste
+    // Cria uma sessão fresca via SessionPgRepository para cada teste
     await excluirSessoesDoUsuario(usuarioId);
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    tokenPlain = await acessoRepo.criarSessao({ usuarioId, expiraEm });
+    tokenPlain = await sessionRepo.criarSessao({ usuarioId, expiraEm });
     tokenHash = crypto.createHash("sha256").update(tokenPlain).digest("hex");
   });
 
@@ -287,7 +287,7 @@ describe("SessionPgRepository (integração — camada B)", () => {
   });
 
   describe("buscarPorTokenHash", () => {
-    it("retorna SessionRecord completo para hash válido", async () => {
+    it("retorna SessaoAutenticada completa para hash válido", async () => {
       const sessao = await sessionRepo.buscarPorTokenHash(tokenHash);
 
       expect(sessao).not.toBeNull();
@@ -390,7 +390,7 @@ describe("SessionPgRepository (integração — camada B)", () => {
     it("revoga todas as sessões ativas do usuário", async () => {
       // Cria uma segunda sessão
       const expiraEm = new Date(Date.now() + 60 * 60_000);
-      const token2 = await acessoRepo.criarSessao({ usuarioId, expiraEm });
+      const token2 = await sessionRepo.criarSessao({ usuarioId, expiraEm });
       const hash2 = crypto.createHash("sha256").update(token2).digest("hex");
 
       await sessionRepo.revogarTodas(usuarioId);

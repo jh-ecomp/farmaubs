@@ -3,7 +3,6 @@ import * as bcrypt from "bcrypt";
 import { DataSource } from "typeorm";
 import { adminDatabaseUrl, appDatabaseUrl } from "../test-db";
 import { SessionPgRepository } from "../../src/modules/acesso/infrastructure/adapters/session-pg.repository";
-import { AcessoPgRepository } from "../../src/modules/acesso/infrastructure/adapters/acesso-pg.repository";
 
 const MUNICIPIO_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const PERFIL_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
@@ -14,7 +13,6 @@ describe("SessionPgRepository — integração (camada B)", () => {
   let admin: DataSource;
   let app: DataSource;
   let sessionRepo: SessionPgRepository;
-  let acessoRepo: AcessoPgRepository;
 
   beforeAll(async () => {
     admin = new DataSource({ type: "postgres", url: adminDatabaseUrl() });
@@ -23,7 +21,6 @@ describe("SessionPgRepository — integração (camada B)", () => {
     await app.initialize();
 
     sessionRepo = new SessionPgRepository(app);
-    acessoRepo = new AcessoPgRepository(app);
 
     const senhaHash = await bcrypt.hash("Teste@123456", 4);
 
@@ -62,7 +59,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("buscarPorTokenHash retorna sessão ativa não expirada", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -90,7 +87,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("buscarPorTokenHash retorna null para sessão expirada", async () => {
     const expiraEm = new Date(Date.now() - 1000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -107,7 +104,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("renovarAtividade atualiza expira_em e ultima_atividade_em", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -138,7 +135,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("revogar muda status para revogada e define revogada_em", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -162,7 +159,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("buscarPorTokenHash retorna null após revogar", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -182,8 +179,8 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("revogarTodas revoga todas as sessões ativas do usuário", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    await acessoRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
-    await acessoRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
 
     await sessionRepo.revogarTodas(USER_ID);
 
