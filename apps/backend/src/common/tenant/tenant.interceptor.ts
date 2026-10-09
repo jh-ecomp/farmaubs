@@ -41,7 +41,11 @@ export class TenantInterceptor implements NestInterceptor {
       return null;
     }
     const request = context.switchToHttp().getRequest();
-    const session: SessionScope | undefined = request.session ?? request.user;
+    if (request.tenantScope?.municipioId) {
+      return request.tenantScope.municipioId;
+    }
+    const session: SessionScope | undefined =
+      request.session ?? request.user ?? request.sessao;
     return session?.municipioId ?? null;
   }
 }
