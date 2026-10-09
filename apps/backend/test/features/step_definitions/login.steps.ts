@@ -27,7 +27,7 @@ function createSimpleMock<T extends (...args: any[]) => any>(impl?: T) {
 }
 
 function makeConfig(overrides: Record<string, number> = {}): import("../../../src/modules/acesso/application/use-cases/login.use-case").LoginUseCaseConfig {
-  const values: any = {
+  const values: Record<string, number> = {
     maxTentativas: 5,
     ttlMinutos: 60,
     ...overrides,
