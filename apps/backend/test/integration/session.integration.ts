@@ -9,7 +9,7 @@ const PERFIL_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const USER_ID = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 const EMAIL = "session.integration@farmaubs.test";
 
-describe("SessionPgRepository — integração (camada B)", () => {
+describe("SessionPgRepository — integração (camada C)", () => {
   let admin: DataSource;
   let app: DataSource;
   let sessionRepo: SessionPgRepository;
@@ -100,6 +100,23 @@ describe("SessionPgRepository — integração (camada B)", () => {
     expect(sessao).toBeNull();
   });
 
+  it("buscarPorTokenHash retorna null para sessão pendente_2fa", async () => {
+    const tokenPlain = await sessionRepo.criarSessao({
+      usuarioId: USER_ID,
+      expiraEm: new Date(Date.now() + 60 * 60_000),
+    });
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(tokenPlain)
+      .digest("hex");
+    await admin.query(
+      `UPDATE sessions SET status = 'pendente_2fa' WHERE token_hash = $1`,
+      [tokenHash],
+    );
+
+    expect(await sessionRepo.buscarPorTokenHash(tokenHash)).toBeNull();
+  });
+
   // ── renovarAtividade ──────────────────────────────────────────────────────
 
   it("renovarAtividade atualiza expira_em e ultima_atividade_em", async () => {
@@ -117,6 +134,17 @@ describe("SessionPgRepository — integração (camada B)", () => {
     expect(sessao).not.toBeNull();
 
     const novaExpiracao = new Date(Date.now() + 90 * 60_000);
+
+    // Força um valor antigo para garantir que a renovação realmente o altere
+    await admin.query(
+      `UPDATE sessions SET ultima_atividade_em = now() - interval '10 minutes' WHERE id = $1`,
+      [sessao!.id],
+    );
+    const antes = await admin.query(
+      `SELECT ultima_atividade_em FROM sessions WHERE id = $1`,
+      [sessao!.id],
+    );
+
     await sessionRepo.renovarAtividade({
       sessionId: sessao!.id,
       expiraEm: novaExpiracao,
@@ -126,8 +154,11 @@ describe("SessionPgRepository — integração (camada B)", () => {
       `SELECT expira_em, ultima_atividade_em FROM sessions WHERE id = $1`,
       [sessao!.id],
     );
-    expect(new Date(rows[0].expira_em).getTime()).toBeGreaterThan(
-      expiraEm.getTime(),
+    expect(
+      Math.abs(new Date(rows[0].expira_em).getTime() - novaExpiracao.getTime()),
+    ).toBeLessThan(1000);
+    expect(new Date(rows[0].ultima_atividade_em).getTime()).toBeGreaterThan(
+      new Date(antes[0].ultima_atividade_em).getTime(),
     );
   });
 
