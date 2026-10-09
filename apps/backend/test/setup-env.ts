@@ -9,6 +9,6 @@ process.env.DB_HOST     = process.env.TEST_DB_HOST     ?? 'localhost';
 process.env.DB_PORT     = process.env.TEST_DB_PORT     ?? '5435';
 process.env.POSTGRES_DB = process.env.TEST_DB_DATABASE ?? 'farmaubs';
 process.env.DB_USER     = process.env.TEST_APP_DB_USER ?? 'farmaubs_app';
-process.env.DB_PASSWORD = process.env.TEST_APP_DB_PASSWORD ??
-                          process.env.FARMAUBS_APP_DB_PASSWORD ??
-                          'farmaubs_test_app_password';
+process.env.TEST_APP_DB_PASSWORD = process.env.TEST_APP_DB_PASSWORD ?? 'farmaubs_test_app_password';
+process.env.TEST_ADMIN_DB_PASSWORD = process.env.TEST_ADMIN_DB_PASSWORD ?? 'farmaubs_test_password';
+process.env.DB_PASSWORD = process.env.TEST_APP_DB_PASSWORD;
