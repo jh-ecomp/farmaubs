@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmaUBS - Inventário Mensal</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts: Inter & Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <!-- Custom CSS FarmaUBS -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Estilos específicos para impressão da Ata de Homologação */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        background: #ffffff;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body style="background-color: var(--color-canvas-bg);">
+
+  <!-- MENU LATERAL / SIDEBAR (Fiel a apps/frontend/src/pages/AdminUsuarios) -->
+  <aside class="farma-sidebar" id="farmaSidebar" aria-label="Navegação Lateral">
+    <div class="d-flex flex-column flex-grow-1 min-h-0">
+      
+      <!-- Topo da Sidebar com Logo FarmaUBS -->
+      <div class="farma-sidebar-brand">
+        <div class="d-flex align-items-center gap-2">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 32px; height: 32px; object-fit: contain;">
+          <div class="d-flex flex-column">
+            <span style="font-size: 16px; font-weight: 700; color: #001c6d; line-height: 1;">FarmaUBS</span>
+            <span style="font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">SMS Parnaíba/PI</span>
+          </div>
+        </div>
+        <span class="badge-cnes-sus" style="font-size: 10px;">SUS</span>
+      </div>
+
+      <!-- Links de Navegação das 4 Telas do Incremento 1 -->
+      <div class="farma-sidebar-menu">
+        <div class="farma-sidebar-section-title">OPERAÇÕES FARMÁCIA</div>
+        <nav>
+          <!-- 1. Dispensação -->
+          <a href="dispensacao.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">medication_liquid</span>
+            <span>Dispensação</span>
+          </a>
+
+          <!-- 2. Recebimento -->
+          <a href="recebimento.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">move_to_inbox</span>
+            <span>Recebimento</span>
+          </a>
+        </nav>
+
+        <div class="farma-sidebar-section-title mt-3">CONTROLE &amp; ESTOQUE</div>
+        <nav>
+          <!-- 3. Estoque Atual -->
+          <a href="estoque.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">inventory_2</span>
+            <span>Estoque Atual</span>
+          </a>
+
+          <!-- 4. Inventário Mensal (Ativo) -->
+          <a href="inventario.html" class="farma-sidebar-nav-item active" aria-current="page">
+            <span class="material-symbols-outlined" style="font-size: 20px;">fact_check</span>
+            <span>Inventário Mensal</span>
+          </a>
+        </nav>
+      </div>
+
+    </div>
+
+    <!-- Rodapé da Sidebar -->
+    <div class="farma-sidebar-footer">
+      <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 11px;">
+        <span class="material-symbols-outlined text-primary" style="font-size: 18px;">local_hospital</span>
+        <div style="line-height: 1.3;">
+          <strong class="d-block text-dark" style="font-size: 11px;">Secretaria de Saúde</strong>
+          <span>Parnaíba/PI • SUS Brasil</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTAINER DE LAYOUT PRINCIPAL -->
+  <div class="farma-main-layout">
+
+    <!-- HEADER SUPERIOR INSTITUCIONAL -->
+    <header class="farma-header justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <!-- Botão Menu Mobile -->
+        <button class="btn btn-sm btn-light border d-lg-none p-1 me-1" id="btnToggleSidebar" title="Abrir menu">
+          <span class="material-symbols-outlined" style="font-size: 22px;">menu</span>
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted d-none d-sm-inline" style="font-size: 13px;">Unidade:</span>
+          <strong class="text-dark" style="font-size: 13px;" id="navUnitSubtitle">SMS Parnaíba - UBS Centro</strong>
+          <span class="badge-cnes-sus d-none d-md-inline-block ms-1">Módulo Auditoria</span>
+        </div>
+      </div>
+
+      <!-- Perfil e Logout -->
+      <div class="d-flex align-items-center gap-3">
+        <div class="badge-farma-optimal d-none d-md-inline-flex">
+          <span class="material-symbols-outlined" style="font-size: 16px;">verified_user</span>
+          <span>Auditoria Sanitária SUS</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <div class="text-end d-none d-sm-block">
+            <p class="mb-0 fw-semibold text-dark" style="font-size: 13px; line-height: 1;" id="navUserName">Dr. Carlos Eduardo</p>
+            <small class="text-muted" style="font-size: 11px;" id="navUserEmail">CRF/PI 4821 • Farmacêutico</small>
+          </div>
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 34px; height: 34px; background-color: #001c6d; font-size: 14px;" id="userAvatar">
+            C
+          </div>
+
+          <a href="login.html" class="btn btn-sm text-secondary ms-1 p-1 rounded-2" title="Sair do FarmaUBS" style="line-height: 1;">
+            <span class="material-symbols-outlined" style="font-size: 22px;">logout</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+    <main class="container-fluid px-3 px-lg-4 py-4" style="max-width: 1440px;">
+      
+      <!-- Topo: Título da Página, Status do Ciclo e Métricas em Tempo Real -->
+      <div class="row align-items-center mb-4 g-3">
+        <div class="col-12 col-lg-5">
+          <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+            Controle &amp; Estoque / <strong class="text-dark">Inventário Mensal</strong>
+          </span>
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <h2 class="fw-bold text-dark mb-0" style="font-size: 22px;">Inventário Físico &amp; Apuração</h2>
+            <span class="badge-farma-optimal" id="inventoryStatusBadge">
+              <span class="material-symbols-outlined" style="font-size: 14px;">pending_actions</span>
+              <span id="inventoryStatusText">Em Andamento</span>
+            </span>
+          </div>
+          <p class="text-muted mb-0 mt-1" style="font-size: 13px;">
+            Ciclo: <strong class="text-dark" id="inventoryCycleText">Setembro / 2026</strong> &bull; Conferência física cega e conciliação de saldos.
+          </p>
+        </div>
+
+        <!-- Cards de Métricas do Inventário -->
+        <div class="col-12 col-lg-7">
+          <div class="row g-2 justify-content-lg-end">
+            <!-- Progresso de Itens Auditados -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #dde9ff; color: #0b3099; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">fact_check</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Conferidos</span>
+                  <span class="fw-bold text-dark" style="font-size: 18px;" id="statCountedRatio">0 / 0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Divergências Detectadas -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #fffbeb; color: #b45309; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">difference</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Divergências</span>
+                  <span class="fw-bold text-warning" style="font-size: 18px; color: #b45309 !important;" id="statDivergenceCount">0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Acurácia do Estoque (%) -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #ecfdf5; color: #047857; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">analytics</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Acurácia</span>
+                  <span class="fw-bold text-success" style="font-size: 18px;" id="statAccuracyPercent">100%</span>
+                </div>
+              </div>
+            </div>
+            <!-- Total de Peças Físicas -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #f1f5f9; color: #475569; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">inventory_2</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Total Físico</span>
+                  <span class="fw-bold text-dark" style="font-size: 18px;" id="statTotalPhysicalUnits">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRID PRINCIPAL: FORMULÁRIO DE CONTAGEM À ESQUERDA + TABELA DE CONCILIAÇÃO À DIREITA -->
+      <div class="row g-4">
+        
+        <!-- COLUNA ESQUERDA: FORMULÁRIO DE LANÇAMENTO DA CONTAGEM FÍSICA -->
+        <div class="col-12 col-xl-5">
+          <div class="farma-card h-100">
+            <div class="farma-card-header d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined text-primary" style="font-size: 22px;">edit_note</span>
+                <h5 class="fw-bold text-dark mb-0" style="font-size: 16px;">Registrar Contagem do Item</h5>
+              </div>
+              <span class="badge-cnes-sus" style="font-size: 11px;">Passo a Passo</span>
+            </div>
+
+            <div class="p-3 p-lg-4">
+              <form id="inventoryCountForm" novalidate>
+
+                <!-- 1. Campo de Seleção do Medicamento com Busca em Tempo Real (Combobox) -->
+                <div class="mb-3 position-relative">
+                  <label for="medicineSearchInput" class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">
+                    1. Medicamento para Conferência <span class="text-danger">*</span>
+                  </label>
+                  
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #cbd5e1;">
+                      <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control farma-input border-start-0 ps-0"
+                      id="medicineSearchInput"
+                      placeholder="Digite o nome do medicamento ou lote..."
+                      autocomplete="off"
+                      required
+                    >
+                    <button class="btn btn-outline-secondary border" type="button" id="btnClearMedSelection" title="Limpar busca" style="border-color: #cbd5e1;">
+                      <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                    </button>
+                  </div>
+                  
+                  <small class="text-muted" style="font-size: 11px;">
+                    Pesquise pelo princípio ativo, dosagem ou código de lote farmacêutico.
+                  </small>
+
+                  <!-- Menu Flutuante de Resultados da Busca -->
+                  <div id="medicineDropdown" class="farma-dropdown-menu d-none" role="listbox">
+                    <!-- Opções geradas dinamicamente via JS -->
+                  </div>
+                  <input type="hidden" id="selectedMedicineId" value="">
+                </div>
+
+                <!-- 2. Painel de Ficha do Medicamento e Saldo Teórico Atual -->
+                <div class="medicine-info-panel mb-3" id="medDetailPanel" style="display: none;">
+                  <div class="med-info-item">
+                    <span class="med-info-label">Medicamento</span>
+                    <span class="med-info-value" id="displayMedName">-</span>
+                  </div>
+                  <div class="med-info-item">
+                    <span class="med-info-label">Lote Farma</span>
+                    <span class="med-info-value" id="displayMedBatch">-</span>
+                  </div>
+                  <div class="med-info-item">
+                    <span class="med-info-label">Validade</span>
+                    <span id="displayMedExpiryBadge" class="badge-expiry-safe">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">event_available</span>
+                      <span id="displayMedExpiry">-</span>
+                    </span>
+                  </div>
+                  <div class="med-info-item">
+                    <span class="med-info-label">Saldo no Sistema</span>
+                    <span class="med-info-value text-primary" style="font-size: 15px;" id="displayMedSystemStock">0 unid.</span>
+                  </div>
+                </div>
+
+                <!-- 3. Campo de Entrada da Contagem Física -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="physicalCountInput" class="form-label text-dark fw-bold mb-0" style="font-size: 13px;">
+                      2. Quantidade Contada Fisicamente <span class="text-danger">*</span>
+                    </label>
+                    <span class="text-muted small" id="unitLabel">unidades</span>
+                  </div>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #cbd5e1;">
+                      <span class="material-symbols-outlined" style="font-size: 18px;">pin</span>
+                    </span>
+                    <input
+                      type="number"
+                      class="form-control farma-input form-control-lg fw-bold border-start-0"
+                      id="physicalCountInput"
+                      min="0"
+                      step="1"
+                      placeholder="Ex: 180"
+                      disabled
+                      required
+                    >
+                  </div>
+                  <small class="text-muted" style="font-size: 11px;">
+                    Insira a quantidade física real apurada nas prateleiras ou caixas térmicas.
+                  </small>
+                </div>
+
+                <!-- 4. Painel de Cálculo em Tempo Real de Divergência -->
+                <div class="mb-3 p-3 rounded-2 border" id="divergenceFeedbackBox" style="background-color: #f8fafc; border-color: #e2e8f0; display: none;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="small fw-semibold text-secondary">Apuração da Divergência:</span>
+                    <span id="calculatedDivergenceBadge" class="badge-divergence-zero">
+                      <span class="material-symbols-outlined" style="font-size: 15px;">check_circle</span>
+                      <span>Divergência: 0 (Estoque Batendo)</span>
+                    </span>
+                  </div>
+                  <div class="mt-2 text-muted" style="font-size: 12px;" id="divergenceFormulaText">
+                    Fórmula: Contagem (0) - Sistema (0) = 0
+                  </div>
+                </div>
+
+                <!-- 5. Campo de Motivo da Divergência (obrigatório se divergência != 0) -->
+                <div class="mb-3" id="divergenceReasonGroup" style="display: none;">
+                  <label for="divergenceReasonSelect" class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">
+                    3. Motivo da Divergência <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select farma-select" id="divergenceReasonSelect">
+                    <option value="" selected disabled>Selecione a justificativa sanitária...</option>
+                    <option value="Avaria / Frasco Quebrado">Avaria / Frasco Quebrado ou Danificado</option>
+                    <option value="Validade Vencida (Descarte)">Validade Vencida (Descarte Sanitário Conforme RDC)</option>
+                    <option value="Erro em Dispensação Anterior">Erro em Baixa de Dispensação Anterior</option>
+                    <option value="Erro em Recebimento / NF">Erro de Lançamento em Nota Fiscal / Guia CAF</option>
+                    <option value="Sobra Não Registrada">Sobra de Remessa / Bonificação Não Registrada</option>
+                    <option value="Perda em Investigação">Perda / Desvio em Investigação</option>
+                    <option value="Ajuste Administrativo">Ajuste de Arredondamento Administrativo</option>
+                  </select>
+                </div>
+
+                <!-- 6. Observações e Justificativa Adicional -->
+                <div class="mb-4">
+                  <label for="countNotes" class="form-label text-dark fw-semibold mb-1" style="font-size: 13px;">
+                    Observações do Farmacêutico (Opcional)
+                  </label>
+                  <textarea
+                    class="form-control farma-input"
+                    id="countNotes"
+                    rows="2"
+                    placeholder="Informações adicionais para auditoria (ex: frasco trincado no transporte, recontagem efetuada com auxiliar)..."
+                    style="font-size: 13px;"
+                  ></textarea>
+                </div>
+
+                <!-- Botões de Ação do Formulário -->
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn-farma-primary flex-grow-1" id="btnSaveItemCount" disabled>
+                    <span class="material-symbols-outlined" style="font-size: 18px;">save</span>
+                    <span>Salvar Contagem</span>
+                  </button>
+                  <button type="button" class="btn-farma-outline" id="btnResetForm">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">restart_alt</span>
+                    <span>Limpar</span>
+                  </button>
+                </div>
+
+              </form>
+
+              <!-- Dica de Boas Práticas Farmacêuticas -->
+              <div class="mt-4 p-3 rounded-2" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                <div class="d-flex align-items-start gap-2">
+                  <span class="material-symbols-outlined text-success" style="font-size: 20px; flex-shrink: 0; margin-top: 1px;">verified</span>
+                  <div style="font-size: 12px; color: #166534; line-height: 1.4;">
+                    <strong>Diretriz SUS / Farmácia Básica:</strong> O inventário mensal garante a rastreabilidade por lote, evita rupturas de estoque e atende às exigências de prestação de contas do Hórus/SISMAC.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA: TABELA DE CONCILIAÇÃO & MAPA DE DIVERGÊNCIAS -->
+        <div class="col-12 col-xl-7">
+          <div class="farma-card h-100 d-flex flex-column">
+            
+            <!-- Barra Superior da Tabela com Filtros e Botões Globais -->
+            <div class="farma-card-header">
+              <div class="row align-items-center g-2">
+                <div class="col-12 col-sm-6 col-md-5">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 22px;">checklist</span>
+                    <h5 class="fw-bold text-dark mb-0" style="font-size: 16px;">Mapa de Apuração</h5>
+                  </div>
+                </div>
+
+                <!-- Filtro de Situação e Ações Globais -->
+                <div class="col-12 col-sm-6 col-md-7 d-flex justify-content-sm-end align-items-center gap-2 flex-wrap">
+                  <!-- Seletor de Filtro de Itens -->
+                  <select class="form-select farma-select form-control-sm" id="tableFilterStatus" style="font-size: 12px; width: auto;">
+                    <option value="ALL" selected>Todos os Itens</option>
+                    <option value="DIVERGENT">Apenas com Divergência</option>
+                    <option value="CONFERRED">Apenas Conferidos</option>
+                    <option value="PENDING">Apenas Pendentes</option>
+                  </select>
+
+                  <!-- Botão de Homologação Oficial -->
+                  <button type="button" class="btn-farma-success py-1 px-3" id="btnOpenHomologateModal" style="font-size: 12px;" title="Fechar e homologar o inventário mensal">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">task_alt</span>
+                    <span>Homologar</span>
+                  </button>
+
+                  <!-- Botão de Impressão da Ata -->
+                  <button type="button" class="btn-farma-outline py-1 px-2" id="btnPrintAta" style="font-size: 12px;" title="Imprimir Ata de Inventário">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
+                    <span class="d-none d-md-inline">Ata</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabela de Medicamentos do Inventário -->
+            <div class="p-0 overflow-hidden flex-grow-1 d-flex flex-column">
+              <div class="table-responsive" style="max-height: 560px;">
+                <table class="table-farmaubs" id="inventoryTable">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="min-width: 180px;">Medicamento &amp; Lote</th>
+                      <th scope="col" class="text-center" style="min-width: 90px;">Sistema</th>
+                      <th scope="col" class="text-center" style="min-width: 90px;">Contagem</th>
+                      <th scope="col" class="text-center" style="min-width: 120px;">Divergência</th>
+                      <th scope="col" style="min-width: 140px;">Motivo / Justificativa</th>
+                      <th scope="col" class="text-center" style="min-width: 100px;">Status</th>
+                      <th scope="col" class="text-end" style="min-width: 80px;">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventoryTableBody">
+                    <!-- Gerado dinamicamente via js/inventario.js -->
+                  </tbody>
+                </table>
+
+                <!-- Mensagem de Estado Vazio se nenhum item corresponder aos filtros -->
+                <div id="emptyInventoryFilterMessage" class="d-none text-center py-5 px-3">
+                  <span class="material-symbols-outlined text-muted" style="font-size: 40px; opacity: 0.6;">
+                    filter_alt_off
+                  </span>
+                  <h6 class="fw-bold text-dark mt-2 mb-1">Nenhum item encontrado no filtro</h6>
+                  <p class="text-muted small mb-0">Altere o filtro selecionado para visualizar os medicamentos.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rodapé Informativo da Tabela -->
+            <div class="px-3 py-2 border-top d-flex flex-wrap align-items-center justify-content-between small text-muted" style="background-color: #ffffff; border-radius: 0 0 12px 12px; font-size: 12px;">
+              <div class="d-flex align-items-center gap-3">
+                <span class="d-flex align-items-center gap-1">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #047857; display: inline-block;"></span> Fiel / Batendo
+                </span>
+                <span class="d-flex align-items-center gap-1">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #b91c1c; display: inline-block;"></span> Falta
+                </span>
+                <span class="d-flex align-items-center gap-1">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #1d4ed8; display: inline-block;"></span> Sobra
+                </span>
+              </div>
+              <div id="footerInventorySummary">
+                Carregando conciliação do inventário...
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div> <!-- Fecha .farma-main-layout -->
+
+  <!-- MODAL "FarmaUBS diz: Homologação do Inventário Mensal" -->
+  <div
+    id="homologateModal"
+    class="farma-modal-backdrop"
+    style="display: none;"
+    role="presentation"
+  >
+    <div
+      class="farma-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="homologate-modal-title"
+      style="max-width: 520px;"
+    >
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 26px; height: 26px;">
+          <h2 id="homologate-modal-title" style="font-size: 16px; font-weight: 700; color: #001c6d; margin: 0;">
+            FarmaUBS diz: Homologação do Ciclo Mensal
+          </h2>
+        </div>
+        <button type="button" id="btnCloseHomologateModal" style="background: none; border: none; cursor: pointer; color: #64748B;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div style="font-size: 13px; color: #334155; line-height: 1.6;">
+        <div class="p-3 mb-3 rounded-2" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
+          <strong class="d-block text-primary mb-1">Atenção Farmacêutica:</strong>
+          A homologação fecha o ciclo de inventário de <strong id="modalCycleName">Setembro/2026</strong> e ajusta formalmente o saldo do catálogo de estoque oficial com as quantidades contadas fisicamente.
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="border rounded p-2 text-center" style="background-color: #f8fafc;">
+              <span class="d-block text-muted" style="font-size: 11px;">Itens Auditados</span>
+              <strong class="text-dark" id="modalAuditedItems">0</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded p-2 text-center" style="background-color: #f8fafc;">
+              <span class="d-block text-muted" style="font-size: 11px;">Divergências Justificadas</span>
+              <strong class="text-warning" id="modalDivergentItems">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div id="modalPendingWarning" class="alert alert-warning py-2 px-3 small d-none" role="alert">
+          <span class="material-symbols-outlined align-middle me-1" style="font-size: 16px;">warning</span>
+          Existem itens ainda não conferidos. Deseja homologar mesmo assim mantendo o saldo anterior para os itens pendentes?
+        </div>
+
+        <p class="mb-0 text-muted small">
+          Ao confirmar, o sistema registrará a assinatura eletrônica do Responsável Técnico (<span id="modalPharmacistName">Dr. Carlos Eduardo</span>) e emitirá a Ata Oficial de Conformidade.
+        </p>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <button type="button" class="btn-farma-outline py-1 px-3" id="btnCancelHomologate">
+          Voltar
+        </button>
+        <button type="button" class="btn-farma-success py-1 px-3" id="btnConfirmHomologate">
+          <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+          <span>Confirmar e Homologar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÁREA DE IMPRESSÃO: ATA OFICIAL DE HOMOLOGAÇÃO DE INVENTÁRIO SUS -->
+  <div id="printArea" class="d-none">
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
+      <!-- Cabeçalho Oficial -->
+      <div style="border-bottom: 2px solid #001c6d; padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h2 style="font-size: 18px; margin: 0; color: #001c6d; font-weight: bold;">SECRETARIA MUNICIPAL DE SAÚDE DE PARNAÍBA / PI</h2>
+          <h3 style="font-size: 14px; margin: 3px 0 0 0; color: #374151;">Sistema FarmaUBS • Módulo de Controle e Gestão Farmacêutica</h3>
+          <p style="font-size: 12px; margin: 2px 0 0 0; color: #6b7280;">Unidade: UBS Centro • CNES: 2384910 • Farmácia Básica SUS</p>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 14px; font-weight: bold; background: #e0e7ff; color: #1e1b4b; padding: 4px 10px; border-radius: 4px; display: inline-block;">
+            ATA DE INVENTÁRIO
+          </span>
+          <p style="font-size: 11px; margin: 4px 0 0 0; color: #6b7280;" id="printDateStamp">Emitido em: 28/09/2026</p>
+        </div>
+      </div>
+
+      <!-- Dados da Sessão de Inventário -->
+      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div><strong>Ciclo de Referência:</strong> <span id="printCycle">Setembro/2026</span></div>
+          <div><strong>Status:</strong> <span id="printStatus">HOMOLOGADO</span></div>
+          <div><strong>Farmacêutico Responsável:</strong> Dr. Carlos Eduardo (CRF/PI 4821)</div>
+          <div><strong>Acurácia Global do Estoque:</strong> <span id="printAccuracy">100%</span></div>
+        </div>
+      </div>
+
+      <!-- Tabela Resumo do Inventário -->
+      <h4 style="font-size: 13px; text-transform: uppercase; margin-bottom: 8px; color: #001c6d;">Espelho de Conciliação Físico vs. Contábil</h4>
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px;">
+        <thead>
+          <tr style="background-color: #f3f4f6; border-bottom: 1px solid #d1d5db; text-align: left;">
+            <th style="padding: 6px 8px;">Medicamento</th>
+            <th style="padding: 6px 8px;">Lote</th>
+            <th style="padding: 6px 8px; text-align: center;">Validade</th>
+            <th style="padding: 6px 8px; text-align: right;">Sistema</th>
+            <th style="padding: 6px 8px; text-align: right;">Físico</th>
+            <th style="padding: 6px 8px; text-align: right;">Divergência</th>
+            <th style="padding: 6px 8px;">Motivo / Justificativa</th>
+          </tr>
+        </thead>
+        <tbody id="printTableBody">
+          <!-- Injetado dinamicamente -->
+        </tbody>
+      </table>
+
+      <!-- Assinaturas e Homologação Legal -->
+      <div style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center; font-size: 12px;">
+        <div style="width: 45%; border-top: 1px solid #111827; padding-top: 6px;">
+          <strong>Dr. Carlos Eduardo</strong><br>
+          Farmacêutico Responsável Técnico<br>
+          CRF/PI 4821
+        </div>
+        <div style="width: 45%; border-top: 1px solid #111827; padding-top: 6px;">
+          <strong>Coordenação de Assistência Farmacêutica</strong><br>
+          Secretaria Municipal de Saúde<br>
+          Prefeitura de Parnaíba / PI
+        </div>
+      </div>
+
+      <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #9ca3af;">
+        Documento gerado automaticamente pelo Sistema FarmaUBS. Em conformidade com as Boas Práticas de Armazenamento e Distribuição da Anvisa (RDC 430/2020) e SUS.
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Flutuante de Feedback -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="liveToast" class="toast align-items-center border-0 shadow-lg text-white" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" id="toastIcon" style="font-size: 20px;">check_circle</span>
+          <span id="toastMessage">Operação realizada com sucesso!</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script de Inventário Mensal -->
+  <script src="js/inventario.js"></script>
+</body>
+</html>
