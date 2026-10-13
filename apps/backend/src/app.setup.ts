@@ -1,10 +1,14 @@
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import cookieParser from "cookie-parser";
 
 export function configureApp(app: INestApplication): void {
+  app.use(cookieParser());
+
   app.enableCors({
     origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
-    exposedHeaders: ["Authorization", "X-Session-Expires-At"],
+    credentials: true,
+    exposedHeaders: ["Authorization", "X-Session-Expires-At", "Set-Cookie"],
   });
 
   app.setGlobalPrefix("api/v1");

@@ -7,11 +7,11 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 28 |
-| **Entregues** | 22 (79%) |
-| **Pendentes** | 6 (21%) |
+| **Entregues** | 23 (82%) |
+| **Pendentes** | 5 (18%) |
 
 ```
-Progresso: [████████████████░░░░] 79% (22/28 concluídas)
+Progresso: [████████████████░░░░] 82% (23/28 concluídas)
 ```
 
 ---
@@ -42,10 +42,11 @@ Progresso: [████████████████░░░░] 79% (2
 | **AC-26** | Listagem paginada de usuários com filtros e escopo global | [ac-26-feat-acesso-listagem-paginada-de-usuarios-com-filtros-e-escopo-global.md](./ac-26-feat-acesso-listagem-paginada-de-usuarios-com-filtros-e-escopo-global.md) |
 | **AC-27** | Catálogo de administração | [ac-27-feat-administracao-catalogo-de-administracao.md](./ac-27-feat-administracao-catalogo-de-administracao.md) |
 | **AC-28** | Idempotência e resiliência na reversão de permissões DML | [ac-28-idempotencia-resiliencia-na-reversao-de-permissoes-dml.md](./ac-28-idempotencia-resiliencia-na-reversao-de-permissoes-dml.md) |
+| **AC-29** | Transporte de sessão via cookie seguro `HttpOnly` no backend | [ac-29-feat-acesso-transporte-de-sessao-via-cookie-seguro-httponly-no-backend.md](./ac-29-feat-acesso-transporte-de-sessao-via-cookie-seguro-httponly-no-backend.md) |
 
 ---
 
-## Histórias Pendentes ⏳ (6)
+## Histórias Pendentes ⏳ (5)
 
 | Código | Título | Especificação | Prioridade / Foco |
 | --- | --- | --- | --- |
@@ -53,7 +54,6 @@ Progresso: [████████████████░░░░] 79% (2
 | **AC-13** | Guards de autorização RBAC por perfil e escopo de tenant | [ac-13-guards-de-autorizacao-rbac-por-perfil-e-escopo-de-tenant.md](./ac-13-guards-de-autorizacao-rbac-por-perfil-e-escopo-de-tenant.md) | Backend / Segurança & RBAC |
 | **AC-14** | Porta `AuthProvider` e adaptador de sessão server-side | [ac-14-porta-authprovider-e-adaptador-de-sessao-server-side.md](./ac-14-porta-authprovider-e-adaptador-de-sessao-server-side.md) | Backend / Arquitetura Hexagonal |
 | **AC-21** | Proteção de rotas por perfil e logout | [ac-21-protecao-de-rotas-por-perfil-e-logout.md](./ac-21-protecao-de-rotas-por-perfil-e-logout.md) | Frontend / Rotas e RBAC |
-| **AC-29** | Transporte de sessão via cookie seguro `HttpOnly` no backend | [ac-29-feat-acesso-transporte-de-sessao-via-cookie-seguro-httponly-no-backend.md](./ac-29-feat-acesso-transporte-de-sessao-via-cookie-seguro-httponly-no-backend.md) | Backend / Segurança de Sessão |
 | **AC-30** | Migração de sessão para cookie `HttpOnly` e expurgo de tokens do `localStorage` no frontend | [ac-30-feat-acesso-migracao-de-sessao-para-cookie-httponly-e-expurgo-de-tokens-do-localstorage-no-frontend.md](./ac-30-feat-acesso-migracao-de-sessao-para-cookie-httponly-e-expurgo-de-tokens-do-localstorage-no-frontend.md) | Frontend / Segurança & Cookie |
 
 ---

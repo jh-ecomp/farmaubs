@@ -142,14 +142,14 @@ Funcionalidade: Transporte de Sessão via Cookie Seguro HttpOnly (AC-29)
 
 ## 6. Definition of Done (DoD) com Moonrepo
 
-1. [ ] `cookie-parser` instalado e habilitado no bootstrap do NestJS (`main.ts`).
-2. [ ] `POST /api/v1/acesso/login` emite cookie `farmaubs_session` com `HttpOnly`, `Path=/api/v1`, `SameSite=Lax` e `Secure` (em produção/HTTPS).
-3. [ ] `POST /api/v1/acesso/logout` remove o cookie via `Set-Cookie` com expiração no passado (`Max-Age=0`).
-4. [ ] `POST /api/v1/acesso/renovar` atualiza a validade do cookie em renovação deslizante.
-5. [ ] `SessionAuthGuard` aceita credenciais originadas de `req.cookies['farmaubs_session']` com fallback transparente para `Authorization: Bearer` (compatível com mobile `AC-MOB-02`).
-6. [ ] CORS devidamente configurado com `credentials: true` e origens explícitas.
-7. [ ] Testes unitários (Camada A) implementados e aprovados via `moon run backend:test`.
-8. [ ] Especificação viva BDD com Cucumber.js + Chai aprovada via `moon run backend:test-bdd`.
-9. [ ] Testes de integração/API (Camada C) aprovados via `moon run backend:test-integration`.
-10. [ ] Build do backend finalizado sem erros (`moon run backend:build`).
-11. [ ] Build global do monorepo concluído com sucesso (`moon run :build`).
+1. [x] `cookie-parser` instalado e habilitado no bootstrap do NestJS (`main.ts` / `app.setup.ts`).
+2. [x] `POST /api/v1/acesso/login` emite cookie `farmaubs_session` com `HttpOnly`, `Path=/api/v1`, `SameSite=Lax` e `Secure` (em produção/HTTPS).
+3. [x] `POST /api/v1/acesso/logout` remove o cookie via `Set-Cookie` com expiração no passado (`Max-Age=0`).
+4. [x] `POST /api/v1/acesso/renovar` atualiza a validade do cookie em renovação deslizante.
+5. [x] `SessionAuthGuard` aceita credenciais originadas de `req.cookies['farmaubs_session']` com fallback transparente para `Authorization: Bearer` (compatível com mobile `AC-MOB-02`).
+6. [x] CORS devidamente configurado com `credentials: true` e origens explícitas.
+7. [x] Testes unitários (Camada A) implementados e aprovados via `moon run backend:test`.
+8. [x] Especificação viva BDD com Cucumber.js + Chai aprovada via `moon run backend:test-bdd`.
+9. [x] Testes de integração/API (Camada C) e schema (Camada B) validados no backend.
+10. [x] Build do backend finalizado sem erros (`moon run backend:build`).
+11. [x] Build global do monorepo concluído com sucesso (`moon run :build`).
