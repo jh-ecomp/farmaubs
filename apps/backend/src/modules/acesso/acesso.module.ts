@@ -1,3 +1,4 @@
+import { DataSource } from "typeorm";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { UserController } from "./api/controllers/user.controller";
@@ -28,8 +29,8 @@ import { REPOSITORIO_PERFIL_PORT } from "./domain/ports/profile.repository.port"
 import { REPOSITORIO_UNIDADE_SAUDE_PORT } from "./domain/ports/health-unit.repository.port";
 import { GERADOR_HASH_SENHA_PORT } from "./domain/ports/password-hasher.port";
 import { SERVICO_EMAIL_PORT } from "./domain/ports/email-service.port";
-import { ACESSO_REPOSITORY } from "./domain/ports/acesso.repository.port";
-import { SESSION_REPOSITORY } from "./domain/ports/session.repository.port";
+import { ACESSO_REPOSITORY, type IAcessoRepository } from "./domain/ports/acesso.repository.port";
+import { SESSION_REPOSITORY, type ISessionRepository } from "./domain/ports/session.repository.port";
 import { AUDIT_REPOSITORY_PORT } from "./domain/ports/audit.repository.port";
 import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.repository";
 
@@ -45,7 +46,8 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     },
     {
       provide: SESSION_REPOSITORY,
-      useClass: SessionPgRepository,
+      useFactory: (ds: DataSource) => new SessionPgRepository(ds),
+      inject: [DataSource],
     },
     TypeOrmUserRepository,
     TypeOrmProfileRepository,
@@ -79,18 +81,22 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     },
     {
       provide: LoginUseCase,
-      useFactory: (acessoRepo: AcessoPgRepository, config: ConfigService) => {
-        return new LoginUseCase(acessoRepo, {
+      useFactory: (
+        acessoRepo: IAcessoRepository,
+        sessionRepo: ISessionRepository,
+        config: ConfigService,
+      ) => {
+        return new LoginUseCase(acessoRepo, sessionRepo, {
           maxTentativas: parseInt(config.get<string>("LOGIN_MAX_ATTEMPTS", "5"), 10),
           ttlMinutos: parseInt(config.get<string>("SESSION_TTL_MINUTES", "60"), 10),
           warningSeconds: parseInt(config.get<string>("SESSION_WARNING_SECONDS", "300"), 10),
         });
       },
-      inject: [ACESSO_REPOSITORY, ConfigService],
+      inject: [ACESSO_REPOSITORY, SESSION_REPOSITORY, ConfigService],
     },
     {
       provide: RenewSessionUseCase,
-      useFactory: (sessionRepo: SessionPgRepository, config: ConfigService) => {
+      useFactory: (sessionRepo: ISessionRepository, config: ConfigService) => {
         return new RenewSessionUseCase(sessionRepo, {
           ttlMinutos: parseInt(config.get<string>("SESSION_TTL_MINUTES", "60"), 10),
           warningMinutos: parseInt(config.get<string>("SESSION_WARNING_MINUTES", "5"), 10),
@@ -159,7 +165,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
       useFactory: (
         userRepo: TypeOrmUserRepository,
         profileRepo: TypeOrmProfileRepository,
-        sessionRepo: SessionPgRepository,
+        sessionRepo: ISessionRepository,
         auditRepo: TypeOrmAuditRepository,
       ) => {
         return new ToggleUserStatusUseCase(userRepo, profileRepo, sessionRepo, auditRepo);
@@ -176,7 +182,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
       useFactory: (
         userRepo: TypeOrmUserRepository,
         hasher: BcryptPasswordHasherAdapter,
-        sessionRepo: SessionPgRepository,
+        sessionRepo: ISessionRepository,
         auditRepo: TypeOrmAuditRepository,
       ) => {
         return new SetTemporaryPasswordUseCase(userRepo, hasher, sessionRepo, auditRepo);

@@ -1,8 +1,9 @@
+import { PerfilCodigo, SessionStatus } from "@farmaubs/shared";
 import * as crypto from "node:crypto";
 import { LogoutUseCase } from "./logout.use-case";
 import type {
   ISessionRepository,
-  SessionRecord,
+  SessaoAutenticada,
 } from "../../domain/ports/session.repository.port";
 
 describe("LogoutUseCase (Camada A — Teste Unitário)", () => {
@@ -15,16 +16,16 @@ describe("LogoutUseCase (Camada A — Teste Unitário)", () => {
     .update(tokenValido)
     .digest("hex");
 
-  const sessaoMock: SessionRecord = {
+  const sessaoMock: SessaoAutenticada = {
     id: "session-uuid-1",
     usuarioId: "user-uuid-1",
     municipioId: "muni-uuid-1",
-    perfilCodigo: "ADMINISTRADOR",
+    perfilCodigo: PerfilCodigo.ADMINISTRADOR,
     unidadeIds: ["unidade-uuid-1"],
     nomeCompleto: "João Silva",
     email: "joao@ubs.gov.br",
     deveTrocarSenha: false,
-    status: "ativa",
+    status: SessionStatus.ATIVA,
     expiraEm: new Date(Date.now() + 3600000),
     criadoEm: new Date(),
     ultimaAtividadeEm: new Date(),
@@ -32,6 +33,8 @@ describe("LogoutUseCase (Camada A — Teste Unitário)", () => {
 
   beforeEach(() => {
     sessionRepoMock = {
+      criarSessao: jest.fn(),
+      limparExpiradas: jest.fn(),
       buscarPorTokenHash: jest.fn(),
       renovarAtividade: jest.fn(),
       revogar: jest.fn().mockResolvedValue(undefined),
@@ -65,7 +68,7 @@ describe("LogoutUseCase (Camada A — Teste Unitário)", () => {
   it("deve ser idempotente quando a sessão já estiver revogada ou inativa", async () => {
     sessionRepoMock.buscarPorTokenHash.mockResolvedValue({
       ...sessaoMock,
-      status: "revogada",
+      status: SessionStatus.REVOGADA,
     });
 
     await expect(useCase.executar(tokenValido)).resolves.toBeUndefined();

@@ -30,5 +30,3 @@ export interface SessionRecord {
   expiraEm: Date;
   criadoEm: Date;
 }
-
-export type SessaoUsuarioSnapshot = SessionRecord;

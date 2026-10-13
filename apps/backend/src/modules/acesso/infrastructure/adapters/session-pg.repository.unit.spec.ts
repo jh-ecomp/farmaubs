@@ -73,6 +73,8 @@ describe("SessionPgRepository (Testes Unitários em Memória — Camada A)", () 
         municipio_id: "muni-2",
         perfil_id: "perfil-2",
         unidade_ids: null,
+        nome_completo: "Maria",
+        email: "maria@ubs.gov.br",
         status: "ativa",
         expira_em: now.toISOString(),
         criado_em: now.toISOString(),
@@ -126,6 +128,59 @@ describe("SessionPgRepository (Testes Unitários em Memória — Camada A)", () 
       expect(dataSourceMock.query).toHaveBeenCalledWith(
         "SELECT auth_revogar_todas_sessoes($1)",
         ["user-1"],
+      );
+    });
+  });
+
+  describe("limparExpiradas", () => {
+    it("deve invocar auth_limpar_sessoes_expiradas com diasRetencao informado", async () => {
+      dataSourceMock.query.mockResolvedValue([{ total: 5 }]);
+
+      const total = await repository.limparExpiradas(15);
+
+      expect(dataSourceMock.query).toHaveBeenCalledWith(
+        "SELECT auth_limpar_sessoes_expiradas($1::int) AS total",
+        [15],
+      );
+      expect(total).toBe(5);
+    });
+
+    it("deve usar default de 7 dias de retenção", async () => {
+      dataSourceMock.query.mockResolvedValue([{ total: 0 }]);
+
+      const total = await repository.limparExpiradas();
+
+      expect(dataSourceMock.query).toHaveBeenCalledWith(
+        "SELECT auth_limpar_sessoes_expiradas($1::int) AS total",
+        [7],
+      );
+      expect(total).toBe(0);
+    });
+  });
+
+  describe("criarSessao", () => {
+    it("deve gerar token aleatório e invocar auth_criar_sessao com casts explícitos", async () => {
+      dataSourceMock.query.mockResolvedValue([]);
+
+      const expiraEm = new Date("2026-09-22T13:00:00.000Z");
+      const token = await repository.criarSessao({
+        usuarioId: "user-123",
+        expiraEm,
+        ipOrigem: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
+      });
+
+      expect(typeof token).toBe("string");
+      expect(token).toHaveLength(64); // 32 bytes hex
+      expect(dataSourceMock.query).toHaveBeenCalledWith(
+        "SELECT auth_criar_sessao($1::uuid, $2::text, $3::timestamptz, $4::inet, $5::text)",
+        [
+          "user-123",
+          expect.any(String), // tokenHash
+          expiraEm,
+          "192.168.1.1",
+          "Mozilla/5.0",
+        ],
       );
     });
   });

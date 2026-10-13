@@ -14,18 +14,10 @@ export interface UserAcessoRecord {
   deveTrocarSenha: boolean;
 }
 
-export interface CreateSessionParams {
-  usuarioId: string;
-  expiraEm: Date;
-  ipOrigem?: string;
-  userAgent?: string;
-}
-
 export interface IAcessoRepository {
   buscarUsuarioPorEmail(email: string): Promise<UserAcessoRecord | null>;
   registrarFalhaLogin(usuarioId: string): Promise<void>;
   resetarEstadoLogin(usuarioId: string): Promise<void>;
-  criarSessao(params: CreateSessionParams): Promise<string>;
   buscarEscopoUsuario(
     usuarioId: string,
   ): Promise<{ perfilId: string; unidadeIds: string[] }>;

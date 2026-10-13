@@ -3,18 +3,16 @@ import * as bcrypt from "bcrypt";
 import { DataSource } from "typeorm";
 import { adminDatabaseUrl, appDatabaseUrl } from "../test-db";
 import { SessionPgRepository } from "../../src/modules/acesso/infrastructure/adapters/session-pg.repository";
-import { AcessoPgRepository } from "../../src/modules/acesso/infrastructure/adapters/acesso-pg.repository";
 
 const MUNICIPIO_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const PERFIL_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const USER_ID = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 const EMAIL = "session.integration@farmaubs.test";
 
-describe("SessionPgRepository — integração (camada B)", () => {
+describe("SessionPgRepository — integração (camada C)", () => {
   let admin: DataSource;
   let app: DataSource;
   let sessionRepo: SessionPgRepository;
-  let acessoRepo: AcessoPgRepository;
 
   beforeAll(async () => {
     admin = new DataSource({ type: "postgres", url: adminDatabaseUrl() });
@@ -23,7 +21,6 @@ describe("SessionPgRepository — integração (camada B)", () => {
     await app.initialize();
 
     sessionRepo = new SessionPgRepository(app);
-    acessoRepo = new AcessoPgRepository(app);
 
     const senhaHash = await bcrypt.hash("Teste@123456", 4);
 
@@ -62,7 +59,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("buscarPorTokenHash retorna sessão ativa não expirada", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -90,7 +87,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("buscarPorTokenHash retorna null para sessão expirada", async () => {
     const expiraEm = new Date(Date.now() - 1000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -103,11 +100,28 @@ describe("SessionPgRepository — integração (camada B)", () => {
     expect(sessao).toBeNull();
   });
 
+  it("buscarPorTokenHash retorna null para sessão pendente_2fa", async () => {
+    const tokenPlain = await sessionRepo.criarSessao({
+      usuarioId: USER_ID,
+      expiraEm: new Date(Date.now() + 60 * 60_000),
+    });
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(tokenPlain)
+      .digest("hex");
+    await admin.query(
+      `UPDATE sessions SET status = 'pendente_2fa' WHERE token_hash = $1`,
+      [tokenHash],
+    );
+
+    expect(await sessionRepo.buscarPorTokenHash(tokenHash)).toBeNull();
+  });
+
   // ── renovarAtividade ──────────────────────────────────────────────────────
 
   it("renovarAtividade atualiza expira_em e ultima_atividade_em", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -120,6 +134,17 @@ describe("SessionPgRepository — integração (camada B)", () => {
     expect(sessao).not.toBeNull();
 
     const novaExpiracao = new Date(Date.now() + 90 * 60_000);
+
+    // Força um valor antigo para garantir que a renovação realmente o altere
+    await admin.query(
+      `UPDATE sessions SET ultima_atividade_em = now() - interval '10 minutes' WHERE id = $1`,
+      [sessao!.id],
+    );
+    const antes = await admin.query(
+      `SELECT ultima_atividade_em FROM sessions WHERE id = $1`,
+      [sessao!.id],
+    );
+
     await sessionRepo.renovarAtividade({
       sessionId: sessao!.id,
       expiraEm: novaExpiracao,
@@ -129,8 +154,11 @@ describe("SessionPgRepository — integração (camada B)", () => {
       `SELECT expira_em, ultima_atividade_em FROM sessions WHERE id = $1`,
       [sessao!.id],
     );
-    expect(new Date(rows[0].expira_em).getTime()).toBeGreaterThan(
-      expiraEm.getTime(),
+    expect(
+      Math.abs(new Date(rows[0].expira_em).getTime() - novaExpiracao.getTime()),
+    ).toBeLessThan(1000);
+    expect(new Date(rows[0].ultima_atividade_em).getTime()).toBeGreaterThan(
+      new Date(antes[0].ultima_atividade_em).getTime(),
     );
   });
 
@@ -138,7 +166,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("revogar muda status para revogada e define revogada_em", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -162,7 +190,7 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("buscarPorTokenHash retorna null após revogar", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await acessoRepo.criarSessao({
+    const tokenPlain = await sessionRepo.criarSessao({
       usuarioId: USER_ID,
       expiraEm,
     });
@@ -182,8 +210,8 @@ describe("SessionPgRepository — integração (camada B)", () => {
 
   it("revogarTodas revoga todas as sessões ativas do usuário", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    await acessoRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
-    await acessoRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
 
     await sessionRepo.revogarTodas(USER_ID);
 
