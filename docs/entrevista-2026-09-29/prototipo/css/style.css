@@ -1,0 +1,750 @@
+/* ==========================================================================
+   FarmaUBS - Design System & Custom Styles
+   Baseado fielmente na interface oficial de E:\PROJETOS\EXTENSAO\farmaubs
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
+
+:root {
+  /* Paleta FarmaUBS */
+  --color-primary: #001c6d;
+  --color-primary-hover: #001550;
+  --color-primary-container: #0b3099;
+  --color-primary-container-hover: #002275;
+  --color-on-primary: #ffffff;
+  
+  --color-canvas-bg: #f8fafc;
+  --color-surface-bg: #ffffff;
+  --color-surface-subtle: #f0f4f8;
+  --color-surface-container-high: #dde9ff;
+  --color-surface-container: #e6eeff;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-tertiary: #64748b;
+  
+  --color-border-crisp: #cbd5e1;
+  --color-border-subtle: #e2e8f0;
+  
+  /* Status Semânticos */
+  --color-status-optimal-bg: #ecfdf5;
+  --color-status-optimal-fg: #047857;
+  --color-status-warning-bg: #fffbeb;
+  --color-status-warning-fg: #b45309;
+  --color-status-rupture-bg: #fef2f2;
+  --color-status-rupture-fg: #b91c1c;
+
+  /* Espaçamentos e Dimensões */
+  --header-height: 64px;
+}
+
+/* Material Symbols Outlined */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined", sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-canvas-bg);
+  color: var(--color-text-primary);
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   TELA DE LOGIN (Fiel a apps/frontend/src/pages/Login.tsx)
+   ========================================================================== */
+
+/* Container Principal (Fundo da tela de login) */
+.login-container1 {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: #f0f0f0;
+  padding: 16px;
+}
+
+/* Cartão Central Branco de Autenticação */
+.login-thq-main-authentication-card-level1-elevation-elm {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 32px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1);
+  gap: 32px;
+  box-sizing: border-box;
+}
+
+/* Cabeçalho do Cartão (Logo e Título) */
+.login-thq-header-typographymargin-elm {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 8px;
+}
+
+/* Container do Formulário */
+.login-thq-login-form-elm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Inputs de E-mail e Senha */
+.login-thq-input1-email-institucional-elm,
+.login-thq-input2-senha-elm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-thq-input-elm1,
+.login-thq-input-elm2 {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  padding: 12px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(226, 232, 240, 1);
+  background-color: #ffffff;
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-thq-input-elm1:focus,
+.login-thq-input-elm2:focus {
+  outline: 2px solid #0b3099;
+  outline-offset: 1px;
+  border-color: #0b3099;
+}
+
+/* Botão Principal de Login */
+.login-thq-primary-cta-buttonmargin-elm {
+  display: flex;
+  width: 100%;
+  padding-top: 16px;
+}
+
+.login-thq-primary-cta-button-elm {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 4px;
+  background-color: #0b3099;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.login-thq-primary-cta-button-elm:hover:not(:disabled) {
+  background-color: #001c6d;
+}
+
+.login-thq-primary-cta-button-elm:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-thq-primary-cta-button-elm:focus-visible {
+  outline: 2px solid #001c6d;
+  outline-offset: 2px;
+}
+
+/* Divisor e Suporte */
+.login-thq-divider-sectionmargin-elm {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   MENU LATERAL / SIDEBAR (Fiel a apps/frontend/src/pages/AdminUsuarios)
+   ========================================================================== */
+.farma-sidebar {
+  width: 250px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  border-right: 1px solid var(--color-border-crisp);
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+  transition: transform 0.25s ease-in-out;
+}
+
+.farma-sidebar-brand {
+  height: var(--header-height);
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--color-border-crisp);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+}
+
+.farma-sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem;
+}
+
+.farma-sidebar-section-title {
+  padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.farma-sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 3px;
+  transition: all 0.15s ease;
+}
+
+.farma-sidebar-nav-item:hover {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+}
+
+.farma-sidebar-nav-item.active {
+  background-color: #0b3099;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.farma-sidebar-nav-item.active .material-symbols-outlined {
+  color: #ffffff;
+}
+
+.farma-sidebar-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--color-border-crisp);
+  background-color: var(--color-surface-subtle);
+}
+
+/* Ajuste do Layout Principal para acomodar o Sidebar no Desktop */
+@media (min-width: 992px) {
+  .farma-main-layout {
+    margin-left: 250px;
+    min-height: 100vh;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .farma-sidebar {
+    transform: translateX(-100%);
+  }
+  .farma-sidebar.show {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+  .farma-main-layout {
+    margin-left: 0;
+  }
+}
+
+/* Header Superior Fixo */
+.farma-header {
+  height: var(--header-height);
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--color-border-crisp);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+}
+
+/* Cards FarmaUBS */
+.farma-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.farma-card:hover {
+  border-color: rgba(203, 213, 225, 0.8);
+}
+
+.farma-card-header {
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+  background-color: transparent;
+}
+
+/* Inputs do Sistema */
+.farma-input,
+.farma-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 0.6rem 0.85rem;
+  color: var(--color-text-primary);
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.farma-input:focus,
+.farma-select:focus {
+  border-color: var(--color-primary-container);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(11, 48, 153, 0.15);
+}
+
+/* Botões do Sistema */
+.btn-farma-primary {
+  background-color: #0b3099;
+  border-color: #0b3099;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 6px;
+  padding: 0.6rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-farma-primary:hover {
+  background-color: #001c6d;
+  border-color: #001c6d;
+  color: #ffffff;
+}
+
+.btn-farma-outline {
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-farma-outline:hover {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+}
+
+.btn-farma-success {
+  background-color: #047857;
+  border-color: #047857;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 6px;
+  padding: 0.65rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-farma-success:hover {
+  background-color: #065f46;
+  border-color: #065f46;
+  color: #ffffff;
+}
+
+/* Destaque do Medicamento Selecionado (Painel Informativo de Lote & Validade) */
+.medicine-info-panel {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.med-info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.med-info-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.med-info-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Badge de Validade Sanitária */
+.badge-expiry-safe {
+  background-color: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.badge-expiry-warning {
+  background-color: #fffbeb;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Cesta / Lista de Itens da Receita Atual */
+.recipe-items-box {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.85rem;
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.recipe-item-row {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.recipe-item-row:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+/* Tabela FarmaUBS */
+.table-farmaubs {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-farmaubs thead th {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.table-farmaubs tbody td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.25);
+  font-size: 14px;
+}
+
+.table-farmaubs tbody tr:hover {
+  background-color: rgba(240, 244, 248, 0.7);
+}
+
+/* Animação para nova linha adicionada em tempo real */
+@keyframes flashGreen {
+  0% {
+    background-color: #d1fae5;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.row-flash {
+  animation: flashGreen 2.8s ease-out;
+}
+
+/* Badges e Rótulos */
+.badge-farma-optimal {
+  background-color: var(--color-status-optimal-bg);
+  color: var(--color-status-optimal-fg);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-farma-warning {
+  background-color: var(--color-status-warning-bg);
+  color: var(--color-status-warning-fg);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-farma-rupture {
+  background-color: var(--color-status-rupture-bg);
+  color: var(--color-status-rupture-fg);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-cnes-sus {
+  font-size: 11px;
+  color: #001c6d;
+  background-color: #e6eeff;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.badge-category-tag {
+  background-color: #dde9ff;
+  color: #001c6d;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Mini Cards de Estatísticas */
+.stat-box {
+  background-color: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.4);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Modal personalizado estilo "FarmaUBS diz:" */
+.farma-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.farma-modal-dialog {
+  width: 100%;
+  max-width: 460px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Combobox / Dropdown de Busca em Tempo Real de Medicamentos */
+.farma-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  max-height: 270px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.farma-dropdown-item {
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+  font-size: 13px;
+}
+
+.farma-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.farma-dropdown-item:hover,
+.farma-dropdown-item.active {
+  background-color: #f0f4f8;
+}
+
+.farma-dropdown-empty {
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+/* Badges de Divergência do Inventário Mensal */
+.badge-divergence-zero {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-divergence-surplus {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-divergence-deficit {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-status-conferido {
+  background-color: #ecfdf5;
+  color: #047857;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-status-pendente {
+  background-color: #fffbeb;
+  color: #b45309;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+

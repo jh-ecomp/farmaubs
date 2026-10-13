@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmaUBS - Estoque Atual</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts: Inter & Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <!-- Custom CSS FarmaUBS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background-color: var(--color-canvas-bg);">
+
+  <!-- MENU LATERAL / SIDEBAR (Fiel a apps/frontend/src/pages/AdminUsuarios) -->
+  <aside class="farma-sidebar" id="farmaSidebar" aria-label="Navegação Lateral">
+    <div class="d-flex flex-column flex-grow-1 min-h-0">
+      
+      <!-- Topo da Sidebar com Logo FarmaUBS -->
+      <div class="farma-sidebar-brand">
+        <div class="d-flex align-items-center gap-2">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 32px; height: 32px; object-fit: contain;">
+          <div class="d-flex flex-column">
+            <span style="font-size: 16px; font-weight: 700; color: #001c6d; line-height: 1;">FarmaUBS</span>
+            <span style="font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">SMS Parnaíba/PI</span>
+          </div>
+        </div>
+        <span class="badge-cnes-sus" style="font-size: 10px;">SUS</span>
+      </div>
+
+      <!-- Links de Navegação das 4 Telas do Incremento 1 -->
+      <div class="farma-sidebar-menu">
+        <div class="farma-sidebar-section-title">OPERAÇÕES FARMÁCIA</div>
+        <nav>
+          <!-- 1. Dispensação -->
+          <a href="dispensacao.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">medication_liquid</span>
+            <span>Dispensação</span>
+          </a>
+
+          <!-- 2. Recebimento -->
+          <a href="recebimento.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">move_to_inbox</span>
+            <span>Recebimento</span>
+          </a>
+        </nav>
+
+        <div class="farma-sidebar-section-title mt-3">CONTROLE &amp; ESTOQUE</div>
+        <nav>
+          <!-- 3. Estoque Atual (Ativo) -->
+          <a href="estoque.html" class="farma-sidebar-nav-item active" aria-current="page">
+            <span class="material-symbols-outlined" style="font-size: 20px;">inventory_2</span>
+            <span>Estoque Atual</span>
+          </a>
+
+          <!-- 4. Inventário Mensal -->
+          <a href="inventario.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">fact_check</span>
+            <span>Inventário Mensal</span>
+          </a>
+        </nav>
+      </div>
+
+    </div>
+
+    <!-- Rodapé da Sidebar -->
+    <div class="farma-sidebar-footer">
+      <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 11px;">
+        <span class="material-symbols-outlined text-primary" style="font-size: 18px;">local_hospital</span>
+        <div style="line-height: 1.3;">
+          <strong class="d-block text-dark" style="font-size: 11px;">Secretaria de Saúde</strong>
+          <span>Parnaíba/PI • SUS Brasil</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTAINER DE LAYOUT PRINCIPAL -->
+  <div class="farma-main-layout">
+
+    <!-- HEADER SUPERIOR INSTITUCIONAL -->
+    <header class="farma-header justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <!-- Botão Menu Mobile -->
+        <button class="btn btn-sm btn-light border d-lg-none p-1 me-1" id="btnToggleSidebar" title="Abrir menu">
+          <span class="material-symbols-outlined" style="font-size: 22px;">menu</span>
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted d-none d-sm-inline" style="font-size: 13px;">Unidade:</span>
+          <strong class="text-dark" style="font-size: 13px;" id="navUnitSubtitle">SMS Parnaíba - UBS Centro</strong>
+          <span class="badge-cnes-sus d-none d-md-inline-block ms-1">Módulo Estoque</span>
+        </div>
+      </div>
+
+      <!-- Perfil e Logout -->
+      <div class="d-flex align-items-center gap-3">
+        <div class="badge-farma-optimal d-none d-md-inline-flex">
+          <span class="material-symbols-outlined" style="font-size: 16px;">medication</span>
+          <span>Farmacêutico Responsável</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <div class="text-end d-none d-sm-block">
+            <p class="mb-0 fw-semibold text-dark" style="font-size: 13px; line-height: 1;" id="navUserName">Farmacêutico(a)</p>
+            <small class="text-muted" style="font-size: 11px;" id="navUserEmail">farmaceutico@saude.parnaiba.pi.gov.br</small>
+          </div>
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 34px; height: 34px; background-color: #001c6d; font-size: 14px;" id="userAvatar">
+            F
+          </div>
+
+          <a href="login.html" class="btn btn-sm text-secondary ms-1 p-1 rounded-2" title="Sair do FarmaUBS" style="line-height: 1;">
+            <span class="material-symbols-outlined" style="font-size: 22px;">logout</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+    <main class="container-fluid px-3 px-lg-4 py-4" style="max-width: 1440px;">
+      
+      <!-- Topo: Título da Página e Métricas em Tempo Real -->
+      <div class="row align-items-center mb-4 g-3">
+        <div class="col-12 col-lg-5">
+          <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+            Controle &amp; Auditoria / <strong class="text-dark">Estoque Atual</strong>
+          </span>
+          <h2 class="fw-bold text-dark mt-1 mb-1" style="font-size: 22px;">Posição do Estoque Atual</h2>
+          <p class="text-muted mb-0" style="font-size: 13px;">
+            Monitoramento em tempo real de saldos, lotes, validades e criticidade de abastecimento.
+          </p>
+        </div>
+
+        <!-- Cards de Métricas em Tempo Real -->
+        <div class="col-12 col-lg-7">
+          <div class="row g-2 justify-content-lg-end">
+            <!-- Total de Itens Cadastrados -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #dde9ff; color: #0b3099; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">inventory_2</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Medicamentos</span>
+                  <span class="fw-bold text-dark" style="font-size: 18px;" id="statTotalItems">0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Total de Unidades em Estoque -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #ecfdf5; color: #047857; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">boxes</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Unidades</span>
+                  <span class="fw-bold text-dark" style="font-size: 18px;" id="statTotalUnits">0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Itens em Alerta / Baixo Estoque -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #fffbeb; color: #b45309; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">warning</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Estoque Baixo</span>
+                  <span class="fw-bold text-warning" style="font-size: 18px; color: #b45309 !important;" id="statLowStock">0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Lotes com Validade Próxima (< 90 dias) -->
+            <div class="col-6 col-sm-3">
+              <div class="stat-box p-2 px-3">
+                <div class="stat-icon-wrapper" style="background-color: #fef2f2; color: #b91c1c; width: 38px; height: 38px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">event_busy</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 10px; text-transform: uppercase;">Validade Curta</span>
+                  <span class="fw-bold text-danger" style="font-size: 18px;" id="statNearExpiry">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD PRINCIPAL: TABELA DE ESTOQUE COM FILTROS AVANÇADOS -->
+      <div class="farma-card">
+        
+        <!-- Barra Superior com Busca, Filtros por Categoria/Status e Ações Globais -->
+        <div class="farma-card-header">
+          <div class="row align-items-center g-3">
+            
+            <!-- Campo de Busca em Tempo Real -->
+            <div class="col-12 col-md-4">
+              <div class="position-relative">
+                <span class="material-symbols-outlined position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;">
+                  search
+                </span>
+                <input
+                  type="text"
+                  id="searchStockInput"
+                  class="form-control farma-input form-control-sm ps-4 ms-2"
+                  placeholder="Pesquisar por nome, lote ou princípio ativo..."
+                  style="font-size: 13px; width: calc(100% - 8px);"
+                />
+              </div>
+            </div>
+
+            <!-- Filtros: Categoria e Situação do Estoque -->
+            <div class="col-12 col-md-5 d-flex gap-2">
+              <select class="form-select farma-select form-control-sm" id="categoryFilter" style="font-size: 13px;">
+                <option value="ALL" selected>Todas as Categorias</option>
+                <option value="Analgésico">Analgésicos / Antitérmicos</option>
+                <option value="Antibiótico">Antibióticos</option>
+                <option value="Anti-hipertensivo">Anti-hipertensivos</option>
+                <option value="Hipoglicemiante">Hipoglicemiantes</option>
+                <option value="Anti-inflamatório">Anti-inflamatórios</option>
+                <option value="Gástrico">Gástricos / Antissecretores</option>
+              </select>
+
+              <select class="form-select farma-select form-control-sm" id="stockStatusFilter" style="font-size: 13px;">
+                <option value="ALL" selected>Todos os Status</option>
+                <option value="NORMAL">Estoque Normal</option>
+                <option value="BAIXO">Estoque Baixo (Alerta)</option>
+                <option value="CRITICO">Esgotado / Crítico</option>
+              </select>
+            </div>
+
+            <!-- Botões de Ação Global -->
+            <div class="col-12 col-md-3 d-flex justify-content-md-end gap-2">
+              <button class="btn-farma-outline py-1 px-2" id="btnPrintReport" title="Imprimir Relatório de Estoque da UBS" style="font-size: 12px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
+                <span>Relatório</span>
+              </button>
+              <button class="btn-farma-outline py-1 px-2" id="btnReloadDefaultStock" title="Restaurar dados padrão" style="font-size: 12px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                <span class="d-none d-sm-inline">Restaurar</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tabela Analítica de Estoque Atual -->
+        <div class="p-0 overflow-hidden d-flex flex-column">
+          <div class="table-responsive" style="max-height: 600px;">
+            <table class="table-farmaubs" id="stockTable">
+              <thead>
+                <tr>
+                  <th scope="col" style="min-width: 200px;">Medicamento &amp; Concentração</th>
+                  <th scope="col" style="min-width: 140px;">Forma &amp; Categoria</th>
+                  <th scope="col" style="min-width: 130px;">Lote Farmacêutico</th>
+                  <th scope="col" style="min-width: 130px;">Validade Sanitária</th>
+                  <th scope="col" class="text-center" style="min-width: 120px;">Saldo em Estoque</th>
+                  <th scope="col" class="text-center" style="min-width: 110px;">Status / Nível</th>
+                  <th scope="col" class="text-end" style="min-width: 110px;">Ajuste Rápido</th>
+                </tr>
+              </thead>
+              <tbody id="stockTableBody">
+                <!-- Injetado dinamicamente via JS em tempo real -->
+              </tbody>
+            </table>
+
+            <!-- Estado Vazio -->
+            <div id="emptyStockMessage" class="d-none text-center py-5 px-3">
+              <span class="material-symbols-outlined text-muted" style="font-size: 48px; opacity: 0.5;">
+                inventory
+              </span>
+              <h6 class="fw-bold text-dark mt-2 mb-1">Nenhum medicamento encontrado</h6>
+              <p class="text-muted small mb-3">Tente ajustar os filtros de categoria ou o termo de pesquisa.</p>
+              <button class="btn-farma-outline btn-sm" id="btnResetFilters">
+                <span class="material-symbols-outlined" style="font-size: 16px;">filter_alt_off</span>
+                <span>Limpar Filtros</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rodapé da Tabela -->
+        <div class="px-3 py-2 border-top d-flex flex-wrap align-items-center justify-content-between small text-muted" style="background-color: #ffffff; border-radius: 0 0 12px 12px; font-size: 12px;">
+          <div class="d-flex align-items-center gap-3">
+            <span class="d-flex align-items-center gap-1">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #047857; display: inline-block;"></span> Normal
+            </span>
+            <span class="d-flex align-items-center gap-1">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #b45309; display: inline-block;"></span> Baixo (Abaixo do Mínimo)
+            </span>
+            <span class="d-flex align-items-center gap-1">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #b91c1c; display: inline-block;"></span> Crítico / Ruptura
+            </span>
+          </div>
+          <div id="footerStockSummary">
+            Exibindo estoque atualizado da farmácia
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div> <!-- Fecha .farma-main-layout -->
+
+  <!-- Modal Acessível "FarmaUBS diz:" para Ficha e Rastreabilidade do Lote -->
+  <div
+    id="lotDetailModal"
+    class="farma-modal-backdrop"
+    style="display: none;"
+    role="presentation"
+  >
+    <div
+      class="farma-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lot-detail-title"
+    >
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 26px; height: 26px;">
+          <h2 id="lot-detail-title" style="font-size: 16px; font-weight: 700; color: #001c6d; margin: 0;">
+            Ficha de Rastreabilidade do Lote &bull; SUS
+          </h2>
+        </div>
+        <button type="button" id="btnCloseLotModal" style="background: none; border: none; cursor: pointer; color: #64748B;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div id="lotDetailContent" style="font-size: 13px; color: #334155; line-height: 1.6;">
+        <!-- Injetado dinamicamente -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <button type="button" class="btn-farma-primary py-1 px-3" id="btnOkLotModal">
+          Concluir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Flutuante de Feedback -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="liveToast" class="toast align-items-center border-0 shadow-lg text-white" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" id="toastIcon" style="font-size: 20px;">check_circle</span>
+          <span id="toastMessage">Operação realizada com sucesso!</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script de Estoque Atual -->
+  <script src="js/estoque.js"></script>
+</body>
+</html>
