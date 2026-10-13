@@ -43,7 +43,7 @@ tasks:
       - 'shared:build'
 
   test-schema:
-    script: 'docker compose -f ../../infra/docker-compose.test.yml up -d --wait && pnpm exec jest --config test/schema/jest-schema.json --runInBand'
+    command: 'pnpm run test:schema'
     options:
       runInCI: false
 
