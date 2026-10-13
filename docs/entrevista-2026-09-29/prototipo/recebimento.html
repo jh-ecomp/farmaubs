@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmaUBS - Recebimento de Medicamentos</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts: Inter & Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <!-- Custom CSS FarmaUBS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background-color: var(--color-canvas-bg);">
+
+  <!-- MENU LATERAL / SIDEBAR (Fiel a apps/frontend/src/pages/AdminUsuarios) -->
+  <aside class="farma-sidebar" id="farmaSidebar" aria-label="Navegação Lateral">
+    <div class="d-flex flex-column flex-grow-1 min-h-0">
+      
+      <!-- Topo da Sidebar com Logo FarmaUBS -->
+      <div class="farma-sidebar-brand">
+        <div class="d-flex align-items-center gap-2">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 32px; height: 32px; object-fit: contain;">
+          <div class="d-flex flex-column">
+            <span style="font-size: 16px; font-weight: 700; color: #001c6d; line-height: 1;">FarmaUBS</span>
+            <span style="font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">SMS Parnaíba/PI</span>
+          </div>
+        </div>
+        <span class="badge-cnes-sus" style="font-size: 10px;">SUS</span>
+      </div>
+
+      <!-- Links de Navegação -->
+      <div class="farma-sidebar-menu">
+        <div class="farma-sidebar-section-title">OPERAÇÕES FARMÁCIA</div>
+        <nav>
+          <!-- Dispensação de Medicamentos -->
+          <a href="dispensacao.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">medication_liquid</span>
+            <span>Dispensação</span>
+          </a>
+
+          <!-- Recebimento de Medicamentos (Ativo) -->
+          <a href="recebimento.html" class="farma-sidebar-nav-item active" aria-current="page">
+            <span class="material-symbols-outlined" style="font-size: 20px;">move_to_inbox</span>
+            <span>Recebimento</span>
+          </a>
+        </nav>
+
+        <div class="farma-sidebar-section-title mt-3">CONTROLE &amp; ESTOQUE</div>
+        <nav>
+          <!-- 3. Estoque Atual -->
+          <a href="estoque.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">inventory_2</span>
+            <span>Estoque Atual</span>
+          </a>
+
+          <!-- 4. Inventário Mensal -->
+          <a href="inventario.html" class="farma-sidebar-nav-item">
+            <span class="material-symbols-outlined" style="font-size: 20px;">fact_check</span>
+            <span>Inventário Mensal</span>
+          </a>
+        </nav>
+      </div>
+
+    </div>
+
+    <!-- Rodapé da Sidebar -->
+    <div class="farma-sidebar-footer">
+      <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 11px;">
+        <span class="material-symbols-outlined text-primary" style="font-size: 18px;">local_hospital</span>
+        <div style="line-height: 1.3;">
+          <strong class="d-block text-dark" style="font-size: 11px;">Secretaria de Saúde</strong>
+          <span>Parnaíba/PI • SUS Brasil</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTAINER DE LAYOUT PRINCIPAL -->
+  <div class="farma-main-layout">
+
+    <!-- HEADER SUPERIOR INSTITUCIONAL -->
+    <header class="farma-header justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <!-- Botão Menu Mobile -->
+        <button class="btn btn-sm btn-light border d-lg-none p-1 me-1" id="btnToggleSidebar" title="Abrir menu">
+          <span class="material-symbols-outlined" style="font-size: 22px;">menu</span>
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted d-none d-sm-inline" style="font-size: 13px;">Unidade:</span>
+          <strong class="text-dark" style="font-size: 13px;" id="navUnitSubtitle">SMS Parnaíba - UBS Centro</strong>
+          <span class="badge-cnes-sus d-none d-md-inline-block ms-1">Almoxarifado &bull; CAF</span>
+        </div>
+      </div>
+
+      <!-- Perfil e Logout -->
+      <div class="d-flex align-items-center gap-3">
+        <!-- Badge de Perfil RBAC FarmaUBS -->
+        <div class="badge-farma-optimal d-none d-md-inline-flex">
+          <span class="material-symbols-outlined" style="font-size: 16px;">medication</span>
+          <span>Farmacêutico Responsável</span>
+        </div>
+
+        <!-- Informações do Usuário Logado -->
+        <div class="d-flex align-items-center gap-2">
+          <div class="text-end d-none d-sm-block">
+            <p class="mb-0 fw-semibold text-dark" style="font-size: 13px; line-height: 1;" id="navUserName">Farmacêutico(a)</p>
+            <small class="text-muted" style="font-size: 11px;" id="navUserEmail">farmaceutico@saude.parnaiba.pi.gov.br</small>
+          </div>
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 34px; height: 34px; background-color: #001c6d; font-size: 14px;" id="userAvatar">
+            F
+          </div>
+
+          <!-- Botão de Sair -->
+          <a href="login.html" class="btn btn-sm text-secondary ms-1 p-1 rounded-2" title="Sair do FarmaUBS" style="line-height: 1;">
+            <span class="material-symbols-outlined" style="font-size: 22px;">logout</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+    <main class="container-fluid px-3 px-lg-4 py-4" style="max-width: 1440px;">
+      
+      <!-- Topo: Título da Página e Métricas em Tempo Real -->
+      <div class="row align-items-center mb-4 g-3">
+        <div class="col-12 col-lg-5">
+          <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+            Atenção Primária / <strong class="text-dark">Recebimento de Medicamentos</strong>
+          </span>
+          <h2 class="fw-bold text-dark mt-1 mb-1" style="font-size: 22px;">Recebimento de Medicamentos</h2>
+          <p class="text-muted mb-0" style="font-size: 13px;">
+            Entrada de estoque, conferência de remessas da CAF e registro de lotes farmacêuticos.
+          </p>
+        </div>
+
+        <!-- Cards de Métricas em Tempo Real -->
+        <div class="col-12 col-lg-7">
+          <div class="row g-2 justify-content-lg-end">
+            <!-- Total de Remessas / Entradas Hoje -->
+            <div class="col-6 col-sm-4">
+              <div class="stat-box">
+                <div class="stat-icon-wrapper" style="background-color: #dde9ff; color: #0b3099;">
+                  <span class="material-symbols-outlined" style="font-size: 24px;">move_to_inbox</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 11px; text-transform: uppercase;">Entradas Hoje</span>
+                  <span class="fw-bold text-dark" style="font-size: 20px;" id="statTotalReceivings">0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Total de Unidades Ingressadas -->
+            <div class="col-6 col-sm-4">
+              <div class="stat-box">
+                <div class="stat-icon-wrapper" style="background-color: #ecfdf5; color: #047857;">
+                  <span class="material-symbols-outlined" style="font-size: 24px;">add_box</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 11px; text-transform: uppercase;">Unidades Ingressadas</span>
+                  <span class="fw-bold text-dark" style="font-size: 20px;" id="statTotalUnitsReceived">0</span>
+                </div>
+              </div>
+            </div>
+            <!-- Lotes Cadastrados -->
+            <div class="col-12 col-sm-4">
+              <div class="stat-box">
+                <div class="stat-icon-wrapper" style="background-color: #fef3c7; color: #b45309;">
+                  <span class="material-symbols-outlined" style="font-size: 24px;">qr_code_2</span>
+                </div>
+                <div>
+                  <span class="d-block text-muted" style="font-size: 11px; text-transform: uppercase;">Lotes Registrados</span>
+                  <span class="fw-bold text-dark" style="font-size: 20px;" id="statTotalBatches">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYOUT EM 2 COLUNAS: FORMULÁRIO À ESQUERDA E TABELA DE ENTRADAS À DIREITA -->
+      <div class="row g-4">
+
+        <!-- COLUNA 1: Formulário de Recebimento de Medicamentos -->
+        <div class="col-12 col-xl-5 col-lg-5">
+          <div class="farma-card h-100">
+            
+            <!-- Cabeçalho do Card -->
+            <div class="farma-card-header d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-2 p-1 d-flex align-items-center justify-content-center" style="background-color: #ecfdf5; color: #047857;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">input</span>
+                </div>
+                <div>
+                  <h5 class="fw-bold mb-0 text-dark" style="font-size: 15px;">Nova Entrada de Estoque</h5>
+                  <small class="text-muted" style="font-size: 12px;">Conferência física e abastecimento da farmácia</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 p-sm-4">
+              <form id="receivingForm" novalidate>
+                
+                <!-- 1. Documento Fiscal / Guia da CAF -->
+                <div class="row g-2 mb-3">
+                  <div class="col-12 col-sm-6">
+                    <label for="invoiceNumber" class="form-label fw-bold text-dark" style="font-size: 13px;">
+                      Nº Nota Fiscal / Guia CAF <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control farma-input"
+                      id="invoiceNumber"
+                      placeholder="Ex: GUIA-CAF-2026/104"
+                      required
+                    >
+                    <div class="invalid-feedback" style="font-size: 11px;">Informe o documento fiscal.</div>
+                  </div>
+
+                  <div class="col-12 col-sm-6">
+                    <label for="supplierOrigin" class="form-label fw-semibold text-secondary" style="font-size: 13px;">
+                      Origem / Fornecedor <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select farma-select" id="supplierOrigin" required>
+                      <option value="CAF Central - SMS Parnaíba" selected>CAF Central - SMS Parnaíba</option>
+                      <option value="Ministério da Saúde (DLOG / SUS)">Ministério da Saúde (DLOG)</option>
+                      <option value="Secretaria Estadual de Saúde (SESAPI)">Secretaria Estadual (SESAPI)</option>
+                      <option value="Compra Direta Municipal (Pregão)">Compra Direta (Pregão)</option>
+                      <option value="Doação Institucional">Doação Institucional</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 2. Medicamento (Combobox Pesquisável com Filtro em Tempo Real) -->
+                <div class="mb-3 position-relative" id="recMedComboboxWrapper">
+                  <label for="recMedSearchInput" class="form-label fw-bold text-dark d-flex align-items-center justify-content-between" style="font-size: 14px;">
+                    <span>Medicamento a Receber <span class="text-danger">*</span></span>
+                    <span class="badge-cnes-sus" style="font-size: 10px;">Catálogo UBS</span>
+                  </label>
+                  <div class="position-relative">
+                    <span class="material-symbols-outlined position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;">
+                      search
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control farma-input ps-4 pe-5 ms-1"
+                      id="recMedSearchInput"
+                      placeholder="Pesquise o medicamento para dar entrada..."
+                      autocomplete="off"
+                      required
+                      style="width: calc(100% - 4px); font-size: 14px;"
+                    >
+                    <input type="hidden" id="recSelectedMedId" required>
+                    
+                    <button type="button" id="btnClearRecMedSearch" class="btn btn-sm text-muted position-absolute" style="right: 32px; top: 50%; transform: translateY(-50%); display: none; padding: 2px;" title="Limpar">
+                      <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+                    </button>
+                    <span class="material-symbols-outlined position-absolute text-muted" id="recMedDropdownArrow" style="right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; cursor: pointer;">
+                      arrow_drop_down
+                    </span>
+                  </div>
+                  
+                  <!-- Dropdown filtrável em tempo real -->
+                  <div class="farma-dropdown-menu" id="recMedDropdownList" style="display: none;"></div>
+                  <div class="invalid-feedback" id="recMedInvalidFeedback" style="font-size: 11px;">Selecione um medicamento para receber.</div>
+                </div>
+
+                <!-- 3. Lote e Data de Validade da Remessa -->
+                <div class="row g-2 mb-3">
+                  <div class="col-12 col-sm-6">
+                    <label for="recBatchNumber" class="form-label fw-bold text-dark" style="font-size: 13px;">
+                      Lote Recebido <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control farma-input"
+                      id="recBatchNumber"
+                      placeholder="Ex: LT-2027M9"
+                      required
+                    >
+                    <div class="invalid-feedback" style="font-size: 11px;">Informe o lote.</div>
+                  </div>
+
+                  <div class="col-12 col-sm-6">
+                    <label for="recExpiryDate" class="form-label fw-bold text-dark" style="font-size: 13px;">
+                      Data de Validade <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      class="form-control farma-input"
+                      id="recExpiryDate"
+                      required
+                    >
+                    <div class="invalid-feedback" style="font-size: 11px;">Validade obrigatória.</div>
+                  </div>
+                </div>
+
+                <!-- 4. Quantidade Recebida & Observações -->
+                <div class="row g-2 mb-4">
+                  <div class="col-12 col-sm-6">
+                    <label for="recQuantity" class="form-label fw-bold text-dark" style="font-size: 13px;">
+                      Quantidade Recebida <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <input
+                        type="number"
+                        class="form-control farma-input fw-bold"
+                        id="recQuantity"
+                        min="1"
+                        placeholder="Ex: 500"
+                        required
+                        style="font-size: 15px;"
+                      >
+                      <span class="input-group-text bg-light text-muted" id="recUnitLabel" style="font-size: 12px;">unid.</span>
+                    </div>
+                    <div class="invalid-feedback" style="font-size: 11px;">Quantidade deve ser maior que 0.</div>
+                  </div>
+
+                  <div class="col-12 col-sm-6">
+                    <label for="recNotes" class="form-label fw-semibold text-secondary" style="font-size: 13px;">
+                      Observação / Laudo <span class="text-muted fw-normal" style="font-size: 11px;">(opcional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control farma-input"
+                      id="recNotes"
+                      placeholder="Ex: Lacrado, laudo anexo"
+                    >
+                  </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                  <button type="submit" class="btn-farma-primary flex-grow-1 py-2 shadow-sm" id="btnSubmitReceiving">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">add_box</span>
+                    <span>Confirmar Entrada no Estoque</span>
+                  </button>
+                  <button type="reset" class="btn-farma-outline" id="btnResetReceiving">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">backspace</span>
+                    <span>Limpar</span>
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUNA 2: Tabela de Últimos Recebimentos em Tempo Real -->
+        <div class="col-12 col-xl-7 col-lg-7">
+          <div class="farma-card h-100 d-flex flex-column">
+            
+            <!-- Cabeçalho da Tabela & Barra de Busca -->
+            <div class="farma-card-header">
+              <div class="row align-items-center g-3">
+                <div class="col-12 col-md-6 d-flex align-items-center gap-2">
+                  <div class="rounded-2 p-1 d-flex align-items-center justify-content-center" style="background-color: #dde9ff; color: #001c6d;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">inventory</span>
+                  </div>
+                  <div>
+                    <div class="d-flex align-items-center gap-2">
+                      <h5 class="fw-bold mb-0 text-dark" style="font-size: 15px;">Últimos Recebimentos de Estoque</h5>
+                      <span class="badge rounded-pill bg-primary" id="badgeReceivingCount" style="font-size: 11px; background-color: #0b3099 !important;">0</span>
+                    </div>
+                    <small class="text-muted" style="font-size: 12px;">Entradas físicas registradas na UBS</small>
+                  </div>
+                </div>
+
+                <!-- Busca Rápida -->
+                <div class="col-12 col-md-6 d-flex align-items-center justify-content-md-end gap-2">
+                  <div class="position-relative flex-grow-1" style="max-width: 260px;">
+                    <span class="material-symbols-outlined position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;">
+                      search
+                    </span>
+                    <input
+                      type="text"
+                      id="searchReceivingInput"
+                      class="form-control farma-input form-control-sm ps-4 ms-2"
+                      placeholder="Buscar medicamento, lote, NF..."
+                      style="font-size: 13px; width: calc(100% - 8px);"
+                    />
+                  </div>
+
+                  <button class="btn-farma-outline py-1 px-2" id="btnReloadMockReceivings" title="Restaurar histórico demonstrativo" style="font-size: 12px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                    <span class="d-none d-sm-inline">Exemplos</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabela de Recebimentos Responsiva -->
+            <div class="p-0 flex-grow-1 overflow-hidden d-flex flex-column">
+              <div class="table-responsive flex-grow-1" style="max-height: 590px;">
+                <table class="table-farmaubs" id="receivingsTable">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="min-width: 180px;">Medicamento &amp; Forma</th>
+                      <th scope="col" style="min-width: 140px;">Lote &amp; Validade</th>
+                      <th scope="col" class="text-center" style="min-width: 90px;">Qtd. Ingressada</th>
+                      <th scope="col" style="min-width: 150px;">Nota / Origem</th>
+                      <th scope="col" style="min-width: 85px;">Horário</th>
+                      <th scope="col" class="text-end" style="min-width: 80px;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="receivingsTableBody">
+                    <!-- Gerado dinamicamente via JS em tempo real -->
+                  </tbody>
+                </table>
+
+                <!-- Estado Vazio -->
+                <div id="emptyReceivingMessage" class="d-none text-center py-5 px-3">
+                  <span class="material-symbols-outlined text-muted" style="font-size: 48px; opacity: 0.5;">
+                    move_to_inbox
+                  </span>
+                  <h6 class="fw-bold text-dark mt-2 mb-1">Nenhum recebimento registrado recentemente</h6>
+                  <p class="text-muted small mb-3">Utilize o formulário ao lado para registrar o recebimento de remessas da CAF.</p>
+                  <button class="btn-farma-outline btn-sm" id="btnPopulateEmptyReceiving">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
+                    <span>Carregar Entradas de Exemplo</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rodapé da Tabela -->
+            <div class="px-3 py-2 border-top d-flex flex-wrap align-items-center justify-content-between small text-muted" style="background-color: #ffffff; border-radius: 0 0 12px 12px; font-size: 12px;">
+              <div class="d-flex align-items-center gap-3">
+                <span class="badge-farma-optimal py-0 px-2" style="font-size: 11px;">
+                  <span class="material-symbols-outlined" style="font-size: 12px;">verified</span>
+                  Estoque Abastecido
+                </span>
+                <span>Conferência de Carga Concluída</span>
+              </div>
+              <div id="footerReceivingSummary">
+                Exibindo entradas em tempo real
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div> <!-- Fecha .farma-main-layout -->
+
+  <!-- Modal Acessível "FarmaUBS diz:" para Estorno de Entrada -->
+  <div
+    id="estornoModal"
+    class="farma-modal-backdrop"
+    style="display: none;"
+    role="presentation"
+  >
+    <div
+      class="farma-modal-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="estorno-modal-title"
+      aria-describedby="estorno-modal-desc"
+    >
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div
+          style="width: 36px; height: 36px; border-radius: 50%; background-color: #fef2f2; display: flex; align-items: center; justify-content: center; color: #b91c1c;"
+        >
+          <span class="material-symbols-outlined" style="font-size: 20px;">
+            undo
+          </span>
+        </div>
+        <h2
+          id="estorno-modal-title"
+          style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;"
+        >
+          FarmaUBS diz:
+        </h2>
+      </div>
+
+      <p
+        id="estorno-modal-desc"
+        style="font-size: 14px; line-height: 1.5; color: #475569; margin: 0;"
+      >
+        Tem certeza que deseja estornar este recebimento? A quantidade será subtraída do estoque da UBS.
+      </p>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button
+          type="button"
+          id="btnCancelEstorno"
+          class="btn-farma-outline py-1 px-3"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          id="btnConfirmEstorno"
+          style="padding: 6px 16px; font-size: 14px; font-weight: 600; color: #FFFFFF; background-color: #b91c1c; border: none; border-radius: 6px; cursor: pointer;"
+        >
+          Confirmar Estorno
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Acessível "FarmaUBS diz:" para Termo de Recebimento CAF / SUS -->
+  <div
+    id="receiptEntryModal"
+    class="farma-modal-backdrop"
+    style="display: none;"
+    role="presentation"
+  >
+    <div
+      class="farma-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="entry-modal-title"
+    >
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 26px; height: 26px;">
+          <h2 id="entry-modal-title" style="font-size: 16px; font-weight: 700; color: #001c6d; margin: 0;">
+            Termo de Recebimento de Carga SUS
+          </h2>
+        </div>
+        <button type="button" id="btnCloseEntryReceipt" style="background: none; border: none; cursor: pointer; color: #64748B;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div id="entryReceiptContent" style="font-size: 13px; color: #334155; line-height: 1.6;">
+        <!-- Injetado dinamicamente -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <button type="button" class="btn-farma-outline py-1 px-3" id="btnPrintEntryReceipt">
+          <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
+          <span>Imprimir Termo</span>
+        </button>
+        <button type="button" class="btn-farma-primary py-1 px-3" id="btnOkEntryReceipt">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Flutuante de Feedback -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="liveToast" class="toast align-items-center border-0 shadow-lg text-white" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" id="toastIcon" style="font-size: 20px;">check_circle</span>
+          <span id="toastMessage">Operação realizada com sucesso!</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script de Recebimento em Tempo Real -->
+  <script src="js/recebimento.js"></script>
+</body>
+</html>
