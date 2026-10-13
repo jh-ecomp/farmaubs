@@ -250,6 +250,26 @@ describe("TenantScopeGuard (AC-13 / Camada A)", () => {
         ),
       );
     });
+
+    it("deve lançar ForbiddenException quando checkUbs: true e nenhum identificador de UBS for fornecido", () => {
+      reflector.getAllAndOverride.mockImplementation((key: any) => {
+        if (key === TENANT_SCOPED_KEY) return { checkUbs: true };
+        return undefined;
+      });
+
+      const { context } = createMockContext({
+        user: farmaUser,
+        params: {},
+        query: {},
+        body: {},
+      });
+
+      expect(() => guard.canActivate(context)).toThrow(
+        new ForbiddenException(
+          "Acesso negado: unidade de saúde obrigatória não informada",
+        ),
+      );
+    });
   });
 
   describe("TC-INC4-08: Injeção de req.tenantScope", () => {

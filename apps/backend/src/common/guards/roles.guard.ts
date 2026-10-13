@@ -16,6 +16,13 @@ import {
   type RepositorioPerfilPort,
 } from "../../modules/acesso/domain/ports/profile.repository.port";
 
+/**
+ * [RF025 / AC-13]: Autorização declarativa RBAC em memória sem queries secundárias (NF010).
+ * @param context - Contexto de execução da requisição HTTP do NestJS.
+ * @returns Promise<boolean> true se o perfil do usuário satisfizer a anotação @Roles.
+ * @throws {UnauthorizedException} Se o token ou sessão não estiver presente no request.
+ * @throws {ForbiddenException} Se o perfil não possuir permissão para o recurso solicitado.
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
@@ -64,7 +71,7 @@ export class RolesGuard implements CanActivate {
 
     let perfilCodigo: string | undefined = sessao.perfilCodigo;
 
-    // Fallback defensivo caso o perfilCodigo não tenha sido propagado no snapshot
+    // Fallback defensivo caso o perfilCodigo não tenha sido propagado no snapshot (NF010)
     if (!perfilCodigo && sessao.perfilId && this.profileRepo) {
       const perfil = await this.profileRepo.buscarPorId(sessao.perfilId);
       if (!perfil) {
@@ -81,3 +88,5 @@ export class RolesGuard implements CanActivate {
     return true;
   }
 }
+
+

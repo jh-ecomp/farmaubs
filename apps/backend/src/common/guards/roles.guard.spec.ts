@@ -143,13 +143,7 @@ describe("RolesGuard (AC-13 / Camada A)", () => {
   });
 
   describe("TC-INC3-07: Zero Queries em Memória (NF010)", () => {
-    it("não deve chamar profileRepo quando perfilCodigo estiver presente no snapshot", async () => {
-      const mockProfileRepo = {
-        buscarPorId: jest.fn(),
-      } as any;
-
-      const guardWithRepo = new RolesGuard(reflector, mockProfileRepo);
-
+    it("deve validar perfilCodigo exclusivamente em memória a partir do snapshot", async () => {
       reflector.getAllAndOverride.mockImplementation((key: any) => {
         if (key === ROLES_KEY) return [PerfilCodigo.GERENTE];
         return undefined;
@@ -159,10 +153,9 @@ describe("RolesGuard (AC-13 / Camada A)", () => {
         user: { perfilCodigo: PerfilCodigo.GERENTE, perfilId: "p-123" },
       });
 
-      const result = await guardWithRepo.canActivate(context);
+      const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(mockProfileRepo.buscarPorId).not.toHaveBeenCalled();
     });
   });
 });

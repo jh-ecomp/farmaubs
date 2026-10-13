@@ -14,6 +14,14 @@ import {
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 import { SKIP_AUTH_KEY } from "./skip-auth.decorator";
 
+
+/**
+ * [RF001 / ADR-002 / AC-13]: Validação de escopo municipal e de UBSs com bypass de Administrador.
+ * @param context - Contexto de execução da requisição HTTP do NestJS.
+ * @returns true se município e UBS estiverem estritamente dentro do escopo do usuário.
+ * @throws {UnauthorizedException} Se o usuário/sessão não estiver presente no request.
+ * @throws {ForbiddenException} Se houver tentativa de acesso fora do município ou UBSs vinculadas.
+ */
 @Injectable()
 export class TenantScopeGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
@@ -87,14 +95,18 @@ export class TenantScopeGuard implements CanActivate {
       req.body?.ubsId ??
       req.body?.unidadeId;
 
-    if (options.checkUbs || reqUnidadeId) {
-      if (reqUnidadeId) {
-        const userUnidades: string[] = user.unidadeIds ?? [];
-        if (!userUnidades.includes(reqUnidadeId)) {
-          throw new ForbiddenException(
-            "Acesso negado: unidade de saúde fora do escopo do usuário",
-          );
-        }
+    if (options.checkUbs && !reqUnidadeId) {
+      throw new ForbiddenException(
+        "Acesso negado: unidade de saúde obrigatória não informada",
+      );
+    }
+
+    if (reqUnidadeId) {
+      const userUnidades: string[] = user.unidadeIds ?? [];
+      if (!userUnidades.includes(reqUnidadeId)) {
+        throw new ForbiddenException(
+          "Acesso negado: unidade de saúde fora do escopo do usuário",
+        );
       }
     }
 
@@ -109,3 +121,4 @@ export class TenantScopeGuard implements CanActivate {
     return true;
   }
 }
+
