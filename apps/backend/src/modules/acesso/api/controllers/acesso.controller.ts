@@ -17,7 +17,7 @@ import {
   ApiHeader,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import type { Request, Response } from "express";
+import type { CookieOptions, Request, Response } from "express";
 import type {
   RenovarSessaoResponse,
   SessaoUsuarioResponse,
@@ -52,6 +52,17 @@ export class AcessoController {
     private readonly logoutUseCase: LogoutUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
   ) {}
+
+  private getCookieOptions(maxAgeMs?: number): CookieOptions {
+    const isProd = process.env.NODE_ENV === "production";
+    return {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/api/v1",
+      ...(maxAgeMs !== undefined ? { maxAge: maxAgeMs } : {}),
+    };
+  }
 
   @Post("login")
   @SkipAuth()
@@ -105,6 +116,11 @@ export class AcessoController {
     }
 
     res.setHeader("Authorization", `Bearer ${resultado.token}`);
+    res.cookie(
+      "farmaubs_session",
+      resultado.token,
+      this.getCookieOptions(resultado.sessao.ttlSeconds * 1000),
+    );
 
     return {
       token: resultado.token,
@@ -133,9 +149,29 @@ export class AcessoController {
     status: 401,
     description: "Não autorizado — sessão ausente, inválida ou expirada.",
   })
-  async renovar(@Req() req: Request): Promise<RenovarSessaoResponse> {
+  async renovar(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<RenovarSessaoResponse> {
     const sessao = (req as any).sessao ?? (req as any).session;
-    return this.renewSessionUseCase.executar(sessao.id);
+    const resultado = await this.renewSessionUseCase.executar(sessao.id);
+
+    const token =
+      (req.cookies && req.cookies["farmaubs_session"]) ||
+      (typeof req.headers["authorization"] === "string" &&
+      req.headers["authorization"].startsWith("Bearer ")
+        ? req.headers["authorization"].substring(7).trim()
+        : undefined);
+
+    if (token) {
+      res.cookie(
+        "farmaubs_session",
+        token,
+        this.getCookieOptions(resultado.ttlSeconds * 1000),
+      );
+    }
+
+    return resultado;
   }
 
   @Get("me")
@@ -174,9 +210,11 @@ export class AcessoController {
   /**
    * [RF004 / Logout]: Encerra a sessão ativa do usuário invalidando o token no servidor.
    * Permite sessões provisórias para permitir abandono/saída graciosa do fluxo (AC-23 Regra 3).
-   * @param req - Objeto de requisição HTTP contendo o cabeçalho Authorization Bearer.
+   * Suporta token originado tanto do cookie HttpOnly farmaubs_session quanto do cabeçalho Authorization Bearer (AC-29).
+   * @param req - Objeto de requisição HTTP contendo cookie farmaubs_session ou cabeçalho Authorization Bearer.
+   * @param res - Objeto de resposta HTTP para expurgo do cookie.
    * @returns Resposta HTTP 204 No Content sem corpo.
-   * @throws {UnauthorizedException} Caso o cabeçalho Authorization seja ausente ou inválido.
+   * @throws {UnauthorizedException} Caso as credenciais sejam ausentes ou com formato inválido.
    */
   @Post("logout")
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -193,24 +231,40 @@ export class AcessoController {
   })
   @ApiResponse({
     status: 401,
-    description: "Não autorizado — cabeçalho Authorization ausente ou formato inválido.",
+    description: "Não autorizado — credenciais ausentes ou formato inválido.",
   })
-  async logout(@Req() req: Request): Promise<void> {
-    const authHeader = req.headers["authorization"];
-    if (
-      !authHeader ||
-      typeof authHeader !== "string" ||
-      !authHeader.startsWith("Bearer ")
-    ) {
-      throw new UnauthorizedException("Token de autenticação ausente ou inválido");
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    let token: string | undefined;
+
+    if (req.cookies && req.cookies["farmaubs_session"]) {
+      token = req.cookies["farmaubs_session"];
     }
 
-    const token = authHeader.substring(7).trim();
+    if (!token) {
+      const authHeader = req.headers["authorization"];
+      if (
+        typeof authHeader === "string" &&
+        authHeader.startsWith("Bearer ")
+      ) {
+        token = authHeader.substring(7).trim();
+      }
+    }
+
     if (!token) {
       throw new UnauthorizedException("Token de autenticação ausente ou inválido");
     }
 
     await this.logoutUseCase.executar(token);
+
+    res.clearCookie("farmaubs_session", {
+      path: "/api/v1",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
   }
 
   @Post("trocar-senha")

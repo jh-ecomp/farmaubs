@@ -64,7 +64,7 @@ import {
   UltimoAdministradorException,
   UsuarioNaoEncontradoException,
 } from "../../domain/errors/user-management.errors";
-import { Roles } from "../../../../common/guards/roles.decorator";
+import { Roles } from "../../../../common/decorators";
 import { RolesGuard } from "../../../../common/guards/roles.guard";
 import { SkipTransaction } from "../../../../common/transaction/skip-transaction.decorator";
 

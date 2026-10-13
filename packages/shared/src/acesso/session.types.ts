@@ -6,6 +6,19 @@ export enum SessionStatus {
   REVOGADA = "revogada",
 }
 
+export interface SessaoUsuarioSnapshot {
+  id: string;
+  usuarioId: string;
+  municipioId: string;
+  perfilCodigo: PerfilCodigo;
+  unidadeIds: string[];
+  deveTrocarSenha: boolean;
+  status: SessionStatus;
+  expiraEm: Date;
+  criadoEm: Date;
+  ultimaAtividadeEm: Date;
+}
+
 export interface SessionDto {
   id: string;
   usuarioId: string;

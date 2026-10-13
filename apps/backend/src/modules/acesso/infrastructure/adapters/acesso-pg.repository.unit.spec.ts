@@ -116,33 +116,6 @@ describe("AcessoPgRepository (Testes Unitários em Memória — Camada A)", () =
     });
   });
 
-  describe("criarSessao", () => {
-    it("deve gerar token aleatório e invocar auth_criar_sessao com hash sha256", async () => {
-      dataSourceMock.query.mockResolvedValue([]);
-
-      const expiraEm = new Date("2026-09-22T13:00:00.000Z");
-      const token = await repository.criarSessao({
-        usuarioId: "user-123",
-        expiraEm,
-        ipOrigem: "192.168.1.1",
-        userAgent: "Mozilla/5.0",
-      });
-
-      expect(typeof token).toBe("string");
-      expect(token).toHaveLength(64); // 32 bytes hex
-      expect(dataSourceMock.query).toHaveBeenCalledWith(
-        "SELECT auth_criar_sessao($1::uuid, $2::text, $3::timestamptz, $4::inet, $5::text)",
-        [
-          "user-123",
-          expect.any(String), // tokenHash
-          expiraEm,
-          "192.168.1.1",
-          "Mozilla/5.0",
-        ],
-      );
-    });
-  });
-
   describe("buscarEscopoUsuario", () => {
     it("deve retornar o escopo do usuário quando encontrado", async () => {
       dataSourceMock.query.mockResolvedValueOnce([

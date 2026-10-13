@@ -1,3 +1,4 @@
+import { PerfilCodigo } from "@farmaubs/shared";
 import { Given, When, Then } from "@cucumber/cucumber";
 import { expect, assert } from "chai";
 import * as bcrypt from "bcrypt";
@@ -25,13 +26,13 @@ function createSimpleMock<T extends (...args: any[]) => any>(impl?: T) {
   return fn;
 }
 
-function makeConfig(overrides: Record<string, string> = {}): ConfigService {
-  const values: Record<string, string> = {
-    LOGIN_MAX_ATTEMPTS: "5",
-    SESSION_TTL_MINUTES: "60",
+function makeConfig(overrides: Record<string, number> = {}): import("../../../src/modules/acesso/application/use-cases/login.use-case").LoginUseCaseConfig {
+  const values: Record<string, number> = {
+    maxTentativas: 5,
+    ttlMinutos: 60,
     ...overrides,
   };
-  return { get: (key: string, def = "") => values[key] ?? def } as any;
+  return values;
 }
 
 function makeRepo(partial: any = {}): any {
@@ -43,9 +44,20 @@ function makeRepo(partial: any = {}): any {
     }),
     registrarFalhaLogin: createSimpleMock().mockResolvedValue(undefined),
     resetarEstadoLogin: createSimpleMock().mockResolvedValue(undefined),
+    ...partial,
+  };
+}
+
+function makeSessionRepo(partial: any = {}): any {
+  return {
     criarSessao: createSimpleMock().mockResolvedValue(
       "token-fake-64chars-00000000000000000000000000000000"
     ),
+    buscarPorTokenHash: createSimpleMock().mockResolvedValue(null),
+    renovarAtividade: createSimpleMock().mockResolvedValue(undefined),
+    revogar: createSimpleMock().mockResolvedValue(undefined),
+    revogarTodas: createSimpleMock().mockResolvedValue(undefined),
+    limparExpiradas: createSimpleMock().mockResolvedValue(0),
     ...partial,
   };
 }
@@ -65,6 +77,10 @@ function makeUsuario(
     ativo: true,
     tentativasLoginFalhas: 0,
     bloqueadoAte: null,
+    nomeCompleto: "Administrador Teste",
+    perfilCodigo: PerfilCodigo.ADMINISTRADOR,
+    unidadeIds: [],
+    deveTrocarSenha: false,
     ...overrides,
   };
 }
@@ -80,7 +96,8 @@ Given(
         makeUsuario({ email, senhaHash })
       ),
     });
-    this.useCase = new LoginUseCase(this.repo, makeConfig());
+    this.sessionRepo = makeSessionRepo();
+    this.useCase = new LoginUseCase(this.repo, this.sessionRepo, makeConfig());
   }
 );
 
@@ -93,7 +110,7 @@ When(
 
 Then("uma sessão é criada com token único", function (this: any) {
   expect(this.resultado.ok).to.be.true;
-  expect(this.repo.criarSessao.calls.length).to.be.greaterThan(0);
+  expect(this.sessionRepo.criarSessao.calls.length).to.be.greaterThan(0);
 });
 
 Then("o contador de tentativas inválidas é zerado", function (this: any) {
@@ -113,7 +130,7 @@ Then("o sistema retorna a mensagem genérica de credenciais inválidas", functio
 });
 
 Then("nenhuma sessão é criada", function (this: any) {
-  expect(this.repo.criarSessao.calls.length).to.equal(0);
+  expect(this.sessionRepo.criarSessao.calls.length).to.equal(0);
 });
 
 Given(
@@ -127,7 +144,8 @@ Given(
         makeUsuario({ email, senhaHash, tentativasLoginFalhas: tentativas })
       ),
     });
-    this.useCase = new LoginUseCase(this.repo, makeConfig());
+    this.sessionRepo = makeSessionRepo();
+    this.useCase = new LoginUseCase(this.repo, this.sessionRepo, makeConfig());
   }
 );
 
@@ -155,7 +173,8 @@ Given("que a conta {string} está bloqueada", async function (this: any, email: 
       makeUsuario({ email, senhaHash, bloqueadoAte })
     ),
   });
-  this.useCase = new LoginUseCase(this.repo, makeConfig());
+  this.sessionRepo = makeSessionRepo();
+  this.useCase = new LoginUseCase(this.repo, this.sessionRepo, makeConfig());
 });
 
 When("eu tentar logar com credenciais corretas", async function (this: any) {
@@ -177,7 +196,8 @@ Given("que não existe usuário com o e-mail {string}", function (this: any, _em
   this.repo = makeRepo({
     buscarUsuarioPorEmail: createSimpleMock().mockResolvedValue(null),
   });
-  this.useCase = new LoginUseCase(this.repo, makeConfig());
+  this.sessionRepo = makeSessionRepo();
+  this.useCase = new LoginUseCase(this.repo, this.sessionRepo, makeConfig());
 });
 
 When("eu tentar logar com esse e-mail e qualquer senha", async function (this: any) {

@@ -2,6 +2,7 @@ import * as bcrypt from "bcrypt";
 import { LoginUseCase } from "./login.use-case";
 import type { IAcessoRepository } from "../../domain/ports/acesso.repository.port";
 import { ACESSO_REPOSITORY } from "../../domain/ports/acesso.repository.port";
+import type { ISessionRepository } from "../../domain/ports/session.repository.port";
 import { Test } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 
@@ -41,7 +42,6 @@ function makeRepo(
     buscarUsuarioPorEmail: jest.fn().mockResolvedValue(makeUsuario()),
     registrarFalhaLogin: jest.fn().mockResolvedValue(undefined),
     resetarEstadoLogin: jest.fn().mockResolvedValue(undefined),
-    criarSessao: jest.fn().mockResolvedValue("token-plain-abc"),
     buscarEscopoUsuario: jest.fn().mockResolvedValue({
       perfilId: "perfil-uuid-1",
       unidadeIds: ["unidade-uuid-1"],
@@ -50,11 +50,26 @@ function makeRepo(
   };
 }
 
+function makeSessionRepo(
+  overrides: Partial<ISessionRepository> = {},
+): ISessionRepository {
+  return {
+    criarSessao: jest.fn().mockResolvedValue("token-plain-abc"),
+    buscarPorTokenHash: jest.fn(),
+    renovarAtividade: jest.fn(),
+    revogar: jest.fn(),
+    revogarTodas: jest.fn(),
+    limparExpiradas: jest.fn(),
+    ...overrides,
+  };
+}
+
 function buildSut(
   repo: IAcessoRepository,
+  sessionRepo: ISessionRepository = makeSessionRepo(),
   envVars: Record<string, string> = {},
 ) {
-  return new LoginUseCase(repo, {
+  return new LoginUseCase(repo, sessionRepo, {
     maxTentativas: parseInt(envVars.LOGIN_MAX_ATTEMPTS ?? "5", 10),
     ttlMinutos: parseInt(envVars.SESSION_TTL_MINUTES ?? "60", 10),
     warningSeconds: parseInt(envVars.SESSION_WARNING_SECONDS ?? "300", 10),
@@ -150,12 +165,13 @@ describe("LoginUseCase", () => {
 
     it("cria sessão com expiraEm aproximadamente agora + 60 min", async () => {
       const repo = makeRepo();
-      const sut = await buildSut(repo);
+      const sessionRepo = makeSessionRepo();
+      const sut = await buildSut(repo, sessionRepo);
       const antes = Date.now();
 
       await sut.executar("ana.souza@farmaubs.local", SENHA_PLAIN);
 
-      const chamada = (repo.criarSessao as jest.Mock).mock.calls[0][0];
+      const chamada = (sessionRepo.criarSessao as jest.Mock).mock.calls[0][0];
       const expiraEm: Date = chamada.expiraEm;
       const msEsperados = 60 * 60_000;
 
@@ -192,11 +208,12 @@ describe("LoginUseCase", () => {
 
     it("não cria sessão", async () => {
       const repo = makeRepo();
-      const sut = await buildSut(repo);
+      const sessionRepo = makeSessionRepo();
+      const sut = await buildSut(repo, sessionRepo);
 
       await sut.executar("ana.souza@farmaubs.local", "senhaErrada!");
 
-      expect(repo.criarSessao).not.toHaveBeenCalled();
+      expect(sessionRepo.criarSessao).not.toHaveBeenCalled();
     });
   });
 
@@ -210,7 +227,8 @@ describe("LoginUseCase", () => {
           .fn()
           .mockResolvedValue(makeUsuario({ tentativasLoginFalhas: 4 })),
       });
-      const sut = await buildSut(repo);
+      const sessionRepo = makeSessionRepo();
+      const sut = await buildSut(repo, sessionRepo);
 
       const result = await sut.executar(
         "ana.souza@farmaubs.local",
@@ -219,7 +237,7 @@ describe("LoginUseCase", () => {
 
       expect(result).toEqual({ ok: false, motivo: "CREDENCIAIS_INVALIDAS" });
       expect(repo.registrarFalhaLogin).toHaveBeenCalledWith("usuario-uuid-1");
-      expect(repo.criarSessao).not.toHaveBeenCalled();
+      expect(sessionRepo.criarSessao).not.toHaveBeenCalled();
     });
   });
 
@@ -266,11 +284,12 @@ describe("LoginUseCase", () => {
           .fn()
           .mockResolvedValue(makeUsuario({ bloqueadoAte })),
       });
-      const sut = await buildSut(repo);
+      const sessionRepo = makeSessionRepo();
+      const sut = await buildSut(repo, sessionRepo);
 
       await sut.executar("ana.souza@farmaubs.local", SENHA_PLAIN);
 
-      expect(repo.criarSessao).not.toHaveBeenCalled();
+      expect(sessionRepo.criarSessao).not.toHaveBeenCalled();
     });
 
     it("bloqueio expirado não bloqueia o login", async () => {
@@ -310,11 +329,12 @@ describe("LoginUseCase", () => {
       const repo = makeRepo({
         buscarUsuarioPorEmail: jest.fn().mockResolvedValue(null),
       });
-      const sut = await buildSut(repo);
+      const sessionRepo = makeSessionRepo();
+      const sut = await buildSut(repo, sessionRepo);
 
       await sut.executar("nao.cadastrado@farmaubs.local", "qualquer");
 
-      expect(repo.criarSessao).not.toHaveBeenCalled();
+      expect(sessionRepo.criarSessao).not.toHaveBeenCalled();
     });
   });
 

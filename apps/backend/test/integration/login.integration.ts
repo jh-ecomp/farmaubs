@@ -3,6 +3,7 @@ import * as bcrypt from "bcrypt";
 import { DataSource } from "typeorm";
 import { adminDatabaseUrl, appDatabaseUrl } from "../test-db";
 import { AcessoPgRepository } from "../../src/modules/acesso/infrastructure/adapters/acesso-pg.repository";
+import { SessionPgRepository } from "../../src/modules/acesso/infrastructure/adapters/session-pg.repository";
 
 const MUNICIPIO_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const PERFIL_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbe";
@@ -15,6 +16,7 @@ describe("AcessoPgRepository — integração (camada B)", () => {
   let admin: DataSource;
   let app: DataSource;
   let repo: AcessoPgRepository;
+  let sessionRepo: SessionPgRepository;
 
   beforeAll(async () => {
     admin = new DataSource({ type: "postgres", url: adminDatabaseUrl() });
@@ -23,6 +25,7 @@ describe("AcessoPgRepository — integração (camada B)", () => {
     await app.initialize();
 
     repo = new AcessoPgRepository(app);
+    sessionRepo = new SessionPgRepository(app);
 
     const senhaHash = await bcrypt.hash(SENHA, 4);
 
@@ -134,7 +137,7 @@ describe("AcessoPgRepository — integração (camada B)", () => {
 
   it("criarSessao retorna token plain e persiste apenas o hash", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const tokenPlain = await repo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    const tokenPlain = await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
 
     expect(tokenPlain).toHaveLength(64);
 
@@ -153,15 +156,15 @@ describe("AcessoPgRepository — integração (camada B)", () => {
 
   it("criarSessao gera token_hash único a cada chamada", async () => {
     const expiraEm = new Date(Date.now() + 60 * 60_000);
-    const token1 = await repo.criarSessao({ usuarioId: USER_ID, expiraEm });
-    const token2 = await repo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    const token1 = await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    const token2 = await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
 
     expect(token1).not.toBe(token2);
   });
 
   it("sessão expirada não é retornada pela função do banco", async () => {
     const expiraEm = new Date(Date.now() - 1000);
-    const tokenPlain = await repo.criarSessao({ usuarioId: USER_ID, expiraEm });
+    const tokenPlain = await sessionRepo.criarSessao({ usuarioId: USER_ID, expiraEm });
     const tokenHash = crypto
       .createHash("sha256")
       .update(tokenPlain)

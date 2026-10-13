@@ -136,6 +136,8 @@ defineFeature(feature, (test) => {
     };
 
     sessionRepoMock = {
+      criarSessao: jest.fn(),
+      limparExpiradas: jest.fn(),
       revogarTodas: jest.fn().mockResolvedValue(undefined),
       revogar: jest.fn(),
       buscarPorTokenHash: jest.fn(),

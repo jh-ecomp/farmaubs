@@ -13,7 +13,6 @@ import { SKIP_AUTH_KEY } from "./skip-auth.decorator";
 import {
   SESSION_REPOSITORY,
   type ISessionRepository,
-  type SessionRecord,
 } from "../../modules/acesso/domain/ports/session.repository.port";
 
 @Injectable()
@@ -52,21 +51,21 @@ export class SessionAuthGuard implements CanActivate {
     }
 
     const req = context.switchToHttp().getRequest<Request>();
-    const authHeader = req.headers["authorization"];
+    let token: string | undefined;
 
-    if (!authHeader || typeof authHeader !== "string") {
-      throw new UnauthorizedException(
-        "Token de autenticação ausente ou inválido",
-      );
+    // 1. Prioridade: Cookie HttpOnly farmaubs_session (Web SPA)
+    if (req.cookies && req.cookies["farmaubs_session"]) {
+      token = req.cookies["farmaubs_session"];
     }
 
-    if (!authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException(
-        "Token de autenticação ausente ou inválido",
-      );
+    // 2. Fallback: Cabeçalho Authorization Bearer (Mobile / Scripts / Swagger)
+    if (!token) {
+      const authHeader = req.headers["authorization"];
+      if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
     }
 
-    const token = authHeader.substring(7).trim();
     if (!token) {
       throw new UnauthorizedException(
         "Token de autenticação ausente ou inválido",

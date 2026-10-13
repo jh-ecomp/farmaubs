@@ -1,3 +1,5 @@
+import { SessionStatus } from "@farmaubs/shared";
+import { PerfilCodigo } from "@farmaubs/shared";
 import { defineFeature, loadFeature } from "jest-cucumber";
 import * as path from "path";
 import * as crypto from "crypto";
@@ -8,7 +10,7 @@ import { SessionAuthGuard } from "../../../../common/guards/session-auth.guard";
 import { RenewSessionUseCase } from "./renew-session.use-case";
 import type {
   ISessionRepository,
-  SessionRecord,
+  SessaoAutenticada,
   RenovarSessaoParams,
 } from "../../domain/ports/session.repository.port";
 
@@ -37,6 +39,8 @@ defineFeature(feature, (test) => {
     renewResult = null;
 
     sessionRepoMock = {
+      criarSessao: jest.fn(),
+      limparExpiradas: jest.fn(),
       buscarPorTokenHash: jest.fn(),
       renovarAtividade: jest.fn().mockResolvedValue(undefined),
       revogar: jest.fn().mockResolvedValue(undefined),
@@ -61,7 +65,7 @@ defineFeature(feature, (test) => {
       sessionRepoMock,
       configServiceMock,
     );
-    useCase = new RenewSessionUseCase(sessionRepoMock, configServiceMock);
+    useCase = new RenewSessionUseCase(sessionRepoMock, { ttlMinutos: 60, warningMinutos: 5 });
   };
 
   const createMockContext = (headers: Record<string, string>) => {
@@ -87,16 +91,16 @@ defineFeature(feature, (test) => {
       "que existe uma sessão ativa com expira_em para daqui a 20 minutos",
       () => {
         setupMocks();
-        const sessaoAtiva: SessionRecord = {
+        const sessaoAtiva: SessaoAutenticada = {
           id: "sessao-1",
           usuarioId: "user-1",
           municipioId: "mun-1",
-          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
           unidadeIds: ["ubs-1"],
           nomeCompleto: "Usuário de Teste",
           email: "teste@farmaubs.local",
           deveTrocarSenha: false,
-          status: "ativa",
+          status: SessionStatus.ATIVA,
           expiraEm: new Date(Date.now() + 20 * 60_000),
           criadoEm: new Date(Date.now() - 40 * 60_000),
           ultimaAtividadeEm: new Date(Date.now() - 60_000),
@@ -143,16 +147,16 @@ defineFeature(feature, (test) => {
       "que existe uma sessão com expira_em no passado (expirada há 1 minuto)",
       () => {
         setupMocks();
-        const sessaoExpirada: SessionRecord = {
+        const sessaoExpirada: SessaoAutenticada = {
           id: "sessao-exp",
           usuarioId: "user-1",
           municipioId: "mun-1",
-          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
           unidadeIds: [],
           nomeCompleto: "Usuário de Teste",
           email: "teste@farmaubs.local",
           deveTrocarSenha: false,
-          status: "ativa",
+          status: SessionStatus.ATIVA,
           expiraEm: new Date(Date.now() - 60_000), // expirada há 1 min
           criadoEm: new Date(Date.now() - 120 * 60_000),
           ultimaAtividadeEm: new Date(Date.now() - 61_000),
@@ -191,16 +195,16 @@ defineFeature(feature, (test) => {
       "que existe uma sessão ativa com última atividade há menos de 30 segundos",
       () => {
         setupMocks();
-        const sessaoRecente: SessionRecord = {
+        const sessaoRecente: SessaoAutenticada = {
           id: "sessao-recente",
           usuarioId: "user-1",
           municipioId: "mun-1",
-          perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+          perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
           unidadeIds: [],
           nomeCompleto: "Usuário de Teste",
           email: "teste@farmaubs.local",
           deveTrocarSenha: false,
-          status: "ativa",
+          status: SessionStatus.ATIVA,
           expiraEm: new Date(Date.now() + 50 * 60_000),
           criadoEm: new Date(Date.now() - 10 * 60_000),
           ultimaAtividadeEm: new Date(Date.now() - 10_000), // 10s atrás (< 30s)
