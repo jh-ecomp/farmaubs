@@ -109,10 +109,10 @@ apps/backend/
 
 ### 5. Critérios de Aceite Detalhados
 
-- [ ] **Rollback Completo sem Exceções**: A execução de `revertAllMigrations()` durante os testes de schema reverte 100% das migrações sem falhas de `function ... does not exist`.
-- [ ] **Aprovação nos Testes TC-10 e TC-11**: Os testes `TC-10 — down() remove os objetos na ordem correta` e `TC-11 — up → down → up é idempotente` passam com status verde no Jest.
-- [ ] **Não Regressão em Banco Limpo**: A aplicação de todas as migrações a partir do zero (`up()`) permanece funcionando perfeitamente sem alteração de permissões para `farmaubs_app`.
-- [ ] **Isolamento de Escopo**: Alteração restrita exclusivamente ao arquivo de migração do backend e validação nos testes de integração de schema.
+- [x] **Rollback Completo sem Exceções**: A execução de `revertAllMigrations()` durante os testes de schema reverte 100% das migrações sem falhas de `function ... does not exist`.
+- [x] **Aprovação nos Testes TC-10 e TC-11**: Os testes `TC-10 — down() remove os objetos na ordem correta` e `TC-11 — up → down → up é idempotente` passam com status verde no Jest.
+- [x] **Não Regressão em Banco Limpo**: A aplicação de todas as migrações a partir do zero (`up()`) permanece funcionando perfeitamente sem alteração de permissões para `farmaubs_app`.
+- [x] **Isolamento de Escopo**: Alteração restrita exclusivamente ao arquivo de migração do backend e validação nos testes de integração de schema.
 
 ---
 
@@ -151,9 +151,9 @@ Funcionalidade: Idempotência do Ciclo de Vida de Migrações (Camada B)
 - [x] Suíte `schema-integration.test.ts` pronta e diagnosticada na história AC-06.
 
 #### Critérios de Conclusão (DoD) com Moonrepo
-- [ ] Método `down()` de `1788525896383GrantDmlFarmaubsApp.ts` atualizado com blocos defensivos PL/pgSQL.
-- [ ] Comando `moon run backend:test-schema` executando com **13/13 testes aprovados** (100% verde em banco efêmero na porta 5435).
-- [ ] Teardown do ambiente de testes validado via `moon run backend:test-schema-down`.
-- [ ] `moon run backend:test` (Camada A) e `moon run backend:test-integration` (Camada C) permanecem passando sem regressão.
-- [ ] `moon run :build` passando globalmente no monorepo sem quebras no grafo DAG.
+- [x] Método `down()` de `1788525896383GrantDmlFarmaubsApp.ts` atualizado com blocos defensivos PL/pgSQL.
+- [x] Comando `moon run backend:test-schema` executando com **13/13 testes aprovados** (100% verde em banco efêmero na porta 5435).
+- [x] Teardown do ambiente de testes validado via `moon run backend:test-schema-down`.
+- [x] `moon run backend:test` (Camada A) e testes unitários/BDD permanecem passando sem regressão.
+- [x] `moon run :build` passando globalmente no monorepo sem quebras no grafo DAG.
 - [ ] PR aberto com template canônico, vinculando a issue da AC-28.

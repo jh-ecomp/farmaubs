@@ -72,6 +72,7 @@ export class GrantDmlFarmaubsApp1788525896383 implements MigrationInterface {
          REVOKE EXECUTE ON FUNCTIONS FROM farmaubs_app`,
     );
 
+    // Revogações defensivas protegidas contra funções já dropadas em migrações reversas
     await queryRunner.query(`
       DO $$
       BEGIN
@@ -79,12 +80,20 @@ export class GrantDmlFarmaubsApp1788525896383 implements MigrationInterface {
       EXCEPTION WHEN undefined_function THEN NULL;
       END $$;
     `);
-    await queryRunner.query(
-      `REVOKE EXECUTE ON FUNCTION auth_registrar_falha_login(uuid) FROM farmaubs_app`,
-    );
-    await queryRunner.query(
-      `REVOKE EXECUTE ON FUNCTION auth_buscar_usuario_por_email(text) FROM farmaubs_app`,
-    );
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        REVOKE EXECUTE ON FUNCTION auth_registrar_falha_login(uuid) FROM farmaubs_app;
+      EXCEPTION WHEN undefined_function THEN NULL;
+      END $$;
+    `);
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        REVOKE EXECUTE ON FUNCTION auth_buscar_usuario_por_email(text) FROM farmaubs_app;
+      EXCEPTION WHEN undefined_function THEN NULL;
+      END $$;
+    `);
 
     await queryRunner.query(
       `REVOKE SELECT, INSERT, UPDATE, DELETE ON TABLE sessions FROM farmaubs_app`,
