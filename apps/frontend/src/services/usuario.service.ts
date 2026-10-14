@@ -24,16 +24,9 @@ export class UsuarioApiError extends Error {
   }
 }
 
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("@FarmaUBS:token");
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-}
+const JSON_HEADERS: HeadersInit = {
+  "Content-Type": "application/json",
+};
 
 export const usuarioService = {
   async listarUsuarios(
@@ -51,7 +44,8 @@ export const usuarioService = {
     let res: Response;
     try {
       res = await fetch(`${API_BASE_URL}/usuarios${queryString}`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
+        headers: JSON_HEADERS,
       });
       res = inspectSessionExpiresHeader(res);
     } catch {
@@ -77,7 +71,8 @@ export const usuarioService = {
     let res: Response;
     try {
       res = await fetch(`${API_BASE_URL}/administracao/municipios`, {
-        headers: getAuthHeaders(),
+        credentials: "include",
+        headers: JSON_HEADERS,
       });
       res = inspectSessionExpiresHeader(res);
     } catch {
@@ -107,7 +102,8 @@ export const usuarioService = {
       res = await fetch(
         `${API_BASE_URL}/administracao/unidades-saude${query}`,
         {
-          headers: getAuthHeaders(),
+          credentials: "include",
+          headers: JSON_HEADERS,
         },
       );
       res = inspectSessionExpiresHeader(res);
@@ -137,7 +133,8 @@ export const usuarioService = {
     try {
       res = await fetch(`${API_BASE_URL}/usuarios`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        credentials: "include",
+        headers: JSON_HEADERS,
         body: JSON.stringify(dados),
       });
       res = inspectSessionExpiresHeader(res);
@@ -174,7 +171,8 @@ export const usuarioService = {
         `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/status`,
         {
           method: "PATCH",
-          headers: getAuthHeaders(),
+          credentials: "include",
+          headers: JSON_HEADERS,
           body: JSON.stringify({ ativo }),
         },
       );
@@ -201,7 +199,8 @@ export const usuarioService = {
       res = await fetch(
         `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}`,
         {
-          headers: getAuthHeaders(),
+          credentials: "include",
+          headers: JSON_HEADERS,
         },
       );
       res = inspectSessionExpiresHeader(res);
@@ -236,7 +235,8 @@ export const usuarioService = {
           `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}`,
           {
             method: "PATCH",
-            headers: getAuthHeaders(),
+            credentials: "include",
+            headers: JSON_HEADERS,
             body: JSON.stringify({
               nomeCompleto: dados.nomeCompleto,
               email: dados.email,
@@ -276,7 +276,8 @@ export const usuarioService = {
           `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/associacoes`,
           {
             method: "PUT",
-            headers: getAuthHeaders(),
+            credentials: "include",
+            headers: JSON_HEADERS,
             body: JSON.stringify({
               perfilId: dados.perfil,
               ubsIds: dados.ubsIds,

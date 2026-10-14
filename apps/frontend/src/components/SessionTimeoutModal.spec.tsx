@@ -23,7 +23,6 @@ describe("SessionTimeoutModal — Camada D (NF012 / AC-20)", () => {
 
     const expiresAt = new Date(now + secondsUntilExpire * 1000).toISOString();
 
-    localStorage.setItem("@FarmaUBS:token", "jwt-token-ativo");
     localStorage.setItem(
       "@FarmaUBS:usuario",
       JSON.stringify({
@@ -152,7 +151,7 @@ describe("SessionTimeoutModal — Camada D (NF012 / AC-20)", () => {
       fireEvent.click(logoutBtn);
     });
 
-    expect(logoutSpy).toHaveBeenCalledWith("jwt-token-ativo");
+    expect(logoutSpy).toHaveBeenCalled();
     expect(clearSpy).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem("@FarmaUBS:token")).toBeNull();
     expect(localStorage.getItem("@FarmaUBS:usuario")).toBeNull();

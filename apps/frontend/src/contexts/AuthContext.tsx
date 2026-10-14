@@ -55,25 +55,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 
   const [authState, setAuthState] = useState<AuthState>(() => {
-    const savedToken = localStorage.getItem("@FarmaUBS:token");
     const savedUser = localStorage.getItem("@FarmaUBS:usuario");
     const savedExpiresAt = localStorage.getItem("@FarmaUBS:expiresAt");
     const savedTtlSeconds = localStorage.getItem("@FarmaUBS:ttlSeconds");
     const savedWarningSeconds = localStorage.getItem(
       "@FarmaUBS:warningSeconds",
     );
-
-    if (!savedToken) {
-      return {
-        token: null,
-        expiresAt: null,
-        ttlSeconds: null,
-        warningSeconds: null,
-        usuario: null,
-        isAuthenticated: false,
-        status: "nao_autenticado",
-      };
-    }
 
     // NF012: Se a data de expiração salva já tiver passado, a sessão é inválida
     if (savedExpiresAt && new Date(savedExpiresAt).getTime() <= Date.now()) {
@@ -106,11 +93,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Usuário inválido no storage permanece null
     }
 
-    // Se temos token mas não temos usuário em cache, inicia em carregando
-    const statusCalculado: AuthStatus = usuario ? "autenticado" : "carregando";
+    let statusCalculado: AuthStatus = "nao_autenticado";
+    if (usuario) {
+      statusCalculado = "autenticado";
+    } else if (savedExpiresAt) {
+      statusCalculado = "carregando";
+    }
 
     return {
-      token: savedToken,
+      token: null,
       expiresAt: savedExpiresAt,
       ttlSeconds: savedTtlSeconds ? parseInt(savedTtlSeconds, 10) : 3600,
       warningSeconds: savedWarningSeconds
@@ -122,53 +113,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   });
 
-  // Revalidação inicial via GET /api/v1/acesso/me quando montado
+  // Revalidação inicial via GET /api/v1/acesso/me quando montado (NF012 / AC-30)
   useEffect(() => {
     let isMounted = true;
 
+    const tinhaSessaoPrevia = Boolean(
+      localStorage.getItem("@FarmaUBS:usuario") ||
+      localStorage.getItem("@FarmaUBS:expiresAt"),
+    );
+
     const validarSessao = async () => {
-      const token = localStorage.getItem("@FarmaUBS:token");
-      if (!token) {
-        if (isMounted) {
-          setAuthState((prev) => ({
-            ...prev,
-            status: "nao_autenticado",
-            isAuthenticated: false,
-          }));
-        }
-        return;
-      }
-
-      const expiresAt = localStorage.getItem("@FarmaUBS:expiresAt");
-      if (expiresAt && new Date(expiresAt).getTime() <= Date.now()) {
-        localStorage.removeItem("@FarmaUBS:token");
-        localStorage.removeItem("@FarmaUBS:usuario");
-        localStorage.removeItem("@FarmaUBS:expiresAt");
-        localStorage.removeItem("@FarmaUBS:ttlSeconds");
-        localStorage.removeItem("@FarmaUBS:warningSeconds");
-        sessionStorage.setItem(
-          "@FarmaUBS:logoutReason",
-          "Sua sessão expirou por inatividade. Faça login novamente para continuar.",
-        );
-        setLogoutReason(
-          "Sua sessão expirou por inatividade. Faça login novamente para continuar.",
-        );
-        if (isMounted) {
-          setAuthState({
-            token: null,
-            expiresAt: null,
-            ttlSeconds: null,
-            warningSeconds: null,
-            usuario: null,
-            isAuthenticated: false,
-            status: "nao_autenticado",
-          });
-        }
-        return;
-      }
-
       try {
-        const sessao = await authService.obterSessaoAtual(token);
+        const sessao = await authService.obterSessaoAtual();
         if (isMounted) {
           setAuthState((prev) => {
             const usuarioBase: UsuarioPayload = prev.usuario || {
@@ -219,6 +175,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             return {
               ...prev,
+              token: null,
               usuario: usuarioAtualizado,
               expiresAt: sessao.expiresAt || prev.expiresAt,
               isAuthenticated: true,
@@ -230,20 +187,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Se a sessão expirou no servidor (401), limpa credenciais locais
         if (
           err?.type === "SESSION_EXPIRED" ||
-          err?.message?.includes("expirou")
+          err?.status === 401 ||
+          err?.message?.includes("expirou") ||
+          err?.message?.includes("não autenticado")
         ) {
           localStorage.removeItem("@FarmaUBS:token");
           localStorage.removeItem("@FarmaUBS:usuario");
           localStorage.removeItem("@FarmaUBS:expiresAt");
           localStorage.removeItem("@FarmaUBS:ttlSeconds");
           localStorage.removeItem("@FarmaUBS:warningSeconds");
-          sessionStorage.setItem(
-            "@FarmaUBS:logoutReason",
-            "Sua sessão expirou no servidor. Faça login novamente para continuar.",
-          );
-          setLogoutReason(
-            "Sua sessão expirou no servidor. Faça login novamente para continuar.",
-          );
+
+          // Apenas exibe o banner de 'sessão expirada' se o usuário possuía uma sessão prévia
+          if (tinhaSessaoPrevia) {
+            sessionStorage.setItem(
+              "@FarmaUBS:logoutReason",
+              "Sua sessão expirou no servidor. Faça login novamente para continuar.",
+            );
+            setLogoutReason(
+              "Sua sessão expirou no servidor. Faça login novamente para continuar.",
+            );
+          } else {
+            sessionStorage.removeItem("@FarmaUBS:logoutReason");
+            setLogoutReason(null);
+          }
+
           if (isMounted) {
             setAuthState({
               token: null,
@@ -256,12 +223,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           }
         } else {
-          // Erro de rede ou indisponibilidade do backend (NETWORK_ERROR): fallback resiliente para evitar spinner infinito
+          // Erro de rede ou indisponibilidade do backend (NETWORK_ERROR): fallback resiliente
           if (isMounted) {
             setAuthState((prev) => {
               const hasCachedUser = Boolean(prev.usuario);
               return {
                 ...prev,
+                token: null,
                 status: hasCachedUser ? "autenticado" : "nao_autenticado",
                 isAuthenticated: hasCachedUser,
               };
@@ -271,9 +239,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    if (authState.token) {
-      validarSessao();
-    }
+    validarSessao();
 
     return () => {
       isMounted = false;
@@ -304,7 +270,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           expiresAt: e.newValue,
         }));
       }
-      if (e.key === "@FarmaUBS:token" && !e.newValue) {
+      if (e.key === "@FarmaUBS:usuario" && !e.newValue) {
         setAuthState({
           token: null,
           expiresAt: null,
@@ -332,13 +298,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = (dadosAuth: Omit<AuthState, "isAuthenticated" | "status">) => {
     setAuthState({
       ...dadosAuth,
+      token: null,
       isAuthenticated: true,
       status: "autenticado",
     });
 
-    if (dadosAuth.token) {
-      localStorage.setItem("@FarmaUBS:token", dadosAuth.token);
-    }
+    localStorage.removeItem("@FarmaUBS:token");
     if (dadosAuth.usuario) {
       localStorage.setItem(
         "@FarmaUBS:usuario",
@@ -363,9 +328,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = (motivo?: string) => {
-    const tokenAtual =
-      authState.token || localStorage.getItem("@FarmaUBS:token");
-
     // NF012 / AC-06: Expurgo imediato e obrigatório do cache de memória RAM
     if (queryClient) {
       queryClient.clear();
@@ -395,12 +357,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLogoutReason(null);
     }
 
-    // [RF004 / AC-06]: Revoga a sessão ativa no PostgreSQL via backend (resiliente a falhas de rede)
-    if (tokenAtual) {
-      authService.logout(tokenAtual).catch(() => {
-        // Falha de rede não impede o logout local
-      });
-    }
+    // [RF004 / AC-06 / AC-30]: Revoga a sessão ativa via cookie HttpOnly
+    authService.logout().catch(() => {
+      // Falha de rede não impede o logout local
+    });
   };
 
   const extendSession = async () => {
