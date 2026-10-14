@@ -183,7 +183,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         <Routes>
           <Route path="/403" element={<AccessDenied />} />
           <Route
-            path="/admin/usuarios"
+            path="/usuarios"
             element={
               <RoleRoute allowedRoles={["ADMINISTRADOR"]}>
                 <AdminUsuarios />
@@ -191,7 +191,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
             }
           />
         </Routes>,
-        { initialEntries: ["/admin/usuarios"] },
+        { initialEntries: ["/usuarios"] },
       );
 
       // Deve estar na tela de Acesso Negado 403
@@ -216,7 +216,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         <Routes>
           <Route path="/403" element={<AccessDenied />} />
           <Route
-            path="/admin/usuarios"
+            path="/usuarios"
             element={
               <RoleRoute allowedRoles={["ADMINISTRADOR"]}>
                 <AdminUsuarios />
@@ -224,7 +224,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
             }
           />
         </Routes>,
-        { initialEntries: ["/admin/usuarios"] },
+        { initialEntries: ["/usuarios"] },
       );
 
       await waitFor(() => {
@@ -252,7 +252,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         <Routes>
           <Route path="/403" element={<AccessDenied />} />
           <Route
-            path="/admin/usuarios"
+            path="/usuarios"
             element={
               <RoleRoute allowedRoles={["ADMINISTRADOR"]}>
                 <AdminUsuarios />
@@ -260,7 +260,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
             }
           />
         </Routes>,
-        { initialEntries: ["/admin/usuarios"] },
+        { initialEntries: ["/usuarios"] },
       );
 
       await waitFor(() => {
@@ -277,7 +277,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       await waitFor(() => {
@@ -293,7 +293,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       await waitFor(() => {
@@ -325,7 +325,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       await waitFor(() => {
@@ -354,7 +354,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       await waitFor(() => {
@@ -397,7 +397,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       });
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       // Abre o modal de cadastro
@@ -494,7 +494,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       const btnNovoUsuario = await screen.findByRole("button", {
@@ -529,7 +529,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       );
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       // Abre o modal
@@ -606,7 +606,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       mockUsuarioService.alterarStatus.mockResolvedValueOnce(undefined);
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       // Localiza a linha da Mariana (outro usuário ativo)
@@ -656,7 +656,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       await screen.findByText("Dra. Mariana Vasconcelos");
@@ -683,7 +683,7 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       setupAuthenticatedAdmin();
 
       renderWithProviders(<AdminUsuarios />, {
-        initialEntries: ["/admin/usuarios"],
+        initialEntries: ["/usuarios"],
       });
 
       // Aguarda tabela renderizar e exibir a tag "Você"

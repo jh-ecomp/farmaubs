@@ -2,7 +2,7 @@ import type { UsuarioPayload } from "../types/auth";
 
 /**
  * [RF002 / RBAC]: Retorna a rota inicial padrão do usuário de acordo com o perfil de acesso (RBAC).
- * Administrador -> /admin/usuarios
+ * Administrador -> /usuarios
  * Demais perfis (Farmacêutico, Gerente, etc.) -> /em-desenvolvimento
  * @param usuario - Objeto do usuário autenticado no contexto global.
  * @returns Rota padrão para redirecionamento após autenticação.
@@ -28,7 +28,7 @@ export function getDefaultRouteForUser(
     perfis.some((p) => p === "ADMINISTRADOR" || p === "ADMIN");
 
   if (isAdmin) {
-    return "/admin/usuarios";
+    return "/usuarios";
   }
 
   return "/em-desenvolvimento";
