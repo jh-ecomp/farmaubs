@@ -1,4 +1,4 @@
-# IN-08: Modal de Homologação e Ata Oficial: Resumo de Conciliação, Impressão da Ata com CSS Print e Exportação .xlsx
+# IN-08 feat(inventario): Modal de Homologação e Ata Oficial: Resumo de Conciliação, Impressão da Ata com CSS Print e Exportação .xlsx
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável pela farmácia da UBS,  
 > **quero** abrir o modal de homologação para revisar o resumo das divergências apuradas, confirmar o acerto de estoque definitivo no sistema, visualizar a Ata Oficial de Inventário Mensal formatada para impressão direta no navegador e baixar a planilha completa em formato Excel (.xlsx),  
@@ -17,85 +17,53 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Modal de Homologação (`ModalHomologacaoInventario.tsx`)**:
-   - Exibe sumário executivo antes do fechamento:
-     - Total de Itens no Catálogo da UBS;
-     - Itens Perfeitamente Conformes;
-     - Itens com Divergência Justificada;
-     - Saldo Físico Global Apurado.
-   - **Condição Bloqueante**: O botão `"Confirmar Homologação e Ajustar Estoque"` permanece desabilitado se houver qualquer item sem contagem física ou com divergência sem justificativa válida.
-   - Ao confirmar:
-     - Dispara a requisição `POST /api/v1/inventario/ciclos/:id/homologar`;
-     - Exibe toast de sucesso confirmando a sincronização dos saldos;
-     - Fecha o modal de confirmação e abre automaticamente o modal de visualização e impressão da Ata Oficial.
-
+   - Exibe sumário executivo antes do fechamento: Total de Itens, Conformes, Divergências Justificadas e Saldo Físico Global.
+   - Condição Bloqueante: O botão `"Confirmar Homologação e Ajustar Estoque"` permanece desabilitado se houver qualquer item sem contagem física ou com divergência sem justificativa válida.
+   - Ao confirmar, dispara `POST /api/v1/inventario/ciclos/:id/homologar`, emite toast e abre automaticamente a visualização da Ata Oficial.
 2. **Modal de Visualização da Ata Oficial (`AtaInventarioImpressaoModal.tsx`)**:
-   - Exibe a Ata Oficial gerada pelo backend (`GET /api/v1/inventario/ciclos/:id/ata`), contendo:
-     - Cabeçalho institucional: Prefeitura Municipal de Parnaíba / Secretaria Municipal de Saúde / FarmaUBS;
-     - Identificação da Unidade Básica de Saúde (Nome e CNES);
-     - Número oficial da Ata (ex.: `ATA-INV-2026/004`) e Hash SHA-256 de integridade;
-     - Data e hora de emissão;
-     - Farmacêutico Responsável Técnico e número de CRF;
-     - Tabela das divergências apuradas com motivo e justificativa sanitária;
-     - Termo legal de declaração de veracidade das informações;
-     - Campos para assinatura física e carimbo do Farmacêutico Responsável e do Gerente da UBS.
-
+   - Apresenta: Cabeçalho institucional, Nome e CNES da UBS, Número da Ata (ex: `ATA-INV-2026/004`), Hash SHA-256 de integridade, data/hora, farmacêutico com CRF, tabela de divergências justificadas e campos para assinatura física.
 3. **Impressão Nativa com Folha de Estilo Limpa (`@media print`)**:
-   - Botão `🖨️ Imprimir Ata Oficial`:
-     - Aciona `window.print()`;
-     - O layout de impressão isola apenas a área `#ataOficialPrintArea`, ocultando barras de navegação, botões e elementos da aplicação;
-     - Tipografia limpa em preto e branco, margens de 15mm e quebra de página inteligente sem cortar tabelas.
-
+   - Botão `🖨️ Imprimir Ata Oficial` aciona `window.print()` isolando `#ataOficialPrintArea` em tipografia limpa, preto e branco e margens de 15mm.
 4. **Botão de Exportação em Planilha Excel (`.xlsx`) (RF021)**:
-   - Botão de ação: `📥 Baixar Planilha (.xlsx)`.
-   - Dispara o download automático do relatório consolidado através de `GET /api/v1/inventario/ciclos/:id/exportar-xlsx`, permitindo arquivamento digital e manipulação gerencial em planilhas.
+   - Botão de ação: `📥 Baixar Planilha (.xlsx)` via `GET /api/v1/inventario/ciclos/:id/exportar-xlsx`.
 
 ---
 
-## 3. Escopo Técnico & Arquitetural
+## 3. Contratos de dados e Protocolo HTTP (DTOs / CSS Print)
 
-- **Camada**: D (Testes de Componentes React).
-- **Componentes**:
-  - `apps/frontend/src/features/inventario/components/ModalHomologacaoInventario.tsx`;
-  - `apps/frontend/src/features/inventario/components/AtaInventarioImpressaoModal.tsx`.
-- **Hooks**: `useHomologarInventario()`, `useAtaInventario(cicloId)` e `useExportarInventarioXlsx(cicloId)`.
+### Contratos TypeScript (`@farmaubs/shared`)
 
-### Compartilhamento Arquitetural com @farmaubs/shared e App Mobile (apps/mobile - IN-MOB-04)
-- **Contratos e DTOs da Ata Oficial**: O DTO de resposta `InventarioAtaOficialDTO`, o schema de homologação `homologarInventarioSchema` e os tipos de totais consolidados são unificados em `@farmaubs/shared/src/contracts/inventario/`.
-- **Validação de Prontidão para Homologação**: A regra lógica pura que verifica se todas as divergências foram saneadas e se o ciclo pode ser encerrado é executada por um helper compartilhado em `@farmaubs/shared/src/domain/inventario/homologacao-helpers.ts`.
-- **Equivalente Mobile**: A formalização legal (impressão com `@media print`) permanece prioritária no desktop, mas o app mobile (**IN-MOB-04**) permite ao farmacêutico homologar o ciclo no celular, consultar o hash e número da Ata gerada e compartilhar o resumo oficial via API nativa (`expo-sharing`).
-- **Diretrizes para Ciclos Independentes de Desenvolvimento**:
-  - *Cenário A (Mobile já implementou IN-MOB-04)*: O Frontend Web consome diretamente `InventarioAtaOficialDTO`, `homologarInventarioSchema` e o helper de validação de prontidão de homologação já validados em `@farmaubs/shared`.
-  - *Cenário B (Mobile ainda NÃO implementou IN-MOB-04)*: O Frontend Web publica o payload de homologação e DTOs da Ata em `packages/shared/src/contracts/inventario/`, servindo de modelo contratual para a confirmação mobile.
-
----
-
-## 4. Critérios de Aceite (Gherkin BDD)
-
-### Cenário 1: Confirmação de homologação e abertura automática da Ata Oficial
-```gherkin
-Dado que todas as contagens e justificativas do ciclo foram preenchidas
-Quando o farmacêutico clicar em "Homologar Inventário"
-E confirmar no modal de homologação
-Então a mutação de homologação deve ser executada com sucesso
-E o modal da Ata Oficial deve ser aberto exibindo o número da ata e a tabela de conciliação
-E um toast deve confirmar: "Inventário homologado e estoque ajustado com sucesso"
+```typescript
+export interface InventarioAtaOficialDTO {
+  numeroAta: string;
+  dataEmissao: string;
+  hashIntegridade: string;
+  ubsNome: string;
+  ubsCnes: string;
+  farmaceuticoNome: string;
+  farmaceuticoCrf: string;
+  totalItens: number;
+  totalConformes: number;
+  totalDivergencias: number;
+  totalSobras: number;
+  totalFaltas: number;
+  itensDivergentes: {
+    medicamento: string;
+    lote: string;
+    fabricante: string;
+    quantidadeTeorica: number;
+    quantidadeFisica: number;
+    divergencia: number;
+    motivo: string;
+    justificativa: string;
+  }[];
+}
 ```
 
-### Cenário 2: Acionamento da folha de impressão CSS print
-```gherkin
-Dado que o modal da Ata Oficial está visível
-Quando o usuário clicar no botão "Imprimir Ata Oficial"
-Então o comando window.print() deve ser acionado
-E apenas o container "#ataOficialPrintArea" deve estar visível para a impressão
-E as assinaturas do farmacêutico e do gerente da UBS devem estar posicionadas no rodapé
-```
-
----
-
-## 5. Estilo de Impressão da Ata Oficial (CSS Print)
+### Estilo de Impressão da Ata Oficial (CSS Print)
 
 ```css
 @media print {
@@ -126,7 +94,46 @@ E as assinaturas do farmacêutico e do gerente da UBS devem estar posicionadas n
 
 ---
 
-## 6. Definition of Done (DoD)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
+
+- **Camada**: D (Testes de Componentes React).
+- **Componentes**:
+  - `apps/frontend/src/features/inventario/components/ModalHomologacaoInventario.tsx`;
+  - `apps/frontend/src/features/inventario/components/AtaInventarioImpressaoModal.tsx`.
+- **Hooks**: `useHomologarInventario()`, `useAtaInventario(cicloId)` e `useExportarInventarioXlsx(cicloId)`.
+
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - IN-MOB-04)
+- **Contratos e DTOs da Ata Oficial**: `InventarioAtaOficialDTO` e `homologarInventarioSchema` unificados em `@farmaubs/shared`.
+- **Validação de Prontidão para Homologação**: Helper puro `verificarProntidaoHomologacao(itens)`.
+- **Equivalente Mobile**: O app mobile (**IN-MOB-04**) permite ao farmacêutico homologar o ciclo no celular, consultar hash e número de ata e compartilhar resumo via API nativa (`expo-sharing`).
+
+---
+
+## 5. Cenários de teste em BDD (Gherkin — camada D)
+
+```gherkin
+# language: pt
+Funcionalidade: Homologação, Impressão da Ata e Exportação XLSX (Camada D)
+
+  Cenário: Confirmação de homologação e abertura automática da Ata Oficial
+    Dado que todas as contagens e justificativas do ciclo foram preenchidas
+    Quando o farmacêutico clicar em "Homologar Inventário"
+    E confirmar no modal de homologação
+    Então a mutação de homologação deve ser executada com sucesso
+    E o modal da Ata Oficial deve ser aberto exibindo o número da ata e a tabela de conciliação
+    E um toast deve confirmar: "Inventário homologado e estoque ajustado com sucesso"
+
+  Cenário: Acionamento da folha de impressão CSS print
+    Dado que o modal da Ata Oficial está visível
+    Quando o usuário clicar no botão "Imprimir Ata Oficial"
+    Então o comando window.print() deve ser acionado
+    E apenas o container "#ataOficialPrintArea" deve estar visível para a impressão
+    E as assinaturas do farmacêutico e do gerente da UBS devem estar posicionadas no rodapé
+```
+
+---
+
+## 6. Checklist de DoD e aceitação
 
 - [ ] Modais desenvolvidos com foco aprisionado, tecla `Escape` e total acessibilidade WCAG 2.1 AA.
 - [ ] Folha de estilo de impressão testada com formatação oficial e campos de assinatura do SUS.

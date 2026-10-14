@@ -1,4 +1,4 @@
-# ES-02: API de Saldos: Consulta Paginada com Busca Textual, Categorias, Agrupamento por Lote e Status
+# ES-02 feat(estoque): API de Saldos: Consulta Paginada com Busca Textual, Categorias, Agrupamento por Lote e Status
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico ou gerente da UBS,  
 > **quero** consultar a listagem paginada dos saldos de estoque da unidade com busca textual inteligente, agrupamento por medicamento, detalhamento dos lotes individuais, filtros por categoria e filtros de validade (com destaque para lotes que vencem no mês corrente),  
@@ -17,81 +17,35 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Agrupamento por Medicamento e Expansão por Lote**:
    - Cada registro principal representa um medicamento do catálogo oficial (`produto_id`).
    - Apresenta o saldo consolidado da UBS (`saldoTotal = soma(lotes.saldo_atual)`).
    - Contém a lista de lotes físicos associados àquele produto na UBS, detalhando código do lote, fabricante, data de validade e saldo do lote.
-
 2. **Classificação Semântica de Validade do Lote (`statusValidade`)**:
    - `VENCIDO`: Data de validade anterior à data corrente (`validade < hoje`).
    - `MES_CORRENTE`: Vencimento dentro do mês e ano civis correntes (exige badge **laranja** no frontend).
    - `CURTA_90D`: Vencimento nos próximos 90 dias corridos que não se enquadre no mês corrente (alerta âmbar/laranja).
    - `REGULAR`: Vencimento superior a 90 dias (badge verde).
-
 3. **Filtro Avançado de Validade (`filtroValidade`)**:
    - `TODOS`: Exibe todos os itens;
    - `MES_CORRENTE`: Filtra medicamentos que possuam pelo menos um lote ativo com vencimento no mês corrente;
    - `VALIDADE_90D`: Filtra medicamentos com pelo menos um lote com vencimento em até 90 dias;
    - `VENCIDOS`: Filtra medicamentos com lotes vencidos que ainda possuam saldo a ser descartado.
-
 4. **Busca Textual Inteligente (`termo`)**:
-   - Suporte a busca parcial (case-insensitive e sem acentos) em:
-     - Nome comercial do produto;
-     - Princípio ativo (DCI/DCB);
-     - Apresentação ou forma farmacêutica;
-     - Código de lote específico.
-
+   - Suporte a busca parcial (case-insensitive e sem acentos) em nome comercial, princípio ativo, apresentação ou código do lote.
 5. **Paginação Eficiente**:
    - Retorno estruturado contendo dados paginados (`itens`, `total`, `pagina`, `itensPorPagina`, `totalPaginas`).
 
 ---
 
-## 3. Escopo Técnico & Arquitetural (Clean Architecture — ADR-034)
+## 3. Contratos de dados e Protocolo HTTP (DTOs)
 
-### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/estoque/saldos.types.ts`**: `ConsultarSaldosQueryDto`, `MedicamentoSaldoItemDto`, `LoteEstoqueDto` e schema Zod `consultarSaldosQuerySchema`.
-- **`src/domain/estoque/fefo-helpers.ts`**: Funções puras `calcularStatusValidade(validadeDate)` e `ordenarLotesPorFEFO(lotes)` reutilizadas no backend para padronização de classificação e no frontend/mobile para renderização de badges.
+### Endpoints REST
+- `GET /api/v1/estoque/saldos`: Listagem paginada de saldos com filtros avançados.
 
-### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
-- **Use Cases**:
-  - `consultar-saldos-paginados.use-case.ts`: Executa query parametrizada de saldos via porta, agrupa os lotes sob seus respectivos medicamentos, aplica ordenação FEFO e enriquece com status de validade.
-
-### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
-- **Portas (Interfaces)**:
-  - `estoque-saldos.repository.port.ts`: Contrato `consultarSaldosPaginados(ubsId: string, filtros: ConsultarSaldosQueryDto)`.
-
-### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
-- **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-estoque-saldos.repository.ts`: Implementa `EstoqueSaldosRepositoryPort` com query builder, paginação e joins otimizados com a tabela de lotes e catálogo.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
-  - `estoque-saldos.controller.ts`: Endpoint `GET /api/v1/estoque/saldos` com validação de query parameters e RBAC.
-
----
-
-## 4. Critérios de Aceite (Gherkin BDD)
-
-### Cenário 1: Consulta paginada padrão com agrupamento de lotes
-```gherkin
-Dado que o farmacêutico está autenticado na sua UBS
-Quando ele consultar "GET /api/v1/estoque/saldos?pagina=1&itensPorPagina=10"
-Então a API deve retornar status 200 (OK)
-E o payload deve listar os medicamentos da UBS com saldo total consolidado
-E cada medicamento deve conter seu array de lotes individuais com fabricante, código do lote, data de validade, saldo e statusValidade
-```
-
-### Cenário 2: Filtro por lotes que vencem no mês corrente
-```gherkin
-Dado que existem 3 medicamentos com lotes com vencimento dentro do mês atual
-Quando o usuário consultar "GET /api/v1/estoque/saldos?filtroValidade=MES_CORRENTE"
-Então a API deve retornar apenas os medicamentos que contêm lotes com statusValidade "MES_CORRENTE"
-E os metadados de paginação devem refletir o total de registros filtrados
-```
-
----
-
-## 5. Contratos de Dados (DTOs TypeScript)
+### DTOs TypeScript (com class-validator)
 
 ```typescript
 export class ConsultarSaldosQueryDto {
@@ -157,7 +111,51 @@ export interface ConsultarSaldosPaginadosResponseDto {
 
 ---
 
-## 6. Definition of Done (DoD)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
+
+### 1. Pacote Compartilhado (`@farmaubs/shared`)
+- **`src/contracts/estoque/saldos.types.ts`**: `ConsultarSaldosQueryDto`, `MedicamentoSaldoItemDto`, `LoteEstoqueDto` e schema Zod `consultarSaldosQuerySchema`.
+- **`src/domain/estoque/fefo-helpers.ts`**: Funções puras `calcularStatusValidade(validadeDate)` e `ordenarLotesPorFEFO(lotes)`.
+
+### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
+- **Use Cases**:
+  - `consultar-saldos-paginados.use-case.ts`: Executa query parametrizada de saldos via porta, agrupa os lotes sob seus respectivos medicamentos, aplica ordenação FEFO e enriquece com status de validade.
+
+### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
+- **Portas (Interfaces)**:
+  - `estoque-saldos.repository.port.ts`: Contrato `consultarSaldosPaginados(ubsId: string, filtros: ConsultarSaldosQueryDto)`.
+
+### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
+- **Adaptadores de Banco (`adapters/`)**:
+  - `typeorm-estoque-saldos.repository.ts`: Implementa `EstoqueSaldosRepositoryPort` com query builder, paginação e joins otimizados.
+- **Adaptadores de Entrada HTTP (`controllers/`)**:
+  - `estoque-saldos.controller.ts`: Endpoint `GET /api/v1/estoque/saldos` com validação de query parameters e RBAC.
+
+---
+
+## 5. Cenários de teste em BDD (Gherkin — camada A e C)
+
+```gherkin
+# language: pt
+Funcionalidade: Consulta Paginada de Saldos de Estoque (Camadas A e C)
+
+  Cenário: Consulta paginada padrão com agrupamento de lotes
+    Dado que o farmacêutico está autenticado na sua UBS
+    Quando ele consultar "GET /api/v1/estoque/saldos?pagina=1&itensPorPagina=10"
+    Então a API deve retornar status 200 (OK)
+    E o payload deve listar os medicamentos da UBS com saldo total consolidado
+    E cada medicamento deve conter seu array de lotes individuais com fabricante, código do lote, data de validade, saldo e statusValidade
+
+  Cenário: Filtro por lotes que vencem no mês corrente
+    Dado que existem 3 medicamentos com lotes com vencimento dentro do mês atual
+    Quando o usuário consultar "GET /api/v1/estoque/saldos?filtroValidade=MES_CORRENTE"
+    Então a API deve retornar apenas os medicamentos que contêm lotes com statusValidade "MES_CORRENTE"
+    E os metadados de paginação devem refletir o total de registros filtrados
+```
+
+---
+
+## 6. Checklist de DoD e aceitação
 
 - [ ] Query otimizada com índices compostos no PostgreSQL cobrindo `(ubs_id, produto_id)` e `(ubs_id, data_validade)`.
 - [ ] Endpoint documentado no Swagger com exemplos de parâmetros de consulta.

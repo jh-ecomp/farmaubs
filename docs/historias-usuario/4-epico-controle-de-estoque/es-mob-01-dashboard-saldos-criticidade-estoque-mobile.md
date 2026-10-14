@@ -1,93 +1,71 @@
-# ES-MOB-01: Dashboard de Saldos e Indicadores de Criticidade no Celular
-
-**Épico:** 4 - Controle de Estoque  
-**Camada:** `apps/mobile` (Expo React Native)  
-**Requisitos Funcionais Relacionados:** RF-018, RF-022, RF-023  
-**Requisitos Não Funcionais Relacionados:** RNF-001, RNF-002, RNF-007, RNF-009  
-**ADRs Aplicadas:** ADR-006 (Contratos TypeScript via @farmaubs/shared), ADR-007 (TanStack Query), ADR-022 (Expo Mobile), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)  
-**História Frontend Irmã:** ES-06 (Dashboard Superior: Cartões de Métricas em Tempo Real)  
-**Complexidade Estimada:** Média  
+# ES-MOB-01 feat(estoque): Dashboard de Saldos e Indicadores de Criticidade no Celular (RF018, RF022, RF023)
 
 ---
 
-## 1. História de Usuário
-
-**Como** Farmacêutico ou Gerente de Farmácia da UBS em ronda ou contagem física,  
-**Quero** visualizar no celular, logo na abertura da aba de estoque, cartões táteis com os indicadores consolidados da minha unidade (Total de Itens, Unidades Físicas, Risco de Ruptura e Lotes com Validade Curta no Mês Corrente com destaque laranja),  
-**Para que** eu possa avaliar imediatamente a saúde do estoque e tocar em um cartão para filtrar a lista e inspecionar os medicamentos críticos na prateleira.
-
----
-
-## 2. Regras de Negócio e Casos de Borda Mobile
-
-### 2.1 Apresentação e Interação dos Cards
-- **Grid Tátil Responsivo**:
-  - Em telas de smartphone padrão (portrait), os indicadores são distribuídos em 2 colunas com 2 linhas (ou carrossel suave caso a largura seja muito restrita).
-  - Cada card possui área mínima de toque de 44x44pt e `activeOpacity={0.7}`.
-- **Card 1: Total de Medicamentos**:
-  - Exibe o total de produtos catalogados com cadastro ativo na UBS. Ícone estilizado de catálogo/pílula em azul (`#2563EB`).
-- **Card 2: Unidades em Prateleira**:
-  - Soma total de unidades farmacêuticas (comprimidos, frascos, ampolas) no estoque físico. Ícone de embalagem em ciano (`#0891B2`).
-- **Card 3: Risco de Ruptura (RF023)**:
-  - Itens com cobertura estimada inferior a 20 dias com base no histórico de dispensações. Badge de alerta vermelho (`#DC2626`).
-  - Ao tocar no card: aplica o filtro `statusEstoque=BAIXO_ESTOQUE` na listagem de medicamentos abaixo e vibra levemente com feedback háptico.
-- **Card 4: Validade no Mês / 90 Dias (RF022)**:
-  - Lotes que vencem no mês corrente ou em até 90 dias.
-  - **Destaque em Laranja Vibrante** (`#D97706` / Amber), alinhado às diretrizes visuais do projeto.
-  - Ao tocar no card: aplica o filtro `filtroValidade=MES_CORRENTE` e posiciona o scroll na lista de lotes críticos.
-
-### 2.2 Estados e Resiliência
-- **Carregamento**: Skeleton placeholders individuais com gradiente animado (`react-native-reanimated`) enquanto a query `useEstoqueMetricas` carrega os dados.
-- **Estado Saudável**: Quando o risco de ruptura for 0, o card exibe badge sutil "Regular" em tom esmeralda (`#059669`).
-- **Atualização Manual (Pull-to-refresh)**: A ação de pull-to-refresh na tela atualiza simultaneamente os cards e a lista de saldos.
+- **Épico**: Controle de Estoque (RF018, RF022, RF023, NF001, NF002, NF007)
+- **Camada**: Mobile (`apps/mobile`)
+- **Requisitos Funcionais**: RF018 (Exibir Dashboard de Indicadores), RF022 (Alertar Medicamentos Próximos ao Vencimento), RF023 (Alertar Risco de Ruptura)
+- **Requisitos Não-Funcionais**: NF001 (Interface Intuitiva), NF002 (Ergonomia Touch), NF007 (Resposta Ágil)
+- **ADRs Vinculadas**: ADR-006 (RBAC), ADR-007 (API REST), ADR-022 (Monorepo), ADR-034 (Workspace Mobile Expo), ADR-035 (Governança Monorepo)
 
 ---
 
-## 3. Contratos de Dados e Tipagens (`@farmaubs/shared`)
+## 1. História de usuário
+
+> **Como** farmacêutico ou gerente de farmácia da UBS em ronda ou contagem física,  
+> **quero** visualizar no celular, logo na abertura da aba de estoque, cartões táteis com os indicadores consolidados da minha unidade (Total de Itens, Unidades Físicas, Risco de Ruptura e Lotes com Validade Curta no Mês Corrente com destaque laranja),  
+> **para que** eu possa avaliar imediatamente a saúde do estoque e tocar em um cartão para filtrar a lista e inspecionar os medicamentos críticos na prateleira (RF018, RF022, RF023).
+
+---
+
+## 2. Regras de negócio e casos de borda
+
+1. **Grid Tátil Responsivo**:
+   - 4 indicadores distribuídos em 2 colunas com área mínima de toque de 44x44pt.
+2. **Definição dos Cartões**:
+   - Card 1: Total de Medicamentos ativos catalogados (azul `#2563EB`).
+   - Card 2: Unidades em Prateleira (ciano `#0891B2`).
+   - Card 3: Risco de Ruptura (< 20 dias de cobertura) (vermelho `#DC2626`). Ao tocar, aplica filtro `statusEstoque=BAIXO_ESTOQUE`.
+   - Card 4: Validade no Mês / 90 Dias em **laranja vibrante** (`#D97706`). Ao tocar, aplica filtro `filtroValidade=MES_CORRENTE`.
+3. **Estados e Resiliência**:
+   - Skeleton placeholders animados durante carregamento.
+   - Suporte a Pull-to-refresh e feedback háptico (`Haptics.selectionAsync()`).
+
+---
+
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
 
 ```typescript
-import { EstoqueMetricasDTO } from '@farmaubs/shared';
-
-export interface UseEstoqueMetricasMobileReturn {
-  metricas: EstoqueMetricasDTO | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  refetch: () => Promise<void>;
-  aplicarFiltroCard: (filtro: { statusEstoque?: string; filtroValidade?: string }) => void;
+export interface EstoqueMetricasDTO {
+  totalMedicamentosAtivos: number;
+  totalUnidadesFisicas: number;
+  itensRiscoRuptura: number;
+  lotesValidadeMesAtual: number;
+  lotesValidadeCurta90d: number;
+  lotesVencidos: number;
+  calculadoEm: string;
 }
 ```
 
 ---
 
-## 3.3 Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Contra-parte no Frontend Web**: `ES-06` (Painel superior: cartões com indicadores em tempo real de saldo e validade).
-- **Contratos Compartilhados (`@farmaubs/shared`)**:
-  - `EstoqueMetricasDTO`, `calcularCriticidadeEstoque`, regras de corte de validade.
-- **Se o Frontend Web já implementou ES-06**:
-  - O Mobile utiliza o mesmo DTO de métricas e a função pura `calcularCriticidadeEstoque` de `@farmaubs/shared`, garantindo que os 4 cards mostrem exatamente os mesmos totais que o painel web.
-- **Se o Frontend Web ainda NÃO implementou ES-06**:
-  - O desenvolvedor Mobile define os contratos e helpers em `packages/shared/src/domain/estoque/criticidade-helpers.ts`, permitindo que o time web os aproveite sem precisar reinventar as regras de corte.
-
----
-
-## 4. Critérios de Aceite Detalhados
-
-1. **Exibição dos 4 Indicadores**: A tela deve renderizar os 4 cards com números atualizados da UBS selecionada.
-2. **Destaque Laranja de Validade**: O card de lotes com validade no mês deve obrigatoriamente adotar a cor de destaque laranja (`#D97706`) com contraste acessível para leitura sob luz ambiente de almoxarifado.
-3. **Ação de Toque para Filtragem**: Ao tocar no card de "Risco de Ruptura" ou "Validade no Mês", a lista de medicamentos deve aplicar instantaneamente o filtro correspondente, sem necessidade de confirmação adicional.
-4. **Desativação de Filtro**: Tocar novamente no card ativo desmarca o filtro e restaura a listagem completa.
-5. **Feedback Tátil**: Todas as interações nos cards devem acionar `Haptics.selectionAsync()`.
+- **Camada**: Mobile (`apps/mobile`).
+- **Componentes**:
+  - `apps/mobile/src/screens/estoque/components/EstoqueMetricasCardsMobile.tsx`.
+- **Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)**:
+  - Contra-parte Web: `ES-06`.
+  - Contratos compartilhados em `@farmaubs/shared` (`packages/shared/src/contracts/estoque/`).
+  - Utilização da função pura `calcularCriticidadeEstoque` de `@farmaubs/shared`.
 
 ---
 
-## 5. Cenários de Teste em BDD (Gherkin em Português)
+## 5. Cenários de teste em BDD (Gherkin — camada Mobile)
 
 ```gherkin
-Funcionalidade: Dashboard de Saldos e Indicadores de Criticidade no Celular
-  Como farmacêutico da UBS
-  Quero visualizar indicadores de criticidade no meu smartphone
-  Para identificar rapidamente medicamentos em risco de ruptura ou vencimento
+# language: pt
+Funcionalidade: Dashboard de Saldos e Indicadores de Criticidade no Celular (ES-MOB-01 / RF018, RF022, RF023)
 
   Contexto:
     Dado que o usuário está autenticado no aplicativo mobile na UBS "UBS Vila Nova"
@@ -109,7 +87,7 @@ Funcionalidade: Dashboard de Saldos e Indicadores de Criticidade no Celular
 
 ---
 
-## 6. Checklist de DoD (Definition of Done)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Componente `EstoqueMetricasCardsMobile` implementado no `apps/mobile/src/screens/estoque/components/`.
 - [ ] Hook `useEstoqueMetricas` consumindo dados com TanStack Query e tipagens de `@farmaubs/shared`.

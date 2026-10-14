@@ -1,4 +1,4 @@
-# ES-10: Interface de Relatórios: Seletor de Período, Filtros de Exportação e Download de Planilha Excel (.xlsx)
+# ES-10 feat(estoque): Interface de Relatórios: Seletor de Período, Filtros de Exportação e Download de Planilha Excel (.xlsx)
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável ou gerente de farmácia da UBS,  
 > **quero** um modal de exportação acessível acionado a partir de um botão em destaque na tela de estoque, permitindo escolher o tipo de relatório desejado (saldos atuais, perdas por vencimento ou movimentações do período), definir o intervalo de datas e baixar diretamente a planilha Excel (.xlsx),  
@@ -17,77 +17,78 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Botão de Ação no Topo da Interface**:
    - Botão secundário estilizado em destaque na barra superior de ações: `📥 Exportar (.xlsx)`.
-   - Ao ser clicado, abre o modal de configuração de exportação.
-
 2. **Seletor de Tipo de Relatório**:
-   - Radio buttons estilizados com descrição auxiliar:
-     - **Saldos Atuais**: "Relação consolidada do estoque físico em prateleira e detalhamento de todos os lotes";
-     - **Perdas por Vencimento e Avarias (RF020)**: "Histórico de baixas por validade expirada, quebras e descartes no período";
-     - **Movimentações do Período**: "Extrato completo de entradas, saídas e ajustes manuais realizados".
-
+   - `Saldos Atuais`: Relação consolidada do estoque físico em prateleira e detalhamento de lotes;
+   - `Perdas por Vencimento e Avarias (RF020)`: Histórico de baixas por validade expirada, quebras e descartes;
+   - `Movimentações do Período`: Extrato completo de entradas, saídas e ajustes manuais.
 3. **Seletor de Período com Atalhos**:
-   - Quando o tipo selecionado for "Perdas" ou "Movimentações", exibe campos de data com botões de atalho:
-     - Atalho "Mês Atual" (padrão);
-     - Atalho "Mês Anterior";
-     - Atalho "Últimos 90 dias";
-     - "Período Personalizado" com campos `Data Início` e `Data Fim`.
+   - Atalhos: "Mês Atual" (padrão), "Mês Anterior", "Últimos 90 dias" e "Período Personalizado".
    - Validação visual: impede `Data Fim < Data Início`.
-
 4. **Filtro Opcional por Princípio Ativo**:
-   - Campo opcional com autocomplete para exportar dados específicos de um medicamento prioritário (ex.: "Insulina NPH", "Amoxicilina").
-
+   - Campo opcional com autocomplete para filtrar dados de um medicamento específico.
 5. **Download Seguro do Arquivo Binário**:
-   - Ao clicar no botão "Baixar Planilha Excel":
-     - Botão passa para estado ocupado (`aria-busy="true"`) exibindo texto: "Gerando planilha...";
-     - Dispara requisição blob para `GET /api/v1/estoque/relatorios/exportar-xlsx`;
-     - Dispara o download automático do arquivo `.xlsx` pelo navegador;
-     - Exibe toast de sucesso e fecha o modal.
+   - Dispara requisição blob para `GET /api/v1/estoque/relatorios/exportar-xlsx` com `aria-busy="true"` ("Gerando planilha...") e toast de confirmação.
 
 ---
 
-## 3. Escopo Técnico & Arquitetural
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
+
+```typescript
+export interface ExportarRelatorioEstoqueQueryDto {
+  tipoRelatorio: 'SALDOS_ATUAIS' | 'PERDAS_VENCIMENTO' | 'MOVIMENTACOES_PERIODO';
+  dataInicio?: string;
+  dataFim?: string;
+  principioAtivo?: string;
+  categoria?: string;
+}
+```
+
+---
+
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 - **Camada**: D (Testes de Componentes React).
 - **Componente**: `apps/frontend/src/features/estoque/components/ModalExportarRelatoriosEstoque.tsx`.
 - **Hook de Download**: `useExportarRelatorioEstoqueXlsx()`.
 - **Props**: `aberto: boolean`, `onFechar: () => void`.
 
-### Compartilhamento Arquitetural com @farmaubs/shared e App Mobile
-- **Contratos de Exportação**: O DTO de parâmetros `ExportarRelatorioEstoqueQueryDto` e o enum `TipoRelatorioEstoque` são centralizados em `@farmaubs/shared/src/contracts/estoque/`.
-- **Validação de Ranges**: O schema Zod `exportarRelatorioEstoqueSchema` valida as datas (`dataInicio <= dataFim`) e tipos permitidos tanto na Web quanto no aplicativo móvel.
-- **Integração Mobile**: No app mobile, o mesmo endpoint é consumido via cliente compartilhado e, em vez de download via navegador, utiliza `expo-file-system` e `expo-sharing` para salvar e compartilhar o `.xlsx` diretamente em mensageiros corporativos ou e-mail do farmacêutico.
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile
+- **Contratos de Exportação**: `ExportarRelatorioEstoqueQueryDto` e enum `TipoRelatorioEstoque` centralizados em `@farmaubs/shared`.
+- **Validação de Ranges**: Schema Zod `exportarRelatorioEstoqueSchema` valida datas e tipos.
+- **Integração Mobile**: No mobile, utiliza `expo-file-system` e `expo-sharing` para salvar e compartilhar o arquivo.
 
 ---
 
-## 4. Critérios de Aceite (Gherkin BDD)
+## 5. Cenários de teste em BDD (Gherkin — camada D)
 
-### Cenário 1: Exportação bem-sucedida de relatório de perdas por vencimento
 ```gherkin
-Dado que o modal de exportação de relatórios está aberto
-Quando o farmacêutico selecionar a opção "Perdas por Vencimento e Avarias"
-E selecionar o atalho de período "Mês Anterior"
-E clicar em "Baixar Planilha Excel"
-Então o botão deve apresentar o spinner de carregamento ("Gerando planilha...")
-E o arquivo .xlsx deve ser transferido para a pasta de downloads do navegador
-E uma mensagem toast deve confirmar: "Relatório de perdas exportado com sucesso"
-E o modal deve ser encerrado
-```
+# language: pt
+Funcionalidade: Interface de Exportação de Relatórios de Estoque (Camada D)
 
-### Cenário 2: Validação de consistência de intervalo de datas personalizado
-```gherkin
-Dado que o usuário selecionou "Período Personalizado"
-Quando ele preencher Data Início "2026-09-30" e Data Fim "2026-09-01"
-Então uma mensagem de erro em vermelho deve ser exibida: "A data final não pode ser anterior à data inicial"
-E o botão de download deve permanecer desabilitado
+  Cenário: Exportação bem-sucedida de relatório de perdas por vencimento
+    Dado que o modal de exportação de relatórios está aberto
+    Quando o farmacêutico selecionar a opção "Perdas por Vencimento e Avarias"
+    E selecionar o atalho de período "Mês Anterior"
+    E clicar em "Baixar Planilha Excel"
+    Então o botão deve apresentar o spinner de carregamento ("Gerando planilha...")
+    E o arquivo .xlsx deve ser transferido para a pasta de downloads do navegador
+    E uma mensagem toast deve confirmar: "Relatório de perdas exportado com sucesso"
+    E o modal deve ser encerrado
+
+  Cenário: Validação de consistência de intervalo de datas personalizado
+    Dado que o usuário selecionou "Período Personalizado"
+    Quando ele preencher Data Início "2026-09-30" e Data Fim "2026-09-01"
+    Então uma mensagem de erro em vermelho deve ser exibida: "A data final não pode ser anterior à data inicial"
+    E o botão de download deve permanecer desabilitado
 ```
 
 ---
 
-## 5. Definition of Done (DoD)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Modal de exportação implementado com React 19, Tailwind CSS e foco aprisionado.
 - [ ] Integração com o endpoint backend de streaming de arquivo binário `.xlsx`.

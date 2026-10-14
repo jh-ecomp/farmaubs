@@ -1,24 +1,26 @@
-# ES-MOB-02: Consulta de Saldos por Medicamento e Expansão de Lotes no Celular
-
-**Épico:** 4 - Controle de Estoque  
-**Camada:** `apps/mobile` (Expo React Native)  
-**Requisitos Funcionais Relacionados:** RF-005, RF-022  
-**Requisitos Não Funcionais Relacionados:** RNF-001, RNF-002, RNF-007  
-**ADRs Aplicadas:** ADR-006 (Contratos TypeScript via @farmaubs/shared), ADR-007 (TanStack Query), ADR-022 (Expo Mobile), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)  
-**História Frontend Irmã:** ES-07 (Tabela Principal de Saldos: Visão por Medicamento e Badges Laranja)  
-**Complexidade Estimada:** Alta  
+# ES-MOB-02 feat(estoque): Consulta de Saldos por Medicamento e Expansão de Lotes no Celular
 
 ---
 
-## 1. História de Usuário
-
-**Como** Farmacêutico ou Técnico de Farmácia circulando pelas prateleiras da UBS,  
-**Quero** consultar pelo smartphone a lista de medicamentos com seus saldos totais e poder expandir cada item para visualizar seus lotes físicos, validades ordenadas por FEFO e badges laranjas nos lotes a vencer no mês,  
-**Para que** eu possa conferir in loco a concordância física do estoque e priorizar a dispensação e descarte dos lotes mais antigos.
+- **Épico**: Controle de Estoque (RF-005, RF-022, RNF-001, RNF-002, RNF-007)
+- **Camada**: Mobile (`apps/mobile`)
+- **Requisitos Funcionais**: RF-005, RF-022
+- **Requisitos Não-Funcionais**: RNF-001, RNF-002, RNF-007
+- **ADRs Vinculadas**: ADR-006, ADR-007, ADR-022, ADR-034, ADR-035
+- **História Frontend Irmã**: ES-07 (Tabela Principal de Saldos: Visão por Medicamento e Badges Laranja)
+- **Complexidade Estimada**: Alta
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda Mobile
+## 1. História de usuário
+
+> **Como** Farmacêutico ou Técnico de Farmácia circulando pelas prateleiras da UBS,  
+> **quero** consultar pelo smartphone a lista de medicamentos com seus saldos totais e poder expandir cada item para visualizar seus lotes físicos, validades ordenadas por FEFO e badges laranjas nos lotes a vencer no mês,  
+> **para que** eu possa conferir in loco a concordância física do estoque e priorizar a dispensação e descarte dos lotes mais antigos.
+
+---
+
+## 2. Regras de negócio e casos de borda
 
 ### 2.1 Apresentação em Lista Tátil com Accordion
 - **Card Principal do Medicamento**:
@@ -45,9 +47,16 @@
 - Utilização de `FlatList` com `initialNumToRender={10}`, `maxToRenderPerBatch={10}` e chave estável `keyExtractor={(item) => item.id}` para rolagem a 60 FPS.
 - Estado recolhido por padrão para economizar espaço de tela e memória.
 
+### 2.3 Critérios de Aceite Detalhados
+1. **Agrupamento por Produto**: Cada linha da lista principal deve representar um medicamento único com a soma de todos os seus lotes em estoque.
+2. **Expansão ao Toque**: O toque em qualquer ponto do card do medicamento deve expandir ou recolher a visualização de seus lotes com animação suave.
+3. **Priorização FEFO**: Dentro do card expandido, os lotes devem ser exibidos do vencimento mais próximo para o mais distante.
+4. **Destaque Laranja de Validade Curta**: Lotes com validade no mês corrente ou em até 90 dias devem exibir um badge destacado na cor laranja com ícone de atenção.
+5. **Acesso aos Atalhos Operacionais**: Cada lote deve disponibilizar atalhos acessíveis para abrir Ajuste Rápido e Ficha de Rastreabilidade.
+
 ---
 
-## 3. Contratos de Dados e Tipagens (`@farmaubs/shared`)
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
 
 ```typescript
 import {
@@ -69,35 +78,25 @@ export interface UseSaldosEstoqueMobileReturn {
 
 ---
 
-## 3.3 Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Contra-parte no Frontend Web**: `ES-07` (Tabela de saldos por produto, expansão de lotes e destaque laranja).
-- **Contratos Compartilhados (`@farmaubs/shared`)**:
-  - `MedicamentoSaldoItemDto`, `LoteEstoqueDto`, `ordenarLotesPorFEFO`, `calcularStatusValidade`.
-- **Se o Frontend Web já implementou ES-07**:
-  - O Mobile utiliza a função `ordenarLotesPorFEFO` e o helper de classificação de validade diretamente de `@farmaubs/shared`, garantindo que os lotes exibidos nos cards do celular tenham exatamente a mesma ordem de consumo que a tabela web.
-- **Se o Frontend Web ainda NÃO implementou ES-07**:
-  - O desenvolvedor Mobile define os contratos e helpers de ordenação em `packages/shared/src/domain/estoque/fefo-helpers.ts`, permitindo que a tabela web os reutilize sem duplicar código.
-
----
-
-## 4. Critérios de Aceite Detalhados
-
-1. **Agrupamento por Produto**: Cada linha da lista principal deve representar um medicamento único com a soma de todos os seus lotes em estoque.
-2. **Expansão ao Toque**: O toque em qualquer ponto do card do medicamento deve expandir ou recolher a visualização de seus lotes com animação suave.
-3. **Priorização FEFO**: Dentro do card expandido, os lotes devem ser exibidos do vencimento mais próximo para o mais distante.
-4. **Destaque Laranja de Validade Curta**: Lotes com validade no mês corrente ou em até 90 dias devem exibir um badge destacado na cor laranja com ícone de atenção.
-5. **Acesso aos Atalhos Operacionais**: Cada lote deve disponibilizar atalhos acessíveis para abrir Ajuste Rápido e Ficha de Rastreabilidade.
+- **Camada**: Mobile (`apps/mobile`).
+- **Componentes**:
+  - `SaldosEstoqueListMobile` (FlatList com virtualização e paginação infinita).
+  - `MedicamentoAccordionItem` com animação via `LayoutAnimation` ou `react-native-reanimated`.
+- **Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)**:
+  - **Contra-parte no Frontend Web**: `ES-07` (Tabela de saldos por produto, expansão de lotes e destaque laranja).
+  - **Contratos Compartilhados (`@farmaubs/shared`)**: `MedicamentoSaldoItemDto`, `LoteEstoqueDto`, `ordenarLotesPorFEFO`, `calcularStatusValidade`.
+  - **Se o Frontend Web já implementou ES-07**: O Mobile utiliza a função `ordenarLotesPorFEFO` e o helper de classificação de validade diretamente de `@farmaubs/shared`.
+  - **Se o Frontend Web ainda NÃO implementou ES-07**: O desenvolvedor Mobile define os contratos e helpers de ordenação em `packages/shared/src/domain/estoque/fefo-helpers.ts`.
 
 ---
 
-## 5. Cenários de Teste em BDD (Gherkin em Português)
+## 5. Cenários de teste em BDD (Gherkin — camada Mobile)
 
 ```gherkin
-Funcionalidade: Consulta de Saldos e Lotes no Celular
-  Como conferente ou farmacêutico da UBS
-  Quero consultar os saldos e lotes dos medicamentos no celular
-  Para validar os itens fisicamente nas prateleiras com base no FEFO
+# language: pt
+Funcionalidade: Consulta de Saldos e Lotes no Celular (ES-MOB-02)
 
   Contexto:
     Dado que o usuário está na tela de estoque no smartphone
@@ -117,7 +116,7 @@ Funcionalidade: Consulta de Saldos e Lotes no Celular
 
 ---
 
-## 6. Checklist de DoD (Definition of Done)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Componente `SaldosEstoqueListMobile` implementado com `FlatList` e suporte a paginação infinita.
 - [ ] Componente `MedicamentoAccordionItem` com animação via `LayoutAnimation` ou `react-native-reanimated`.

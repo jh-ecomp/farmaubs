@@ -1,4 +1,4 @@
-# ES-05: API de Relatórios: Geração e Download de Planilha Excel (.xlsx) por Período, Princípio Ativo e Perdas
+# ES-05 feat(estoque): API de Relatórios: Geração e Download de Planilha Excel (.xlsx) por Período, Princípio Ativo e Perdas
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável ou gerente de farmácia da UBS,  
 > **quero** um endpoint dedicado para gerar e baixar relatórios estruturados de estoque em formato de planilha Excel (.xlsx), filtrados por tipo de relatório (saldos atuais, perdas por vencimento ou movimentações), intervalo customizado de datas e princípio ativo,  
@@ -17,79 +17,27 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Tipos de Relatório Suportados (`tipoRelatorio`)**:
    - `SALDOS_ATUAIS`: Fotografia em tempo real de todos os medicamentos com seus saldos por lote, fabricantes, validades e status de cobertura na UBS.
-   - `PERDAS_VENCIMENTO` (RF020): Consolidação detalhada de todas as baixas e descartes por validade expirada ou avaria física no intervalo de datas informado, com lotes, quantidades e justificativas.
+   - `PERDAS_VENCIMENTO` (RF020): Consolidação detalhada de todas as baixas e descartes por validade expirada ou avaria física no intervalo de datas informado.
    - `MOVIMENTACOES_PERIODO`: Extrato cronológico de todas as entradas, dispensas e ajustes realizados na unidade dentro do período selecionado.
-
 2. **Parâmetros e Validações Temporais**:
-   - `dataInicio` e `dataFim` no formato ISO `YYYY-MM-DD`.
-   - Validações: `dataFim >= dataInicio`. Intervalo máximo permitido: 365 dias corridos.
-   - Caso `dataInicio` e `dataFim` sejam omitidos no relatório de movimentações ou perdas, assume-se por padrão os últimos 30 dias corridos.
-
+   - `dataInicio` e `dataFim` no formato ISO `YYYY-MM-DD` com `dataFim >= dataInicio` (máximo de 365 dias). Padrão quando omitido: últimos 30 dias corridos.
 3. **Formatação Profissional da Planilha (ExcelJS)**:
    - Formato binário: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
-   - Nome do arquivo no cabeçalho `Content-Disposition`:
-     `relatorio_estoque_<tipoRelatorio>_<ubsId>_<dataInicio>_<dataFim>.xlsx`.
-   - Estilização corporativa do FarmaUBS:
-     - Cabeçalho institucional com nome da UBS, CNES, município de Parnaíba e data de emissão;
-     - Linha de títulos das colunas com fundo azul SUS (#005BA6), texto branco e negrito;
-     - Células de data formatadas como `DD/MM/AAAA`;
-     - Células numéricas alinhadas à direita com formatação de inteiros;
-     - Largura automática ajustada ao conteúdo das colunas.
+   - Nome do arquivo: `relatorio_estoque_<tipoRelatorio>_<ubsId>_<dataInicio>_<dataFim>.xlsx`.
+   - Cabeçalho institucional com nome da UBS, CNES, município de Parnaíba e data de emissão.
 
 ---
 
-## 3. Escopo Técnico & Arquitetural (Clean Architecture — ADR-034)
+## 3. Contratos de dados e Protocolo HTTP (DTOs)
 
-### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/estoque/relatorios.types.ts`**: `ExportarRelatorioEstoqueQueryDto`, enum `TipoRelatorioEstoque` e schema Zod `exportarRelatorioEstoqueSchema`.
+### Endpoints REST
+- `GET /api/v1/estoque/relatorios/exportar-xlsx`: Geração e streaming do arquivo Excel (.xlsx).
 
-### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
-- **Use Cases**:
-  - `gerar-relatorio-estoque-xlsx.use-case.ts`: Consulta os registros correspondentes ao tipo solicitado via porta, orquestra a geração do arquivo através de `GeradorPlanilhaEstoquePort` e devolve o buffer binário com metadados de cabeçalho HTTP.
-
-### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
-- **Portas (Interfaces)**:
-  - `estoque-relatorios.repository.port.ts`: Contrato `consultarDadosParaRelatorio(ubsId, tipo, range, produtoId)`.
-  - `gerador-planilha-estoque.port.ts`: Interface agnóstica para geração da planilha Excel.
-
-### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
-- **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-estoque-relatorios.repository.ts`.
-- **Adaptadores de Serviço (`services/`)**:
-  - `exceljs-gerador-planilha-estoque.service.ts`: Implementa `GeradorPlanilhaEstoquePort` com formatação temática institucional e auto-largura.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
-  - `estoque-relatorios.controller.ts`: Endpoint `GET /api/v1/estoque/relatorios/exportar-xlsx` com streaming de buffer.
-
----
-
-## 4. Critérios de Aceite (Gherkin BDD)
-
-### Cenário 1: Download de relatório de saldos atuais em planilha Excel
-```gherkin
-Dado que o farmacêutico está autenticado na sua UBS
-Quando ele requisitar "GET /api/v1/estoque/relatorios/exportar-xlsx?tipoRelatorio=SALDOS_ATUAIS"
-Então a API deve retornar status 200 (OK)
-E o cabeçalho "Content-Type" deve ser "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-E o cabeçalho "Content-Disposition" deve conter "attachment; filename=\"relatorio_estoque_SALDOS_ATUAIS_"
-E a planilha gerada deve conter colunas de: Medicamento, Princípio Ativo, Fabricante, Lote, Validade, Saldo e Status
-```
-
-### Cenário 2: Download de relatório de perdas por vencimento com intervalo de datas
-```gherkin
-Dado que foram descartadas 150 unidades por vencimento no mês de agosto de 2026
-Quando o usuário requisitar "GET /api/v1/estoque/relatorios/exportar-xlsx?tipoRelatorio=PERDAS_VENCIMENTO&dataInicio=2026-08-01&dataFim=2026-08-31"
-Então a API deve retornar status 200 (OK)
-E o arquivo baixado deve listar apenas as baixas por motivo de perda ocorridas em agosto de 2026
-E deve totalizar na última linha a quantidade consolidada de itens perdidos
-```
-
----
-
-## 5. Contratos de Dados (DTOs TypeScript)
+### DTOs TypeScript (com class-validator)
 
 ```typescript
 export class ExportarRelatorioEstoqueQueryDto {
@@ -116,7 +64,55 @@ export class ExportarRelatorioEstoqueQueryDto {
 
 ---
 
-## 6. Definition of Done (DoD)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
+
+### 1. Pacote Compartilhado (`@farmaubs/shared`)
+- **`src/contracts/estoque/relatorios.types.ts`**: `ExportarRelatorioEstoqueQueryDto`, enum `TipoRelatorioEstoque` e schema Zod `exportarRelatorioEstoqueSchema`.
+
+### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
+- **Use Cases**:
+  - `gerar-relatorio-estoque-xlsx.use-case.ts`: Consulta os registros correspondentes ao tipo solicitado via porta, orquestra a geração do arquivo através de `GeradorPlanilhaEstoquePort` e devolve o buffer binário com metadados de cabeçalho HTTP.
+
+### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
+- **Portas (Interfaces)**:
+  - `estoque-relatorios.repository.port.ts`: Contrato `consultarDadosParaRelatorio(ubsId, tipo, range, produtoId)`.
+  - `gerador-planilha-estoque.port.ts`: Interface agnóstica para geração da planilha Excel.
+
+### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
+- **Adaptadores de Banco (`adapters/`)**:
+  - `typeorm-estoque-relatorios.repository.ts`.
+- **Adaptadores de Serviço (`services/`)**:
+  - `exceljs-gerador-planilha-estoque.service.ts`: Implementa `GeradorPlanilhaEstoquePort` com formatação temática institucional.
+- **Adaptadores de Entrada HTTP (`controllers/`)**:
+  - `estoque-relatorios.controller.ts`: Endpoint `GET /api/v1/estoque/relatorios/exportar-xlsx` com streaming de buffer.
+
+---
+
+## 5. Cenários de teste em BDD (Gherkin — camada A e C)
+
+```gherkin
+# language: pt
+Funcionalidade: Relatórios Estruturados de Estoque em XLSX (Camadas A e C)
+
+  Cenário: Download de relatório de saldos atuais em planilha Excel
+    Dado que o farmacêutico está autenticado na sua UBS
+    Quando ele requisitar "GET /api/v1/estoque/relatorios/exportar-xlsx?tipoRelatorio=SALDOS_ATUAIS"
+    Então a API deve retornar status 200 (OK)
+    E o cabeçalho "Content-Type" deve ser "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    E o cabeçalho "Content-Disposition" deve conter "attachment; filename=\"relatorio_estoque_SALDOS_ATUAIS_"
+    E a planilha gerada deve conter colunas de: Medicamento, Princípio Ativo, Fabricante, Lote, Validade, Saldo e Status
+
+  Cenário: Download de relatório de perdas por vencimento com intervalo de datas
+    Dado que foram descartadas 150 unidades por vencimento no mês de agosto de 2026
+    Quando o usuário requisitar "GET /api/v1/estoque/relatorios/exportar-xlsx?tipoRelatorio=PERDAS_VENCIMENTO&dataInicio=2026-08-01&dataFim=2026-08-31"
+    Então a API deve retornar status 200 (OK)
+    E o arquivo baixado deve listar apenas as baixas por motivo de perda ocorridas em agosto de 2026
+    E deve totalizar na última linha a quantidade consolidada de itens perdidos
+```
+
+---
+
+## 6. Checklist de DoD e aceitação
 
 - [ ] Serviço de exportação implementado com streaming seguro via biblioteca `ExcelJS`.
 - [ ] Suporte aos três tipos de relatórios com metadados institucionais da UBS no cabeçalho.
