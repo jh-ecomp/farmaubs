@@ -4,7 +4,11 @@ import type {
   TrocarSenhaComando,
   RedefinirSenhaProvisoriaResultado,
 } from "@farmaubs/shared";
-import type { LoginResponse, SessaoUsuarioDto, UsuarioPayload } from "../types/auth";
+import type {
+  LoginResponse,
+  SessaoUsuarioDto,
+  UsuarioPayload,
+} from "../types/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -79,17 +83,18 @@ export function inspectSessionExpiresHeader(response: Response): Response {
 
 export const authService = {
   /**
-   * [RF001 / Autenticação]: Efetua autenticação do usuário com credenciais e obtém sessão ativa.
+   * [RF001 / Autenticação / AC-30]: Efetua autenticação do usuário com credenciais e obtém sessão ativa via cookie HttpOnly.
    * @param dadosLogin - Credenciais de login (e-mail e senha).
-   * @returns Resposta com token JWT, dados canônicos do usuário autenticado e parâmetros de sessão.
+   * @returns Resposta com dados canônicos do usuário autenticado e parâmetros de sessão.
    * @throws {AuthError} Quando as credenciais são inválidas, conta bloqueada ou erro de rede.
    */
   async login(dadosLogin: LoginRequest): Promise<LoginResponse> {
     let resposta: Response;
     try {
-      // Endpoint oficial implementado pelo backend no módulo de acesso (AC-05 / AC-11)
+      // Endpoint oficial implementado pelo backend no módulo de acesso (AC-05 / AC-29 / AC-30)
       resposta = await fetch(`${API_BASE_URL}/acesso/login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -153,15 +158,8 @@ export const authService = {
       );
     }
 
-    // Sucesso: obtém token do corpo (preferencial e imune a proxies) ou do cabeçalho Authorization
+    // Sucesso: cookie farmaubs_session é setado automaticamente pelo navegador (NF012 / AC-30)
     const body: BackendLoginResponse = await resposta.json();
-    const authHeader =
-      resposta.headers.get("Authorization") ||
-      resposta.headers.get("authorization");
-    const tokenFromHeader = authHeader
-      ? authHeader.replace(/^Bearer\s+/i, "")
-      : "";
-    const token = body.token || tokenFromHeader;
 
     const usuarioRetornado: UsuarioPayload = {
       id: body.usuario.id,
@@ -179,7 +177,7 @@ export const authService = {
     };
 
     return {
-      token,
+      token: body.token ?? null,
       expiresAt: body.sessao.expiresAt,
       ttlSeconds: body.sessao.ttlSeconds,
       warningSeconds: body.sessao.warningSeconds,
@@ -189,27 +187,19 @@ export const authService = {
   },
 
   /**
-   * [RF002 / Sessão]: Recupera e valida a sessão ativa do usuário no servidor via GET /api/v1/acesso/me.
-   * @param tokenParam - Token de autenticação JWT opcional (busca no localStorage se omitido).
+   * [RF002 / Sessão / AC-30]: Recupera e valida a sessão ativa do usuário no servidor via GET /api/v1/acesso/me com credentials: include.
+   * @param _tokenParam - Parâmetro mantido exclusivamente por compatibilidade retroativa (ignorado).
    * @returns Snapshot dos dados do usuário e perfil RBAC no contrato SessaoUsuarioDto.
-   * @throws {AuthError} Caso não haja token ou o servidor retorne 401 (sessão expirada/inválida).
+   * @throws {AuthError} Caso o servidor retorne 401 (sessão expirada/inválida) ou erro de rede.
    */
-  async obterSessaoAtual(tokenParam?: string): Promise<SessaoUsuarioDto> {
-    const token = tokenParam || localStorage.getItem("@FarmaUBS:token");
-    if (!token) {
-      throw new AuthError(
-        "Nenhum token de autenticação encontrado.",
-        "SESSION_EXPIRED",
-      );
-    }
-
+  async obterSessaoAtual(_tokenParam?: string): Promise<SessaoUsuarioDto> {
     let resposta: Response;
     try {
       resposta = await fetch(`${API_BASE_URL}/acesso/me`, {
         method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       resposta = inspectSessionExpiresHeader(resposta);
@@ -254,47 +244,38 @@ export const authService = {
   },
 
   /**
-   * [RF004 / Logout]: Dispara a revogação da sessão ativa no servidor via POST /api/v1/acesso/logout.
+   * [RF004 / Logout / AC-30]: Dispara a revogação da sessão ativa no servidor via POST /api/v1/acesso/logout com credentials: include.
    * Resiliente a erros de conexão para garantir que a saída local ocorra mesmo offline.
    */
-  async logout(tokenExplicit?: string): Promise<void> {
-    const token = tokenExplicit || localStorage.getItem("@FarmaUBS:token");
-    if (!token) return;
-
+  async logout(_tokenExplicit?: string): Promise<void> {
     try {
       await fetch(`${API_BASE_URL}/acesso/logout`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
     } catch {
-      // Resiliência: erros de conexão ou 404 (endpoint ainda não publicado no backend)
-      // não interrompem o expurgo local e limpeza de cache de memória RAM
+      // Resiliência: erros de conexão não interrompem o expurgo local e limpeza de cache de memória RAM
     }
   },
 
+  /**
+   * [NF012 / Renovação / AC-30]: Renova a expiração da sessão no servidor com cookie HttpOnly.
+   */
   async renovarSessao(): Promise<{
     expiresAt: string;
     ttlSeconds: number;
     warningSeconds: number;
   }> {
-    const token = localStorage.getItem("@FarmaUBS:token");
-    if (!token) {
-      throw new AuthError(
-        "Nenhum token de autenticação encontrado.",
-        "SESSION_EXPIRED",
-      );
-    }
-
     let resposta: Response;
     try {
       resposta = await fetch(`${API_BASE_URL}/acesso/renovar`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       resposta = inspectSessionExpiresHeader(resposta);
@@ -328,15 +309,17 @@ export const authService = {
     };
   },
 
+  /**
+   * [RF003 / Troca de Senha / AC-30]: Submete a nova senha definitiva do usuário enviando cookie HttpOnly.
+   */
   async trocarSenha(dados: TrocarSenhaComando): Promise<{ mensagem: string }> {
-    const token = localStorage.getItem("@FarmaUBS:token");
     let resposta: Response;
     try {
       resposta = await fetch(`${API_BASE_URL}/acesso/trocar-senha`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(dados),
       });
@@ -380,11 +363,13 @@ export const authService = {
     return await resposta.json();
   },
 
+  /**
+   * [RF003 / Redefinição Administrativa / AC-30]: Emite senha provisória com cookie HttpOnly.
+   */
   async redefinirSenhaProvisoria(
     usuarioId: string,
     senhaProvisoria?: string,
   ): Promise<RedefinirSenhaProvisoriaResultado> {
-    const token = localStorage.getItem("@FarmaUBS:token");
     const payload = senhaProvisoria ? { senhaProvisoria } : {};
     let res: Response;
     try {
@@ -392,9 +377,9 @@ export const authService = {
         `${API_BASE_URL}/usuarios/${encodeURIComponent(usuarioId)}/senha-provisoria`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(payload),
         },

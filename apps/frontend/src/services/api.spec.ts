@@ -6,7 +6,7 @@ import {
 } from "./api";
 import { usuarioService } from "./usuario.service";
 
-describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
+describe("api.ts — authService & Interceptores (AC-08 / AC-20 / AC-30)", () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
@@ -21,8 +21,6 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
 
   describe("authService.redefinirSenhaProvisoria", () => {
     it("deve tratar status 204 No Content sem lançar SyntaxError e retornar a senha provisória enviada", async () => {
-      localStorage.setItem("@FarmaUBS:token", "fake-token-adm");
-
       // Simula backend respondendo 204 No Content (sem corpo de resposta)
       globalThis.fetch = vi.fn().mockResolvedValue(
         new Response(null, {
@@ -45,8 +43,9 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         expect.stringContaining("/usuarios/usr-123/senha-provisoria"),
         expect.objectContaining({
           method: "POST",
+          credentials: "include",
           headers: expect.objectContaining({
-            Authorization: "Bearer fake-token-adm",
+            "Content-Type": "application/json",
           }),
           body: JSON.stringify({ senhaProvisoria: "SenhaSegura@2026" }),
         }),
@@ -54,8 +53,6 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
     });
 
     it("deve tratar resposta 200 OK com corpo JSON normalmente", async () => {
-      localStorage.setItem("@FarmaUBS:token", "fake-token-adm");
-
       globalThis.fetch = vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
@@ -127,16 +124,8 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
     });
   });
 
-  describe("authService.obterSessaoAtual (AC-19 / #196)", () => {
-    it("deve lançar AuthError SESSION_EXPIRED se não houver token no localStorage", async () => {
-      await expect(authService.obterSessaoAtual()).rejects.toThrow(
-        "Nenhum token de autenticação encontrado.",
-      );
-    });
-
-    it("deve chamar GET /acesso/me com Bearer token e retornar SessaoUsuarioDto canônico", async () => {
-      localStorage.setItem("@FarmaUBS:token", "me-valid-token");
-
+  describe("authService.obterSessaoAtual (AC-19 / AC-30)", () => {
+    it("deve chamar GET /acesso/me com credentials: 'include' e retornar SessaoUsuarioDto canônico", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
@@ -176,16 +165,15 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         expect.stringContaining("/acesso/me"),
         expect.objectContaining({
           method: "GET",
+          credentials: "include",
           headers: expect.objectContaining({
-            Authorization: "Bearer me-valid-token",
+            "Content-Type": "application/json",
           }),
         }),
       );
     });
 
     it("deve lançar SESSION_EXPIRED quando o servidor responder 401", async () => {
-      localStorage.setItem("@FarmaUBS:token", "me-expired-token");
-
       globalThis.fetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ message: "Sessão inválida" }), {
           status: 401,
@@ -197,12 +185,18 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         "Sua sessão expirou no servidor.",
       );
     });
+
+    it("deve lançar NETWORK_ERROR quando a requisição falhar por rede", async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Failed to fetch"));
+
+      await expect(authService.obterSessaoAtual()).rejects.toThrow(
+        "Não foi possível conectar ao servidor para validar a sessão.",
+      );
+    });
   });
 
-  describe("authService.logout (AC-06 / RF004)", () => {
-    it("deve disparar POST /acesso/logout com token de autenticação", async () => {
-      localStorage.setItem("@FarmaUBS:token", "token-to-revoke");
-
+  describe("authService.logout (AC-06 / RF004 / AC-30)", () => {
+    it("deve disparar POST /acesso/logout com credentials: 'include'", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(
         new Response(null, {
           status: 204,
@@ -216,44 +210,15 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         expect.stringContaining("/acesso/logout"),
         expect.objectContaining({
           method: "POST",
+          credentials: "include",
           headers: expect.objectContaining({
-            Authorization: "Bearer token-to-revoke",
+            "Content-Type": "application/json",
           }),
         }),
       );
-    });
-
-    it("deve priorizar token explicitamente passado no argumento", async () => {
-      globalThis.fetch = vi.fn().mockResolvedValue(
-        new Response(null, {
-          status: 204,
-        }),
-      );
-
-      await authService.logout("token-passado-diretamente");
-
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/acesso/logout"),
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            Authorization: "Bearer token-passado-diretamente",
-          }),
-        }),
-      );
-    });
-
-    it("não deve disparar requisição se não houver token disponível", async () => {
-      globalThis.fetch = vi.fn();
-
-      await authService.logout();
-
-      expect(globalThis.fetch).not.toHaveBeenCalled();
     });
 
     it("deve ser resiliente e silenciar erro caso a rota retorne 404 ou falhe a rede", async () => {
-      localStorage.setItem("@FarmaUBS:token", "token-fail");
-
       globalThis.fetch = vi
         .fn()
         .mockRejectedValue(new Error("Network Failure"));
