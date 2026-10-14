@@ -216,6 +216,7 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         expect.stringContaining("/acesso/logout"),
         expect.objectContaining({
           method: "POST",
+          credentials: "include",
           headers: expect.objectContaining({
             Authorization: "Bearer token-to-revoke",
           }),
@@ -236,6 +237,7 @@ describe("api.ts — authService & Interceptores (AC-08 / AC-20)", () => {
         expect.stringContaining("/acesso/logout"),
         expect.objectContaining({
           method: "POST",
+          credentials: "include",
           headers: expect.objectContaining({
             Authorization: "Bearer token-passado-diretamente",
           }),
