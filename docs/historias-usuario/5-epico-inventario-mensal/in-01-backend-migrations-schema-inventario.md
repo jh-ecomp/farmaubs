@@ -1,4 +1,4 @@
-# IN-01: Migrations do Schema de Inventário de Estoque, Itens de Contagem e Atas Oficiais
+# IN-01 feat(inventario): Migrations do Schema de Inventário de Estoque, Itens de Contagem e Atas Oficiais
 
 ---
 
@@ -9,29 +9,32 @@
 
 ---
 
-## 1. Contexto & Problema
+## 1. História de usuário
 
-O inventário físico periódico é a garantia sanitária e fiscal de que os saldos teóricos registrados no banco de dados correspondem com precisão à realidade das prateleiras da farmácia da UBS. Para suportar esse fluxo de trabalho rigoroso, o schema do banco de dados relacional (PostgreSQL 18) deve modelar o ciclo de vida do inventário desde o snapshot inicial de saldos até a homologação final dos ajustes e a preservação imutável da Ata Oficial.
-
----
-
-## 2. Escopo Técnico da implementação (Clean Architecture — ADR-034)
-
-### Camada de Infraestrutura / Persistência (`apps/backend/src/modules/inventario/infrastructure/persistence/`)
-- **`migrations/`**:
-  - `apps/backend/src/database/migrations/<timestamp>-cria-schema-inventario.ts`.
-  - Tabelas criadas: `ciclos_inventario`, `inventario_itens`, `atas_inventario` e novos tipos ENUM de movimentação (`AJUSTE_ENTRADA_INVENTARIO`, `AJUSTE_SAIDA_INVENTARIO`).
-- **`entities/` (ORM Mappers)**:
-  - `ciclo-inventario.typeorm-entity.ts`
-  - `inventario-item.typeorm-entity.ts`
-  - `ata-inventario.typeorm-entity.ts`
-- **Mapeamento para Entidades de Domínio**:
-  - `CicloInventarioMapper`, `InventarioItemMapper` e `AtaInventarioMapper` para conversão com os modelos do domínio puro em `domain/entities/`.
-- **Decisões Arquiteturais**: ADR-008 / ADR-015 (PostgreSQL 18 e Consistência Transacional), ADR-016 (Isolamento RLS por UBS), ADR-034 (Clean Architecture Fullstack).
+> **Como** administrador de banco de dados e engenheiro backend do FarmaUBS,  
+> **quero** criar e versionar as tabelas relacionais do módulo de inventário mensal (`ciclos_inventario`, `inventario_itens`, `atas_inventario`), com colunas calculadas de divergência, restrições parciais de unicidade e políticas RLS de tenant,  
+> **para que** o sistema permita congelar snapshots de saldos teóricos, auditar contagens físicas cegas e homologar atas oficiais imutáveis com total integridade referencial e segurança jurídica para o SUS (RF013, RF028, ADR-016).
 
 ---
 
-## 3. Especificação do Schema SQL (DDL PostgreSQL)
+## 2. Regras de negócio e casos de borda
+
+1. **Ciclo Único Ativo por UBS**:
+   - Uma UBS só pode possuir no máximo um ciclo de inventário com status `EM_ANDAMENTO` por vez. Essa regra é reforçada no banco de dados via índice único condicional: `CREATE UNIQUE INDEX idx_ciclo_ativo_por_ubs ON ciclos_inventario(ubs_id) WHERE status = 'EM_ANDAMENTO'`.
+2. **Snapshot Congelado de Saldos Teóricos**:
+   - Cada linha em `inventario_itens` armazena o saldo teórico congelado no instante da abertura do ciclo. Novos lotes recebidos durante o inventário não alteram o snapshot original.
+3. **Coluna Gerada de Divergência**:
+   - O campo `divergencia` é uma coluna gerada armazenada (`GENERATED ALWAYS AS (quantidade_fisica - quantidade_teorica) STORED`), garantindo precisão matemática e indexabilidade nas consultas de conciliação.
+4. **Motivo Obrigatório em Divergências**:
+   - Caso `quantidade_fisica != quantidade_teorica`, a aplicação exige `motivo_divergencia` (enum sanitário) e justificativa textual quando o motivo for `OUTROS`.
+5. **Imutabilidade e Hash da Ata Oficial**:
+   - A tabela `atas_inventario` é estritamente de inserção (`INSERT-only`). Registra o `hash_integridade` (SHA-256) do extrato de conciliação para garantir inviolabilidade legal perante órgãos de fiscalização sanitária.
+6. **Isolamento Multi-tenant via RLS (ADR-016)**:
+   - As tabelas `ciclos_inventario`, `inventario_itens` e `atas_inventario` possuem Row-Level Security ativado vinculado a `app.current_ubs_id`.
+
+---
+
+## 3. Contratos de dados e Schema SQL (DDL)
 
 ```sql
 -- 1. Tabela de Ciclos de Inventário
@@ -120,27 +123,46 @@ CREATE POLICY rls_atas_inventario ON atas_inventario
 
 ---
 
-## 4. Critérios de Aceite (Gherkin BDD)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-### Cenário 1: Execução e integridade das migrations de inventário
-```gherkin
-Dado um banco de dados de testes na versão imediatamente anterior
-Quando a migration de schema de inventário for executada
-Então as tabelas "ciclos_inventario", "inventario_itens" e "atas_inventario" devem ser criadas
-E o índice único parcial "idx_ciclo_ativo_por_ubs" deve estar ativo
-E as colunas calculadas de divergência devem operar com a fórmula física - teórica
-```
+### Camada de Infraestrutura / Persistência (`apps/backend/src/modules/inventario/infrastructure/persistence/`)
+- **`migrations/`**:
+  - `apps/backend/src/database/migrations/<timestamp>-cria-schema-inventario.ts`.
+  - Tabelas criadas: `ciclos_inventario`, `inventario_itens`, `atas_inventario` e novos tipos ENUM de movimentação (`AJUSTE_ENTRADA_INVENTARIO`, `AJUSTE_SAIDA_INVENTARIO`).
+- **`entities/` (ORM Mappers)**:
+  - `ciclo-inventario.typeorm-entity.ts`
+  - `inventario-item.typeorm-entity.ts`
+  - `ata-inventario.typeorm-entity.ts`
+- **Mapeamento para Entidades de Domínio**:
+  - `CicloInventarioMapper`, `InventarioItemMapper` e `AtaInventarioMapper` para conversão com os modelos do domínio puro em `domain/entities/`.
+- **Decisões Arquiteturais**: ADR-008 / ADR-015 (PostgreSQL 18 e Consistência Transacional), ADR-016 (Isolamento RLS por UBS), ADR-034 (Clean Architecture Fullstack).
 
-### Cenário 2: Rollback limpo da migration
+---
+
+## 5. Cenários de teste em BDD (Gherkin — camada B)
+
 ```gherkin
-Dado que a migration de inventário foi executada com sucesso
-Quando for executado o comando "migration:revert"
-Então as tabelas e tipos ENUM devem ser desfeitos sem deixar resíduos no banco
+# language: pt
+Funcionalidade: Integridade do Schema de Inventário (Camada B)
+
+  Cenário: Execução e integridade das migrations de inventário
+    Dado um banco de dados de testes na versão imediatamente anterior
+    Quando a migration de schema de inventário for executada
+    Então as tabelas "ciclos_inventario", "inventario_itens" e "atas_inventario" devem ser criadas
+    E o índice único parcial "idx_ciclo_ativo_por_ubs" deve estar ativo
+    E as colunas calculadas de divergência devem operar com a fórmula física - teórica
+
+  Cenário: Rollback limpo da migration
+    Dado que a migration de inventário foi executada com sucesso
+    Quando for executado o comando "migration:revert"
+    Então as tabelas e tipos ENUM devem ser desfeitos sem deixar resíduos no banco
 ```
 
 ---
 
-## 5. Definition of Done (DoD)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Arquivo TypeScript da migration implementado e validado contra PostgreSQL 18.
 - [ ] Testes de integração de banco de dados (Camada B) validando criação de chaves estrangeiras, coluna gerada de divergência e políticas RLS de tenant.
+- [ ] Índice único parcial para `status = 'EM_ANDAMENTO'` ativo e validado.
+- [ ] Políticas RLS aplicadas nas 3 tabelas operacionais.

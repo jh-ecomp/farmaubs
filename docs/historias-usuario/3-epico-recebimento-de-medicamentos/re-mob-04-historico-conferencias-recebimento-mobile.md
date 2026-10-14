@@ -1,102 +1,74 @@
-# RE-MOB-04: Consulta de Histórico de Conferências e Recebimentos no Celular
-
-**Épico:** 3 - Recebimento de Medicamentos  
-**Camada:** `apps/mobile` (Expo React Native)  
-**Requisitos Funcionais Relacionados:** RF-023, RF-024  
-**Requisitos Não Funcionais Relacionados:** RNF-001, RNF-004, RNF-006, RNF-009  
-**ADRs Aplicadas:** ADR-006 (Contratos TypeScript via @farmaubs/shared), ADR-007 (TanStack Query), ADR-022 (Expo Mobile), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)  
-**História Frontend Irmã:** RE-08 (Painel de Recebimentos e Termo de Estorno Web)  
-**Complexidade Estimada:** Média  
+# RE-MOB-04 feat(recebimento): Consulta de Histórico de Conferências e Recebimentos no Celular (RF008, RF028)
 
 ---
 
-## 1. História de Usuário
-
-**Como** Farmacêutico ou Atendente de Farmácia em deslocamento na farmácia ou almoxarifado,  
-**Quero** consultar pelo aplicativo mobile o histórico dos últimos recebimentos e conferências físicas homologadas na minha UBS,  
-**Para que** eu possa verificar rapidamente se uma remessa já foi dada como recebida, conferir a quantidade de volumes/itens e consultar o protocolo da nota/guia sem precisar ir até o terminal desktop.
-
----
-
-## 2. Regras de Negócio e Casos de Borda Mobile
-
-### 2.1 Contexto e Escopo de Consulta
-- **Escopo por UBS:** A consulta retorna apenas os recebimentos registrados para a UBS ativa vinculada à sessão do usuário (`user.ubsId`).
-- **Filtro de Período Rápido (Chips):**
-  - "Hoje" (filtro padrão inicial).
-  - "Últimos 7 dias".
-  - "Últimos 30 dias".
-  - Filtro por termo de busca (número do documento/NF ou nome do fornecedor/origem).
-- **Ações Disponíveis no Mobile:**
-  - Visualização em lista tátil com resumo: Data/Hora, Número do Documento, Origem/Fornecedor, Qtd de Itens Conferidos e Nome do Responsável.
-  - Abertura de modal/bottom sheet com o detalhamento completo dos lotes e quantidades conferidas.
-  - Visualização do protocolo de confirmação com possibilidade de compartilhamento nativo (`Share.share`) do resumo para outros canais (ex: WhatsApp do almoxarifado/coordenação).
-- **Restrição de Segurança / Estorno:**
-  - A operação de estorno/cancelamento de recebimento com emissão de justificativa técnica e estorno de estoque permanece restrita à aplicação Web Desktop (RE-08), com o app mobile exibindo apenas o status (ex: `EFETIVADO` ou `ESTORNADO`).
-
-### 2.2 Usabilidade Mobile e Performance
-- `FlatList` otimizada com paginação infinita (`onEndReachedThreshold={0.4}`, páginas de 15 registros).
-- Suporte a `RefreshControl` (pull-to-refresh) com feedback háptico.
-- Estados de UI claros: Skeleton loader nos cards, empty state caso não haja remessas no período e error banner com botão "Tentar novamente".
-- Altura mínima de touch target de 44x44pt para cada item da lista.
+- **Épico**: Recebimento de Medicamentos (RF008, RF028, NF001, NF002, NF007)
+- **Camada**: Mobile (`apps/mobile`)
+- **Requisitos Funcionais**: RF008 (Registro de Entrada de Medicamentos), RF028 (Consulta de Histórico e Log de Auditoria)
+- **Requisitos Não-Funcionais**: NF001 (Interface Intuitiva com Menos Cliques), NF002 (Ergonomia Touch em Campo), NF007 (Download Rápido de Planilha e Resposta Ágil)
+- **ADRs Vinculadas**: ADR-006 (RBAC), ADR-007 (API REST), ADR-022 (Monorepo), ADR-034 (Workspace Mobile Expo), ADR-035 (Governança Monorepo)
 
 ---
 
-## 3. Contratos de Dados e Tipagens (`@farmaubs/shared`)
+## 1. História de usuário
+
+> **Como** farmacêutico ou atendente de farmácia em deslocamento no almoxarifado da UBS,  
+> **quero** consultar pelo aplicativo mobile o histórico dos últimos recebimentos e conferências físicas homologadas na minha unidade,  
+> **para que** eu possa verificar rapidamente se uma remessa já foi dada como recebida, conferir a quantidade de volumes e consultar o protocolo da nota/guia sem precisar ir até o terminal desktop (RF008, RF028).
+
+---
+
+## 2. Regras de negócio e casos de borda
+
+1. **Escopo por UBS**:
+   - A consulta retorna apenas os recebimentos registrados para a UBS ativa vinculada à sessão do usuário (`user.ubsId`).
+2. **Chips de Filtragem Rápida**:
+   - Atalhos: "Hoje" (filtro padrão inicial), "Últimos 7 dias", "Últimos 30 dias" e campo de busca rápida por termo (documento ou fornecedor).
+3. **Detalhamento da Carga Conferida**:
+   - Toque em um card abre Bottom Sheet exibindo a lista completa de medicamentos, fabricantes, lotes, validades e quantidades.
+4. **Compartilhamento de Protocolo**:
+   - Botão "Compartilhar Protocolo" que formata os dados essenciais e invoca a API nativa de compartilhamento (`Share.share`).
+5. **Restrição de Estorno no Mobile**:
+   - A operação de estorno com dedução de estoque permanece restrita à aplicação Desktop (RE-08). O app mobile apenas sinaliza com badge visual vermelho `ESTORNADO`.
+
+---
+
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
 
 ```typescript
-import {
-  RecebimentoListItemDTO,
-  RecebimentoDetalheDTO,
-  PeriodoFiltroRecebimento,
-} from '@farmaubs/shared';
-
-export interface UseHistoricoRecebimentosMobileReturn {
-  recebimentos: RecebimentoListItemDTO[];
-  isLoading: boolean;
-  isFetchingNextPage: boolean;
-  filtroPeriodo: PeriodoFiltroRecebimento;
-  termoBusca: string;
-  setFiltroPeriodo: (periodo: PeriodoFiltroRecebimento) => void;
-  setTermoBusca: (busca: string) => void;
-  refetch: () => Promise<void>;
-  fetchNextPage: () => void;
-  hasNextPage: boolean;
+export interface RecebimentoListItemDTO {
+  id: string;
+  numeroDocumento: string;
+  dataRecebimento: string;
+  fornecedorOrigem: string;
+  totalItens: number;
+  totalUnidades: number;
+  status: 'CONCLUIDO' | 'ESTORNADO';
+  usuarioRecebedorNome: string;
 }
+
+export type PeriodoFiltroRecebimento = 'HOJE' | 'SETE_DIAS' | 'TRINTA_DIAS';
 ```
 
 ---
 
-## 3.3 Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Contra-parte no Frontend Web**: `RE-08` (Painel de histórico: visualização ontem/hoje, intervalo customizado, XLSX, termo e estorno).
-- **Contratos Compartilhados (`@farmaubs/shared`)**:
-  - `ListarRecebimentosQuery`, `ItemHistoricoRecebimentoDto`, `RecebimentoListItemDTO`, `PeriodoFiltroRecebimento`.
-- **Se o Frontend Web já implementou RE-08**:
-  - O Mobile utiliza exatamente a rota `GET /api/v1/recebimento/entradas` com os mesmos parâmetros de filtro e paginação já homologados no painel web.
-- **Se o Frontend Web ainda NÃO implementou RE-08**:
-  - O desenvolvedor Mobile define os contratos de consulta e listagem em `packages/shared/src/recebimento/historico-recebimento.types.ts`, assegurando que a tabela web e o relatório XLSX consumam o mesmo schema.
-
----
-
-## 4. Critérios de Aceite Detalhados
-
-1. **Listagem Padrão:** Ao abrir a tela de histórico no mobile, o app deve carregar os recebimentos do dia corrente ("Hoje").
-2. **Chips de Filtragem:** A alternância entre "Hoje", "Últimos 7 dias" e "Últimos 30 dias" deve disparar refetch imediato e animar a transição de lista.
-3. **Busca Rápida:** Ao digitar número de documento ou fornecedor no campo de busca (com debounce de 300ms), a lista deve filtrar os registros correspondentes.
-4. **Detalhe da Remessa:** Ao tocar em um card de recebimento, deve ser aberto um Bottom Sheet mostrando cada medicamento da remessa, fabricante, lote, validade e quantidade recebida.
-5. **Identificação de Estornos:** Caso uma remessa tenha sido estornada via web, o card deve exibir badge visual vermelho `ESTORNADO` com a data e motivo do cancelamento, prevenindo conferências duplicadas.
-6. **Compartilhamento de Protocolo:** Deve haver botão "Compartilhar Protocolo" que formata os dados essenciais (UBS, NF, Origem, Data, Responsável, Total de Itens) e invoca a API nativa de compartilhamento.
+- **Camada**: Mobile (`apps/mobile`).
+- **Telas e Componentes**:
+  - `apps/mobile/src/screens/recebimento/HistoricoRecebimentosScreen.tsx`.
+  - `apps/mobile/src/features/recebimento/components/RecebimentoDetalheSheet.tsx`.
+- **Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)**:
+  - Contra-parte Web: `RE-08`.
+  - Contratos compartilhados em `@farmaubs/shared` (`packages/shared/src/recebimento/historico-recebimento.types.ts`).
 
 ---
 
-## 5. Cenários de Teste em BDD (Gherkin em Português)
+## 5. Cenários de teste em BDD (Gherkin — camada Mobile)
 
 ```gherkin
-Funcionalidade: Consulta de Histórico de Recebimentos no Celular
-  Como conferente ou farmacêutico da farmácia municipal
-  Quero consultar os recebimentos homologados no meu smartphone
-  Para verificar rapidamente a entrada de mercadorias no estoque da UBS
+# language: pt
+Funcionalidade: Consulta de Histórico de Recebimentos no Celular (RE-MOB-04 / RF008, RF028)
 
   Contexto:
     Dado que o usuário está autenticado no aplicativo mobile com a UBS "UBS Central" selecionada
@@ -124,7 +96,7 @@ Funcionalidade: Consulta de Histórico de Recebimentos no Celular
 
 ---
 
-## 6. Checklist de DoD (Definition of Done)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Componente `HistoricoRecebimentosScreen` implementado no `apps/mobile/src/screens/recebimento/`.
 - [ ] Hook `useHistoricoRecebimentos` implementado consumindo client da API compartilhado (`@farmaubs/shared`).

@@ -1,24 +1,26 @@
-# ES-MOB-05: Ficha de Rastreabilidade do Lote no Celular
-
-**Épico:** 4 - Controle de Estoque  
-**Camada:** `apps/mobile` (Expo React Native)  
-**Requisitos Funcionais Relacionados:** RF-028  
-**Requisitos Não Funcionais Relacionados:** RNF-001, RNF-007, RNF-009  
-**ADRs Aplicadas:** ADR-006 (Contratos TypeScript via @farmaubs/shared), ADR-007 (TanStack Query), ADR-022 (Expo Mobile), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)  
-**História Frontend Irmã:** ES-09 (Modais Operacionais: Ficha de Rastreabilidade do Lote)  
-**Complexidade Estimada:** Baixa  
+# ES-MOB-05 feat(estoque): Ficha de Rastreabilidade do Lote no Celular
 
 ---
 
-## 1. História de Usuário
-
-**Como** Farmacêutico Responsável ou Fiscal Sanitário durante inspeção no estoque da UBS,  
-**Quero** consultar no celular a ficha de rastreabilidade completa de um lote específico, com sua linha do tempo cronológica de entradas, saídas, dispensações e ajustes,  
-**Para que** eu possa auditar a procedência, verificar quem efetuou cada movimentação e esclarecer discrepâncias de saldo sem sair da prateleira da farmácia.
+- **Épico**: Controle de Estoque (RF-028, RNF-001, RNF-007, RNF-009)
+- **Camada**: Mobile (`apps/mobile`)
+- **Requisitos Funcionais**: RF-028
+- **Requisitos Não-Funcionais**: RNF-001, RNF-007, RNF-009
+- **ADRs Vinculadas**: ADR-006, ADR-007, ADR-022, ADR-034, ADR-035
+- **História Frontend Irmã**: ES-09 (Modais Operacionais: Ficha de Rastreabilidade do Lote)
+- **Complexidade Estimada**: Baixa
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda Mobile
+## 1. História de usuário
+
+> **Como** Farmacêutico Responsável ou Fiscal Sanitário durante inspeção no estoque da UBS,  
+> **quero** consultar no celular a ficha de rastreabilidade completa de um lote específico, com sua linha do tempo cronológica de entradas, saídas, dispensações e ajustes,  
+> **para que** eu possa auditar a procedência, verificar quem efetuou cada movimentação e esclarecer discrepâncias de saldo sem sair da prateleira da farmácia.
+
+---
+
+## 2. Regras de negócio e casos de borda
 
 ### 2.1 Linha do Tempo Visual (Timeline Mobile)
 - **Cabeçalho Informativo do Lote**:
@@ -41,9 +43,15 @@
 - Scroll suave com `FlatList` caso o lote tenha histórico volumoso de dispensações.
 - Estado de carregamento com skeleton loaders de linha do tempo.
 
+### 2.3 Critérios de Aceite Detalhados
+1. **Abertura Rápida**: Ao tocar no botão "Rastrear" de qualquer lote, a ficha de rastreabilidade deve carregar os dados em menos de 1 segundo.
+2. **Identificação Visual de Movimentações**: Cada tipo de movimentação deve possuir cor e ícone semântico padronizado.
+3. **Exibição do Saldo Resultante**: O operador deve ser capaz de conferir o saldo após cada operação ao longo do tempo.
+4. **Detalhes da Operação**: Ao tocar em um evento da linha do tempo, informações complementares (como justificativa de ajuste ou número de receita) devem ser expandidas.
+
 ---
 
-## 3. Contratos de Dados e Tipagens (`@farmaubs/shared`)
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
 
 ```typescript
 import {
@@ -62,34 +70,24 @@ export interface UseRastreabilidadeLoteMobileReturn {
 
 ---
 
-## 3.3 Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Contra-parte no Frontend Web**: `ES-09` (Modais de ficha de movimentação do lote e ajuste rápido justificado).
-- **Contratos Compartilhados (`@farmaubs/shared`)**:
-  - `RastreabilidadeLoteDto`, `MovimentacaoLoteItemDto`, `TipoMovimentacaoEstoque`.
-- **Se o Frontend Web já implementou ES-09**:
-  - O Mobile utiliza exatamente a mesma rota `GET /api/v1/estoque/lotes/:id/rastreabilidade` e o DTO de eventos históricos já consumidos pelo modal web.
-- **Se o Frontend Web ainda NÃO implementou ES-09**:
-  - O desenvolvedor Mobile define os tipos de movimentações em `packages/shared/src/contracts/estoque/`, permitindo que o modal web use os mesmos contratos de linha do tempo.
-
----
-
-## 4. Critérios de Aceite Detalhados
-
-1. **Abertura Rápida**: Ao tocar no botão "Rastrear" de qualquer lote, a ficha de rastreabilidade deve carregar os dados em menos de 1 segundo.
-2. **Identificação Visual de Movimentações**: Cada tipo de movimentação deve possuir cor e ícone semântico padronizado.
-3. **Exibição do Saldo Resultante**: O operador deve ser capaz de conferir o saldo após cada operação ao longo do tempo.
-4. **Detalhes da Operação**: Ao tocar em um evento da linha do tempo, informações complementares (como justificativa de ajuste ou número de receita) devem ser expandidas.
+- **Camada**: Mobile (`apps/mobile`).
+- **Componentes**:
+  - `FichaRastreabilidadeLoteMobile` (`apps/mobile/src/screens/estoque/components/`).
+- **Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)**:
+  - **Contra-parte no Frontend Web**: `ES-09` (Modais de ficha de movimentação do lote e ajuste rápido justificado).
+  - **Contratos Compartilhados (`@farmaubs/shared`)**: `RastreabilidadeLoteDto`, `MovimentacaoLoteItemDto`, `TipoMovimentacaoEstoque`.
+  - **Se o Frontend Web já implementou ES-09**: O Mobile utiliza exatamente a mesma rota `GET /api/v1/estoque/lotes/:id/rastreabilidade` e o DTO de eventos históricos.
+  - **Se o Frontend Web ainda NÃO implementou ES-09**: O desenvolvedor Mobile define os tipos de movimentações em `packages/shared/src/contracts/estoque/`.
 
 ---
 
-## 5. Cenários de Teste em BDD (Gherkin em Português)
+## 5. Cenários de teste em BDD (Gherkin — camada Mobile)
 
 ```gherkin
-Funcionalidade: Ficha de Rastreabilidade do Lote no Celular
-  Como farmacêutico da UBS
-  Quero auditar o histórico de um lote no meu smartphone
-  Para verificar o histórico de entradas e saídas físicas
+# language: pt
+Funcionalidade: Ficha de Rastreabilidade do Lote no Celular (ES-MOB-05)
 
   Contexto:
     Dado que o usuário está no estoque mobile e seleciona o lote "LOT-8890"
@@ -104,7 +102,7 @@ Funcionalidade: Ficha de Rastreabilidade do Lote no Celular
 
 ---
 
-## 6. Checklist de DoD (Definition of Done)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Componente `FichaRastreabilidadeLoteMobile` implementado com design de linha do tempo.
 - [ ] Hook de consulta integrado a `GET /api/v1/estoque/lotes/:loteId/rastreabilidade` via TanStack Query.

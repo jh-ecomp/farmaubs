@@ -1,4 +1,4 @@
-# IN-02: API de Ciclos: Iniciar Ciclo, Congelamento de Saldo Teórico, Salvamento de Rascunho e Gestão de Status
+# IN-02 feat(inventario): API de Ciclos: Iniciar Ciclo, Congelamento de Saldo Teórico, Salvamento de Rascunho e Gestão de Status
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável da farmácia da UBS,  
 > **quero** iniciar um novo ciclo de inventário mensal que capture uma fotografia (snapshot) dos saldos teóricos de todos os lotes de medicamentos da unidade, consultar o ciclo ativo com o progresso das contagens e poder cancelar um ciclo incorreto mediante justificativa,  
@@ -17,7 +17,7 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Abertura de Ciclo e Snapshot de Estoque Teórico (RF013)**:
    - Ao requisitar `POST /api/v1/inventario/ciclos`:
@@ -25,14 +25,12 @@
      - Gera o número sequencial do ciclo (ex: `INV-2026/10`).
      - Realiza uma varredura em todos os lotes cadastrados com vínculo na UBS e insere registros em `inventario_itens` copiando o `saldo_atual` para `quantidade_teorica`.
      - Inicializa `quantidade_fisica` como `null` e status do ciclo como `EM_ANDAMENTO`.
-
 2. **Consulta do Ciclo Ativo (`GET /api/v1/inventario/ciclos/ativo`)**:
    - Retorna os dados do ciclo em andamento na unidade, com totalizadores de progresso:
      - `totalItens`: total de lotes a conferir;
      - `itensConferidos`: quantidade de lotes cuja contagem física já foi preenchida;
      - `percentualConcluido`: progresso percentual (`itensConferidos / totalItens * 100`).
    - Se não houver ciclo ativo, retorna status `200` com payload `{ cicloAtivo: null }`.
-
 3. **Cancelamento de Ciclo (`POST /api/v1/inventario/ciclos/:id/cancelar`)**:
    - Permitido apenas para ciclos com status `EM_ANDAMENTO`.
    - Exige campo `motivoCancelamento` obrigatório (mínimo de 10 caracteres).
@@ -40,58 +38,15 @@
 
 ---
 
-## 3. Escopo Técnico & Arquitetural (Clean Architecture — ADR-034)
+## 3. Contratos de dados e Protocolo HTTP (DTOs)
 
-### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/inventario/ciclos.types.ts`**: `InventarioCicloAtivoDTO`, `InventarioHistoricoItemDTO`, `IniciarCicloInputDTO`, `CancelarCicloInputDTO` e enum `StatusCicloInventario`.
-- **`src/domain/inventario/progresso-helpers.ts`**: Função pura `calcularProgressoInventario(totalItens, itensContados)` compartilhada entre backend, frontend e mobile.
+### Endpoints REST
+- `POST /api/v1/inventario/ciclos`: Iniciar novo ciclo com snapshot em lote.
+- `GET /api/v1/inventario/ciclos/ativo`: Consulta do ciclo ativo e progresso de contagem.
+- `GET /api/v1/inventario/ciclos`: Histórico paginado de ciclos da UBS.
+- `POST /api/v1/inventario/ciclos/:id/cancelar`: Cancelamento justificado de ciclo em andamento.
 
-### 2. Camada de Aplicação (`apps/backend/src/modules/inventario/application/`)
-- **Use Cases**:
-  - `iniciar-ciclo-inventario.use-case.ts`: Verifica a inexistência de ciclo ativo na UBS, gera o identificador do ciclo e captura o snapshot de todos os lotes ativos via porta de repositório em transação única.
-  - `consultar-ciclo-ativo.use-case.ts`: Recupera o ciclo `EM_ANDAMENTO`, calcula o percentual concluído e retorna o status operacional.
-  - `listar-historico-ciclos.use-case.ts`: Consulta histórico paginado de ciclos da UBS.
-  - `cancelar-ciclo-inventario.use-case.ts`: Atualiza o status para `CANCELADO` com registro de motivo sem alterar saldos físicos.
-
-### 3. Camada de Domínio (`apps/backend/src/modules/inventario/domain/`)
-- **Entidades de Domínio**: `CicloInventario` e `InventarioItem`.
-- **Portas (Interfaces)**:
-  - `inventario-ciclos.repository.port.ts`: Contratos `buscarAtivoPorUbs`, `salvarComSnapshot`, `listarPorUbsPaginado` e `atualizarStatus`.
-- **Erros de Domínio**: `CicloAtivoJaExistenteException`, `CicloNaoEncontradoException`, `CicloJaFinalizadoException`.
-
-### 4. Camada de Infraestrutura (`apps/backend/src/modules/inventario/infrastructure/`)
-- **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-inventario-ciclos.repository.ts`: Persistência TypeORM com RLS (`app.current_ubs_id`) e transação de snapshot.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
-  - `inventario-ciclos.controller.ts`: Endpoints `POST /`, `GET /ativo`, `GET /` e `POST /:id/cancelar`.
-
----
-
-## 4. Critérios de Aceite (Gherkin BDD)
-
-### Cenário 1: Início bem-sucedido de ciclo com cópia fiel de saldos teóricos
-```gherkin
-Dado que o farmacêutico está autenticado na sua UBS
-E a UBS possui 120 lotes ativos cadastrados
-E não há nenhum ciclo com status "EM_ANDAMENTO"
-Quando ele enviar "POST /api/v1/inventario/ciclos" com:
-  | observacoes | Inventario regular referente ao mes de outubro de 2026 |
-Então a API deve retornar status 201 (Created)
-E o ciclo deve ser criado com status "EM_ANDAMENTO"
-E devem ser gerados exatamente 120 itens de contagem com quantidade_teorica congelada
-```
-
-### Cenário 2: Bloqueio de múltiplos ciclos ativos simultâneos na mesma UBS
-```gherkin
-Dado que já existe um ciclo "INV-2026/09" com status "EM_ANDAMENTO"
-Quando o usuário tentar iniciar outro ciclo na mesma unidade
-Então a API deve recusar com status 409 (Conflict)
-E informar erro: "Já existe um ciclo de inventário em andamento para esta UBS"
-```
-
----
-
-## 5. Contratos de Dados (DTOs TypeScript)
+### DTOs TypeScript (com class-validator)
 
 ```typescript
 export class IniciarCicloInventarioDto {
@@ -126,7 +81,59 @@ export interface CicloAtivoResponseDto {
 
 ---
 
-## 6. Definition of Done (DoD)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
+
+### 1. Pacote Compartilhado (`@farmaubs/shared`)
+- **`src/contracts/inventario/ciclos.types.ts`**: `InventarioCicloAtivoDTO`, `InventarioHistoricoItemDTO`, `IniciarCicloInputDTO`, `CancelarCicloInputDTO` e enum `StatusCicloInventario`.
+- **`src/domain/inventario/progresso-helpers.ts`**: Função pura `calcularProgressoInventario(totalItens, itensContados)` compartilhada entre backend, frontend e mobile.
+
+### 2. Camada de Aplicação (`apps/backend/src/modules/inventario/application/`)
+- **Use Cases**:
+  - `iniciar-ciclo-inventario.use-case.ts`: Verifica a inexistência de ciclo ativo na UBS, gera o identificador do ciclo e captura o snapshot de todos os lotes ativos via porta de repositório em transação única.
+  - `consultar-ciclo-ativo.use-case.ts`: Recupera o ciclo `EM_ANDAMENTO`, calcula o percentual concluído e retorna o status operacional.
+  - `listar-historico-ciclos.use-case.ts`: Consulta histórico paginado de ciclos da UBS.
+  - `cancelar-ciclo-inventario.use-case.ts`: Atualiza o status para `CANCELADO` com registro de motivo sem alterar saldos físicos.
+
+### 3. Camada de Domínio (`apps/backend/src/modules/inventario/domain/`)
+- **Entidades de Domínio**: `CicloInventario` e `InventarioItem`.
+- **Portas (Interfaces)**:
+  - `inventario-ciclos.repository.port.ts`: Contratos `buscarAtivoPorUbs`, `salvarComSnapshot`, `listarPorUbsPaginado` e `atualizarStatus`.
+- **Erros de Domínio**: `CicloAtivoJaExistenteException`, `CicloNaoEncontradoException`, `CicloJaFinalizadoException`.
+
+### 4. Camada de Infraestrutura (`apps/backend/src/modules/inventario/infrastructure/`)
+- **Adaptadores de Banco (`adapters/`)**:
+  - `typeorm-inventario-ciclos.repository.ts`: Persistência TypeORM com RLS (`app.current_ubs_id`) e transação de snapshot.
+- **Adaptadores de Entrada HTTP (`controllers/`)**:
+  - `inventario-ciclos.controller.ts`: Endpoints `POST /`, `GET /ativo`, `GET /` e `POST /:id/cancelar`.
+
+---
+
+## 5. Cenários de teste em BDD (Gherkin — camada A e C)
+
+```gherkin
+# language: pt
+Funcionalidade: Ciclos de Inventário Mensal (Camadas A e C)
+
+  Cenário: Início bem-sucedido de ciclo com cópia fiel de saldos teóricos
+    Dado que o farmacêutico está autenticado na sua UBS
+    E a UBS possui 120 lotes ativos cadastrados
+    E não há nenhum ciclo com status "EM_ANDAMENTO"
+    Quando ele enviar "POST /api/v1/inventario/ciclos" com:
+      | observacoes | Inventario regular referente ao mes de outubro de 2026 |
+    Então a API deve retornar status 201 (Created)
+    E o ciclo deve ser criado com status "EM_ANDAMENTO"
+    E devem ser gerados exatamente 120 itens de contagem com quantidade_teorica congelada
+
+  Cenário: Bloqueio de múltiplos ciclos ativos simultâneos na mesma UBS
+    Dado que já existe um ciclo "INV-2026/09" com status "EM_ANDAMENTO"
+    Quando o usuário tentar iniciar outro ciclo na mesma unidade
+    Então a API deve recusar com status 409 (Conflict)
+    E informar erro: "Já existe um ciclo de inventário em andamento para esta UBS"
+```
+
+---
+
+## 6. Checklist de DoD e aceitação
 
 - [ ] Caso de uso `IniciarCicloInventarioUseCase` implementado com inserção em lote (`batch insert`) de snapshot para performance.
 - [ ] Endpoints documentados com OpenAPI/Swagger.

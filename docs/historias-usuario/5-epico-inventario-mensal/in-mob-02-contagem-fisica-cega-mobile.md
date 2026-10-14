@@ -1,129 +1,106 @@
-# IN-MOB-02: Contagem Física de Inventário nas Prateleiras no Celular
-
-**Épico:** 5 - Inventário Mensal  
-**Camada:** `apps/mobile` (Expo React Native)  
-**Requisitos Funcionais Relacionados:** RF-013  
-**Requisitos Não Funcionais Relacionados:** RNF-001, RNF-002, RNF-005, RNF-007  
-**ADRs Aplicadas:** ADR-006 (Contratos TypeScript via @farmaubs/shared), ADR-007 (TanStack Query), ADR-022 (Expo Mobile), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)  
-**História Frontend Irmã:** IN-06 (Formulário de Contagem Física: Lançamento por Lote e Autosave)  
-**Complexidade Estimada:** Alta  
+# IN-MOB-02 feat(inventario): Contagem Física de Inventário nas Prateleiras no Celular (RF013)
 
 ---
 
-## 1. História de Usuário
-
-**Como** Farmacêutico ou Técnico de Farmácia percorrendo os corredores e prateleiras da farmácia da UBS com o smartphone,  
-**Quero** registrar a contagem física das caixas e frascos por lote diretamente no aplicativo, com campo de busca ágil, botões incrementais táteis (+/-) e salvamento automático contínuo em rascunho (autosave),  
-**Para que** eu possa realizar o levantamento físico com velocidade e conforto, sem pranchetas de papel e com garantia de que nenhuma digitação será perdida caso a conexão oscile.
-
----
-
-## 2. Regras de Negócio e Casos de Borda Mobile
-
-### 2.1 Ergonomia de Bancada e Contagem Física
-- **Identificação do Item**:
-  - Nome do medicamento, apresentação farmacêutica, laboratório/fabricante.
-  - Código do lote em fonte monoespaçada e data de validade com badge.
-- **Controles de Quantidade Física Tátil**:
-  - Campo numérico central com botões largos de incremento (`+`) e decremento (`-`) nas laterais (mínimo de 48x48pt para fácil operação com polegar).
-  - Toque no número abre o teclado numérico nativo (`keyboardType="number-pad"`).
-  - Não permite valores negativos (`>= 0`).
-- **Navegação e Filtros Rápidos**:
-  - Barra de busca superior com debounce de 300ms (busca por nome do remédio ou lote).
-  - Chips de status:
-    - `Pendentes` (itens ainda não contados no ciclo atual - padrão ao abrir).
-    - `Contados` (itens já com contagem lançada).
-    - `Todos`.
-
-### 2.2 Salvamento Automático em Rascunho (Autosave - RNF-005)
-- Ao alterar a quantidade física de um lote:
-  - O estado da tela é atualizado instantaneamente (zero atraso perceptível).
-  - Uma fila de sincronização em background despacha o salvamento para `PUT /api/v1/inventario/ciclos/:id/itens/:itemId/contagem` com debounce de 1 segundo.
-- **Barra de Status de Sincronização**:
-  - Exibida no topo ou rodapé da tela:
-    - 🔄 `Salvando contagem...`
-    - ✅ `Todas as contagens salvas`
-    - ⚠️ `Sem conexão — retido no aparelho` (mantido em fila local no AsyncStorage/Memory até retorno da rede).
-- **Detecção de Divergência**:
-  - Após o salvamento, se a contagem física diferir do saldo teórico congelado, o card exibe um badge sutil `Divergência Detectada` e disponibiliza o atalho `Justificar` que direciona para a tela de conciliação (**IN-MOB-03**).
+- **Épico**: Inventário Mensal (RF013, NF001, NF002, NF005, NF007)
+- **Camada**: Mobile (`apps/mobile`)
+- **Requisitos Funcionais**: RF013 (Realizar Inventário Mensal - Contagem Física)
+- **Requisitos Não-Funcionais**: NF001 (Interface Intuitiva), NF002 (Ergonomia Touch em Campo), NF005 (Autosave em Rascunho), NF007 (Resposta Ágil)
+- **ADRs Vinculadas**: ADR-006 (RBAC), ADR-007 (API REST), ADR-022 (Monorepo), ADR-034 (Workspace Mobile Expo), ADR-035 (Governança Monorepo)
 
 ---
 
-## 3. Contratos de Dados e Tipagens (`@farmaubs/shared`)
+## 1. História de usuário
+
+> **Como** farmacêutico ou técnico de farmácia percorrendo as prateleiras da farmácia da UBS com o smartphone,  
+> **quero** registrar a contagem física das caixas e frascos por lote diretamente no aplicativo, com busca ágil, botões incrementais táteis (+/-) e salvamento automático contínuo em rascunho (autosave),  
+> **para que** eu possa realizar o levantamento físico com velocidade e conforto, sem pranchetas de papel e com garantia de que nenhuma digitação será perdida caso a conexão oscile (RF013, NF005).
+
+---
+
+## 2. Regras de negócio e casos de borda
+
+1. **Ergonomia de Bancada e Contagem Física**:
+   - Identificação do lote com nome do medicamento, apresentação, fabricante, código do lote e validade.
+   - Botões largos de incremento (`+`) e decremento (`-`) nas laterais (mínimo de 48x48pt).
+   - Não permite valores negativos (`>= 0`).
+2. **Navegação e Filtros Rápidos**:
+   - Busca com debounce de 300ms.
+   - Filtros rápidos: `Pendentes` (padrão ao abrir), `Contados` e `Todos`.
+3. **Salvamento Automático em Rascunho (Autosave)**:
+   - Disparo em background com debounce de 1 segundo para `PUT /api/v1/inventario/ciclos/:id/itens/:itemId/contagem`.
+   - Indicadores de sincronização: "Salvando contagem...", "Todas as contagens salvas" ou aviso de retenção local caso haja queda de rede.
+4. **Detecção de Divergência**:
+   - Badge sutil indicando divergência com atalho direto "Justificar" para a tela de conciliação (**IN-MOB-03**).
+
+---
+
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
 
 ```typescript
-import {
-  SalvarContagemItemInputDTO,
-  salvarContagemItemSchema,
-  InventarioItemContagemDTO,
-  calcularDivergencia,
-} from '@farmaubs/shared';
+export interface InventarioItemContagemDTO {
+  id: string;
+  produtoNome: string;
+  principioAtivo: string;
+  fabricanteNome: string;
+  numeroLote: string;
+  dataValidade: string;
+  quantidadeTeorica: number;
+  quantidadeFisica: number | null;
+  divergencia: number | null;
+  motivoDivergencia?: string;
+  justificativaDivergencia?: string;
+}
 
-export interface UseContagemInventarioMobileReturn {
-  itens: InventarioItemContagemDTO[];
-  isLoading: boolean;
-  isSaving: boolean;
-  statusSync: 'SALVANDO' | 'SINCRONIZADO' | 'ERRO_OFFLINE';
-  atualizarQuantidade: (itemId: string, novaQtd: number) => void;
-  filtroStatus: 'TODOS' | 'PENDENTES' | 'CONTADOS';
-  setFiltroStatus: (filtro: 'TODOS' | 'PENDENTES' | 'CONTADOS') => void;
+export interface SalvarContagemItemInputDTO {
+  quantidadeFisica: number;
+  motivoDivergencia?: string;
+  justificativaDivergencia?: string;
 }
 ```
 
 ---
 
-## 3.3 Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Contra-parte no Frontend Web**: `IN-06` (Formulário de contagem física: digitação por lote com busca textual e salvamento contínuo).
-- **Contratos Compartilhados (`@farmaubs/shared`)**:
-  - `SalvarContagemItemInputDTO`, `salvarContagemItemSchema`, `InventarioItemContagemDTO`, `calcularDivergencia`.
-- **Se o Frontend Web já implementou IN-06**:
-  - O Mobile utiliza exatamente o mesmo schema Zod e o mesmo endpoint `PATCH /api/v1/inventario/ciclos/:id/itens/:itemId` para atualização da contagem de cada lote em tempo real.
-- **Se o Frontend Web ainda NÃO implementou IN-06**:
-  - O desenvolvedor Mobile define os schemas de salvamento de lote e helpers de divergência em `packages/shared/src/contracts/inventario/`, permitindo que a tela web de contagem os consuma sem desvios de tipagem.
-
----
-
-## 4. Critérios de Aceite Detalhados
-
-1. **Facilidade Tátil**: Os botões de incremento (+) e decremento (-) devem responder imediatamente a toques repetidos com feedback háptico leve.
-2. **Salvamento Automático em Background**: A alteração numérica não deve exigir clique em "Salvar" individual; o app deve sincronizar automaticamente em até 1 segundo após o término da digitação.
-3. **Indicador Visual de Sincronização**: O usuário deve ter visibilidade permanente sobre o estado das gravações (salvando vs salvo).
-4. **Filtro de Itens Pendentes**: Deve ser possível isolar com um toque apenas os medicamentos que ainda aguardam contagem.
-5. **Prevenção de Perda de Dados**: Fechar o aplicativo ou alternar de tela não deve descartar contagens que estejam na fila de salvamento.
+- **Camada**: Mobile (`apps/mobile`).
+- **Telas e Componentes**:
+  - `apps/mobile/src/screens/inventario/ContagemFisicaScreen.tsx`.
+  - `apps/mobile/src/features/inventario/components/ItemContagemCard.tsx`.
+- **Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)**:
+  - Contra-parte Web: `IN-06`.
+  - Contratos compartilhados em `@farmaubs/shared` (`packages/shared/src/contracts/inventario/`).
+  - Utilização da função pura `calcularDivergencia(teorico, fisico)`.
 
 ---
 
-## 5. Cenários de Teste em BDD (Gherkin em Português)
+## 5. Cenários de teste em BDD (Gherkin — camada Mobile)
 
 ```gherkin
-Funcionalidade: Contagem Física de Inventário nas Prateleiras no Celular
-  Como conferente de farmácia na UBS
-  Quero lançar as quantidades físicas contadas no smartphone
-  Para registrar o inventário diretamente na prateleira sem pranchetas de papel
+# language: pt
+Funcionalidade: Contagem Física de Inventário no Celular (IN-MOB-02 / RF013)
 
   Contexto:
-    Dado que o usuário está na tela de contagem do ciclo de inventário ativo
-    E o lote "LOTE-551" de "Paracetamol 500mg" está pendente de contagem
+    Dado que o usuário está na tela de contagem do ciclo ativo no celular
+    E a lista exibe o lote "LT-PARACETAMOL-100" pendente de contagem
 
-  Cenário: Incremento tátil de quantidade com salvamento automático
-    Quando o usuário toca 3 vezes no botão "+" do lote "LOTE-551"
-    Então o visor deve exibir a quantidade "3"
-    E a barra de sincronização deve exibir "Salvando contagem..."
-    E após 1 segundo deve exibir "Todas as contagens salvas"
+  Cenário: Incremento de quantidade física com botões táteis
+    Quando o usuário toca no botão "+" 5 vezes
+    Então a quantidade exibida deve ser 5
+    E a barra de sincronização deve indicar "Salvando..."
+    E após 1 segundo deve indicar "Todas as contagens salvas"
 
-  Cenário: Filtro de itens pendentes de conferência
-    Dado que 10 itens já foram contados e 15 continuam pendentes
-    Quando o usuário seleciona o chip "Pendentes"
-    Então a lista deve exibir estritamente os 15 medicamentos que ainda não receberam contagem física
+  Cenário: Filtro por itens pendentes de contagem
+    Dado que 10 itens já foram contados e 20 estão pendentes
+    Quando o usuário seleciona o filtro "Pendentes"
+    Então a lista deve exibir exatamente os 20 itens sem contagem
 ```
 
 ---
 
-## 6. Checklist de DoD (Definition of Done)
+## 6. Checklist de DoD e aceitação
 
-- [ ] Componente `ContagemInventarioListMobile` implementado com suporte a `FlatList` virtualizada.
-- [ ] Hook de autosave com debounce e tratamento de reconexão.
-- [ ] Botões incrementais de 48x48pt com suporte a `Haptics.selectionAsync()`.
-- [ ] Indicador de sincronização em tempo real no topo/rodapé da tela.
-- [ ] Testes de componentes mobile simulando toques incrementais e chamadas de autosave.
+- [ ] Componente `ContagemFisicaScreen` com botões táteis largos (mínimo 48x48pt).
+- [ ] Mecanismo de autosave com debounce e tolerância a falhas de conexão.
+- [ ] Integração com `@farmaubs/shared` para tipagens e cálculo de divergência.
+- [ ] Testes automatizados com React Native Testing Library validando incremento e autosave.

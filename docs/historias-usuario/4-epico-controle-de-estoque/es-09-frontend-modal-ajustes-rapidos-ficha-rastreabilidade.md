@@ -1,4 +1,4 @@
-# ES-09: Modais Operacionais: Ficha de Rastreabilidade do Lote e Diálogo de Ajuste Rápido (+/-) Justificado
+# ES-09 feat(estoque): Modais Operacionais: Ficha de Rastreabilidade do Lote e Diálogo de Ajuste Rápido (+/-) Justificado
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável ou residente da UBS,  
 > **quero** abrir um modal de ajuste rápido para lançar acréscimos (+) ou baixas (-) no saldo de um lote informando motivo sanitário e justificativa obrigatória, e abrir um modal de ficha de rastreabilidade para inspecionar a linha do tempo completa daquele lote,  
@@ -17,40 +17,54 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Modal de Ajuste de Estoque (`ModalAjusteEstoque.tsx`)**:
-   - **Cabeçalho Informativo**: Exibe o nome do medicamento, apresentação, fabricante, código do lote e saldo atual em destaque.
-   - **Seletor de Tipo de Operação**:
-     - Botão de alternância: `Entrada (+)` em verde ou `Saída (-)` em vermelho.
-   - **Campo Quantidade**:
-     - Input numérico inteiro positivo (> 0).
-     - Em caso de saída: validação em tempo real impedindo digitação de quantidade superior ao saldo atual do lote.
-   - **Dropdown de Motivo Sanitário**:
-     - Opções para Entrada: `Correção de Inventário`, `Devolução de Paciente`, `Outro`.
-     - Opções para Saída: `Validade Vencida`, `Avaria Física / Quebra`, `Extravio`, `Recolhimento Sanitário`, `Outro`.
-   - **Campo de Justificativa Textual Obrigatória**:
-     - Mínimo de 10 caracteres (e mínimo de 20 caracteres caso o motivo seja "Outro", atendendo à recomendação de Bruno Santana na entrevista de 29/09/2026);
-     - Contador de caracteres em tempo real e mensagem de aviso com `aria-live`.
-   - **Submissão**:
-     - Consome `POST /api/v1/estoque/lotes/:loteId/ajustes`;
-     - Dispara toast de sucesso e invalida os caches de métricas e saldos no TanStack Query.
-
+   - Exibe nome do medicamento, apresentação, fabricante, código do lote e saldo atual em destaque.
+   - Alternância de operação: `Entrada (+)` em verde ou `Saída (-)` em vermelho.
+   - Quantidade inteira positiva (> 0). Em saídas, bloqueia valores superiores ao saldo atual do lote.
+   - Motivo sanitário obrigatório:
+     - Entrada: `Correção de Inventário`, `Devolução de Paciente`, `Outro`.
+     - Saída: `Validade Vencida`, `Avaria Física / Quebra`, `Extravio`, `Recolhimento Sanitário`, `Outro`.
+   - Justificativa obrigatória: mínimo de 10 caracteres (ou 20 caracteres caso o motivo seja "Outro").
+   - Dispara toast de sucesso e invalida os caches de métricas e saldos no TanStack Query.
 2. **Modal de Ficha de Rastreabilidade (`ModalFichaRastreabilidade.tsx`)**:
    - Consome `GET /api/v1/estoque/lotes/:loteId/rastreabilidade`.
-   - Exibe linha do tempo cronológica com marcadores visuais (badges/ícones):
-     - Ícone verde para `ENTRADA_RECEBIMENTO`;
-     - Ícone azul para `SAIDA_DISPENSACAO`;
-     - Ícone roxo para `AJUSTE_ENTRADA` / `AJUSTE_SAIDA`;
-     - Ícone cinza para estornos.
-   - Exibe data/hora formatada, quantidade, saldo resultante, nome do usuário responsável e documento de suporte (Guia CAF, senha ou justificativa).
-
+   - Exibe linha do tempo cronológica com marcadores visuais para cada tipo de movimentação, com data/hora, quantidade, saldo resultante, usuário responsável e documento de suporte.
 3. **Acessibilidade dos Modais (ADR-032)**:
-   - Uso de `role="dialog"`, `aria-modal="true"`, foco aprisionado (focus trap), tecla `Escape` para fechar e retorno do foco ao botão disparador.
+   - `role="dialog"`, `aria-modal="true"`, foco aprisionado (focus trap), fechamento por `Escape` e retorno do foco ao botão disparador.
 
 ---
 
-## 3. Escopo Técnico & Arquitetural
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Schemas Zod)
+
+```typescript
+import { z } from 'zod';
+
+export const registrarAjusteSchema = z.object({
+  tipoOperacao: z.enum(['ENTRADA', 'SAIDA']),
+  quantidade: z.number().int().positive('A quantidade deve ser maior que zero'),
+  motivo: z.string().min(1, 'Selecione o motivo do ajuste'),
+  justificativa: z.string().min(10, 'A justificativa deve conter pelo menos 10 caracteres'),
+}).refine(
+  (data) => {
+    if (data.motivo === 'OUTRO') {
+      return data.justificativa.trim().length >= 20;
+    }
+    return true;
+  },
+  {
+    message: "O motivo 'Outro' exige justificativa detalhada com no mínimo 20 caracteres",
+    path: ['justificativa'],
+  }
+);
+
+export type RegistrarAjusteLoteInputDto = z.infer<typeof registrarAjusteSchema>;
+```
+
+---
+
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 - **Camada**: D (Testes de Componentes React).
 - **Componentes**:
@@ -58,44 +72,42 @@
   - `apps/frontend/src/features/estoque/components/ModalFichaRastreabilidade.tsx`.
 - **Hooks**: `useRegistrarAjusteEstoque()` e `useRastreabilidadeLote(loteId)`.
 
-### Compartilhamento Arquitetural com @farmaubs/shared e App Mobile (apps/mobile - ES-MOB-04 e ES-MOB-05)
-- **DTOs de Operação e Schema Zod**: `RegistrarAjusteLoteInputDto`, `RastreabilidadeLoteDto` e o schema `registrarAjusteSchema` estão unificados em `@farmaubs/shared/src/contracts/estoque/`.
-- **Validação de Justificativa e Saldo**: A regra que exige no mínimo 10 caracteres (ou 20 caracteres se o motivo for "Outro") e a validação de que uma saída não pode exceder o saldo atual do lote são executadas pelo schema Zod compartilhado no frontend web e no app mobile (evitando round-trips inválidos).
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-04 e ES-MOB-05)
+- **DTOs de Operação e Schema Zod**: `RegistrarAjusteLoteInputDto`, `RastreabilidadeLoteDto` e `registrarAjusteSchema` centralizados em `@farmaubs/shared`.
+- **Validação de Justificativa e Saldo**: Regra de mínimo 10 caracteres (ou 20 para "Outro") validada pelo Zod compartilhado.
 - **Equivalência Mobile**:
-  - Ajuste rápido é implementado na tela/modal mobile `AjusteEstoqueScreen` (**ES-MOB-04**).
-  - A linha do tempo de rastreabilidade é implementada no componente nativo `FichaRastreabilidadeLoteMobile` (**ES-MOB-05**).
-- **Diretrizes para Ciclos Independentes de Desenvolvimento**:
-  - *Cenário A (Mobile já implementou ES-MOB-04/ES-MOB-05)*: O Frontend Web consome diretamente `RegistrarAjusteLoteInputDto`, `RastreabilidadeLoteDto` e `registrarAjusteSchema` já validados em `@farmaubs/shared`.
-  - *Cenário B (Mobile ainda NÃO implementou)*: O Frontend Web publica as regras de validação de justificativa (mínimo 10 caracteres ou 20 para "Outro") e schemas de DTO em `packages/shared/src/contracts/estoque/`, garantindo que os formulários móveis sigam exatamente os mesmos limites.
+  - Ajuste rápido implementado na tela/modal mobile `AjusteEstoqueScreen` (**ES-MOB-04**).
+  - Linha do tempo de rastreabilidade implementada no componente nativo `FichaRastreabilidadeLoteMobile` (**ES-MOB-05**).
 
 ---
 
-## 4. Critérios de Aceite (Gherkin BDD)
+## 5. Cenários de teste em BDD (Gherkin — camada D)
 
-### Cenário 1: Confirmação de ajuste de saída por avaria com justificativa válida
 ```gherkin
-Dado que o modal de ajuste está aberto para o lote "LT-01" com saldo de 20 unidades
-Quando o farmacêutico selecionar a operação "Saída (-)"
-E preencher a quantidade "2"
-E selecionar o motivo "Avaria Física / Quebra"
-E preencher a justificativa "Frasco quebrou durante manuseio na bancada"
-E clicar no botão "Confirmar Ajuste"
-Então a mutação deve ser enviada com sucesso
-E o modal deve ser fechado
-E um toast informativo de sucesso deve ser exibido
-```
+# language: pt
+Funcionalidade: Modais de Ajuste e Ficha de Rastreabilidade (Camada D)
 
-### Cenário 2: Bloqueio do botão de confirmação quando a justificativa é insuficiente
-```gherkin
-Dado que o modal de ajuste está aberto com motivo "Outro"
-Quando o usuário digitar apenas "ajuste" na justificativa (6 caracteres)
-Então o botão "Confirmar Ajuste" deve permanecer desabilitado
-E deve ser exibido o aviso: "O motivo 'Outro' exige justificativa detalhada com no mínimo 20 caracteres"
+  Cenário: Confirmação de ajuste de saída por avaria com justificativa válida
+    Dado que o modal de ajuste está aberto para o lote "LT-01" com saldo de 20 unidades
+    Quando o farmacêutico selecionar a operação "Saída (-)"
+    E preencher a quantidade "2"
+    E selecionar o motivo "Avaria Física / Quebra"
+    E preencher a justificativa "Frasco quebrou durante manuseio na bancada"
+    E clicar no botão "Confirmar Ajuste"
+    Então a mutação deve ser enviada com sucesso
+    E o modal deve ser fechado
+    E um toast informativo de sucesso deve ser exibido
+
+  Cenário: Bloqueio do botão de confirmação quando a justificativa é insuficiente
+    Dado que o modal de ajuste está aberto com motivo "Outro"
+    Quando o usuário digitar apenas "ajuste" na justificativa (6 caracteres)
+    Então o botão "Confirmar Ajuste" deve permanecer desabilitado
+    E deve ser exibido o aviso: "O motivo 'Outro' exige justificativa detalhada com no mínimo 20 caracteres"
 ```
 
 ---
 
-## 5. Definition of Done (DoD)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Modais desenvolvidos com validação via React Hook Form + Zod.
 - [ ] Invalidação automática dos caches de `estoque/metricas` e `estoque/saldos` após mutação.

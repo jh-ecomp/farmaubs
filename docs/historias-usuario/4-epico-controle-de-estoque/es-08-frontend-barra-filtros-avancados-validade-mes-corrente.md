@@ -1,4 +1,4 @@
-# ES-08: Barra de Filtros Avançados: Busca Livre, Filtro de Validade no Mês Corrente e Categorias da REMUME
+# ES-08 feat(estoque): Barra de Filtros Avançados: Busca Livre, Filtro de Validade no Mês Corrente e Categorias da REMUME
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável ou operador de farmácia da UBS,  
 > **quero** uma barra de filtros ergonômica e ágil com campo de busca por texto com debounce, filtro rápido para isolar medicamentos que vencem no mês corrente, seletor de categorias clínicas e filtro por nível de disponibilidade,  
@@ -17,32 +17,41 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Campo de Busca Textual com Debounce (300ms)**:
-   - Permite digitar o nome comercial, princípio ativo ou código de lote.
-   - Aplica debounce de 300ms para evitar disparos excessivos de requisições à API durante a digitação rápida no balcão.
+   - Permite digitar o nome comercial, princípio ativo ou código de lote com debounce de 300ms.
    - Ícone de lupa à esquerda e botão limpar ("X") à direita quando preenchido.
-
-2. **Filtro de Validade Dedicado (Alinhamento de 29/09/2026)**:
-   - Dropdown ou grupo de botões segmented-control:
-     - `Todos`: Sem filtro temporal;
-     - `Vencendo no Mês Vigente`: Isola itens com lote expirando no mês civil atual (com badge laranja no seletor);
-     - `Validade Curta (< 90 dias)`: Isola itens expirando nos próximos 90 dias;
-     - `Vencidos`: Exibe apenas lotes cuja validade já expirou.
-
+2. **Filtro de Validade Dedicado**:
+   - `Todos`: Sem filtro temporal;
+   - `Vencendo no Mês Vigente`: Isola itens com lote expirando no mês civil atual (com badge laranja no seletor);
+   - `Validade Curta (< 90 dias)`: Isola itens expirando nos próximos 90 dias;
+   - `Vencidos`: Exibe apenas lotes cuja validade já expirou.
 3. **Filtro por Categoria Clínica da REMUME**:
-   - Dropdown populado dinamicamente com as categorias do município (ex.: "Anti-hipertensivos", "Antidiabéticos", "Antimicrobianos", "Analgésicos/Anti-inflamatórios", "Saúde da Mulher").
-
+   - Dropdown com as categorias do município (ex.: "Anti-hipertensivos", "Antidiabéticos", "Antimicrobianos", etc.).
 4. **Filtro por Nível de Estoque**:
    - Seleção entre: "Todos", "Apenas em Estoque", "Baixo Estoque / Risco de Ruptura" e "Zerados".
-
 5. **Botão Limpar Filtros**:
    - Reseta todos os campos para o estado padrão em um único clique e refaz a consulta na primeira página.
 
 ---
 
-## 3. Escopo Técnico & Arquitetural
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
+
+```typescript
+export interface ConsultarSaldosQueryDto {
+  termo?: string;
+  categoria?: string;
+  filtroValidade?: 'TODOS' | 'MES_CORRENTE' | 'VALIDADE_90D' | 'VENCIDOS';
+  statusEstoque?: 'TODOS' | 'EM_ESTOQUE' | 'BAIXO_ESTOQUE' | 'ZERADO';
+  pagina?: number;
+  itensPorPagina?: number;
+}
+```
+
+---
+
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 - **Camada**: D (Testes de Componentes React).
 - **Componente**: `apps/frontend/src/features/estoque/components/EstoqueFiltrosBar.tsx`.
@@ -51,38 +60,36 @@
   - `onChange: (novosFiltros: Partial<ConsultarSaldosQueryDto>) => void`;
   - `onLimpar: () => void`.
 
-### Compartilhamento Arquitetural com @farmaubs/shared e App Mobile (apps/mobile - ES-MOB-03)
-- **DTO de Consulta Compartilhado**: `ConsultarSaldosQueryDto` e os tipos literais de filtro (`filtroValidade: 'TODOS' | 'MES_CORRENTE' | 'CURTA_90_DIAS' | 'VENCIDOS'`) são exportados de `@farmaubs/shared/src/contracts/estoque/`.
-- **Validação de Parâmetros**: O schema Zod `consultarSaldosQuerySchema` garante que os mesmos critérios de filtro e paginação sejam validados nas camadas de apresentação Web e Mobile antes do envio à API.
-- **Ergonomia Tátil**: No mobile, os seletores da barra web são transpostos para chips de rolagem horizontal (`ScrollView horizontal`) e uma folha modal inferior (Bottom Sheet) para filtros combinados de categoria clínica e criticidade.
-- **Diretrizes para Ciclos Independentes de Desenvolvimento**:
-  - *Cenário A (Mobile já implementou ES-MOB-03)*: O Frontend Web consome diretamente `ConsultarSaldosQueryDto` e `consultarSaldosQuerySchema` de `@farmaubs/shared`, aplicando os mesmos parâmetros nas queries da tabela.
-  - *Cenário B (Mobile ainda NÃO implementou ES-MOB-03)*: O Frontend Web define e publica os parâmetros de consulta e enums de filtro em `packages/shared/src/contracts/estoque/`, deixando a interface pronta para o app móvel.
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-03)
+- **DTO de Consulta Compartilhado**: `ConsultarSaldosQueryDto` e schema Zod `consultarSaldosQuerySchema` centralizados em `@farmaubs/shared`.
+- **Ergonomia Tátil**: No mobile, os filtros são apresentados via chips de rolagem horizontal e Bottom Sheet para filtros combinados.
 
 ---
 
-## 4. Critérios de Aceite (Gherkin BDD)
+## 5. Cenários de teste em BDD (Gherkin — camada D)
 
-### Cenário 1: Seleção do filtro "Vencendo no Mês Vigente"
 ```gherkin
-Dado que a barra de filtros está renderizada
-Quando o farmacêutico selecionar a opção "Vencendo no Mês Vigente" no seletor de validade
-Então o callback "onChange" deve ser disparado com "filtroValidade=MES_CORRENTE" e "pagina=1"
-E a interface deve exibir um chip/tag indicativo de filtro ativo
-```
+# language: pt
+Funcionalidade: Barra de Filtros de Estoque (Camada D)
 
-### Cenário 2: Digitação no campo de busca com debounce
-```gherkin
-Dado que o farmacêutico digita "Amox" no campo de busca textual
-Quando passarem 300 milissegundos sem novas teclas digitadas
-Então a busca deve ser disparada com termo "Amox"
-E a página da consulta deve ser resetada para a primeira página
+  Cenário: Seleção do filtro "Vencendo no Mês Vigente"
+    Dado que a barra de filtros está renderizada
+    Quando o farmacêutico selecionar a opção "Vencendo no Mês Vigente" no seletor de validade
+    Então o callback "onChange" deve ser disparado com "filtroValidade=MES_CORRENTE" e "pagina=1"
+    E a interface deve exibir um chip/tag indicativo de filtro ativo
+
+  Cenário: Digitação no campo de busca com debounce
+    Dado que o farmacêutico digita "Amox" no campo de busca textual
+    Quando passarem 300 milissegundos sem novas teclas digitadas
+    Então a busca deve ser disparada com termo "Amox"
+    E a página da consulta deve ser resetada para a primeira página
 ```
 
 ---
 
-## 5. Definition of Done (DoD)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Componente implementado com debounce funcional via hook customizado `useDebounce`.
 - [ ] Seletor de validade contendo opção explícita de "Vencendo no Mês Corrente".
 - [ ] Testes de componentes (Camada D) validando atraso do debounce e acionamento dos filtros com acessibilidade por teclado (`Tab`, `Enter`).
+- [ ] Schema Zod consumido de `@farmaubs/shared`.

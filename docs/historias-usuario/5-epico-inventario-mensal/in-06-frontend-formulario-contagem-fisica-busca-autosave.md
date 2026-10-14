@@ -1,4 +1,4 @@
-# IN-06: Formulário de Contagem Física: Lançamento por Lote com Busca Inteligente e Salvamento Automático em Rascunho
+# IN-06 feat(inventario): Formulário de Contagem Física: Lançamento por Lote com Busca Inteligente e Salvamento Automático em Rascunho
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável ou residente da UBS,  
 > **quero** uma interface ágil de conferência física na prateleira que permita buscar medicamentos por texto, lançar as quantidades físicas contadas por lote com salvamento automático contínuo em rascunho (autosave) e visualizar o feedback de divergência em tempo real,  
@@ -17,33 +17,43 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Mecanismo de Busca e Navegação por Itens**:
-   - Barra de busca com debounce (300ms) permitindo filtrar a lista de itens do ciclo por nome comercial, princípio ativo ou código de lote.
-   - Filtro de navegação rápida: "Todos", "Apenas Não Conferidos" (prioritário na rotina) e "Já Conferidos".
-
+   - Barra de busca com debounce (300ms) permitindo filtrar por nome comercial, princípio ativo ou código de lote.
+   - Filtros rápidos: "Todos", "Apenas Não Conferidos" (prioritário na rotina) e "Já Conferidos".
 2. **Lançamento de Quantidade Física**:
-   - Para cada lote listado:
-     - Exibe identificação completa: Medicamento, Concentração, Fabricante, Código do Lote e Data de Validade;
-     - Campo numérico `quantidadeFisica` com botões incrementais (`+` e `-`) e digitação direta;
-     - O valor deve ser um inteiro maior ou igual a zero (`>= 0`).
-
+   - Exibe medicamento, concentração, fabricante, lote e validade.
+   - Campo numérico `quantidadeFisica` com botões incrementais (`+` e `-`) e digitação direta (inteiro `>= 0`).
 3. **Persistência Contínua em Rascunho (Autosave - NF005)**:
    - Ao alterar o valor do campo numérico:
-     - O componente atualiza o estado local imediatamente;
-     - Dispara requisição de salvamento com debounce de 1 segundo para a rota `PUT /api/v1/inventario/ciclos/:id/itens/:itemId/contagem`;
-     - Um indicador no topo da tela exibe o estado de sincronização:
-       - `Salvando alterações...` (ícone de sincronização girando);
-       - `Todas as contagens salvas em rascunho` (ícone de check verde e timestamp da última gravação);
-       - `Aviso: Conexão instável — dados retidos localmente` (caso ocorra erro de rede temporário).
-
+     - Dispara requisição com debounce de 1 segundo para `PUT /api/v1/inventario/ciclos/:id/itens/:itemId/contagem`;
+     - Indicador visual no topo: "Salvando alterações...", "Todas as contagens salvas em rascunho" ou aviso de retenção local caso haja falha temporária de rede.
 4. **Identificação Imediata de Divergência**:
-   - Se a contagem física for divergente do saldo teórico, a linha do item recebe uma sutil borda colorida e exibe um botão de atalho `"Justificar Divergência"` que abre o modal/gaveta para seleção de motivo.
+   - Se a contagem física for divergente do saldo teórico, a linha recebe destaque visual e exibe botão "Justificar Divergência".
 
 ---
 
-## 3. Escopo Técnico & Arquitetural
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Schemas Zod)
+
+```typescript
+import { z } from 'zod';
+
+export const salvarContagemItemSchema = z.object({
+  quantidadeFisica: z
+    .number({ invalid_type_error: 'Informe um número válido' })
+    .int('A quantidade deve ser um número inteiro')
+    .min(0, 'A quantidade física não pode ser negativa'),
+  motivoDivergencia: z.string().optional(),
+  justificativaDivergencia: z.string().max(500).optional(),
+});
+
+export type SalvarContagemItemInputDTO = z.infer<typeof salvarContagemItemSchema>;
+```
+
+---
+
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 - **Camada**: D (Testes de Componentes e Fluxos React).
 - **Componente Principal**: `apps/frontend/src/features/inventario/components/InventarioContagemForm.tsx`.
@@ -52,39 +62,38 @@
   - `useSalvarContagemItem()`: Mutação com atualização otimista (optimistic update);
   - `useAutosaveInventario()`: Hook personalizado para controle de status e fila de sincronização.
 
-### Compartilhamento Arquitetural com @farmaubs/shared e App Mobile (apps/mobile - IN-MOB-02)
-- **Contratos e DTOs de Contagem**: O DTO `SalvarContagemItemInputDTO` e o schema Zod `salvarContagemItemSchema` são centralizados em `@farmaubs/shared/src/contracts/inventario/`.
-- **Lógica Pura de Comparação de Divergência**: A regra `calcularDivergencia(saldoTeorico, quantidadeFisica)` que determina diferença (sobra ou falta) é exportada de `@farmaubs/shared/src/domain/inventario/divergencia-helpers.ts`.
-- **Especialização Mobile**: O aplicativo mobile (**IN-MOB-02**) foi desenhado para ser o instrumento primário de contagem física nas prateleiras da farmácia, com botões incrementais táteis (+ / -) de 44x44pt, autosave com debounce em segundo plano e teclado numérico com controle de foco (`KeyboardAvoidingView`).
-- **Diretrizes para Ciclos Independentes de Desenvolvimento**:
-  - *Cenário A (Mobile já implementou IN-MOB-02)*: O Frontend Web consome diretamente `SalvarContagemItemInputDTO`, `salvarContagemItemSchema` e `calcularDivergencia` de `@farmaubs/shared`.
-  - *Cenário B (Mobile ainda NÃO implementou IN-MOB-02)*: O Frontend Web publica as regras de autosave e DTOs em `packages/shared/src/contracts/inventario/`, servindo de modelo contratual para a contagem no smartphone.
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - IN-MOB-02)
+- **Contratos e DTOs de Contagem**: `SalvarContagemItemInputDTO` e `salvarContagemItemSchema` centralizados em `@farmaubs/shared`.
+- **Lógica Pura de Comparação de Divergência**: `calcularDivergencia(saldoTeorico, quantidadeFisica)`.
+- **Especialização Mobile**: O app mobile (**IN-MOB-02**) é o instrumento primário de bancada nas prateleiras com botões incrementais táteis (+ / -) de 44x44pt e `KeyboardAvoidingView`.
 
 ---
 
-## 4. Critérios de Aceite (Gherkin BDD)
+## 5. Cenários de teste em BDD (Gherkin — camada D)
 
-### Cenário 1: Digitação de contagem e salvamento automático em rascunho
 ```gherkin
-Dado que o farmacêutico está na tela de contagem do ciclo ativo
-Quando ele digitar a quantidade física "45" no lote "LT-DIP-01"
-Então o indicador de sincronização deve passar para "Salvando alterações..."
-E após 1 segundo a requisição de atualização deve ser confirmada
-E o indicador deve exibir "Todas as contagens salvas em rascunho" com ícone de check
-```
+# language: pt
+Funcionalidade: Formulário de Contagem Física e Autosave (Camada D)
 
-### Cenário 2: Filtro por itens pendentes de conferência física
-```gherkin
-Dado que o ciclo possui 120 itens e 40 já foram contados
-Quando o usuário acionar o filtro "Apenas Não Conferidos"
-Então a lista na tela deve exibir exatamente os 80 itens que ainda estão com contagem nula
-E o contador superior deve refletir a quantidade pendente
+  Cenário: Digitação de contagem e salvamento automático em rascunho
+    Dado que o farmacêutico está na tela de contagem do ciclo ativo
+    Quando ele digitar a quantidade física "45" no lote "LT-DIP-01"
+    Então o indicador de sincronização deve passar para "Salvando alterações..."
+    E após 1 segundo a requisição de atualização deve ser confirmada
+    E o indicador deve exibir "Todas as contagens salvas em rascunho" com ícone de check
+
+  Cenário: Filtro por itens pendentes de conferência física
+    Dado que o ciclo possui 120 itens e 40 já foram contados
+    Quando o usuário acionar o filtro "Apenas Não Conferidos"
+    Então a lista na tela deve exibir exatamente os 80 itens que ainda estão com contagem nula
+    E o contador superior deve refletir a quantidade pendente
 ```
 
 ---
 
-## 5. Definition of Done (DoD)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Formulário de contagem implementado com inputs numéricos acessíveis e foco ordenado por teclado.
 - [ ] Mecanismo de autosave com debounce e tratamento de erros de conexão com retenção em estado local.
 - [ ] Testes de componentes (Camada D) validando cálculo de divergência na UI, disparo de requisição e persistência de dados.
+- [ ] Schemas e helpers de validação consumidos de `@farmaubs/shared`.

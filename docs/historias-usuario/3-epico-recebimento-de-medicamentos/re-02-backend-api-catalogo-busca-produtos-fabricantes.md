@@ -1,4 +1,4 @@
-# RE-02: API de Catálogo: Busca Textual de Medicamentos, Apresentações e Fabricantes (RF008)
+# RE-02 feat(recebimento): API de Catálogo: Busca Textual de Medicamentos, Apresentações e Fabricantes (RF008)
 
 ---
 
@@ -9,80 +9,37 @@
 
 ---
 
-## Contexto & Problema
+## 1. História de usuário
 
-Durante a conferência física de uma carga recebida na UBS, o farmacêutico precisa localizar com rapidez e precisão o medicamento constante na nota ou guia. Como definido nos requisitos do MVP 1, **não haverá leitor de código de barras neste momento**, sendo fundamental uma busca textual de alta performance com suporte a termos parciais de nome comercial, princípio ativo ou forma farmacêutica.
-
-Além disso, para atender às solicitações clínicas da equipe e da Anvisa, cada medicamento recebido deve estar estritamente vinculado ao seu **Fabricante / Laboratório** (ex: EMS, Prati-Donaduzzi, Medley, Fiocruz). A API deve fornecer endpoints para consulta rápida de fabricantes cadastrados e inclusão facilitada de novos fabricantes.
-
----
-
-## Escopo Técnico & Arquitetural (Clean Architecture — ADR-034)
-
-### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/recebimento/catalogo.types.ts`**: Tipos `ProdutoCatalogoItemDto`, `FabricanteDto`, `CadastrarFabricanteRequest` e schemas Zod.
-
-### 2. Camada de Aplicação (`apps/backend/src/modules/catalogo/application/`)
-- **Use Cases**:
-  - `buscar-produtos-catalogo.use-case.ts`: Busca textual em nome comercial, princípio ativo e apresentação.
-  - `listar-fabricantes.use-case.ts`: Retorna lista ordenada de laboratórios ativos.
-  - `cadastrar-fabricante.use-case.ts`: Valida unicidade e persiste novo fabricante.
-
-### 3. Camada de Domínio (`apps/backend/src/modules/catalogo/domain/`)
-- **Entidades de Domínio**: `Produto` e `Fabricante`.
-- **Portas (Interfaces)**:
-  - `produto-catalogo.repository.port.ts`: Consulta de produtos com paginação/busca.
-  - `fabricante.repository.port.ts`: Listagem e criação de fabricantes.
-
-### 4. Camada de Infraestrutura (`apps/backend/src/modules/catalogo/infrastructure/`)
-- **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-produto-catalogo.repository.ts` e `typeorm-fabricante.repository.ts`.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
-  - `catalogo.controller.ts`: Endpoints `GET /produtos/busca`, `GET /fabricantes` e `POST /fabricantes`.
+> **Como** farmacêutico ou responsável pela farmácia da UBS durante a conferência física da carga,  
+> **quero** buscar medicamentos no catálogo por termos textuais livres (nome comercial, princípio ativo, forma farmacêutica) e consultar ou cadastrar rapidamente os fabricantes/laboratórios produtores,  
+> **para que** eu localize com precisão os itens da nota ou guia da CAF sem depender de leitor de código de barras no MVP 1 e vincule a rastreabilidade sanitária obrigatória de cada lote recebido (RF008, NF007).
 
 ---
 
-## Critérios de Aceite (Gherkin BDD)
+## 2. Regras de negócio e casos de borda
 
-### Cenário 1: Busca textual de medicamentos com termo válido
-```gherkin
-Dado que o usuário está autenticado com perfil "FARMACEUTICO" ou "TECNICO"
-Quando ele enviar uma requisição "GET /api/v1/catalogo/produtos/busca?termo=amox"
-Então a API deve retornar status 200 (OK)
-E o corpo da resposta deve conter uma lista de medicamentos contendo "amox" no nome comercial ou princípio ativo
-E cada item deve apresentar "id", "nomeComercial", "principioAtivo", "dosagem", "formaFarmaceutica" e "unidadeMedida"
-```
-
-### Cenário 2: Rejeição de busca com termo vazio ou insuficiente
-```gherkin
-Dado que o usuário tenta pesquisar medicamentos
-Quando ele enviar a requisição "GET /api/v1/catalogo/produtos/busca?termo=a"
-Então a API deve responder com status 400 (Bad Request)
-E o erro deve informar que o termo de busca deve possuir no mínimo 2 caracteres
-```
-
-### Cenário 3: Consulta e cadastro rápido de fabricante
-```gherkin
-Dado que o farmacêutico está recebendo um lote de um novo laboratório "Laboratório Teuto"
-Quando ele enviar uma requisição "POST /api/v1/catalogo/fabricantes" com:
-  | razaoSocial | Laboratório Teuto Brasileiro S/A |
-  | nomeFantasia | Teuto |
-  | cnpj | 17159045000109 |
-Então a API deve retornar status 201 (Created) com o fabricante persistido e "ativo: true"
-E em seguida, requisições "GET /api/v1/catalogo/fabricantes" devem listar o "Teuto" entre as opções disponíveis
-```
-
-### Cenário 4: Prevenção de duplicidade de CNPJ de fabricante
-```gherkin
-Dado que já existe um fabricante cadastrado com o CNPJ "17159045000109"
-Quando for enviado um novo cadastro com o mesmo CNPJ
-Então a API deve responder com status 409 (Conflict)
-E detalhar que o CNPJ já está vinculado ao fabricante existente
-```
+1. **Ausência de Código de Barras no MVP 1**:
+   - A busca de medicamentos funciona via texto livre com suporte a termos parciais (`ILIKE` com índice `pg_trgm` ou `to_tsvector`), garantindo respostas com latência inferior a 200ms.
+2. **Termo Mínimo de Busca**:
+   - O parâmetro `termo` deve possuir no mínimo 2 caracteres para evitar varreduras desnecessárias em todo o catálogo. Termos menores retornam `400 (Bad Request)`.
+3. **Normalização de Fabricantes**:
+   - O sistema aplica `trim()` nos campos de razão social e nome fantasia para prevenir duplicidades geradas por espaços em branco no início ou fim.
+4. **Unicidade de CNPJ do Fabricante**:
+   - Quando informado, o CNPJ deve ser composto por 14 dígitos numéricos e ser único no sistema. Tentativas de duplicidade retornam `409 (Conflict)`.
+5. **Inativação Lógica**:
+   - Fabricantes não podem ser deletados fisicamente do banco de dados para resguardar a integridade relacional dos lotes históricos já recebidos (`ativo: false`).
 
 ---
 
-## Contratos de Dados (DTOs e Interfaces TypeScript)
+## 3. Contratos de dados e Protocolo HTTP (DTOs)
+
+### Endpoints REST
+- `GET /api/v1/catalogo/produtos/busca?termo={termo}`: Busca textual de medicamentos no catálogo.
+- `GET /api/v1/catalogo/fabricantes`: Listagem de todos os laboratórios ativos.
+- `POST /api/v1/catalogo/fabricantes`: Cadastro rápido de novo fabricante.
+
+### DTOs TypeScript (com class-validator)
 
 ```typescript
 // DTO de Consulta de Medicamentos
@@ -133,15 +90,69 @@ export interface FabricanteResponseDto {
 
 ---
 
-## Regras de Negócio e Casos de Borda
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-1. **Ausência de Código de Barras no MVP 1**: A busca funciona puramente via texto (`ILIKE` com índice `pg_trgm` ou `to_tsvector`), garantindo respostas com latência inferior a 200ms.
-2. **Normalização de Nomes de Fabricantes**: O sistema deve aplicar `trim()` nos campos de razão social e nome fantasia para evitar duplicidades geradas por espaços em branco no início ou fim.
-3. **Inativação Lógica**: Fabricantes não devem ser deletados fisicamente do banco de dados para manter a integridade dos lotes históricos já recebidos (`ativo: false`).
+### 1. Pacote Compartilhado (`@farmaubs/shared`)
+- **`src/contracts/recebimento/catalogo.types.ts`**: Tipos `ProdutoCatalogoItemDto`, `FabricanteDto`, `CadastrarFabricanteRequest` e schemas Zod.
+
+### 2. Camada de Aplicação (`apps/backend/src/modules/catalogo/application/`)
+- **Use Cases**:
+  - `buscar-produtos-catalogo.use-case.ts`: Busca textual em nome comercial, princípio ativo e apresentação.
+  - `listar-fabricantes.use-case.ts`: Retorna lista ordenada de laboratórios ativos.
+  - `cadastrar-fabricante.use-case.ts`: Valida unicidade e persiste novo fabricante.
+
+### 3. Camada de Domínio (`apps/backend/src/modules/catalogo/domain/`)
+- **Entidades de Domínio**: `Produto` e `Fabricante`.
+- **Portas (Interfaces)**:
+  - `produto-catalogo.repository.port.ts`: Consulta de produtos com paginação/busca.
+  - `fabricante.repository.port.ts`: Listagem e criação de fabricantes.
+
+### 4. Camada de Infraestrutura (`apps/backend/src/modules/catalogo/infrastructure/`)
+- **Adaptadores de Banco (`adapters/`)**:
+  - `typeorm-produto-catalogo.repository.ts` e `typeorm-fabricante.repository.ts`.
+- **Adaptadores de Entrada HTTP (`controllers/`)**:
+  - `catalogo.controller.ts`: Endpoints `GET /produtos/busca`, `GET /fabricantes` e `POST /fabricantes`.
 
 ---
 
-## Definition of Done (DoD)
+## 5. Cenários de teste em BDD (Gherkin — camada A e C)
+
+```gherkin
+# language: pt
+Funcionalidade: Catálogo de Medicamentos e Fabricantes (Camada A e C)
+
+  Cenário: Busca textual de medicamentos com termo válido
+    Dado que o usuário está autenticado com perfil "FARMACEUTICO" ou "TECNICO"
+    Quando ele enviar uma requisição "GET /api/v1/catalogo/produtos/busca?termo=amox"
+    Então a API deve retornar status 200 (OK)
+    E o corpo da resposta deve conter uma lista de medicamentos contendo "amox" no nome comercial ou princípio ativo
+    E cada item deve apresentar "id", "nomeComercial", "principioAtivo", "dosagem", "formaFarmaceutica" e "unidadeMedida"
+
+  Cenário: Rejeição de busca com termo vazio ou insuficiente
+    Dado que o usuário tenta pesquisar medicamentos
+    Quando ele enviar a requisição "GET /api/v1/catalogo/produtos/busca?termo=a"
+    Então a API deve responder com status 400 (Bad Request)
+    E o erro deve informar que o termo de busca deve possuir no mínimo 2 caracteres
+
+  Cenário: Consulta e cadastro rápido de fabricante
+    Dado que o farmacêutico está recebendo um lote de um novo laboratório "Laboratório Teuto"
+    Quando ele enviar uma requisição "POST /api/v1/catalogo/fabricantes" com:
+      | razaoSocial  | Laboratório Teuto Brasileiro S/A |
+      | nomeFantasia | Teuto                            |
+      | cnpj         | 17159045000109                   |
+    Então a API deve retornar status 201 (Created) com o fabricante persistido e "ativo: true"
+    E em seguida, requisições "GET /api/v1/catalogo/fabricantes" devem listar o "Teuto" entre as opções disponíveis
+
+  Cenário: Prevenção de duplicidade de CNPJ de fabricante
+    Dado que já existe um fabricante cadastrado com o CNPJ "17159045000109"
+    Quando for enviado um novo cadastro com o mesmo CNPJ
+    Então a API deve responder com status 409 (Conflict)
+    E detalhar que o CNPJ já está vinculado ao fabricante existente
+```
+
+---
+
+## 6. Checklist de DoD e aceitação
 
 - [ ] Endpoints implementados no NestJS com validação de payload via `ValidationPipe` global.
 - [ ] Testes unitários (Camada A) cobrindo busca de catálogo, sanitização de filtros e validação de CNPJ.

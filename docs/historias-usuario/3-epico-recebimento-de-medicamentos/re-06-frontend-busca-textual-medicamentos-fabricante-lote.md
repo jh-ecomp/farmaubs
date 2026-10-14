@@ -1,4 +1,4 @@
-# RE-06: Busca Textual no Catálogo, Fabricante Obrigatório, Lote e Validade com Alertas (RF008, RF024)
+# RE-06 feat(recebimento): Busca Textual no Catálogo, Fabricante Obrigatório, Lote e Validade com Alertas (RF008, RF024)
 
 ---
 
@@ -9,86 +9,34 @@
 
 ---
 
-## Contexto & Problema
+## 1. História de usuário
 
-Durante a conferência das caixas de medicamentos na bancada da farmácia, o operador precisa registrar item a item os medicamentos da remessa. Como definido para o MVP 1, **o leitor de código de barras não será utilizado**, exigindo um componente de autocomplete textual altamente eficiente, que filtre medicamentos do catálogo à medida que o usuário digita.
-
-Além disso, conforme destacado na entrevista com os farmacêuticos de Parnaíba, a rastreabilidade sanitária depende obrigatoriamente da associação de cada medicamento com o seu **Fabricante / Laboratório** (ex: EMS, Prati-Donaduzzi, Medley, Fiocruz), além do **Lote** e **Data de Validade** com alerta visual preventivo de validade curta.
-
----
-
-## Escopo Técnico & Arquitetural
-
-- **Camada**: D (Testes de Componentes / Frontend React).
-- **Componente**: `apps/frontend/src/features/recebimento/components/ItemRecebimentoForm.tsx`.
-- **Hooks & Integrações**:
-  - `useBuscaCatalogo(termo)`: Hook React Query consumindo `GET /api/v1/catalogo/produtos/busca`.
-  - `useFabricantes()`: Hook React Query consumindo `GET /api/v1/catalogo/fabricantes`.
-- **Campos do Componente**:
-  1. `recMedSearchInput`: Campo textual com autocomplete dropdown exibindo nome comercial, princípio ativo, dosagem e forma farmacêutica.
-  2. `fabricanteId`: Dropdown de seleção de fabricante com botão modal para adicionar novo laboratório caso não listado.
-  3. `recBatchNumber`: Input alfanumérico para digitação do lote impresso na caixa.
-  4. `recExpiryDate`: Datepicker para data de validade com trava para datas expiradas.
-  5. `recQuantity`: Input numérico inteiro positivo (> 0).
-- **Decisões Arquiteturais**: ADR-011 (React + Vite), ADR-013 (TanStack Query), ADR-032 (Acessibilidade WCAG 2.1 AA), ADR-034 (Mobile Expo), ADR-035 (Moonrepo).
-
-### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - RE-MOB-02)
-- **Contratos Exportados em `packages/shared/src/recebimento/catalogo-recebimento.types.ts`**:
-  - `ItemConferenciaRecebimentoDto`: `{ produtoId: string; produtoNome: string; fabricanteId: string; fabricanteNome: string; numeroLote: string; dataValidade: string; quantidade: number }`.
-  - `FabricanteDto`: `{ id: string; nome: string; ativo: boolean }`.
-  - `CriarFabricanteRapidoRequest`: `{ nome: string }`.
-- **Validações Puras**:
-  - Regra de validade mínima: `validarDataValidadeFutura(data: string): boolean`.
-  - Classificação de validade de recebimento: `classificarValidadeRecebimento(dataValidade: string): 'ACEITA' | 'ALERTA_6_MESES' | 'RECUSADA_VENCIDA'`.
-- **Paridade com Mobile**:
-  - Tanto a Web quanto o Mobile (`apps/mobile` - `RE-MOB-02`) compartilham os mesmos contratos de dados e regras de validação sanitária de lote/validade, permitindo que a conferência física ocorra lado a lado com as caixas físicas abertas.
-- **Diretrizes para Ciclos Independentes de Desenvolvimento**:
-  - *Cenário A (Mobile já implementou RE-MOB-02)*: O Frontend Web consome diretamente `ItemConferenciaRecebimentoDto`, `FabricanteDto` e a função pura `classificarValidadeRecebimento` de `@farmaubs/shared`.
-  - *Cenário B (Mobile ainda NÃO implementou RE-MOB-02)*: O Frontend Web publica essas tipagens e helpers em `packages/shared/src/recebimento/catalogo-recebimento.types.ts`, acompanhados de testes unitários para a regra de validade mínima.
+> **Como** farmacêutico ou operador de farmácia da UBS,  
+> **quero** pesquisar medicamentos no catálogo por texto livre com resposta instantânea, vincular o fabricante do lote, conferir a data de validade com alerta preventivo e adicionar os itens com suas quantidades à remessa,  
+> **para que** a conferência física das caixas na bancada ocorra com ergonomia e sem risco de inclusão de medicamentos vencidos ou dados incompletos de rastreabilidade sanitária (RF008, RF024).
 
 ---
 
-## Critérios de Aceite (Gherkin BDD)
+## 2. Regras de negócio e casos de borda
 
-### Cenário 1: Seleção de medicamento via autocomplete e preenchimento completo do lote
-```gherkin
-Dado que o farmacêutico está no formulário de inclusão de item de recebimento
-Quando ele digitar "paracetamol" no campo de busca do medicamento
-Então o dropdown deve listar os medicamentos correspondentes (ex: "Paracetamol 500mg - Comprimido")
-E ao clicar no item desejado, o medicamento deve ser selecionado
-E os campos de "Fabricante", "Lote", "Data de Validade" e "Quantidade" devem ser habilitados para edição
-E ao selecionar "Prati-Donaduzzi", informar lote "LT-8812", validade "2027-12-31" e quantidade 400
-Então o botão "Adicionar à Remessa" deve ficar habilitado
-```
-
-### Cenário 2: Alerta visual para lotes com validade curta (< 180 dias)
-```gherkin
-Dado que o farmacêutico está registrando um lote cuja validade expira em 90 dias a partir da data atual
-Quando ele preencher o campo "Data de Validade"
-Então um badge de alerta em tom âmbar deve surgir abaixo do campo: "Atenção: lote com validade inferior a 6 meses"
-E a inclusão do item deve ser permitida, porém destacada visualmente
-```
-
-### Cenário 3: Bloqueio de datas de validade expiradas (passadas)
-```gherkin
-Dado que o farmacêutico digita uma data de validade correspondente a ontem ou ao mês passado
-Quando o campo de data de validade perder o foco
-Então o formulário deve exibir mensagem de erro: "A data de validade deve ser futura"
-E o botão de adicionar item deve permanecer desabilitado
-```
-
-### Cenário 4: Cadastro rápido de fabricante sem perder os dados já preenchidos
-```gherkin
-Dado que o medicamento recebido é de um fabricante recém-homologado que ainda não consta na lista
-Quando o usuário clicar no botão "+ Novo Fabricante"
-Então um modal leve deve ser aberto sobre a tela
-E ao preencher a razão social "Laboratório Globo S/A" e confirmar
-Então o fabricante deve ser salvo na API e imediatamente selecionado no formulário sem limpar os outros campos
-```
+1. **Autocomplete de Medicamentos sem Leitor de Código de Barras**:
+   - Para o MVP 1, a seleção de medicamentos é realizada por busca textual com debounce de 300ms (`useDebounce`), exibindo nome comercial, princípio ativo, dosagem e forma farmacêutica.
+2. **Fabricante / Laboratório Obrigatório**:
+   - Cada lote registrado deve possuir obrigatoriamente um fabricante associado. Se o laboratório for novo, o operador pode cadastrá-lo rapidamente via modal sem perder o formulário em andamento.
+3. **Bloqueio de Validade Passada**:
+   - A data de validade deve ser estritamente futura (`validade > hoje`). Lotes vencidos são bloqueados na interface com mensagem explícita: `"A validade do lote deve ser estritamente futura"`.
+4. **Alerta Visual de Validade Curta (< 180 dias)**:
+   - Caso a data de validade expire em menos de 6 meses (180 dias), o formulário exibe um badge âmbar de atenção: `"Atenção: lote com validade inferior a 6 meses"`. A inclusão é permitida com destaque visual.
+5. **Quantidade Inteira Positiva**:
+   - O campo de quantidade aceita apenas números inteiros maiores que zero (`quantidadeRecebida >= 1`).
+6. **Ergonomia e Teclado (ADR-032)**:
+   - Permite navegação pelas opções do autocomplete com as setas `Cima`/`Baixo` e seleção com `Enter`. Botão de limpeza ("X") para resetar o campo com 1 clique.
 
 ---
 
-## Esquema de Validação (Zod)
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Schemas Zod)
+
+### Esquema de Validação Zod (`@farmaubs/shared` / Frontend)
 
 ```typescript
 import { z } from 'zod';
@@ -122,16 +70,68 @@ export type ItemRecebimentoFormData = z.infer<typeof itemRecebimentoSchema>;
 
 ---
 
-## Regras de Interface e Ergonomia
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-1. **Limpeza do Seletor de Busca**: Ícone de "X" visível no input de medicamento para limpar a seleção e buscar outro produto com um único clique.
-2. **Debounce na Busca**: O autocomplete deve disparar requisições ao backend somente após 300ms de pausa na digitação (`useDebounce`), evitando requisições excessivas.
-3. **Navegação Fluida por Teclado**: O usuário pode navegar pelos resultados do dropdown usando as setas `Cima` / `Baixo` e selecionar com a tecla `Enter`.
+- **Camada**: D (Testes de Componentes / Frontend React).
+- **Componente**: `apps/frontend/src/features/recebimento/components/ItemRecebimentoForm.tsx`.
+- **Hooks & Integrações**:
+  - `useBuscaCatalogo(termo)`: Hook React Query consumindo `GET /api/v1/catalogo/produtos/busca`.
+  - `useFabricantes()`: Hook React Query consumindo `GET /api/v1/catalogo/fabricantes`.
+- **Campos do Componente**:
+  1. `recMedSearchInput`: Campo textual com autocomplete dropdown.
+  2. `fabricanteId`: Dropdown de seleção de fabricante com botão modal para adicionar novo laboratório.
+  3. `recBatchNumber`: Input alfanumérico para digitação do lote impresso na caixa.
+  4. `recExpiryDate`: Datepicker para data de validade com trava para datas expiradas.
+  5. `recQuantity`: Input numérico inteiro positivo (> 0).
+
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - RE-MOB-02)
+- **Contratos Exportados em `packages/shared/src/recebimento/catalogo-recebimento.types.ts`**:
+  - `ItemConferenciaRecebimentoDto`, `FabricanteDto`, `CriarFabricanteRapidoRequest`.
+- **Funções Puras**:
+  - `classificarValidadeRecebimento(dataValidade: string): 'ACEITA' | 'ALERTA_6_MESES' | 'RECUSADA_VENCIDA'`.
 
 ---
 
-## Definition of Done (DoD)
+## 5. Cenários de teste em BDD (Gherkin — camada D)
 
-- [ ] Componente implementado com busca textual integrada ao TanStack Query.
+```gherkin
+# language: pt
+Funcionalidade: Inclusão de Medicamentos, Lote e Validade (Camada D)
+
+  Cenário: Seleção de medicamento via autocomplete e preenchimento completo do lote
+    Dado que o farmacêutico está no formulário de inclusão de item de recebimento
+    Quando ele digitar "paracetamol" no campo de busca do medicamento
+    Então o dropdown deve listar os medicamentos correspondentes (ex: "Paracetamol 500mg - Comprimido")
+    E ao clicar no item desejado, o medicamento deve ser selecionado
+    E os campos de "Fabricante", "Lote", "Data de Validade" e "Quantidade" devem ser habilitados para edição
+    E ao selecionar "Prati-Donaduzzi", informar lote "LT-8812", validade "2027-12-31" e quantidade 400
+    Então o botão "Adicionar à Remessa" deve ficar habilitado
+
+  Cenário: Alerta visual para lotes com validade curta (< 180 dias)
+    Dado que o farmacêutico está registrando um lote cuja validade expira em 90 dias a partir da data atual
+    Quando ele preencher o campo "Data de Validade"
+    Então um badge de alerta em tom âmbar deve surgir abaixo do campo: "Atenção: lote com validade inferior a 6 meses"
+    E a inclusão do item deve ser permitida, porém destacada visualmente
+
+  Cenário: Bloqueio de datas de validade expiradas (passadas)
+    Dado que o farmacêutico digita uma data de validade correspondente a ontem ou ao mês passado
+    Quando o campo de data de validade perder o foco
+    Então o formulário deve exibir mensagem de erro: "A data de validade deve ser futura"
+    E o botão de adicionar item deve permanecer desabilitado
+
+  Cenário: Cadastro rápido de fabricante sem perder os dados já preenchidos
+    Dado que o medicamento recebido é de um fabricante recém-homologado que ainda não consta na lista
+    Quando o usuário clicar no botão "+ Novo Fabricante"
+    Então um modal leve deve ser aberto sobre a tela
+    E ao preencher a razão social "Laboratório Globo S/A" e confirmar
+    Então o fabricante deve ser salvo na API e imediatamente selecionado no formulário sem limpar os outros campos
+```
+
+---
+
+## 6. Checklist de DoD e aceitação
+
+- [ ] Componente implementado com busca textual integrada ao TanStack Query com debounce.
 - [ ] Validação estrita de data futura e quantidade inteira positiva.
 - [ ] Testes unitários (Camada D) validando seleção no combobox, cálculo do badge de validade curta e submissão do item.
+- [ ] Modal de cadastro rápido de fabricante implementado e acessível.

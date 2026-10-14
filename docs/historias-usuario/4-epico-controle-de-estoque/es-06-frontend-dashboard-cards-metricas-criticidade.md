@@ -1,4 +1,4 @@
-# ES-06: Dashboard Superior: Cartões de Métricas em Tempo Real (Totalizadores, Baixo Estoque e Validade Curta)
+# ES-06 feat(estoque): Dashboard Superior: Cartões de Métricas em Tempo Real (Totalizadores, Baixo Estoque e Validade Curta)
 
 ---
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. História de Usuário
+## 1. História de usuário
 
 > **Como** farmacêutico responsável ou gerente de farmácia da UBS,  
 > **quero** visualizar no topo da tela de estoque quatro cartões de indicadores consolidados e interativos (Total de Medicamentos, Total de Unidades Físicas, Itens em Baixo Estoque e Lotes com Validade no Mês Corrente em destaque laranja),  
@@ -17,72 +17,78 @@
 
 ---
 
-## 2. Regras de Negócio e Casos de Borda
+## 2. Regras de negócio e casos de borda
 
 1. **Estrutura dos 4 Cartões de Métricas**:
-   - **Card 1: Total de Medicamentos**:
-     - Exibe o número de produtos ativos catalogados na unidade;
-     - Ícone temático institucional (pílula / catálogo), cor azul institucional (`text-blue-600 bg-blue-50`).
-   - **Card 2: Unidades Físicas em Prateleira**:
-     - Soma consolidada de todas as unidades farmacêuticas em estoque na UBS;
-     - Ícone temático (caixas / embalagens), cor ciano (`text-cyan-600 bg-cyan-50`).
-   - **Card 3: Risco de Ruptura / Baixo Estoque (RF023)**:
-     - Quantidade de itens com cobertura crítica (< 20 dias de consumo médio);
-     - Indicador visual em vermelho/âmbar caso haja itens em risco (`text-rose-600 bg-rose-50`);
-     - Interatividade: ao clicar no card, a tabela de saldos aplica automaticamente o filtro `statusEstoque=BAIXO_ESTOQUE`.
-   - **Card 4: Lotes Vencendo no Mês / Validade Curta (RF022)**:
-     - Quantidade de lotes que vencem no mês corrente ou em até 90 dias;
-     - Destaque em **cor laranja vibrante** (`text-amber-700 bg-amber-50 border-amber-200`), conforme acordado na entrevista com a equipe em 29/09/2026;
-     - Interatividade: ao clicar no card, a tabela de saldos aplica automaticamente o filtro `filtroValidade=MES_CORRENTE`.
-
+   - **Card 1: Total de Medicamentos**: Número de produtos ativos catalogados na unidade (`text-blue-600 bg-blue-50`).
+   - **Card 2: Unidades Físicas em Prateleira**: Soma consolidada de todas as unidades em estoque (`text-cyan-600 bg-cyan-50`).
+   - **Card 3: Risco de Ruptura / Baixo Estoque (RF023)**: Itens com cobertura crítica (< 20 dias). Ao clicar, filtra por `statusEstoque=BAIXO_ESTOQUE`.
+   - **Card 4: Lotes Vencendo no Mês / Validade Curta (RF022)**: Lotes no mês corrente ou em até 90 dias em **cor laranja vibrante** (`text-amber-700 bg-amber-50 border-amber-200`). Ao clicar, filtra por `filtroValidade=MES_CORRENTE`.
 2. **Estados Visuais e Feedback**:
-   - **Carregamento**: Skeleton loaders com efeito pulsar em cada card para prevenir layout shift (`CLS < 0.1`).
-   - **Estado Zero**: Caso não haja nenhum item em risco ou validade curta, o número é exibido como "0" com badge suave "Estoque Saudável" em tom esmeralda.
-
+   - Skeleton loaders com efeito pulsar durante carregamento para evitar layout shift.
+   - Estado Zero com badge suave "Estoque Saudável" em tom esmeralda quando não houver riscos.
 3. **Acessibilidade e Semântica (ADR-032)**:
-   - Cada card possui `role="button"` quando clicável para filtro, `tabindex="0"`, foco visível de alto contraste e atributos `aria-label` descritivos (ex.: `"Ver 4 medicamentos em risco de ruptura"`).
+   - `role="button"` nos cards interativos, `tabindex="0"`, foco visível de alto contraste e atributos `aria-label` descritivos.
 
 ---
 
-## 3. Escopo Técnico & Arquitetural
+## 3. Contratos de dados e Protocolo HTTP (DTOs / Tipagens)
+
+```typescript
+export interface EstoqueMetricasDTO {
+  totalMedicamentosAtivos: number;
+  totalUnidadesFisicas: number;
+  itensRiscoRuptura: number;
+  lotesValidadeMesAtual: number;
+  lotesValidadeCurta90d: number;
+  lotesVencidos: number;
+  calculadoEm: string;
+}
+
+export interface FiltroCardsEstoque {
+  statusEstoque?: 'BAIXO_ESTOQUE' | 'ZERADO' | 'TODOS';
+  filtroValidade?: 'MES_CORRENTE' | 'VALIDADE_90D' | 'VENCIDOS' | 'TODOS';
+}
+```
+
+---
+
+## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 - **Camada**: D (Testes de Componentes React).
 - **Componente**: `apps/frontend/src/features/estoque/components/EstoqueCardsMetricas.tsx`.
 - **Hook de Dados**: `useEstoqueMetricas()` consumindo `GET /api/v1/estoque/metricas` via TanStack Query.
-- **Props**: `onFiltrarPorCard?: (filtro: { statusEstoque?: string; filtroValidade?: string }) => void`.
+- **Props**: `onFiltrarPorCard?: (filtro: FiltroCardsEstoque) => void`.
 
-### Compartilhamento Arquitetural com @farmaubs/shared e App Mobile (apps/mobile - ES-MOB-01)
-- **Contratos e DTOs Unificados**: O DTO de resposta `EstoqueMetricasDTO` e as chaves de query cache `['estoque', 'metricas', ubsId]` são definidos em `@farmaubs/shared/src/contracts/estoque/`.
-- **Cálculo de Criticidade e Ranges**: A regra pura que classifica criticidade (ex: `< 20 dias` de cobertura = risco de ruptura; vencimento `<= 90 dias` ou no mês corrente = destaque laranja de validade) é extraída como função pura em `@farmaubs/shared/src/domain/estoque/criticidade-helpers.ts` e consumida tanto na web quanto no componente nativo mobile `EstoqueMetricasCardsMobile`.
-- **Consistência de Feedback**: As mesmas cores semânticas e critérios de badges são compartilhados entre Tailwind CSS (Web) e tokens de estilo do React Native (Mobile).
-- **Diretrizes para Ciclos Independentes de Desenvolvimento**:
-  - *Cenário A (Mobile já implementou ES-MOB-01)*: O Frontend Web consome diretamente `EstoqueMetricasDTO` e `criticidade-helpers.ts` de `@farmaubs/shared`, aplicando as mesmas faixas de corte de ruptura e validade.
-  - *Cenário B (Mobile ainda NÃO implementou ES-MOB-01)*: O Frontend Web publica as regras puras de criticidade e tipagens em `packages/shared/src/domain/estoque/criticidade-helpers.ts`, permitindo que o time Mobile tenha o algoritmo e tokens prontos.
+### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-01)
+- **Contratos e DTOs Unificados**: DTO `EstoqueMetricasDTO` definido em `@farmaubs/shared/src/contracts/estoque/`.
+- **Cálculo de Criticidade e Ranges**: Helper puro em `@farmaubs/shared/src/domain/estoque/criticidade-helpers.ts` consumido no web e mobile.
 
 ---
 
-## 4. Critérios de Aceite (Gherkin BDD)
+## 5. Cenários de teste em BDD (Gherkin — camada D)
 
-### Cenário 1: Renderização com dados e destaque do card laranja de validade
 ```gherkin
-Dado que a API retorna métricas com 6 lotes vencendo no mês atual
-Quando o componente "EstoqueCardsMetricas" for renderizado
-Então o card de validade curta deve exibir o número "6" com estilo de destaque na cor laranja
-E o card de total de medicamentos deve exibir o valor correspondente
-E nenhum skeleton loader deve permanecer visível após o carregamento
-```
+# language: pt
+Funcionalidade: Cartões de Métricas de Estoque (Camada D)
 
-### Cenário 2: Clique no card de risco de ruptura aciona filtro na tabela
-```gherkin
-Dado que existem 3 itens em risco de ruptura de estoque
-Quando o farmacêutico clicar no card "Itens em Risco de Ruptura"
-Então o callback de filtro deve ser disparado com "statusEstoque=BAIXO_ESTOQUE"
-E o card deve apresentar um indicador visual de estado ativo/selecionado
+  Cenário: Renderização com dados e destaque do card laranja de validade
+    Dado que a API retorna métricas com 6 lotes vencendo no mês atual
+    Quando o componente "EstoqueCardsMetricas" for renderizado
+    Então o card de validade curta deve exibir o número "6" com estilo de destaque na cor laranja
+    E o card de total de medicamentos deve exibir o valor correspondente
+    E nenhum skeleton loader deve permanecer visível após o carregamento
+
+  Cenário: Clique no card de risco de ruptura aciona filtro na tabela
+    Dado que existem 3 itens em risco de ruptura de estoque
+    Quando o farmacêutico clicar no card "Itens em Risco de Ruptura"
+    Então o callback de filtro deve ser disparado com "statusEstoque=BAIXO_ESTOQUE"
+    E o card deve apresentar um indicador visual de estado ativo/selecionado
 ```
 
 ---
 
-## 5. Definition of Done (DoD)
+## 6. Checklist de DoD e aceitação
 
 - [ ] Componente implementado com Tailwind CSS e grid responsivo (1 col mobile, 2 col tablet, 4 col desktop).
 - [ ] Cartão de validade estilizado com a cor laranja acordada e suporte a clique de atalho.
