@@ -117,6 +117,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let isMounted = true;
 
+    const tinhaSessaoPrevia = Boolean(
+      localStorage.getItem("@FarmaUBS:usuario") ||
+      localStorage.getItem("@FarmaUBS:expiresAt"),
+    );
+
     const validarSessao = async () => {
       try {
         const sessao = await authService.obterSessaoAtual();
@@ -191,13 +196,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
           localStorage.removeItem("@FarmaUBS:expiresAt");
           localStorage.removeItem("@FarmaUBS:ttlSeconds");
           localStorage.removeItem("@FarmaUBS:warningSeconds");
-          sessionStorage.setItem(
-            "@FarmaUBS:logoutReason",
-            "Sua sessão expirou no servidor. Faça login novamente para continuar.",
-          );
-          setLogoutReason(
-            "Sua sessão expirou no servidor. Faça login novamente para continuar.",
-          );
+
+          // Apenas exibe o banner de 'sessão expirada' se o usuário possuía uma sessão prévia
+          if (tinhaSessaoPrevia) {
+            sessionStorage.setItem(
+              "@FarmaUBS:logoutReason",
+              "Sua sessão expirou no servidor. Faça login novamente para continuar.",
+            );
+            setLogoutReason(
+              "Sua sessão expirou no servidor. Faça login novamente para continuar.",
+            );
+          } else {
+            sessionStorage.removeItem("@FarmaUBS:logoutReason");
+            setLogoutReason(null);
+          }
+
           if (isMounted) {
             setAuthState({
               token: null,

@@ -177,7 +177,7 @@ export const authService = {
     };
 
     return {
-      token: body.token ?? null,
+      token: body.token || undefined,
       expiresAt: body.sessao.expiresAt,
       ttlSeconds: body.sessao.ttlSeconds,
       warningSeconds: body.sessao.warningSeconds,
