@@ -264,6 +264,7 @@ export const authService = {
     try {
       await fetch(`${API_BASE_URL}/acesso/logout`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

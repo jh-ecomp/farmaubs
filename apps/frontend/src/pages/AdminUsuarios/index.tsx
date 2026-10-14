@@ -258,7 +258,7 @@ export function AdminUsuarios() {
               </div>
               <nav className="space-y-0.5">
                 <Link
-                  to="/admin/usuarios"
+                  to="/usuarios"
                   className="flex items-center gap-space-xs px-space-xs py-2 rounded-lg bg-primary-container text-on-primary font-body-md-medium transition-colors"
                   aria-current="page"
                 >

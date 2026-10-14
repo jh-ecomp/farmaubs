@@ -17,7 +17,7 @@ describe("RoleRoute — Guarda RBAC por Perfil (RF025 / NF009 / ADR-006)", () =>
       <Routes>
         <Route path="/login" element={<div>Tela de Login</div>} />
         <Route
-          path="/admin/usuarios"
+          path="/usuarios"
           element={
             <RoleRoute allowedRoles={[PerfilCodigo.ADMINISTRADOR]}>
               <div>Gestão de Usuários</div>
@@ -25,7 +25,7 @@ describe("RoleRoute — Guarda RBAC por Perfil (RF025 / NF009 / ADR-006)", () =>
           }
         />
       </Routes>,
-      { initialEntries: ["/admin/usuarios"] },
+      { initialEntries: ["/usuarios"] },
     );
 
     expect(screen.getByText("Tela de Login")).toBeInTheDocument();

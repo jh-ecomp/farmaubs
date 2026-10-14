@@ -176,17 +176,6 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/admin/usuarios"
-            element={
-              <ProtectedRoute>
-                <RoleRoute allowedRoles={["ADMINISTRADOR"]}>
-                  <AdminUsuarios />
-                </RoleRoute>
-              </ProtectedRoute>
-            }
-          />
-
           {/* Gestão de UBSs */}
           <Route
             path="/ubs"

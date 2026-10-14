@@ -404,7 +404,7 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
   });
 
   describe("6. Redirecionamento de Usuário Já Autenticado", () => {
-    it("deve redirecionar para /admin/usuarios se usuário autenticado for ADMINISTRADOR e não renderizar o formulário", async () => {
+    it("deve redirecionar para /usuarios se usuário autenticado for ADMINISTRADOR e não renderizar o formulário", async () => {
       localStorage.setItem("@FarmaUBS:token", "jwt-token-admin");
       localStorage.setItem(
         "@FarmaUBS:expiresAt",
@@ -426,7 +426,7 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
       renderWithProviders(<Login />);
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/admin/usuarios", {
+        expect(mockNavigate).toHaveBeenCalledWith("/usuarios", {
           replace: true,
         });
       });

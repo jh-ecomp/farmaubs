@@ -53,9 +53,6 @@ export const MATRIZ_PERMISSOES_ROTAS: Record<string, PerfilCodigo[]> = {
   "/usuarios": [
     PerfilCodigo.ADMINISTRADOR,
   ],
-  "/admin/usuarios": [
-    PerfilCodigo.ADMINISTRADOR,
-  ],
   "/ubs": [
     PerfilCodigo.ADMINISTRADOR,
   ],

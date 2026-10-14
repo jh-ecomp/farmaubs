@@ -143,10 +143,7 @@ export function Sidebar() {
                 </div>
                 <div className="space-y-0.5">
                   {itemsDoGrupo.map((item) => {
-                    const isActive =
-                      location.pathname === item.path ||
-                      (item.path === "/usuarios" &&
-                        location.pathname.startsWith("/admin/usuarios"));
+                    const isActive = location.pathname === item.path;
 
                     return (
                       <Link
