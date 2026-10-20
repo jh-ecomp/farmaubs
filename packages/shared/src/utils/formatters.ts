@@ -51,3 +51,14 @@ export function validarCPF(cpf: string): boolean {
 
   return true;
 }
+
+/**
+ * Valida formato do Cartão Nacional de Saúde (CNS).
+ * Requer 15 dígitos numéricos e rejeita sequências com todos os dígitos iguais.
+ */
+export function validarCNS(cns: string): boolean {
+  const limpo = limparNaoNumericos(cns);
+  if (limpo.length !== 15) return false;
+  if (/^(\d)\1{14}$/.test(limpo)) return false;
+  return true;
+}
