@@ -1,12 +1,17 @@
 import { Module } from "@nestjs/common";
 import { CatalogoController } from "./api/controllers/catalogo.controller";
 import { RecebimentoController } from "./api/controllers/recebimento.controller";
+import { HistoricoRecebimentoController } from "./api/controllers/historico-recebimento.controller";
 import { BuscarProdutosCatalogoUseCase } from "./application/use-cases/buscar-produtos-catalogo.use-case";
 import { ListarFabricantesUseCase } from "./application/use-cases/listar-fabricantes.use-case";
 import { CadastrarFabricanteUseCase } from "./application/use-cases/cadastrar-fabricante.use-case";
 import { EfetivarRecebimentoUseCase } from "./application/use-cases/efetivar-recebimento.use-case";
+import { ListarHistoricoRecebimentoUseCase } from "./application/use-cases/listar-historico-recebimento.use-case";
+import { ObterDetalhesRecebimentoUseCase } from "./application/use-cases/obter-detalhes-recebimento.use-case";
+import { EstornarRecebimentoUseCase } from "./application/use-cases/estornar-recebimento.use-case";
 import { TypeOrmCatalogoRepository } from "./infrastructure/adapters/typeorm-catalogo.repository";
 import { TypeOrmRecebimentoRepository } from "./infrastructure/adapters/typeorm-recebimento.repository";
+import { TypeOrmHistoricoRecebimentoRepository } from "./infrastructure/adapters/typeorm-historico-recebimento.repository";
 import {
   CATALOGO_REPOSITORY_PORT,
   type CatalogoRepositoryPort,
@@ -15,9 +20,17 @@ import {
   RECEBIMENTO_REPOSITORY_PORT,
   type RecebimentoRepositoryPort,
 } from "./domain/ports/recebimento.repository.port";
+import {
+  HISTORICO_RECEBIMENTO_REPOSITORY_PORT,
+  type HistoricoRecebimentoRepositoryPort,
+} from "./domain/ports/historico-recebimento.repository.port";
 
 @Module({
-  controllers: [CatalogoController, RecebimentoController],
+  controllers: [
+    CatalogoController,
+    RecebimentoController,
+    HistoricoRecebimentoController,
+  ],
   providers: [
     TypeOrmCatalogoRepository,
     {
@@ -28,6 +41,11 @@ import {
     {
       provide: RECEBIMENTO_REPOSITORY_PORT,
       useExisting: TypeOrmRecebimentoRepository,
+    },
+    TypeOrmHistoricoRecebimentoRepository,
+    {
+      provide: HISTORICO_RECEBIMENTO_REPOSITORY_PORT,
+      useExisting: TypeOrmHistoricoRecebimentoRepository,
     },
     {
       provide: BuscarProdutosCatalogoUseCase,
@@ -55,16 +73,39 @@ import {
       ) => new EfetivarRecebimentoUseCase(recebimentoRepo, catalogoRepo),
       inject: [RECEBIMENTO_REPOSITORY_PORT, CATALOGO_REPOSITORY_PORT],
     },
+    {
+      provide: ListarHistoricoRecebimentoUseCase,
+      useFactory: (repo: HistoricoRecebimentoRepositoryPort) =>
+        new ListarHistoricoRecebimentoUseCase(repo),
+      inject: [HISTORICO_RECEBIMENTO_REPOSITORY_PORT],
+    },
+    {
+      provide: ObterDetalhesRecebimentoUseCase,
+      useFactory: (repo: HistoricoRecebimentoRepositoryPort) =>
+        new ObterDetalhesRecebimentoUseCase(repo),
+      inject: [HISTORICO_RECEBIMENTO_REPOSITORY_PORT],
+    },
+    {
+      provide: EstornarRecebimentoUseCase,
+      useFactory: (repo: HistoricoRecebimentoRepositoryPort) =>
+        new EstornarRecebimentoUseCase(repo),
+      inject: [HISTORICO_RECEBIMENTO_REPOSITORY_PORT],
+    },
   ],
   exports: [
     CATALOGO_REPOSITORY_PORT,
     RECEBIMENTO_REPOSITORY_PORT,
+    HISTORICO_RECEBIMENTO_REPOSITORY_PORT,
     BuscarProdutosCatalogoUseCase,
     ListarFabricantesUseCase,
     CadastrarFabricanteUseCase,
     EfetivarRecebimentoUseCase,
+    ListarHistoricoRecebimentoUseCase,
+    ObterDetalhesRecebimentoUseCase,
+    EstornarRecebimentoUseCase,
     TypeOrmCatalogoRepository,
     TypeOrmRecebimentoRepository,
+    TypeOrmHistoricoRecebimentoRepository,
   ],
 })
 export class RecebimentoModule {}

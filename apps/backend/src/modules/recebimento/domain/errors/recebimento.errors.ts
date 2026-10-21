@@ -70,3 +70,18 @@ export class SaldoInsuficienteEstornoException extends Error {
     this.name = "SaldoInsuficienteEstornoException";
   }
 }
+
+export class DocumentoNaoEncontradoException extends Error {
+  constructor(documentoId: string) {
+    super(`Documento de recebimento com identificador ${documentoId} não foi encontrado.`);
+    this.name = "DocumentoNaoEncontradoException";
+  }
+}
+
+export class UbsAcessoNegadoException extends Error {
+  constructor(ubsId: string) {
+    super(`Acesso negado: a unidade ${ubsId} não está nas permissões de acesso do operador.`);
+    this.name = "UbsAcessoNegadoException";
+  }
+}
+
