@@ -7,6 +7,7 @@ import { CommonModule } from "./common/common.module";
 import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
 import { AdministracaoModule } from "./modules/administracao/administracao.module";
+import { RecebimentoModule } from "./modules/recebimento/recebimento.module";
 import { SessionAuthGuard } from "./common/guards/session-auth.guard";
 import { MustChangePasswordGuard } from "./modules/acesso/api/guards/must-change-password.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
@@ -56,6 +57,7 @@ import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persi
     HealthModule,
     AcessoModule,
     AdministracaoModule,
+    RecebimentoModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionAuthGuard },
