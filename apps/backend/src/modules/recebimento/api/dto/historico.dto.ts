@@ -11,7 +11,7 @@ import {
   Min,
   MinLength,
 } from "class-validator";
-import {
+import type {
   FiltroHistoricoRecebimento,
   PeriodoPredefinido,
   SolicitacaoEstornoRecebimento,

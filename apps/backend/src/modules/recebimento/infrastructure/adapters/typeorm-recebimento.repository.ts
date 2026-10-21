@@ -30,7 +30,7 @@ export class TypeOrmRecebimentoRepository implements RecebimentoRepositoryPort {
     const manager = this.transactionContext.getManager();
     const doc = await manager.findOne(DocumentoEntradaEntity, {
       where: { numero_documento: numeroDocumento, ubs_id: ubsId },
-      select: ["id", "numero_documento", "status"],
+      select: { id: true, numero_documento: true, status: true },
     });
 
     if (!doc) return null;

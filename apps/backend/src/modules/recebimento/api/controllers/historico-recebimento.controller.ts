@@ -24,11 +24,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import {
+import { PerfilCodigo } from "@farmaubs/shared";
+import type {
   AuthenticatedUserPayload,
   DetalhesRecebimentoCompleto,
   HistoricoRecebimentoPaginado,
-  PerfilCodigo,
   ResultadoEstornoRecebimento,
 } from "@farmaubs/shared";
 import { CurrentUser } from "../../../../common/decorators/current-user.decorator";

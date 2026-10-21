@@ -7,7 +7,7 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { MunicipioEntity } from "../../../administracao/infrastructure/persistence/entities/municipio.entity";
+import { MunicipioEntity } from "../../../../administracao/infrastructure/persistence/entities/municipio.entity";
 import { DocumentoEntradaEntity } from "./documento-entrada.entity";
 import { ProdutoEntity } from "./produto.entity";
 import { FabricanteEntity } from "./fabricante.entity";

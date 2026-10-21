@@ -8,8 +8,8 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { MunicipioEntity } from "../../../administracao/infrastructure/persistence/entities/municipio.entity";
-import { UnidadeSaudeEntity } from "../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
+import { MunicipioEntity } from "../../../../administracao/infrastructure/persistence/entities/municipio.entity";
+import { UnidadeSaudeEntity } from "../../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
 import { ProdutoEntity } from "./produto.entity";
 import { FabricanteEntity } from "./fabricante.entity";
 

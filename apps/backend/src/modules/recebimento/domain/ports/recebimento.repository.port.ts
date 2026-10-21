@@ -10,6 +10,7 @@ export interface ContextoOperacionalRecebimento {
   municipioId: string;
   ubsId: string;
   usuarioId: string;
+  usuarioNome?: string;
 }
 
 export interface ItemRecebimentoResolvido {

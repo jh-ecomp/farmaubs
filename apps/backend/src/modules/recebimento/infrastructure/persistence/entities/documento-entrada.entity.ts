@@ -9,9 +9,9 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { MunicipioEntity } from "../../../administracao/infrastructure/persistence/entities/municipio.entity";
-import { UnidadeSaudeEntity } from "../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
-import { UserEntity } from "../../../administracao/infrastructure/persistence/entities/user.entity";
+import { MunicipioEntity } from "../../../../administracao/infrastructure/persistence/entities/municipio.entity";
+import { UnidadeSaudeEntity } from "../../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
+import { User } from "../../../../administracao/infrastructure/persistence/entities/user.entity";
 import { RecebimentoItemEntity } from "./recebimento-item.entity";
 
 /**
@@ -80,9 +80,9 @@ export class DocumentoEntradaEntity {
   })
   usuario_recebedor_id: string;
 
-  @ManyToOne(() => UserEntity, { onDelete: "RESTRICT" })
+  @ManyToOne(() => User, { onDelete: "RESTRICT" })
   @JoinColumn({ name: "usuario_recebedor_id" })
-  usuarioRecebedor?: UserEntity;
+  usuarioRecebedor?: User;
 
   @Index("idx_documentos_entrada_status")
   @Column({
@@ -105,9 +105,9 @@ export class DocumentoEntradaEntity {
   })
   estornado_por_id?: string | null;
 
-  @ManyToOne(() => UserEntity, { onDelete: "RESTRICT" })
+  @ManyToOne(() => User, { onDelete: "RESTRICT" })
   @JoinColumn({ name: "estornado_por_id" })
-  estornadoPor?: UserEntity | null;
+  estornadoPor?: User | null;
 
   @Column({
     type: "text",

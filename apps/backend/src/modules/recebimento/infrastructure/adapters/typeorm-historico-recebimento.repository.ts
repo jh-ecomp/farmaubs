@@ -124,7 +124,7 @@ export class TypeOrmHistoricoRecebimentoRepository
         for (const item of itens) {
           const lote = await manager.findOne(LoteEntity, {
             where: { id: item.lote_id },
-            select: ["saldo_atual"],
+            select: { saldo_atual: true },
           });
           if (!lote || Number(lote.saldo_atual) < Number(item.quantidade_recebida)) {
             podeEstornar = false;
@@ -199,8 +199,8 @@ export class TypeOrmHistoricoRecebimentoRepository
         id: item.id,
         produtoId: item.produto_id,
         produtoNome: prod ? prod.principio_ativo : "Medicamento",
-        formaFarmaceutica: prod ? prod.forma_farmaceutica : "-",
-        concentracao: prod ? prod.concentracao : "-",
+        formaFarmaceutica: prod?.forma_farmaceutica ?? "-",
+        concentracao: prod?.dosagem ?? "-",
         fabricanteId: item.fabricante_id,
         fabricanteNome: fab ? fab.nome_fantasia : "Fabricante",
         loteId: item.lote_id,

@@ -20,7 +20,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { AuthenticatedUserPayload, PerfilCodigo } from "@farmaubs/shared";
+import { PerfilCodigo } from "@farmaubs/shared";
+import type {
+  AuthenticatedUserPayload,
+  EntradaEstoqueEfetivadaResultado,
+} from "@farmaubs/shared";
 import { CurrentUser } from "../../../../common/decorators/current-user.decorator";
 import { Roles } from "../../../../common/decorators/roles.decorator";
 import { EfetivarRecebimentoUseCase } from "../../application/use-cases/efetivar-recebimento.use-case";
@@ -85,7 +89,7 @@ export class RecebimentoController {
   async efetivarEntrada(
     @Body() dto: CriarEntradaEstoqueDto,
     @CurrentUser() user: AuthenticatedUserPayload,
-  ): Promise<EntradaEstoqueEfetivadaSwaggerResponse> {
+  ): Promise<EntradaEstoqueEfetivadaResultado> {
     const ubsDestino = dto.ubsId || user.unidadeIds?.[0];
 
     if (!ubsDestino) {

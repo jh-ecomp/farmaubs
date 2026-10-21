@@ -7,9 +7,9 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { MunicipioEntity } from "../../../administracao/infrastructure/persistence/entities/municipio.entity";
-import { UnidadeSaudeEntity } from "../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
-import { UserEntity } from "../../../administracao/infrastructure/persistence/entities/user.entity";
+import { MunicipioEntity } from "../../../../administracao/infrastructure/persistence/entities/municipio.entity";
+import { UnidadeSaudeEntity } from "../../../../administracao/infrastructure/persistence/entities/unidade-saude.entity";
+import { User } from "../../../../administracao/infrastructure/persistence/entities/user.entity";
 import { LoteEntity } from "./lote.entity";
 
 /**
@@ -98,9 +98,9 @@ export class MovimentacaoEstoqueEntity {
   })
   usuario_id: string;
 
-  @ManyToOne(() => UserEntity, { onDelete: "RESTRICT" })
+  @ManyToOne(() => User, { onDelete: "RESTRICT" })
   @JoinColumn({ name: "usuario_id" })
-  usuario?: UserEntity;
+  usuario?: User;
 
   @Column({
     type: "text",
