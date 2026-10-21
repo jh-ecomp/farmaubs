@@ -43,3 +43,36 @@ export class DadosDispensacaoInvalidosException extends DispensacaoDomainExcepti
   }
 }
 
+export class IntervaloDatasInvalidoException extends DispensacaoDomainException {
+  constructor(
+    mensagem = "Intervalo de datas inválido: verifique o formato AAAA-MM-DD, se a data final é maior ou igual à inicial e se o período não excede 365 dias.",
+  ) {
+    super(mensagem);
+    this.name = "IntervaloDatasInvalidoException";
+  }
+}
+
+export class DispensacaoNaoEncontradaException extends DispensacaoDomainException {
+  constructor(dispensacaoId: string) {
+    super(
+      `Dispensação "${dispensacaoId}" não foi encontrada na unidade de saúde atual.`,
+    );
+    this.name = "DispensacaoNaoEncontradaException";
+  }
+}
+
+export class DispensacaoJaEstornadaException extends DispensacaoDomainException {
+  constructor(dispensacaoId: string) {
+    super(`A dispensação "${dispensacaoId}" já se encontra estornada.`);
+    this.name = "DispensacaoJaEstornadaException";
+  }
+}
+
+export class MotivoEstornoInvalidoException extends DispensacaoDomainException {
+  constructor(
+    mensagem = "O motivo do estorno é obrigatório e deve conter no mínimo 10 caracteres.",
+  ) {
+    super(mensagem);
+    this.name = "MotivoEstornoInvalidoException";
+  }
+}

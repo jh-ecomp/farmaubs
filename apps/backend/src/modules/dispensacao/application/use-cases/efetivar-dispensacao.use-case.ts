@@ -48,7 +48,11 @@ export class EfetivarDispensacaoUseCase {
     contexto: ContextoAtendimentoDispensacao,
     dataReferencia: Date = new Date(),
   ): Promise<DispensacaoEfetivadaResultado> {
-    if (!contexto.municipioId || !contexto.unidadeId || !contexto.dispensadorId) {
+    if (
+      !contexto.municipioId ||
+      !contexto.unidadeId ||
+      !contexto.dispensadorId
+    ) {
       throw new DadosDispensacaoInvalidosException(
         "Escopo de município, unidade de saúde e dispensador são obrigatórios na sessão.",
       );
@@ -163,7 +167,9 @@ export class EfetivarDispensacaoUseCase {
     dataReferencia: Date,
   ) {
     if (!paciente) {
-      throw new DadosPacienteInvalidosException("Dados do paciente são obrigatórios.");
+      throw new DadosPacienteInvalidosException(
+        "Dados do paciente são obrigatórios.",
+      );
     }
 
     const cnsLimpo = limparNaoNumericos(paciente.cns ?? "");
@@ -227,4 +233,3 @@ export class EfetivarDispensacaoUseCase {
     };
   }
 }
-

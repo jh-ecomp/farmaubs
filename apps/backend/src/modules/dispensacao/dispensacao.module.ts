@@ -2,15 +2,21 @@ import { Module } from "@nestjs/common";
 import { PacienteController } from "./api/controllers/paciente.controller";
 import { DispensacaoCatalogoController } from "./api/controllers/dispensacao-catalogo.controller";
 import { DispensacaoController } from "./api/controllers/dispensacao.controller";
+import { HistoricoDispensacaoController } from "./api/controllers/dispensacao-historico.controller";
 import { CadastrarPacienteUseCase } from "./application/use-cases/cadastrar-paciente.use-case";
 import { BuscarPacientesUseCase } from "./application/use-cases/buscar-pacientes.use-case";
 import { ConsultarHistoricoPacienteUseCase } from "./application/use-cases/consultar-historico-paciente.use-case";
 import { BuscarMedicamentosDispensacaoUseCase } from "./application/use-cases/buscar-medicamentos-dispensacao.use-case";
 import { ObterSugestaoLotesFefoUseCase } from "./application/use-cases/obter-sugestao-lotes-fefo.use-case";
 import { EfetivarDispensacaoUseCase } from "./application/use-cases/efetivar-dispensacao.use-case";
+import { ListarDispensacoesUseCase } from "./application/use-cases/listar-dispensacoes.use-case";
+import { ExportarDispensacoesXlsxUseCase } from "./application/use-cases/exportar-dispensacoes-xlsx.use-case";
+import { EstornarDispensacaoUseCase } from "./application/use-cases/estornar-dispensacao.use-case";
 import { TypeOrmPacienteRepository } from "./infrastructure/adapters/typeorm-paciente.repository";
 import { TypeOrmDispensacaoCatalogoRepository } from "./infrastructure/adapters/typeorm-dispensacao-catalogo.repository";
 import { TypeOrmDispensacaoRepository } from "./infrastructure/adapters/typeorm-dispensacao.repository";
+import { TypeOrmHistoricoDispensacaoRepository } from "./infrastructure/adapters/typeorm-historico-dispensacao.repository";
+import { XlsxGeradorPlanilhaService } from "./infrastructure/services/xlsx-gerador-planilha.service";
 import { PACIENTE_REPOSITORY_PORT } from "./domain/ports/paciente.repository.port";
 import {
   DISPENSACAO_CATALOGO_REPOSITORY_PORT,
@@ -20,12 +26,21 @@ import {
   DISPENSACAO_REPOSITORY_PORT,
   type DispensacaoRepositoryPort,
 } from "./domain/ports/dispensacao.repository.port";
+import {
+  HISTORICO_DISPENSACAO_REPOSITORY_PORT,
+  type HistoricoDispensacaoRepositoryPort,
+} from "./domain/ports/historico-dispensacao.repository.port";
+import {
+  GERADOR_PLANILHA_PORT,
+  type GeradorPlanilhaPort,
+} from "./domain/ports/gerador-planilha.port";
 
 @Module({
   controllers: [
     PacienteController,
     DispensacaoCatalogoController,
     DispensacaoController,
+    HistoricoDispensacaoController,
   ],
   providers: [
     CadastrarPacienteUseCase,
@@ -46,6 +61,16 @@ import {
       provide: DISPENSACAO_REPOSITORY_PORT,
       useExisting: TypeOrmDispensacaoRepository,
     },
+    TypeOrmHistoricoDispensacaoRepository,
+    {
+      provide: HISTORICO_DISPENSACAO_REPOSITORY_PORT,
+      useExisting: TypeOrmHistoricoDispensacaoRepository,
+    },
+    XlsxGeradorPlanilhaService,
+    {
+      provide: GERADOR_PLANILHA_PORT,
+      useExisting: XlsxGeradorPlanilhaService,
+    },
     {
       provide: BuscarMedicamentosDispensacaoUseCase,
       useFactory: (repo: DispensacaoCatalogoRepositoryPort) =>
@@ -64,6 +89,26 @@ import {
         new EfetivarDispensacaoUseCase(repo),
       inject: [DISPENSACAO_REPOSITORY_PORT],
     },
+    {
+      provide: ListarDispensacoesUseCase,
+      useFactory: (repo: HistoricoDispensacaoRepositoryPort) =>
+        new ListarDispensacoesUseCase(repo),
+      inject: [HISTORICO_DISPENSACAO_REPOSITORY_PORT],
+    },
+    {
+      provide: ExportarDispensacoesXlsxUseCase,
+      useFactory: (
+        repo: HistoricoDispensacaoRepositoryPort,
+        planilha: GeradorPlanilhaPort,
+      ) => new ExportarDispensacoesXlsxUseCase(repo, planilha),
+      inject: [HISTORICO_DISPENSACAO_REPOSITORY_PORT, GERADOR_PLANILHA_PORT],
+    },
+    {
+      provide: EstornarDispensacaoUseCase,
+      useFactory: (repo: HistoricoDispensacaoRepositoryPort) =>
+        new EstornarDispensacaoUseCase(repo),
+      inject: [HISTORICO_DISPENSACAO_REPOSITORY_PORT],
+    },
   ],
   exports: [
     CadastrarPacienteUseCase,
@@ -72,12 +117,19 @@ import {
     BuscarMedicamentosDispensacaoUseCase,
     ObterSugestaoLotesFefoUseCase,
     EfetivarDispensacaoUseCase,
+    ListarDispensacoesUseCase,
+    ExportarDispensacoesXlsxUseCase,
+    EstornarDispensacaoUseCase,
     PACIENTE_REPOSITORY_PORT,
     DISPENSACAO_CATALOGO_REPOSITORY_PORT,
     DISPENSACAO_REPOSITORY_PORT,
+    HISTORICO_DISPENSACAO_REPOSITORY_PORT,
+    GERADOR_PLANILHA_PORT,
     TypeOrmPacienteRepository,
     TypeOrmDispensacaoCatalogoRepository,
     TypeOrmDispensacaoRepository,
+    TypeOrmHistoricoDispensacaoRepository,
+    XlsxGeradorPlanilhaService,
   ],
 })
 export class DispensacaoModule {}
