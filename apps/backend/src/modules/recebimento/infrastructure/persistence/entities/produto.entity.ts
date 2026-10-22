@@ -17,6 +17,21 @@ export class ProdutoEntity {
   })
   id: string;
 
+  @Index("idx_produtos_codigo_catmat")
+  @Column({
+    type: "varchar",
+    length: 20,
+    nullable: true,
+  })
+  codigo_catmat?: string | null;
+
+  @Column({
+    type: "varchar",
+    length: 10,
+    nullable: true,
+  })
+  codigo_atc?: string | null;
+
   @Index("idx_produtos_nome_comercial")
   @Column({
     type: "varchar",
@@ -70,11 +85,26 @@ export class ProdutoEntity {
   categoria: string;
 
   @Column({
+    type: "varchar",
+    length: 30,
+    default: "BASICO",
+    nullable: false,
+  })
+  componente: string;
+
+  @Column({
     type: "boolean",
     default: false,
     nullable: false,
   })
   antimicrobiano: boolean;
+
+  @Column({
+    type: "boolean",
+    default: false,
+    nullable: false,
+  })
+  controlado: boolean;
 
   @Column({
     type: "boolean",

@@ -31,7 +31,7 @@ export class TypeOrmCatalogoRepository implements CatalogoRepositoryPort {
       .createQueryBuilder(ProdutoEntity, "p")
       .where("p.ativo = true")
       .andWhere(
-        "(p.principio_ativo ILIKE :termo OR p.nome_comercial ILIKE :termo OR p.apresentacao ILIKE :termo)",
+        "(p.principio_ativo ILIKE :termo OR p.nome_comercial ILIKE :termo OR p.apresentacao ILIKE :termo OR p.codigo_catmat ILIKE :termo)",
         { termo: termoSql },
       )
       .orderBy("p.principio_ativo", "ASC")
@@ -40,6 +40,8 @@ export class TypeOrmCatalogoRepository implements CatalogoRepositoryPort {
 
     return produtos.map((p) => ({
       id: p.id,
+      codigoCatmat: p.codigo_catmat,
+      codigoAtc: p.codigo_atc,
       nomeComercial: p.nome_comercial,
       principioAtivo: p.principio_ativo,
       dosagem: p.dosagem,
@@ -47,7 +49,9 @@ export class TypeOrmCatalogoRepository implements CatalogoRepositoryPort {
       apresentacao: p.apresentacao,
       unidadeMedida: p.unidade_medida,
       categoria: p.categoria,
+      componente: p.componente,
       antimicrobiano: p.antimicrobiano,
+      controlado: p.controlado,
       ativo: p.ativo,
     }));
   }
@@ -68,6 +72,8 @@ export class TypeOrmCatalogoRepository implements CatalogoRepositoryPort {
 
     return {
       id: produto.id,
+      codigoCatmat: produto.codigo_catmat,
+      codigoAtc: produto.codigo_atc,
       nomeComercial: produto.nome_comercial,
       principioAtivo: produto.principio_ativo,
       dosagem: produto.dosagem,
@@ -75,7 +81,9 @@ export class TypeOrmCatalogoRepository implements CatalogoRepositoryPort {
       apresentacao: produto.apresentacao,
       unidadeMedida: produto.unidade_medida,
       categoria: produto.categoria,
+      componente: produto.componente,
       antimicrobiano: produto.antimicrobiano,
+      controlado: produto.controlado,
       ativo: produto.ativo,
     };
   }

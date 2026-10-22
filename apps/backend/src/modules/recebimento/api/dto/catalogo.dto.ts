@@ -85,6 +85,12 @@ export class ProdutoCatalogoSwaggerResponse implements ProdutoCatalogoResponseDt
   @ApiProperty({ example: "0194e43e-a6fb-7389-9a74-94c039755ef0" })
   id: string;
 
+  @ApiPropertyOptional({ example: "267890", description: "Código CATMAT (Comprasnet / Ministério da Saúde)" })
+  codigoCatmat?: string | null;
+
+  @ApiPropertyOptional({ example: "J01CA04", description: "Código ATC da OMS" })
+  codigoAtc?: string | null;
+
   @ApiPropertyOptional({ example: "Amoxil" })
   nomeComercial?: string | null;
 
@@ -106,8 +112,14 @@ export class ProdutoCatalogoSwaggerResponse implements ProdutoCatalogoResponseDt
   @ApiProperty({ example: "ANTIBIOTICOS" })
   categoria: string;
 
-  @ApiProperty({ example: true })
+  @ApiPropertyOptional({ example: "BASICO", description: "Componente da Assistência Farmacêutica (BASICO, ESTRATEGICO, ESPECIALIZADO)" })
+  componente?: string | null;
+
+  @ApiProperty({ example: true, description: "Indicador de controle especial antimicrobiano (RDC 20/2011)" })
   antimicrobiano: boolean;
+
+  @ApiPropertyOptional({ example: false, description: "Indicador de controle especial (Portaria 344/1998)" })
+  controlado?: boolean;
 
   @ApiProperty({ example: true })
   ativo: boolean;

@@ -62,7 +62,6 @@ export class HistoricoRecebimentoController {
   ) {}
 
   @Get("historico")
-  @SkipTransaction()
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth("access-token")
   @Roles(
@@ -100,7 +99,6 @@ export class HistoricoRecebimentoController {
   }
 
   @Get("entradas/:id")
-  @SkipTransaction()
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth("access-token")
   @Roles(

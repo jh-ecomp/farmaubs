@@ -25,7 +25,25 @@ import {
   type HistoricoRecebimentoRepositoryPort,
 } from "./domain/ports/historico-recebimento.repository.port";
 
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { ProdutoEntity } from "./infrastructure/persistence/entities/produto.entity";
+import { FabricanteEntity } from "./infrastructure/persistence/entities/fabricante.entity";
+import { DocumentoEntradaEntity } from "./infrastructure/persistence/entities/documento-entrada.entity";
+import { LoteEntity } from "./infrastructure/persistence/entities/lote.entity";
+import { RecebimentoItemEntity } from "./infrastructure/persistence/entities/recebimento-item.entity";
+import { MovimentacaoEstoqueEntity } from "./infrastructure/persistence/entities/movimentacao-estoque.entity";
+
 @Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      ProdutoEntity,
+      FabricanteEntity,
+      DocumentoEntradaEntity,
+      LoteEntity,
+      RecebimentoItemEntity,
+      MovimentacaoEstoqueEntity,
+    ]),
+  ],
   controllers: [
     CatalogoController,
     RecebimentoController,

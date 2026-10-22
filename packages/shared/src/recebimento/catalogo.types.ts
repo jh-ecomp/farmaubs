@@ -4,6 +4,8 @@
 
 export interface ProdutoCatalogoResponseDto {
   id: string;
+  codigoCatmat?: string | null;
+  codigoAtc?: string | null;
   nomeComercial?: string | null;
   principioAtivo: string;
   dosagem?: string | null;
@@ -11,7 +13,9 @@ export interface ProdutoCatalogoResponseDto {
   apresentacao?: string | null;
   unidadeMedida?: string | null;
   categoria: string;
+  componente?: string | null;
   antimicrobiano: boolean;
+  controlado?: boolean;
   ativo: boolean;
 }
 
