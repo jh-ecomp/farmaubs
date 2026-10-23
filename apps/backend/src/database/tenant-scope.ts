@@ -54,6 +54,43 @@ export const TABLE_SCOPES: TableScope[] = [
     justification:
       "Trilha de auditoria transacional e imutável de ações administrativas (RF028, NF018).",
   },
+  // Módulo de Recebimento e Estoque (Épico 3 - RF008, RF024, RF028)
+  {
+    table: "produtos",
+    scope: "global",
+    justification:
+      "Catálogo geral de medicamentos e insumos da REMUME (RF008, ADR-016).",
+  },
+  {
+    table: "fabricantes",
+    scope: "global",
+    justification:
+      "Catálogo de laboratórios e produtores farmacêuticos (RF008).",
+  },
+  {
+    table: "documentos_entrada",
+    scope: "municipio",
+    justification:
+      "Cabeçalho de guias CAF e notas fiscais de remessa por UBS/município (RF008, ADR-016).",
+  },
+  {
+    table: "lotes",
+    scope: "municipio",
+    justification:
+      "Saldos físicos e datas de validade de lotes por UBS (RF008, NF015).",
+  },
+  {
+    table: "recebimento_itens",
+    scope: "municipio",
+    justification:
+      "Linhas físicas de conferência de carga recebida por UBS (RF008, NF015).",
+  },
+  {
+    table: "movimentacoes_estoque",
+    scope: "municipio",
+    justification:
+      "Livro-razão e trilha de auditoria de movimentações físicas de estoque (RF028, ADR-017).",
+  },
 
   // Módulo de dispensação (Épico 2 — DI-01):
   {
@@ -74,8 +111,4 @@ export const TABLE_SCOPES: TableScope[] = [
     justification:
       "Itens dispensados vinculados ao atendimento e isolados por município (RF010, NF015, ADR-002).",
   },
-
-  // Épicos futuros (padrão a seguir quando entrarem):
-  // { table: 'medicamentos', scope: 'municipio', justification: 'Catálogo local REMUME (ADR-016, NF016).' },
-  // { table: 'lotes', scope: 'municipio', justification: 'Estoque por UBS (RF008, NF015).' },
 ];

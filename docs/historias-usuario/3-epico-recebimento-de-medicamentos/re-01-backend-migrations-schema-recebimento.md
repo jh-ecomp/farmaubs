@@ -175,7 +175,7 @@ Funcionalidade: Integridade do Schema de Recebimento de Cargas (Camada B)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Arquivo de migration criado e testado via `pnpm migration:run` e `pnpm migration:revert`.
-- [ ] Teste de integração de banco (Camada B) validando criação das tabelas, chaves estrangeiras e constraints.
-- [ ] Teste automatizado verificando o isolamento de consultas RLS com `SET LOCAL app.current_ubs_id`.
-- [ ] Constraints de saldo não negativo e quantidade física positiva ativas no PostgreSQL.
+- [x] Arquivo de migration criado e testado via `pnpm migration:run` e `pnpm migration:revert`.
+- [x] Teste de integração de banco (Camada B) validando criação das tabelas, chaves estrangeiras e constraints.
+- [x] Teste automatizado verificando o isolamento de consultas RLS com `SET LOCAL app.current_ubs_id`.
+- [x] Constraints de saldo não negativo e quantidade física positiva ativas no PostgreSQL.

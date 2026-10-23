@@ -100,10 +100,10 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 
 | ID | Título | Testes | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| [RE-01](./re-01-backend-migrations-schema-recebimento.md) | Migrações do schema de recebimento (`documentos_entrada`, `recebimento_itens`, `lotes`, `fabricantes` e movimentações) | B | DI-01 | ✅ Redigida |
-| [RE-02](./re-02-backend-api-catalogo-busca-produtos-fabricantes.md) | API de Catálogo: busca de produtos, apresentações e cadastro de fabricantes | A, C | RE-01 | ✅ Redigida |
-| [RE-03](./re-03-backend-api-efetivacao-transacao-entrada-estoque.md) | API de Efetivação: transação de entrada de estoque, atualização de lotes e log | A, B, C | RE-01, RE-02 | ✅ Redigida |
-| [RE-04](./re-04-backend-api-historico-recebimentos-estorno.md) | API de Histórico: filtro ontem/hoje, intervalo customizado, comprovante, estorno e exportação em XLSX | A, C | RE-03 | ✅ Redigida |
+| [RE-01](./re-01-backend-migrations-schema-recebimento.md) | Migrações do schema de recebimento (`documentos_entrada`, `recebimento_itens`, `lotes`, `fabricantes` e movimentações) | B | DI-01 | ✅ Concluída |
+| [RE-02](./re-02-backend-api-catalogo-busca-produtos-fabricantes.md) | API de Catálogo: busca de produtos, apresentações e cadastro de fabricantes | A, C | RE-01 | ✅ Concluída |
+| [RE-03](./re-03-backend-api-efetivacao-transacao-entrada-estoque.md) | API de Efetivação: transação de entrada de estoque, atualização de lotes e log | A, B, C | RE-01, RE-02 | ✅ Concluída |
+| [RE-04](./re-04-backend-api-historico-recebimentos-estorno.md) | API de Histórico: filtro ontem/hoje, intervalo customizado, comprovante, estorno e exportação em XLSX | A, C | RE-03 | ✅ Concluída |
 
 ### Frontend
 
@@ -119,11 +119,11 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 ## Critérios de conclusão do épico (DoD)
 
 - [x] 8 histórias redigidas com critérios de aceite em Gherkin em português.
-- [ ] Schema de banco com migrações, chaves estrangeiras, índices e políticas de RLS por UBS.
-- [ ] Preenchimento obrigatório de fabricante, lote, validade e quantidade nas entradas.
-- [ ] Bloqueio de lotes vencidos e aviso para lotes com validade menor que 6 meses.
-- [ ] Atualização de saldo em transação segura com registro de auditoria da entrada.
-- [ ] Histórico com filtro padrão ontem/hoje, intervalo de datas e download de planilha XLSX.
-- [ ] Comprovante de recebimento formatado para impressão no navegador.
-- [ ] Estorno com justificativa textual e checagem de saldo disponível no lote.
-- [ ] Testes automatizados cobrindo as camadas A, B, C e D.
+- [x] Schema de banco com migrações, chaves estrangeiras, índices e políticas de RLS por UBS.
+- [x] Preenchimento obrigatório de fabricante, lote, validade e quantidade nas entradas.
+- [x] Bloqueio de lotes vencidos e aviso para lotes com validade menor que 6 meses.
+- [x] Atualização de saldo em transação segura com registro de auditoria da entrada.
+- [x] Histórico com filtro padrão ontem/hoje, intervalo de datas e download de planilha XLSX.
+- [ ] Comprovante de recebimento formatado para impressão no navegador. (API implementada em RE-04; layout pendente em RE-08)
+- [x] Estorno com justificativa textual e checagem de saldo disponível no lote.
+- [ ] Testes automatizados cobrindo as camadas A, B, C e D. (Camadas A, B e C concluídas; Camada D pendente com frontend)
