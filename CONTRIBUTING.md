@@ -555,7 +555,7 @@ A execução com sucesso dos testes automatizados **não substitui** a validaç�
 
 > [!CAUTION]
 > **Ordem Estrita de Execução Pré-Push com Moonrepo:**
-> Execute as 5 etapas a seguir rigorosamente nesta sequência antes de qualquer `git push`:
+> Execute as 6 etapas a seguir rigorosamente nesta sequência antes de qualquer `git push`:
 >
 > 1. **Sincronizar com a `main`:**
 >    Faça `git fetch origin main` e integre a versão mais recente da `main` (`git merge origin/main` ou `git rebase origin/main`) caso ela tenha avançado desde a criação da sua branch.
@@ -578,6 +578,12 @@ A execução com sucesso dos testes automatizados **não substitui** a validaç�
 >    - Nenhuma tipagem estrita foi substituída por `any`.
 > 5. **Conferir Cobertura da História de Usuário:**
 >    Confira se as alterações cobrem **100% dos critérios de aceite (BDD)** e requisitos descritos na história de usuário atribuída. Se faltar algum cenário, implemente-o antes de enviar.
+> 6. **Atualizar o Progresso das Histórias de Usuário:**
+>    Antes de submeter o Pull Request, atualize o status de progresso das histórias de usuário em que trabalhou:
+>    - Marque os critérios de aceite e checkboxes de DoD como concluídos (`[x]`) no arquivo markdown individual da história (`docs/historias-usuario/.../<historia>.md`).
+>    - Atualize as métricas e o status da história para `✅ Concluída` no arquivo `PROGRESSO.md` do épico correspondente.
+>    - Atualize o status da história no mapa consolidado geral (`docs/historias-usuario/MAPA_HISTORIAS.md`).
+>    Isso garante a rastreabilidade viva e a conformidade contínua entre a especificação de requisitos e o código entregue.
 
 ---
 
@@ -629,6 +635,7 @@ Closes #78
 2. A branch deve estar atualizada em relação à `main` com conflitos resolvidos com prioridade para a `main`.
 3. Todos os testes automatizados relevantes devem estar passando via comandos oficiais do Moonrepo (`moon run ...` ou `moon ci`), com **prints anexados** na descrição do PR.
 4. Validação manual (Swagger/Banco ou Interface Docker) relatada.
+5. **Atualização do Progresso das Histórias de Usuário:** Atualização obrigatória dos arquivos de histórias trabalhadas (`docs/historias-usuario/...`), marcando os itens do checklist de DoD como concluídos (`[x]`), atualizando a tabela em `PROGRESSO.md` do épico e o mapa consolidado `docs/historias-usuario/MAPA_HISTORIAS.md` antes da submissão do PR.
 
 ### 6.2 Prints e Evidências Obrigatórias por Escopo
 
@@ -686,6 +693,7 @@ Closes #78
 - [ ] Branch sincronizada com a `main` mais recente com conflitos resolvidos priorizando a `main`
 - [ ] Nenhuma regra de negócio ou teste foi relaxado / enfraquecido
 - [ ] 100% dos critérios de aceite da história de usuário foram cobertos
+- [ ] Progresso das histórias de usuário atualizado (arquivos individuais, PROGRESSO.md e MAPA_HISTORIAS.md)
 - [ ] Funções documentadas com cabeçalho Micro-TSDoc
 - [ ] Commits seguindo o padrão Conventional Commits
 - [ ] Issue vinculada (`Closes #<numero>` ou `Refs #<numero>`)
