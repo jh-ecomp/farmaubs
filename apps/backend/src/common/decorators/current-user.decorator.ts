@@ -13,7 +13,12 @@ export const CurrentUser = createParamDecorator(
     ctx: ExecutionContext,
   ) => {
     const request = ctx.switchToHttp().getRequest();
-    const user = request.user ?? request.session ?? request.sessao;
+    const raw = request.user ?? request.session ?? request.sessao;
+    if (!raw) return undefined;
+    const user = {
+      ...raw,
+      id: raw.usuarioId ?? raw.id,
+    };
     return data ? user?.[data] : user;
   },
 );
