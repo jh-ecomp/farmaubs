@@ -34,6 +34,7 @@ import {
 } from "../dto/recebimento.dto";
 import {
   DocumentoEntradaDuplicadoException,
+  DocumentoEntradaInvalidoException,
   FabricanteNaoEncontradoException,
   ItemRecebimentoInvalidoException,
   ProdutoNaoEncontradoException,
@@ -116,6 +117,9 @@ export class RecebimentoController {
         throw new BadRequestException(error.message);
       }
       if (error instanceof ItemRecebimentoInvalidoException) {
+        throw new BadRequestException(error.message);
+      }
+      if (error instanceof DocumentoEntradaInvalidoException) {
         throw new BadRequestException(error.message);
       }
       if (error instanceof DocumentoEntradaDuplicadoException) {
