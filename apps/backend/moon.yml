@@ -63,3 +63,13 @@ tasks:
     script: 'pnpm exec ts-node src/database/seed-dev.ts'
     options:
       runInCI: false
+
+  migration-run:
+    command: 'pnpm run migration:run'
+    options:
+      runInCI: false
+
+  migration-revert:
+    command: 'pnpm run migration:revert'
+    options:
+      runInCI: false
