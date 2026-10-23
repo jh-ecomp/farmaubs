@@ -13,15 +13,15 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 ## Épico 1: Acesso e Autenticação do Sistema
 | ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
 | --- | --- | --- | --- | --- | --- |
-| AC-01 a AC-15 | Backend | Migrations, RLS, Autenticação, RBAC, Sessão Server-side e Timeout | ✅ Redigidas | ⏳ Parcial | — |
-| AC-16 | Frontend | Tela de login com validação e feedback de erro (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-MOB-01 |
-| AC-18 | Frontend | Gestão de usuários no painel administrativo (RF001, RF025) | ✅ Redigida | ⏳ Não iniciada | — |
-| AC-19 | Frontend | Contexto de autenticação: usuário atual, perfil e escopo (ADR-013) | ✅ Redigida | ⏳ Não iniciada | AC-MOB-02 / AC-MOB-03 |
-| AC-20 | Frontend | Aviso de timeout e renovação de sessão in-app (NF012) | ✅ Redigida | ⏳ Não iniciada | AC-MOB-07 |
-| AC-21 | Frontend | Proteção de rotas por perfil e logout (NF009) | ✅ Redigida | ⏳ Não iniciada | AC-MOB-05 |
-| AC-24 | Frontend | Tela de troca obrigatória de senha (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-MOB-04 |
-| AC-25 | Frontend | Encerrar sessão no cliente e expurgo de cache | ✅ Redigida | ⏳ Não iniciada | AC-MOB-05 |
-| AC-30 | Frontend | Migração de sessão para cookie HttpOnly e expurgo localStorage | ✅ Redigida | ⏳ Não iniciada | AC-MOB-02 |
+| AC-01 a AC-15 | Backend | Migrations, RLS, Autenticação, RBAC, Sessão Server-side e Timeout | ✅ Redigidas | ✅ Concluída | — |
+| AC-16 | Frontend | Tela de login com validação e feedback de erro (RF002) | ✅ Redigida | ✅ Concluída | AC-MOB-01 |
+| AC-18 | Frontend | Gestão de usuários no painel administrativo (RF001, RF025) | ✅ Redigida | ✅ Concluída | — |
+| AC-19 | Frontend | Contexto de autenticação: usuário atual, perfil e escopo (ADR-013) | ✅ Redigida | ✅ Concluída | AC-MOB-02 / AC-MOB-03 |
+| AC-20 | Frontend | Aviso de timeout e renovação de sessão in-app (NF012) | ✅ Redigida | ✅ Concluída | AC-MOB-07 |
+| AC-21 | Frontend | Proteção de rotas por perfil e logout (NF009) | ✅ Redigida | ✅ Concluída | AC-MOB-05 |
+| AC-24 | Frontend | Tela de troca obrigatória de senha (RF002) | ✅ Redigida | ✅ Concluída | AC-MOB-04 |
+| AC-25 | Frontend | Encerrar sessão no cliente e expurgo de cache | ✅ Redigida | ✅ Concluída | AC-MOB-05 |
+| AC-30 | Frontend | Migração de sessão para cookie HttpOnly e expurgo localStorage | ✅ Redigida | ✅ Concluída | AC-MOB-02 |
 | AC-MOB-01 | Mobile | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-16 |
 | AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AC-19 / AC-30 |
 | AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ⏳ Não iniciada | AC-19 |
@@ -56,10 +56,10 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 ## Épico 3: Recebimento de Medicamentos
 | ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
 | --- | --- | --- | --- | --- | --- |
-| RE-01 | Backend | Migrações do schema de recebimento (`documentos_entrada`, `lotes`, etc.) | ✅ Redigida | ⏳ Não iniciada | — |
-| RE-02 | Backend | API de Catálogo: busca de produtos, apresentações e fabricantes | ✅ Redigida | ⏳ Não iniciada | — |
-| RE-03 | Backend | API de Efetivação: transação de entrada de estoque e atualização de lotes | ✅ Redigida | ⏳ Não iniciada | — |
-| RE-04 | Backend | API de Histórico: filtro ontem/hoje, comprovante, estorno e XLSX | ✅ Redigida | ⏳ Não iniciada | — |
+| RE-01 | Backend | Migrações do schema de recebimento (`documentos_entrada`, `lotes`, etc.) | ✅ Redigida | ✅ Concluída | — |
+| RE-02 | Backend | API de Catálogo: busca de produtos, apresentações e fabricantes | ✅ Redigida | ✅ Concluída | — |
+| RE-03 | Backend | API de Efetivação: transação de entrada de estoque e atualização de lotes | ✅ Redigida | ✅ Concluída | — |
+| RE-04 | Backend | API de Histórico: filtro ontem/hoje, comprovante, estorno e XLSX | ✅ Redigida | ✅ Concluída | — |
 | RE-05 | Frontend | Cabeçalho do recebimento: formulário de guia CAF/documento e origem | ✅ Redigida | ⏳ Não iniciada | RE-MOB-01 |
 | RE-06 | Frontend | Busca no catálogo, fabricante obrigatório, lote e avisos de validade | ✅ Redigida | ⏳ Não iniciada | RE-MOB-02 |
 | RE-07 | Frontend | Efetivação da entrada: envio da carga e atualização de estoque | ✅ Redigida | ⏳ Não iniciada | RE-MOB-03 |
