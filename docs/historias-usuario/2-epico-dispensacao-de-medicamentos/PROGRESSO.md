@@ -7,12 +7,12 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 15 |
-| **Entregues** | 0 (0%) |
+| **Entregues** | 5 (33%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 15 (100%) |
+| **Pendentes** | 10 (67%) |
 
 ```
-Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/15 concluídas)
+Progresso: [███████░░░░░░░░░░░░░] 33% (5/15 concluídas)
 ```
 
 ---
@@ -21,11 +21,11 @@ Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/
 
 | Código | Camada | Título | Especificação | Status Redação | Status Implementação |
 | --- | --- | --- | --- | --- | --- |
-| **DI-01** | Backend | Migrations do schema de dispensação (`pacientes`, `dispensacoes`, `dispensacao_itens` e movimentações) | [di-01-backend-migrations-schema-dispensacao.md](./di-01-backend-migrations-schema-dispensacao.md) | ✅ Redigida | ⏳ Não iniciada |
-| **DI-02** | Backend | API de Pacientes: Validação obrigatória (CNS, CPF, Nome, Data Nasc), busca e histórico de consumo | [di-02-backend-api-pacientes-cadastro-historico.md](./di-02-backend-api-pacientes-cadastro-historico.md) | ✅ Redigida | ⏳ Não iniciada |
-| **DI-03** | Backend | API de Dispensação: Busca textual de medicamentos e algoritmo de sugestão FEFO | [di-03-backend-api-dispensacao-busca-produtos-lotes-fefo.md](./di-03-backend-api-dispensacao-busca-produtos-lotes-fefo.md) | ✅ Redigida | ⏳ Não iniciada |
-| **DI-04** | Backend | API de Efetivação: Transação atômica de dispensa, validação de antimicrobianos e baixa de estoque | [di-04-backend-api-efetivacao-transacao-baixa-estoque.md](./di-04-backend-api-efetivacao-transacao-baixa-estoque.md) | ✅ Redigida | ⏳ Não iniciada |
-| **DI-05** | Backend | API de Histórico: Listagem temporal (ontem/hoje padrão, range de datas), filtros e exportação .xlsx | [di-05-backend-api-historico-dispensas-filtro-ontem-hoje-exportacao-xlsx.md](./di-05-backend-api-historico-dispensas-filtro-ontem-hoje-exportacao-xlsx.md) | ✅ Redigida | ⏳ Não iniciada |
+| **DI-01** | Backend | Migrations do schema de dispensação (`pacientes`, `dispensacoes`, `dispensacao_itens` e movimentações) | [di-01-backend-migrations-schema-dispensacao.md](./di-01-backend-migrations-schema-dispensacao.md) | ✅ Redigida | ✅ Concluída |
+| **DI-02** | Backend | API de Pacientes: Validação obrigatória (CNS, CPF, Nome, Data Nasc), busca e histórico de consumo | [di-02-backend-api-pacientes-cadastro-historico.md](./di-02-backend-api-pacientes-cadastro-historico.md) | ✅ Redigida | ✅ Concluída |
+| **DI-03** | Backend | API de Dispensação: Busca textual de medicamentos e algoritmo de sugestão FEFO | [di-03-backend-api-dispensacao-busca-produtos-lotes-fefo.md](./di-03-backend-api-dispensacao-busca-produtos-lotes-fefo.md) | ✅ Redigida | ✅ Concluída |
+| **DI-04** | Backend | API de Efetivação: Transação atômica de dispensa, validação de antimicrobianos e baixa de estoque | [di-04-backend-api-efetivacao-transacao-baixa-estoque.md](./di-04-backend-api-efetivacao-transacao-baixa-estoque.md) | ✅ Redigida | ✅ Concluída |
+| **DI-05** | Backend | API de Histórico: Listagem temporal (ontem/hoje padrão, range de datas), filtros e exportação .xlsx | [di-05-backend-api-historico-dispensas-filtro-ontem-hoje-exportacao-xlsx.md](./di-05-backend-api-historico-dispensas-filtro-ontem-hoje-exportacao-xlsx.md) | ✅ Redigida | ✅ Concluída |
 | **DI-06** | Frontend | Componente de Identificação do Paciente: Formulário obrigatório (CNS, CPF, Nome, Data Nasc) e histórico | [di-06-frontend-identificacao-paciente-formulario-historico.md](./di-06-frontend-identificacao-paciente-formulario-historico.md) | ✅ Redigida | ⏳ Não iniciada |
 | **DI-07** | Frontend | Busca Textual de Medicamentos e Seletor de Lotes FEFO com alertas de índice terapêutico | [di-07-frontend-busca-textual-medicamentos-seletor-lotes-fefo.md](./di-07-frontend-busca-textual-medicamentos-seletor-lotes-fefo.md) | ✅ Redigida | ⏳ Não iniciada |
 | **DI-08** | Frontend | Carrinho de Dispensação: Múltiplos itens, campos de posologia e validação de receita de antimicrobianos | [di-08-frontend-carrinho-receita-posologia-antimicrobianos.md](./di-08-frontend-carrinho-receita-posologia-antimicrobianos.md) | ✅ Redigida | ⏳ Não iniciada |

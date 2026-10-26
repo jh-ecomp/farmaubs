@@ -97,6 +97,15 @@ export class ItemDispensacaoDto implements ItemDispensacaoRequest {
 }
 
 export class EfetivarDispensacaoDto implements EfetivarDispensacaoRequest {
+  @ApiPropertyOptional({
+    description:
+      "UUID da UBS de atendimento. Se omitido, utiliza a primeira UBS vinculada ao usuário autenticado.",
+    example: "0194e43e-a6fb-7389-9a74-94c039755ef5",
+  })
+  @IsOptional()
+  @IsUUID()
+  ubsId?: string;
+
   @ApiProperty({
     description: "Dados obrigatórios de identificação do paciente",
     type: PacienteDispensacaoDto,

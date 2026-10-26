@@ -170,9 +170,9 @@ Funcionalidade: Efetivação Transacional de Dispensação e Baixa de Estoque (C
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Transação gerenciada atomicamente via `QueryRunner` ou `TransactionInterceptor` (ADR-015).
-- [ ] Validação estrita de receita médica para antimicrobianos (bloqueio com > 10 dias).
-- [ ] Bloqueio de linhas para prevenir condições de corrida em saldos concorrentes.
-- [ ] Micro-TSDoc documentando todos os use cases e adaptadores.
-- [ ] Testes automatizados unitários (Camada A) e de integração transacional com banco real (Camada C).
-- [ ] Resposta da API formatada conforme os DTOs do `@farmaubs/shared`.
+- [x] Transação gerenciada atomicamente via `QueryRunner` ou `TransactionInterceptor` (ADR-015).
+- [x] Validação estrita de receita médica para antimicrobianos (bloqueio com > 10 dias).
+- [x] Bloqueio de linhas para prevenir condições de corrida em saldos concorrentes.
+- [x] Micro-TSDoc documentando todos os use cases e adaptadores.
+- [x] Testes automatizados unitários (Camada A) e de integração transacional com banco real (Camada C).
+- [x] Resposta da API formatada conforme os DTOs do `@farmaubs/shared`.

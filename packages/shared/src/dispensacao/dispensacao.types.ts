@@ -14,6 +14,7 @@ export interface PacienteDispensacaoRequest {
 }
 
 export interface EfetivarDispensacaoRequest {
+  ubsId?: string;
   paciente: PacienteDispensacaoRequest;
   receitaEmissaoEm?: string; // Obrigatório se houver antimicrobiano (YYYY-MM-DD)
   itens: ItemDispensacaoRequest[];

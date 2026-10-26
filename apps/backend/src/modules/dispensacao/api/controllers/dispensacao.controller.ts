@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   HttpCode,
   HttpStatus,
   Post,
@@ -86,15 +87,33 @@ export class DispensacaoController {
           userId?: string;
           unidadeId?: string;
           ubsId?: string;
+          unidadeIds?: string[];
           nomeCompleto?: string;
         })
       | undefined;
 
     const municipioId =
       sessao?.municipioId ?? this.tenantContext.getMunicipioId() ?? "";
-    const unidadeId = sessao?.unidadeId ?? sessao?.ubsId ?? "";
+    const unidadeId =
+      dto.ubsId ||
+      sessao?.unidadeIds?.[0] ||
+      sessao?.unidadeId ||
+      sessao?.ubsId ||
+      "";
     const dispensadorId = sessao?.id ?? sessao?.userId ?? "";
     const dispensadorNome = sessao?.nomeCompleto;
+
+    if (
+      sessao?.perfilCodigo !== PerfilCodigo.ADMINISTRADOR &&
+      Array.isArray(sessao?.unidadeIds) &&
+      sessao.unidadeIds.length > 0 &&
+      unidadeId &&
+      !sessao.unidadeIds.includes(unidadeId)
+    ) {
+      throw new ForbiddenException(
+        "Acesso negado: a unidade informada não pertence às unidades atribuídas ao usuário.",
+      );
+    }
 
     try {
       return await this.efetivarDispensacaoUseCase.execute(dto, {

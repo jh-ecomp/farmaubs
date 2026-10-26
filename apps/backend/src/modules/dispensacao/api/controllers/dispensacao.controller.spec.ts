@@ -1,5 +1,5 @@
 import { Reflector } from "@nestjs/core";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PerfilCodigo } from "@farmaubs/shared";
 import { DispensacaoController } from "./dispensacao.controller";
 import { EfetivarDispensacaoUseCase } from "../../application/use-cases/efetivar-dispensacao.use-case";
@@ -84,7 +84,7 @@ describe("DispensacaoController (Camada C - REST e RBAC)", () => {
       const res = await controller.efetivar(dtoMock, {
         id: "user-1",
         municipioId: municipioIdMock,
-        unidadeId: "ubs-1",
+        unidadeIds: ["ubs-1"],
       } as any);
 
       expect(res).toEqual(esperado);
@@ -96,6 +96,20 @@ describe("DispensacaoController (Camada C - REST e RBAC)", () => {
       });
     });
 
+    it("deve lançar ForbiddenException (403) quando ubsId informada não pertence às unidadeIds do usuário", async () => {
+      await expect(
+        controller.efetivar(
+          { ...dtoMock, ubsId: "ubs-outra" },
+          {
+            id: "user-1",
+            perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+            municipioId: municipioIdMock,
+            unidadeIds: ["ubs-1"],
+          } as any,
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
     it("deve mapear ReceitaAntimicrobianoVencidaException e SaldoInsuficienteLoteException para BadRequestException (400)", async () => {
       efetivarUseCaseMock.execute.mockRejectedValue(
         new ReceitaAntimicrobianoVencidaException(),
@@ -104,7 +118,7 @@ describe("DispensacaoController (Camada C - REST e RBAC)", () => {
         controller.efetivar(dtoMock, {
           id: "user-1",
           municipioId: municipioIdMock,
-          unidadeId: "ubs-1",
+          unidadeIds: ["ubs-1"],
         } as any),
       ).rejects.toBeInstanceOf(BadRequestException);
 
@@ -115,7 +129,7 @@ describe("DispensacaoController (Camada C - REST e RBAC)", () => {
         controller.efetivar(dtoMock, {
           id: "user-1",
           municipioId: municipioIdMock,
-          unidadeId: "ubs-1",
+          unidadeIds: ["ubs-1"],
         } as any),
       ).rejects.toBeInstanceOf(BadRequestException);
     });

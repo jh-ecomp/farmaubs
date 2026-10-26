@@ -1,4 +1,5 @@
 export interface ListarDispensacoesQuery {
+  ubsId?: string;
   pagina?: number;
   limite?: number;
   dataInicio?: string; // YYYY-MM-DD (Default: ontem)
@@ -33,6 +34,7 @@ export interface DispensacoesPaginadasResultado {
 }
 
 export interface EstornarDispensacaoRequest {
+  ubsId?: string;
   motivoEstorno: string;
 }
 

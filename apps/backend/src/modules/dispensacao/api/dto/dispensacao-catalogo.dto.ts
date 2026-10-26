@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString, IsUUID } from "class-validator";
 import type {
   LoteDisponivelDto,
   MedicamentoBuscaDto,
@@ -15,6 +15,15 @@ export class BuscarMedicamentosQueryDto {
   @IsOptional()
   @IsString()
   termo?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "UUID da UBS de consulta. Se omitido, utiliza a primeira UBS vinculada ao usuário autenticado.",
+    example: "0194e43e-a6fb-7389-9a74-94c039755ef5",
+  })
+  @IsOptional()
+  @IsUUID()
+  ubsId?: string;
 }
 
 export class MedicamentoBuscaResponseDto implements MedicamentoBuscaDto {

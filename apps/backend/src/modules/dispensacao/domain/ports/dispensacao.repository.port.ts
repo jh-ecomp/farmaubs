@@ -21,6 +21,7 @@ export interface ItemPersistirDispensacao {
   numeroLote: string;
   quantidadeDispensada: number;
   posologia?: string;
+  saldoAnteriorLote?: number;
   saldoRestanteLote: number;
 }
 

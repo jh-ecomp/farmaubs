@@ -8,6 +8,8 @@ import {
   Index,
 } from "typeorm";
 import { MunicipioEntity } from "../../../../administracao/infrastructure/persistence/entities/municipio.entity";
+import { LoteEntity } from "../../../../recebimento/infrastructure/persistence/entities/lote.entity";
+import { ProdutoEntity } from "../../../../recebimento/infrastructure/persistence/entities/produto.entity";
 import { DispensacaoEntity } from "./dispensacao.entity";
 
 @Entity("dispensacao_itens")
@@ -34,8 +36,16 @@ export class DispensacaoItemEntity {
   @Column({ type: "uuid", nullable: false })
   medicamento_id: string;
 
+  @ManyToOne(() => ProdutoEntity, { onDelete: "RESTRICT" })
+  @JoinColumn({ name: "medicamento_id" })
+  produto?: ProdutoEntity;
+
   @Column({ type: "uuid", nullable: false })
   lote_id: string;
+
+  @ManyToOne(() => LoteEntity, { onDelete: "RESTRICT" })
+  @JoinColumn({ name: "lote_id" })
+  lote?: LoteEntity;
 
   @Column({ type: "integer", nullable: false })
   quantidade_dispensada: number;

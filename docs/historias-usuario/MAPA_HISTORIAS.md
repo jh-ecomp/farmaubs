@@ -35,11 +35,11 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 ## Épico 2: Dispensação de Medicamentos
 | ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
 | --- | --- | --- | --- | --- | --- |
-| DI-01 | Backend | Migrações do schema de dispensação (`pacientes`, `dispensacoes`, etc.) | ✅ Redigida | ⏳ Não iniciada | — |
-| DI-02 | Backend | API de Pacientes: validação obrigatória (CNS, CPF, nome) e histórico | ✅ Redigida | ⏳ Não iniciada | — |
-| DI-03 | Backend | API de Dispensação: busca textual de medicamentos e algoritmo FEFO | ✅ Redigida | ⏳ Não iniciada | — |
-| DI-04 | Backend | API de Efetivação: baixa transacional de estoque e antimicrobianos | ✅ Redigida | ⏳ Não iniciada | — |
-| DI-05 | Backend | API de Histórico: filtro ontem/hoje, intervalo e exportação em XLSX | ✅ Redigida | ⏳ Não iniciada | — |
+| DI-01 | Backend | Migrações do schema de dispensação (`pacientes`, `dispensacoes`, etc.) | ✅ Redigida | ✅ Concluída | — |
+| DI-02 | Backend | API de Pacientes: validação obrigatória (CNS, CPF, nome) e histórico | ✅ Redigida | ✅ Concluída | — |
+| DI-03 | Backend | API de Dispensação: busca textual de medicamentos e algoritmo FEFO | ✅ Redigida | ✅ Concluída | — |
+| DI-04 | Backend | API de Efetivação: baixa transacional de estoque e antimicrobianos | ✅ Redigida | ✅ Concluída | — |
+| DI-05 | Backend | API de Histórico: filtro ontem/hoje, intervalo e exportação em XLSX | ✅ Redigida | ✅ Concluída | — |
 | DI-06 | Frontend | Formulário de identificação do paciente (CNS, CPF) e histórico | ✅ Redigida | ⏳ Não iniciada | DI-MOB-01 |
 | DI-07 | Frontend | Busca textual de medicamentos e seletor de lotes FEFO com alertas | ✅ Redigida | ⏳ Não iniciada | DI-MOB-02 |
 | DI-08 | Frontend | Carrinho de dispensação: múltiplos itens, posologia e antimicrobianos | ✅ Redigida | ⏳ Não iniciada | DI-MOB-03 |

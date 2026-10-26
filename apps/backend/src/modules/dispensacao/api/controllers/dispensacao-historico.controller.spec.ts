@@ -2,6 +2,7 @@ import { Reflector } from "@nestjs/core";
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from "@nestjs/common";
 import { PerfilCodigo } from "@farmaubs/shared";
@@ -75,7 +76,7 @@ describe("HistoricoDispensacaoController (Camada C - REST e RBAC)", () => {
   });
 
   describe("GET /dispensacoes", () => {
-    it("deve listar dispensações repassando query e unidadeId", async () => {
+    it("deve listar dispensações repassando query e unidadeIds", async () => {
       const esperado = {
         itens: [],
         totalItens: 0,
@@ -87,9 +88,21 @@ describe("HistoricoDispensacaoController (Camada C - REST e RBAC)", () => {
       };
       listarUseCaseMock.execute.mockResolvedValue(esperado);
 
-      const res = await controller.listar({}, { unidadeId: "ubs-1" } as any);
+      const res = await controller.listar({}, { unidadeIds: ["ubs-1"] } as any);
       expect(res).toEqual(esperado);
       expect(listarUseCaseMock.execute).toHaveBeenCalledWith({}, "ubs-1");
+    });
+
+    it("deve lançar ForbiddenException (403) quando ubsId na query não pertencer às unidadeIds do usuário", async () => {
+      await expect(
+        controller.listar(
+          { ubsId: "ubs-outra" },
+          {
+            perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+            unidadeIds: ["ubs-1"],
+          } as any,
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it("deve mapear IntervaloDatasInvalidoException para BadRequestException (400)", async () => {
@@ -116,7 +129,7 @@ describe("HistoricoDispensacaoController (Camada C - REST e RBAC)", () => {
       const setHeader = jest.fn();
       const res = await controller.exportarXlsx(
         {},
-        { unidadeId: "ubs-1" } as any,
+        { unidadeIds: ["ubs-1"] } as any,
         { setHeader } as any,
       );
 
@@ -141,7 +154,7 @@ describe("HistoricoDispensacaoController (Camada C - REST e RBAC)", () => {
         controller.estornar(
           "disp-1",
           { motivoEstorno: "curto" },
-          { id: "user-1", unidadeId: "ubs-1" } as any,
+          { id: "user-1", unidadeIds: ["ubs-1"] } as any,
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
 
@@ -152,7 +165,7 @@ describe("HistoricoDispensacaoController (Camada C - REST e RBAC)", () => {
         controller.estornar(
           "disp-1",
           { motivoEstorno: "Motivo válido" },
-          { id: "user-1", unidadeId: "ubs-1" } as any,
+          { id: "user-1", unidadeIds: ["ubs-1"] } as any,
         ),
       ).rejects.toBeInstanceOf(NotFoundException);
 
@@ -163,7 +176,7 @@ describe("HistoricoDispensacaoController (Camada C - REST e RBAC)", () => {
         controller.estornar(
           "disp-1",
           { motivoEstorno: "Motivo válido" },
-          { id: "user-1", unidadeId: "ubs-1" } as any,
+          { id: "user-1", unidadeIds: ["ubs-1"] } as any,
         ),
       ).rejects.toBeInstanceOf(ConflictException);
     });

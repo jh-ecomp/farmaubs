@@ -13,6 +13,7 @@ import type {
   HistoricoDispensacaoRepositoryPort,
 } from "../../domain/ports/historico-dispensacao.repository.port";
 import { DispensacaoEntity } from "../persistence/entities/dispensacao.entity";
+import { MovimentacaoEstoqueEntity } from "../../../recebimento/infrastructure/persistence/entities/movimentacao-estoque.entity";
 
 @Injectable()
 export class TypeOrmHistoricoDispensacaoRepository
@@ -35,7 +36,7 @@ export class TypeOrmHistoricoDispensacaoRepository
          FROM public.dispensacoes d
          INNER JOIN public.pacientes p ON p.id = d.paciente_id
          LEFT JOIN public.dispensacao_itens di ON di.dispensacao_id = d.id
-         LEFT JOIN public.medicamentos m ON m.id = di.medicamento_id
+         LEFT JOIN public.produtos m ON m.id = di.medicamento_id
         WHERE ${whereSql}`,
       params,
     );
@@ -64,7 +65,7 @@ export class TypeOrmHistoricoDispensacaoRepository
        INNER JOIN public.pacientes p ON p.id = d.paciente_id
        LEFT JOIN public.users u ON u.id = d.dispensador_id
        LEFT JOIN public.dispensacao_itens di ON di.dispensacao_id = d.id
-       LEFT JOIN public.medicamentos m ON m.id = di.medicamento_id
+       LEFT JOIN public.produtos m ON m.id = di.medicamento_id
        WHERE ${whereSql}
        GROUP BY d.id, d.numero_atendimento, d.created_at, d.status, p.nome_completo, p.cpf, p.cns, u.nome_completo
        ORDER BY d.created_at DESC
@@ -118,7 +119,7 @@ export class TypeOrmHistoricoDispensacaoRepository
        INNER JOIN public.pacientes p ON p.id = d.paciente_id
        LEFT JOIN public.users u ON u.id = d.dispensador_id
        INNER JOIN public.dispensacao_itens di ON di.dispensacao_id = d.id
-       LEFT JOIN public.medicamentos m ON m.id = di.medicamento_id
+       LEFT JOIN public.produtos m ON m.id = di.medicamento_id
        LEFT JOIN public.lotes l ON l.id = di.lote_id
        WHERE ${whereSql}
        ORDER BY d.created_at DESC`,
@@ -214,6 +215,12 @@ export class TypeOrmHistoricoDispensacaoRepository
       },
     );
 
+    const dispInfoRows = await manager.query(
+      `SELECT municipio_id, unidade_id FROM public.dispensacoes WHERE id = $1::uuid`,
+      [params.dispensacaoId],
+    );
+    const dispInfo = dispInfoRows[0] ?? {};
+
     const itensDevolvidos: EstornarDispensacaoResultado["itensDevolvidos"] = [];
     for (const item of params.itens) {
       const loteRows = await manager.query(
@@ -221,15 +228,38 @@ export class TypeOrmHistoricoDispensacaoRepository
             SET saldo_atual = saldo_atual + $2,
                 updated_at = now()
           WHERE id = $1::uuid
-        RETURNING saldo_atual`,
+        RETURNING saldo_atual, municipio_id, ubs_id`,
         [item.loteId, item.quantidadeDispensada],
       );
+
+      const loteRow = loteRows[0] ?? {};
+      const novoSaldo = Number(loteRow.saldo_atual ?? 0);
+      const saldoAnterior = Math.max(0, novoSaldo - item.quantidadeDispensada);
+      const municipioId = dispInfo.municipio_id ?? loteRow.municipio_id;
+      const ubsId = dispInfo.unidade_id ?? loteRow.ubs_id;
+
+      if (municipioId && ubsId) {
+        const movimentacao = manager.create(MovimentacaoEstoqueEntity, {
+          municipio_id: municipioId,
+          ubs_id: ubsId,
+          lote_id: item.loteId,
+          tipo_movimentacao: "ENTRADA_ESTORNO_DISPENSACAO",
+          quantidade: item.quantidadeDispensada,
+          saldo_anterior: saldoAnterior,
+          saldo_posterior: novoSaldo,
+          documento_referencia_id: params.dispensacaoId,
+          tipo_documento_referencia: "DISPENSACAO",
+          usuario_id: params.estornadoPorId,
+          justificativa: params.motivoEstorno,
+        });
+        await manager.save(MovimentacaoEstoqueEntity, movimentacao);
+      }
 
       itensDevolvidos.push({
         loteId: item.loteId,
         numeroLote: item.numeroLote,
         quantidadeRestituida: item.quantidadeDispensada,
-        novoSaldoLote: Number(loteRows[0]?.saldo_atual ?? 0),
+        novoSaldoLote: novoSaldo,
       });
     }
 

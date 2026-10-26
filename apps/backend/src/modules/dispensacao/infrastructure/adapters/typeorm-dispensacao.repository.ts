@@ -13,6 +13,7 @@ import type {
 import { PacienteEntity } from "../persistence/entities/paciente.entity";
 import { DispensacaoEntity } from "../persistence/entities/dispensacao.entity";
 import { DispensacaoItemEntity } from "../persistence/entities/dispensacao-item.entity";
+import { MovimentacaoEstoqueEntity } from "../../../recebimento/infrastructure/persistence/entities/movimentacao-estoque.entity";
 
 @Injectable()
 export class TypeOrmDispensacaoRepository implements DispensacaoRepositoryPort {
@@ -82,14 +83,14 @@ export class TypeOrmDispensacaoRepository implements DispensacaoRepositoryPort {
       `SELECT
          l.id,
          l.numero_lote,
-         l.unidade_id,
-         l.medicamento_id,
-         COALESCE(m.principio_ativo, l.medicamento_id::text) AS medicamento_nome,
-         COALESCE(m.antimicrobiano, false) AS antimicrobiano,
+         l.ubs_id AS unidade_id,
+         l.produto_id AS medicamento_id,
+         COALESCE(p.principio_ativo, l.produto_id::text) AS medicamento_nome,
+         COALESCE(p.antimicrobiano, false) AS antimicrobiano,
          l.saldo_atual,
          l.data_validade
        FROM public.lotes l
-       LEFT JOIN public.medicamentos m ON m.id = l.medicamento_id
+       LEFT JOIN public.produtos p ON p.id = l.produto_id
        WHERE l.id = $1::uuid
        FOR UPDATE OF l`,
       [loteId],
@@ -168,6 +169,24 @@ export class TypeOrmDispensacaoRepository implements DispensacaoRepositoryPort {
         posologia: item.posologia ?? null,
       });
       const itemSalvo = await manager.save(DispensacaoItemEntity, itemEntity);
+
+      const saldoAnterior =
+        item.saldoAnteriorLote ??
+        item.saldoRestanteLote + item.quantidadeDispensada;
+      const movimentacao = manager.create(MovimentacaoEstoqueEntity, {
+        municipio_id: dados.municipioId,
+        ubs_id: dados.unidadeId,
+        lote_id: item.loteId,
+        tipo_movimentacao: "SAIDA_DISPENSACAO",
+        quantidade: item.quantidadeDispensada,
+        saldo_anterior: saldoAnterior,
+        saldo_posterior: item.saldoRestanteLote,
+        documento_referencia_id: dispensacaoSalva.id,
+        tipo_documento_referencia: "DISPENSACAO",
+        usuario_id: dados.dispensadorId,
+        justificativa: `Dispensação atendimento ${numeroAtendimento}`,
+      });
+      await manager.save(MovimentacaoEstoqueEntity, movimentacao);
 
       itensResultado.push({
         itemId: itemSalvo.id,

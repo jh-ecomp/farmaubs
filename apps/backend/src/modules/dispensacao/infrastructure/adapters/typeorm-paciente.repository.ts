@@ -97,6 +97,7 @@ export class TypeOrmPacienteRepository implements PacienteRepositoryPort {
     const itens = await manager
       .createQueryBuilder(DispensacaoItemEntity, "item")
       .innerJoinAndSelect("item.dispensacao", "disp")
+      .leftJoinAndSelect("item.produto", "produto")
       .where("disp.paciente_id = :pacienteId", { pacienteId })
       .andWhere("disp.status = 'concluida'")
       .andWhere("disp.created_at >= :dataLimite", { dataLimite: noventaDiasAtras })
@@ -107,7 +108,10 @@ export class TypeOrmPacienteRepository implements PacienteRepositoryPort {
       dispensacaoId: item.dispensacao_id,
       dataDispensacao: item.dispensacao?.created_at ?? item.created_at,
       medicamentoId: item.medicamento_id,
-      medicamentoNome: item.medicamento_id,
+      medicamentoNome:
+        item.produto?.principio_ativo ??
+        item.produto?.nome_comercial ??
+        item.medicamento_id,
       quantidadeDispensada: item.quantidade_dispensada,
       posologia: item.posologia ?? undefined,
     }));

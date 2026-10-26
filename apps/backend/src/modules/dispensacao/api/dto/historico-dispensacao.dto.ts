@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
   MinLength,
@@ -19,6 +20,15 @@ import type {
 } from "@farmaubs/shared";
 
 export class ListarDispensacoesQueryDto implements ListarDispensacoesQuery {
+  @ApiPropertyOptional({
+    description:
+      "UUID da UBS de filtro. Se omitido, utiliza a primeira UBS vinculada ao usuário autenticado.",
+    example: "0194e43e-a6fb-7389-9a74-94c039755ef5",
+  })
+  @IsOptional()
+  @IsUUID()
+  ubsId?: string;
+
   @ApiPropertyOptional({ description: "Página atual (1-based)", default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -147,6 +157,15 @@ export class DispensacoesPaginadasResponseDto
 }
 
 export class EstornarDispensacaoDto implements EstornarDispensacaoRequest {
+  @ApiPropertyOptional({
+    description:
+      "UUID da UBS de origem do estorno. Se omitido, utiliza a UBS vinculada ao usuário autenticado.",
+    example: "0194e43e-a6fb-7389-9a74-94c039755ef5",
+  })
+  @IsOptional()
+  @IsUUID()
+  ubsId?: string;
+
   @ApiProperty({
     description: "Justificativa obrigatória do estorno (mínimo de 10 caracteres)",
     example: "Paciente desistiu da retirada após conferência no balcão",

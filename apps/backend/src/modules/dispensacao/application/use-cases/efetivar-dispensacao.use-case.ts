@@ -133,6 +133,7 @@ export class EfetivarDispensacaoUseCase {
     const itensPersistir: ItemPersistirDispensacao[] = [];
     for (const item of request.itens) {
       const lote = lotesBloqueados.get(item.loteId)!;
+      const saldoAnterior = lote.saldoAtual;
       const saldoRestante =
         await this.dispensacaoRepository.decrementarSaldoLote(
           item.loteId,
@@ -147,6 +148,7 @@ export class EfetivarDispensacaoUseCase {
         numeroLote: lote.numeroLote,
         quantidadeDispensada: item.quantidadeDispensada,
         posologia: item.posologia,
+        saldoAnteriorLote: saldoAnterior,
         saldoRestanteLote: saldoRestante,
       });
     }

@@ -37,26 +37,27 @@ export class TypeOrmDispensacaoCatalogoRepository
     const manager = this.transactionContext.getManager();
     const rows: MedicamentoRow[] = await manager.query(
       `SELECT
-         m.id,
-         m.principio_ativo,
-         m.nome_comercial,
-         m.apresentacao,
-         COALESCE(m.categoria, 'GERAL') AS categoria,
-         COALESCE(m.antimicrobiano, false) AS antimicrobiano,
+         p.id,
+         p.principio_ativo,
+         p.nome_comercial,
+         p.apresentacao,
+         COALESCE(p.categoria, 'GERAL') AS categoria,
+         COALESCE(p.antimicrobiano, false) AS antimicrobiano,
          COALESCE(SUM(l.saldo_atual), 0)::int AS saldo_total_ubs
-       FROM public.medicamentos m
+       FROM public.produtos p
        LEFT JOIN public.lotes l
-         ON l.medicamento_id = m.id
+         ON l.produto_id = p.id
         AND l.saldo_atual > 0
-        AND ($2::uuid IS NULL OR l.unidade_id = $2::uuid)
-       WHERE m.ativo = true
+        AND l.status = 'ATIVO'
+        AND ($2::uuid IS NULL OR l.ubs_id = $2::uuid)
+       WHERE p.ativo = true
          AND (
-           m.principio_ativo ILIKE $1
-           OR m.nome_comercial ILIKE $1
-           OR m.apresentacao ILIKE $1
+           p.principio_ativo ILIKE $1
+           OR p.nome_comercial ILIKE $1
+           OR p.apresentacao ILIKE $1
          )
-       GROUP BY m.id, m.principio_ativo, m.nome_comercial, m.apresentacao, m.categoria, m.antimicrobiano
-       ORDER BY m.principio_ativo ASC
+       GROUP BY p.id, p.principio_ativo, p.nome_comercial, p.apresentacao, p.categoria, p.antimicrobiano
+       ORDER BY p.principio_ativo ASC
        LIMIT 20`,
       [`%${termo}%`, unidadeId ?? null],
     );
@@ -74,21 +75,22 @@ export class TypeOrmDispensacaoCatalogoRepository
     const manager = this.transactionContext.getManager();
     const rows: MedicamentoRow[] = await manager.query(
       `SELECT
-         m.id,
-         m.principio_ativo,
-         m.nome_comercial,
-         m.apresentacao,
-         COALESCE(m.categoria, 'GERAL') AS categoria,
-         COALESCE(m.antimicrobiano, false) AS antimicrobiano,
+         p.id,
+         p.principio_ativo,
+         p.nome_comercial,
+         p.apresentacao,
+         COALESCE(p.categoria, 'GERAL') AS categoria,
+         COALESCE(p.antimicrobiano, false) AS antimicrobiano,
          COALESCE(SUM(l.saldo_atual), 0)::int AS saldo_total_ubs
-       FROM public.medicamentos m
+       FROM public.produtos p
        LEFT JOIN public.lotes l
-         ON l.medicamento_id = m.id
+         ON l.produto_id = p.id
         AND l.saldo_atual > 0
-        AND ($2::uuid IS NULL OR l.unidade_id = $2::uuid)
-       WHERE m.id = $1::uuid
-         AND m.ativo = true
-       GROUP BY m.id, m.principio_ativo, m.nome_comercial, m.apresentacao, m.categoria, m.antimicrobiano`,
+        AND l.status = 'ATIVO'
+        AND ($2::uuid IS NULL OR l.ubs_id = $2::uuid)
+       WHERE p.id = $1::uuid
+         AND p.ativo = true
+       GROUP BY p.id, p.principio_ativo, p.nome_comercial, p.apresentacao, p.categoria, p.antimicrobiano`,
       [medicamentoId, unidadeId ?? null],
     );
 
@@ -111,9 +113,10 @@ export class TypeOrmDispensacaoCatalogoRepository
          l.saldo_atual,
          l.created_at
        FROM public.lotes l
-       WHERE l.medicamento_id = $1::uuid
+       WHERE l.produto_id = $1::uuid
          AND l.saldo_atual > 0
-         AND ($2::uuid IS NULL OR l.unidade_id = $2::uuid)
+         AND l.status = 'ATIVO'
+         AND ($2::uuid IS NULL OR l.ubs_id = $2::uuid)
        ORDER BY l.data_validade ASC, l.created_at ASC`,
       [medicamentoId, unidadeId ?? null],
     );

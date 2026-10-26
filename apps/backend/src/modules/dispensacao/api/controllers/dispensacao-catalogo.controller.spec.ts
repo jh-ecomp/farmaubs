@@ -1,5 +1,5 @@
 import { Reflector } from "@nestjs/core";
-import { NotFoundException } from "@nestjs/common";
+import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PerfilCodigo } from "@farmaubs/shared";
 import { DispensacaoCatalogoController } from "./dispensacao-catalogo.controller";
 import { BuscarMedicamentosDispensacaoUseCase } from "../../application/use-cases/buscar-medicamentos-dispensacao.use-case";
@@ -57,16 +57,28 @@ describe("DispensacaoCatalogoController (Camada C - REST e RBAC)", () => {
   });
 
   describe("GET /dispensacao/medicamentos", () => {
-    it("deve delegar a busca textual repassando o termo e unidadeId da sessão", async () => {
+    it("deve delegar a busca textual repassando o termo e unidadeIds da sessão", async () => {
       buscarMedicamentosUseCaseMock.execute.mockResolvedValue([]);
       const res = await controller.buscarMedicamentos({ termo: "amox" }, {
-        unidadeId: "ubs-123",
+        unidadeIds: ["ubs-123"],
       } as any);
       expect(res).toEqual([]);
       expect(buscarMedicamentosUseCaseMock.execute).toHaveBeenCalledWith(
         "amox",
         "ubs-123",
       );
+    });
+
+    it("deve lançar ForbiddenException (403) quando ubsId na query não pertencer às unidadeIds do usuário", async () => {
+      await expect(
+        controller.buscarMedicamentos(
+          { termo: "amox", ubsId: "ubs-outra" },
+          {
+            perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+            unidadeIds: ["ubs-123"],
+          } as any,
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 
@@ -89,7 +101,7 @@ describe("DispensacaoCatalogoController (Camada C - REST e RBAC)", () => {
 
       const res = await controller.obterLotesFefo(
         "0194e43e-a6fb-7389-9a74-94c039755ea1",
-        { unidadeId: "ubs-123" } as any,
+        { unidadeIds: ["ubs-123"] } as any,
       );
       expect(res).toEqual(esperado);
       expect(obterSugestaoLotesFefoUseCaseMock.execute).toHaveBeenCalledWith(

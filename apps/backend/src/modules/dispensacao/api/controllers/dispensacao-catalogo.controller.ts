@@ -1,5 +1,6 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -68,8 +69,7 @@ export class DispensacaoCatalogoController {
     @Query() query: BuscarMedicamentosQueryDto,
     @CurrentUser() user?: AuthenticatedUserPayload,
   ): Promise<MedicamentoBuscaResponseDto[]> {
-    const unidadeId =
-      (user as { unidadeId?: string | null } | undefined)?.unidadeId ?? null;
+    const unidadeId = this.resolverEValidarUbs(user, query?.ubsId);
     return this.buscarMedicamentosUseCase.execute(query.termo, unidadeId);
   }
 
@@ -107,9 +107,9 @@ export class DispensacaoCatalogoController {
   async obterLotesFefo(
     @Param("id", ParseUUIDPipe) id: string,
     @CurrentUser() user?: AuthenticatedUserPayload,
+    @Query("ubsId") ubsId?: string,
   ): Promise<SugestaoFefoResponseDto> {
-    const unidadeId =
-      (user as { unidadeId?: string | null } | undefined)?.unidadeId ?? null;
+    const unidadeId = this.resolverEValidarUbs(user, ubsId);
     try {
       return await this.obterSugestaoLotesFefoUseCase.execute(id, unidadeId);
     } catch (error) {
@@ -118,5 +118,39 @@ export class DispensacaoCatalogoController {
       }
       throw error;
     }
+  }
+
+  private resolverEValidarUbs(
+    user?: AuthenticatedUserPayload,
+    ubsIdSolicitada?: string,
+  ): string | null {
+    const sessao = user as
+      | (AuthenticatedUserPayload & {
+          unidadeId?: string | null;
+          ubsId?: string | null;
+          unidadeIds?: string[];
+        })
+      | undefined;
+
+    const unidadeId =
+      ubsIdSolicitada ??
+      sessao?.unidadeIds?.[0] ??
+      sessao?.unidadeId ??
+      sessao?.ubsId ??
+      null;
+
+    if (
+      ubsIdSolicitada &&
+      sessao?.perfilCodigo !== PerfilCodigo.ADMINISTRADOR &&
+      Array.isArray(sessao?.unidadeIds) &&
+      sessao.unidadeIds.length > 0 &&
+      !sessao.unidadeIds.includes(ubsIdSolicitada)
+    ) {
+      throw new ForbiddenException(
+        "Acesso negado: a unidade informada não pertence às unidades atribuídas ao usuário.",
+      );
+    }
+
+    return unidadeId;
   }
 }

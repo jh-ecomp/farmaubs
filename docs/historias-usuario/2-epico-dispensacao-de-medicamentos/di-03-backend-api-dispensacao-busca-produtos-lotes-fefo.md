@@ -139,9 +139,9 @@ Funcionalidade: Busca Textual e Sugestão FEFO de Medicamentos (Camada A)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Busca textual sem dependência de leitor de código de barras físico.
-- [ ] Sugestão de lotes estritamente em ordem crescente de validade (FEFO).
-- [ ] Bloqueio de sugestão para lotes já expirados.
-- [ ] Métodos documentados com cabeçalho Micro-TSDoc.
-- [ ] Testes unitários puros na Camada A validando cenários de ordenação e desempate.
-- [ ] Documentação Swagger com parâmetros e payloads de resposta.
+- [x] Busca textual sem dependência de leitor de código de barras físico.
+- [x] Sugestão de lotes estritamente em ordem crescente de validade (FEFO).
+- [x] Bloqueio de sugestão para lotes já expirados.
+- [x] Métodos documentados com cabeçalho Micro-TSDoc.
+- [x] Testes unitários puros na Camada A validando cenários de ordenação e desempate.
+- [x] Documentação Swagger com parâmetros e payloads de resposta.

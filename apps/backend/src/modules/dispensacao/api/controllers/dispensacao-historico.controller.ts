@@ -3,6 +3,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -91,11 +92,7 @@ export class HistoricoDispensacaoController {
     @Query() query: ListarDispensacoesQueryDto,
     @CurrentUser() user?: AuthenticatedUserPayload,
   ): Promise<DispensacoesPaginadasResponseDto> {
-    const unidadeId =
-      (user as { unidadeId?: string | null; ubsId?: string | null } | undefined)
-        ?.unidadeId ??
-      (user as { ubsId?: string | null } | undefined)?.ubsId ??
-      null;
+    const unidadeId = this.resolverEValidarUbs(user, query?.ubsId);
 
     try {
       return await this.listarDispensacoesUseCase.execute(query, unidadeId);
@@ -145,11 +142,7 @@ export class HistoricoDispensacaoController {
     @CurrentUser() user?: AuthenticatedUserPayload,
     @Res({ passthrough: true }) res?: Response,
   ): Promise<Buffer> {
-    const unidadeId =
-      (user as { unidadeId?: string | null; ubsId?: string | null } | undefined)
-        ?.unidadeId ??
-      (user as { ubsId?: string | null } | undefined)?.ubsId ??
-      null;
+    const unidadeId = this.resolverEValidarUbs(user, query?.ubsId);
 
     try {
       const resultado = await this.exportarDispensacoesXlsxUseCase.execute(
@@ -216,13 +209,11 @@ export class HistoricoDispensacaoController {
       | (AuthenticatedUserPayload & {
           id?: string;
           userId?: string;
-          unidadeId?: string | null;
-          ubsId?: string | null;
         })
       | undefined;
 
     const estornadoPorId = sessao?.id ?? sessao?.userId ?? "";
-    const unidadeId = sessao?.unidadeId ?? sessao?.ubsId ?? null;
+    const unidadeId = this.resolverEValidarUbs(user, dto?.ubsId);
 
     try {
       return await this.estornarDispensacaoUseCase.execute(id, dto, {
@@ -244,6 +235,40 @@ export class HistoricoDispensacaoController {
       }
       throw error;
     }
+  }
+
+  private resolverEValidarUbs(
+    user?: AuthenticatedUserPayload,
+    ubsIdSolicitada?: string,
+  ): string | null {
+    const sessao = user as
+      | (AuthenticatedUserPayload & {
+          unidadeId?: string | null;
+          ubsId?: string | null;
+          unidadeIds?: string[];
+        })
+      | undefined;
+
+    const unidadeId =
+      ubsIdSolicitada ??
+      sessao?.unidadeIds?.[0] ??
+      sessao?.unidadeId ??
+      sessao?.ubsId ??
+      null;
+
+    if (
+      ubsIdSolicitada &&
+      sessao?.perfilCodigo !== PerfilCodigo.ADMINISTRADOR &&
+      Array.isArray(sessao?.unidadeIds) &&
+      sessao.unidadeIds.length > 0 &&
+      !sessao.unidadeIds.includes(ubsIdSolicitada)
+    ) {
+      throw new ForbiddenException(
+        "Acesso negado: a unidade informada não pertence às unidades atribuídas ao usuário.",
+      );
+    }
+
+    return unidadeId;
   }
 }
 
