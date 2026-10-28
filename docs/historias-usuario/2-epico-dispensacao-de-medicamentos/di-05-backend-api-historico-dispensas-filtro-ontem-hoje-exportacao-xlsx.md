@@ -172,9 +172,9 @@ Funcionalidade: Consulta de Histórico de Dispensas e Exportação XLSX (Camada 
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Filtro padrão `D-1` e `D0` implementado e coberto por testes.
-- [ ] Exportação `.xlsx` gerada via stream com cabeçalhos e formatação adequada de colunas.
-- [ ] Operação de estorno atualiza saldo do lote e registra auditoria sob transação ACID.
-- [ ] Micro-TSDoc em todos os métodos e use cases.
-- [ ] Testes da Camada A cobrindo paginação, filtros e lógica de estorno.
-- [ ] Endpoint documentado no Swagger com schema do arquivo binário e DTOs.
+- [x] Filtro padrão `D-1` e `D0` implementado e coberto por testes.
+- [x] Exportação `.xlsx` gerada via stream com cabeçalhos e formatação adequada de colunas.
+- [x] Operação de estorno atualiza saldo do lote e registra auditoria sob transação ACID.
+- [x] Micro-TSDoc em todos os métodos e use cases.
+- [x] Testes da Camada A cobrindo paginação, filtros e lógica de estorno.
+- [x] Endpoint documentado no Swagger com schema do arquivo binário e DTOs.

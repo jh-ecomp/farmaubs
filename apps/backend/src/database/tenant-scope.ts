@@ -91,4 +91,24 @@ export const TABLE_SCOPES: TableScope[] = [
     justification:
       "Livro-razão e trilha de auditoria de movimentações físicas de estoque (RF028, ADR-017).",
   },
+
+  // Módulo de dispensação (Épico 2 — DI-01):
+  {
+    table: "pacientes",
+    scope: "municipio",
+    justification:
+      "Cadastro municipal de pacientes do SUS (RF010, NF015, NF017, ADR-002).",
+  },
+  {
+    table: "dispensacoes",
+    scope: "municipio",
+    justification:
+      "Atendimentos de dispensação isolados por município/UBS (RF010, RF012, NF015, ADR-002).",
+  },
+  {
+    table: "dispensacao_itens",
+    scope: "municipio",
+    justification:
+      "Itens dispensados vinculados ao atendimento e isolados por município (RF010, NF015, ADR-002).",
+  },
 ];

@@ -8,6 +8,7 @@ import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
 import { AdministracaoModule } from "./modules/administracao/administracao.module";
 import { RecebimentoModule } from "./modules/recebimento/recebimento.module";
+import { DispensacaoModule } from "./modules/dispensacao/dispensacao.module";
 import { SessionAuthGuard } from "./common/guards/session-auth.guard";
 import { MustChangePasswordGuard } from "./modules/acesso/api/guards/must-change-password.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
@@ -28,6 +29,9 @@ import { DocumentoEntradaEntity } from "./modules/recebimento/infrastructure/per
 import { LoteEntity } from "./modules/recebimento/infrastructure/persistence/entities/lote.entity";
 import { RecebimentoItemEntity } from "./modules/recebimento/infrastructure/persistence/entities/recebimento-item.entity";
 import { MovimentacaoEstoqueEntity } from "./modules/recebimento/infrastructure/persistence/entities/movimentacao-estoque.entity";
+import { PacienteEntity } from "./modules/dispensacao/infrastructure/persistence/entities/paciente.entity";
+import { DispensacaoEntity } from "./modules/dispensacao/infrastructure/persistence/entities/dispensacao.entity";
+import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/persistence/entities/dispensacao-item.entity";
 
 @Module({
   imports: [
@@ -59,6 +63,9 @@ import { MovimentacaoEstoqueEntity } from "./modules/recebimento/infrastructure/
           LoteEntity,
           RecebimentoItemEntity,
           MovimentacaoEstoqueEntity,
+          PacienteEntity,
+          DispensacaoEntity,
+          DispensacaoItemEntity,
         ],
         autoLoadEntities: true,
         synchronize: false,
@@ -70,6 +77,7 @@ import { MovimentacaoEstoqueEntity } from "./modules/recebimento/infrastructure/
     AcessoModule,
     AdministracaoModule,
     RecebimentoModule,
+    DispensacaoModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionAuthGuard },
