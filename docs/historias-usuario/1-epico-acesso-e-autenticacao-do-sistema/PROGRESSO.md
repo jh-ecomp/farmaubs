@@ -7,16 +7,16 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 28 |
-| **Entregues** | 23 (82%) |
-| **Pendentes** | 5 (18%) |
+| **Entregues** | 28 (100%) |
+| **Pendentes** | 0 (0%) |
 
 ```
-Progresso: [████████████████░░░░] 82% (23/28 concluídas)
+Progresso: [████████████████████] 100% (28/28 concluídas)
 ```
 
 ---
 
-## Histórias Entregues ✅ (21)
+## Histórias Entregues ✅ (28)
 
 | Código | Título | Documento / Especificação |
 | --- | --- | --- |
@@ -30,11 +30,15 @@ Progresso: [████████████████░░░░] 82% (2
 | **AC-08** | Gerenciar usuários: editar, inativar/reativar, perfil, UBSs | [ac-08-gerenciar-usuarios-editar-inativar-reativar-alterar-perfil-e-ubss.md](./ac-08-gerenciar-usuarios-editar-inativar-reativar-alterar-perfil-e-ubss.md) |
 | **AC-09** | 2FA TOTP opt-in com segredo criptografado em repouso | *Documentado no índice do épico* |
 | **AC-10** | Timeout de sessão: expiração deslizante + timestamp absoluto | [ac-10-timeout-de-sessao-expiracao-deslizante-timestamp-absoluto-para-aviso.md](./ac-10-timeout-de-sessao-expiracao-deslizante-timestamp-absoluto-para-aviso.md) |
+| **AC-12** | Endpoints REST `/api/v1/usuarios/*` com DTOs e Swagger | [ac-12-endpoints-rest-usuarios-com-dtos-e-swagger.md](./ac-12-endpoints-rest-usuarios-com-dtos-e-swagger.md) |
+| **AC-13** | Guards de autorização RBAC por perfil e escopo de tenant | [ac-13-guards-de-autorizacao-rbac-por-perfil-e-escopo-de-tenant.md](./ac-13-guards-de-autorizacao-rbac-por-perfil-e-escopo-de-tenant.md) |
+| **AC-14** | Porta `AuthProvider` e adaptador de sessão server-side | [ac-14-porta-authprovider-e-adaptador-de-sessao-server-side.md](./ac-14-porta-authprovider-e-adaptador-de-sessao-server-side.md) |
 | **AC-16** | Tela de login com validação e feedback de erro | [ac-16-tela-de-login-com-validacao-e-feedback-de-erro.md](./ac-16-tela-de-login-com-validacao-e-feedback-de-erro.md) |
 | **AC-17** | Tela de recuperação de senha | *Documentado no índice do épico* |
 | **AC-18** | Gestão de usuários no painel administrativo | [ac-18-gestao-de-usuarios-no-painel-administrativo.md](./ac-18-gestao-de-usuarios-no-painel-administrativo.md) |
 | **AC-19** | Contexto de autenticação: usuário atual, perfil e escopo | [ac-19-contexto-de-autenticacao-usuario-atual-perfil-e-escopo-de-tenant.md](./ac-19-contexto-de-autenticacao-usuario-atual-perfil-e-escopo-de-tenant.md) |
 | **AC-20** | Aviso de timeout e encerramento de sessão | [ac-20-aviso-de-inatividade-e-renovacao-de-sessao.md](./ac-20-aviso-de-inatividade-e-renovacao-de-sessao.md) |
+| **AC-21** | Proteção de rotas por perfil e logout | [ac-21-protecao-de-rotas-por-perfil-e-logout.md](./ac-21-protecao-de-rotas-por-perfil-e-logout.md) |
 | **AC-22** | Enriquecer resposta de autenticação e contrato de sessão com perfil RBAC e escopo | [ac-22-feat-acesso-enriquecer-resposta-de-autenticacao-e-contrato-de sessao-com-perfil-rbac-e-escopo.md](./ac-22-feat-acesso-enriquecer-resposta-de-autenticacao-e-contrato-de%20sessao-com-perfil-rbac-e-escopo.md) |
 | **AC-23** | Redefinição administrativa e troca obrigatória de senha | [ac-23-feat-acesso-redefinicao-administrativa-e-troca-obrigatoria-de-senha.md](./ac-23-feat-acesso-redefinicao-administrativa-e-troca-obrigatoria-de-senha.md) |
 | **AC-24** | Fluxo de redefinição administrativa e tela de troca obrigatória de senha | [ac-24-feat-acesso-fluxo-de-redefinicao-administrativa-e-tela-de-troca-obrigatoria-de-senha.md](./ac-24-feat-acesso-fluxo-de-redefinicao-administrativa-e-tela-de-troca-obrigatoria-de-senha.md) |
@@ -43,18 +47,13 @@ Progresso: [████████████████░░░░] 82% (2
 | **AC-27** | Catálogo de administração | [ac-27-feat-administracao-catalogo-de-administracao.md](./ac-27-feat-administracao-catalogo-de-administracao.md) |
 | **AC-28** | Idempotência e resiliência na reversão de permissões DML | [ac-28-idempotencia-resiliencia-na-reversao-de-permissoes-dml.md](./ac-28-idempotencia-resiliencia-na-reversao-de-permissoes-dml.md) |
 | **AC-29** | Transporte de sessão via cookie seguro `HttpOnly` no backend | [ac-29-feat-acesso-transporte-de-sessao-via-cookie-seguro-httponly-no-backend.md](./ac-29-feat-acesso-transporte-de-sessao-via-cookie-seguro-httponly-no-backend.md) |
+| **AC-30** | Migração de sessão para cookie `HttpOnly` e expurgo de tokens do `localStorage` no frontend | [ac-30-feat-acesso-migracao-de-sessao-para-cookie-httponly-e-expurgo-de-tokens-do-localstorage-no-frontend.md](./ac-30-feat-acesso-migracao-de-sessao-para-cookie-httponly-e-expurgo-de-tokens-do-localstorage-no-frontend.md) |
 
 ---
 
-## Histórias Pendentes ⏳ (5)
+## Histórias Pendentes ⏳ (0)
 
-| Código | Título | Especificação | Prioridade / Foco |
-| --- | --- | --- | --- |
-| **AC-12** | Endpoints REST `/api/v1/usuarios/*` com DTOs e Swagger | [ac-12-endpoints-rest-usuarios-com-dtos-e-swagger.md](./ac-12-endpoints-rest-usuarios-com-dtos-e-swagger.md) | Backend / API REST |
-| **AC-13** | Guards de autorização RBAC por perfil e escopo de tenant | [ac-13-guards-de-autorizacao-rbac-por-perfil-e-escopo-de-tenant.md](./ac-13-guards-de-autorizacao-rbac-por-perfil-e-escopo-de-tenant.md) | Backend / Segurança & RBAC |
-| **AC-14** | Porta `AuthProvider` e adaptador de sessão server-side | [ac-14-porta-authprovider-e-adaptador-de-sessao-server-side.md](./ac-14-porta-authprovider-e-adaptador-de-sessao-server-side.md) | Backend / Arquitetura Hexagonal |
-| **AC-21** | Proteção de rotas por perfil e logout | [ac-21-protecao-de-rotas-por-perfil-e-logout.md](./ac-21-protecao-de-rotas-por-perfil-e-logout.md) | Frontend / Rotas e RBAC |
-| **AC-30** | Migração de sessão para cookie `HttpOnly` e expurgo de tokens do `localStorage` no frontend | [ac-30-feat-acesso-migracao-de-sessao-para-cookie-httponly-e-expurgo-de-tokens-do-localstorage-no-frontend.md](./ac-30-feat-acesso-migracao-de-sessao-para-cookie-httponly-e-expurgo-de-tokens-do-localstorage-no-frontend.md) | Frontend / Segurança & Cookie |
+*Nenhuma história web/backend pendente. Todas as 28 histórias não-mobile foram 100% concluídas e validadas.*
 
 ---
 

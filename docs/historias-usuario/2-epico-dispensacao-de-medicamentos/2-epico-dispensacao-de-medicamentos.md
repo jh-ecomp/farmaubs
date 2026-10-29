@@ -73,11 +73,11 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 
 | ID | Título | Testes | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| [DI-01](./di-01-backend-migrations-schema-dispensacao.md) | Migrações do schema de dispensação (`pacientes`, `dispensacoes`, `dispensacao_itens` e movimentações) | B | AC-01 | ✅ Redigida |
-| [DI-02](./di-02-backend-api-pacientes-cadastro-historico.md) | API de Pacientes: validação cadastral (CNS, CPF, nome e nascimento) e histórico de consumo | A, C | DI-01 | ✅ Redigida |
-| [DI-03](./di-03-backend-api-dispensacao-busca-produtos-lotes-fefo.md) | API de Dispensação: busca textual de medicamentos e algoritmo FEFO | A, C | DI-01 | ✅ Redigida |
-| [DI-04](./di-04-backend-api-efetivacao-transacao-baixa-estoque.md) | API de Efetivação: baixa transacional de estoque e validação de antimicrobianos | A, B, C | DI-01, DI-02, DI-03 | ✅ Redigida |
-| [DI-05](./di-05-backend-api-historico-dispensas-filtro-ontem-hoje-exportacao-xlsx.md) | API de Histórico: filtro ontem/hoje, intervalo customizado e exportação em XLSX | A, C | DI-04 | ✅ Redigida |
+| [DI-01](./di-01-backend-migrations-schema-dispensacao.md) | Migrações do schema de dispensação (`pacientes`, `dispensacoes`, `dispensacao_itens` e movimentações) | B | AC-01 | ✅ Concluída |
+| [DI-02](./di-02-backend-api-pacientes-cadastro-historico.md) | API de Pacientes: validação cadastral (CNS, CPF, nome e nascimento) e histórico de consumo | A, C | DI-01 | ✅ Concluída |
+| [DI-03](./di-03-backend-api-dispensacao-busca-produtos-lotes-fefo.md) | API de Dispensação: busca textual de medicamentos e algoritmo FEFO | A, C | DI-01 | ✅ Concluída |
+| [DI-04](./di-04-backend-api-efetivacao-transacao-baixa-estoque.md) | API de Efetivação: baixa transacional de estoque e validação de antimicrobianos | A, B, C | DI-01, DI-02, DI-03 | ✅ Concluída |
+| [DI-05](./di-05-backend-api-historico-dispensas-filtro-ontem-hoje-exportacao-xlsx.md) | API de Histórico: filtro ontem/hoje, intervalo customizado e exportação em XLSX | A, C | DI-04 | ✅ Concluída |
 
 ### Frontend
 
@@ -94,10 +94,10 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 ## Critérios de conclusão do épico (DoD)
 
 - [x] 10 histórias de usuário redigidas com critérios de aceite em Gherkin em português e contratos TypeScript.
-- [ ] Schema de banco com migrações, chaves estrangeiras e isolamento multi-tenant por UBS via RLS.
-- [ ] Validação cadastral completa de paciente no momento da dispensa (CNS, CPF, nome e data de nascimento).
-- [ ] Algoritmo de sugestão de lotes por FEFO em tempo de execução.
-- [ ] Validação obrigatória de dados de receita médica para antimicrobianos.
-- [ ] Baixa transacional em banco de dados com registro imediato de movimentação de auditoria.
+- [x] Schema de banco com migrações, chaves estrangeiras e isolamento multi-tenant por UBS via RLS.
+- [x] Validação cadastral completa de paciente no momento da dispensa (CNS, CPF, nome e data de nascimento).
+- [x] Algoritmo de sugestão de lotes por FEFO em tempo de execução.
+- [x] Validação obrigatória de dados de receita médica para antimicrobianos.
+- [x] Baixa transacional em banco de dados com registro imediato de movimentação de auditoria.
 - [ ] Painel de histórico com filtro padrão ontem/hoje e download de relatório em formato Excel (.xlsx).
 - [ ] Testes automatizados cobrindo as camadas A, B, C e D.

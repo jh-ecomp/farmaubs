@@ -154,7 +154,7 @@ Funcionalidade: Catálogo de Medicamentos e Fabricantes (Camada A e C)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Endpoints implementados no NestJS com validação de payload via `ValidationPipe` global.
-- [ ] Testes unitários (Camada A) cobrindo busca de catálogo, sanitização de filtros e validação de CNPJ.
-- [ ] Testes E2E (Camada C) validando fluxos de sucesso e tratamento de erros (400, 404, 409).
-- [ ] Documentação Swagger / OpenAPI gerada sob o prefixo `/api/v1/catalogo`.
+- [x] Endpoints implementados no NestJS com validação de payload via `ValidationPipe` global.
+- [x] Testes unitários (Camada A) cobrindo busca de catálogo, sanitização de filtros e validação de CNPJ.
+- [x] Testes E2E (Camada C) validando fluxos de sucesso e tratamento de erros (400, 404, 409).
+- [x] Documentação Swagger / OpenAPI gerada sob o prefixo `/api/v1/catalogo`.
