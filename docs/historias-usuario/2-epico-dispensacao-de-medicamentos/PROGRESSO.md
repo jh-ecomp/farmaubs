@@ -1,6 +1,6 @@
 # Progresso — Épico 2: Dispensação de Medicamentos
 
-Última atualização: 01/10/2026
+Última atualização: 28/10/2026
 
 ## Resumo Executivo
 
