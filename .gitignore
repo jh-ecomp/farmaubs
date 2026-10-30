@@ -47,6 +47,9 @@ storage/reports/
 # Cache de build do vite-plugin-pwa (ADR-014 — preventivo)
 dev-dist/
 
+# Cache local do Expo (apps/mobile). Gerado pelo expo start; específico da máquina.
+.expo/
+
 # ==========================================
 # Ferramentas de IA e Assistentes de Código
 # ==========================================

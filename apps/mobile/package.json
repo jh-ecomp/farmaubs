@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@babel/runtime": "7.29.7",
     "@farmaubs/shared": "workspace:*",
     "expo": "~52.0.0",
     "expo-secure-store": "~14.0.0",
