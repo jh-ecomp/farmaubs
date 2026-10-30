@@ -1,120 +1,152 @@
 import { ObterMetricasEstoqueUseCase } from "./obter-metricas-estoque.use-case";
-import type { RepositorioEstoqueMetricasPort } from "../../domain/ports/estoque-metricas.repository.port";
+import type {
+  ConsumoProdutoAgregado,
+  ContagemLotesValidade,
+  RepositorioEstoqueMetricasPort,
+} from "../../domain/ports/estoque-metricas.repository.port";
 
-function criarFake(
-  parcial: Partial<RepositorioEstoqueMetricasPort> = {},
-): RepositorioEstoqueMetricasPort {
+const UBS_ID = "11111111-1111-4111-8111-111111111111";
+const HOJE = "2026-10-30";
+const AGORA = new Date("2026-10-30T12:00:00.000Z");
+
+function criarRepoFake(
+  parcial: {
+    totais?: { totalMedicamentosAtivos: number; totalUnidadesFisicas: number };
+    consumos?: ConsumoProdutoAgregado[];
+    validade?: ContagemLotesValidade;
+  } = {},
+): jest.Mocked<RepositorioEstoqueMetricasPort> {
   return {
-    obterTotais: async () => ({
-      totalMedicamentosAtivos: 0,
-      totalUnidadesFisicas: 0,
-    }),
-    listarConsumoPorProduto: async () => [],
-    listarLotesParaValidade: async () => [],
-    ...parcial,
+    obterTotais: jest
+      .fn()
+      .mockResolvedValue(
+        parcial.totais ?? {
+          totalMedicamentosAtivos: 0,
+          totalUnidadesFisicas: 0,
+        },
+      ),
+    listarConsumoPorProduto: jest
+      .fn()
+      .mockResolvedValue(parcial.consumos ?? []),
+    contarLotesPorValidade: jest.fn().mockResolvedValue(
+      parcial.validade ?? {
+        lotesVencidos: 0,
+        lotesValidadeMesAtual: 0,
+        lotesValidadeCurta90d: 0,
+      },
+    ),
   };
 }
 
+/** Consumo de 5/dia (150 em 30 dias) com o saldo informado. */
+function produto(id: string, saldoAtual: number): ConsumoProdutoAgregado {
+  return { produtoId: id, saldoAtual, totalDispensado: 150, diasApurados: 30 };
+}
+
 describe("ObterMetricasEstoqueUseCase", () => {
-  const hoje = "2026-10-13";
-  const agora = new Date("2026-10-13T15:00:00.000Z");
+  it("repassa totais e contagens de validade vindos do repositório", async () => {
+    const repo = criarRepoFake({
+      totais: { totalMedicamentosAtivos: 85, totalUnidadesFisicas: 12450 },
+      validade: {
+        lotesVencidos: 2,
+        lotesValidadeMesAtual: 6,
+        lotesValidadeCurta90d: 11,
+      },
+    });
 
-  it("repassa os totais e a data do cálculo", async () => {
-    const useCase = new ObterMetricasEstoqueUseCase(
-      criarFake({
-        obterTotais: async () => ({
-          totalMedicamentosAtivos: 85,
-          totalUnidadesFisicas: 12450,
-        }),
-      }),
+    const r = await new ObterMetricasEstoqueUseCase(repo).executar(
+      UBS_ID,
+      HOJE,
+      AGORA,
     );
-    const r = await useCase.executar("ubs-1", hoje, agora);
-    expect(r.totalMedicamentosAtivos).toBe(85);
-    expect(r.totalUnidadesFisicas).toBe(12450);
-    expect(r.calculadoEm).toBe("2026-10-13T15:00:00.000Z");
+
+    expect(r).toEqual({
+      totalMedicamentosAtivos: 85,
+      totalUnidadesFisicas: 12450,
+      itensRiscoRuptura: 0,
+      lotesValidadeMesAtual: 6,
+      lotesValidadeCurta90d: 11,
+      lotesVencidos: 2,
+      calculadoEm: "2026-10-30T12:00:00.000Z",
+    });
   });
 
-  it("conta produtos em risco de ruptura", async () => {
-    const useCase = new ObterMetricasEstoqueUseCase(
-      criarFake({
-        listarConsumoPorProduto: async () => [
-          {
-            produtoId: "a",
-            saldoAtual: 60,
-            totalDispensado: 90,
-            diasApurados: 30,
-          }, // 20 dias: risco
-          {
-            produtoId: "b",
-            saldoAtual: 61,
-            totalDispensado: 90,
-            diasApurados: 30,
-          }, // acima: ok
-          {
-            produtoId: "c",
-            saldoAtual: 0,
-            totalDispensado: 0,
-            diasApurados: 30,
-          }, // zero: risco
-          {
-            produtoId: "d",
-            saldoAtual: 10,
-            totalDispensado: 0,
-            diasApurados: 0,
-          }, // sem dados: ok
-        ],
-      }),
-    );
-    const r = await useCase.executar("ubs-1", hoje, agora);
-    expect(r.itensRiscoRuptura).toBe(2);
+  it("consulta o repositório sempre com o ubsId e a data de referência", async () => {
+    const repo = criarRepoFake();
+
+    await new ObterMetricasEstoqueUseCase(repo).executar(UBS_ID, HOJE, AGORA);
+
+    expect(repo.obterTotais).toHaveBeenCalledWith(UBS_ID);
+    expect(repo.listarConsumoPorProduto).toHaveBeenCalledWith(UBS_ID, HOJE);
+    expect(repo.contarLotesPorValidade).toHaveBeenCalledWith(UBS_ID, HOJE);
   });
 
-  it("classifica lotes por validade e ignora lotes com saldo zero", async () => {
-    const useCase = new ObterMetricasEstoqueUseCase(
-      criarFake({
-        listarLotesParaValidade: async () => [
-          { loteId: "1", validade: "2026-10-05", saldoAtual: 10 }, // vencido
-          { loteId: "2", validade: "2026-10-20", saldoAtual: 10 }, // mês corrente + 90d
-          { loteId: "3", validade: "2026-12-01", saldoAtual: 10 }, // só 90d
-          { loteId: "4", validade: "2027-06-01", saldoAtual: 10 }, // fora
-          { loteId: "5", validade: "2026-10-20", saldoAtual: 0 }, // saldo zero: ignorado
-        ],
-      }),
+  it("classifica risco quando a cobertura é exatamente 20 dias (limite inclusivo)", async () => {
+    // saldo 100 / CMD 5 = 20 dias
+    const repo = criarRepoFake({ consumos: [produto("a", 100)] });
+
+    const r = await new ObterMetricasEstoqueUseCase(repo).executar(
+      UBS_ID,
+      HOJE,
+      AGORA,
     );
-    const r = await useCase.executar("ubs-1", hoje, agora);
-    expect(r.lotesVencidos).toBe(1);
-    expect(r.lotesValidadeMesAtual).toBe(1);
-    expect(r.lotesValidadeCurta90d).toBe(2);
+
+    expect(r.itensRiscoRuptura).toBe(1);
   });
 
-  it("respeita as fronteiras de validade (hoje, ontem, 90 e 91 dias)", async () => {
-    const useCase = new ObterMetricasEstoqueUseCase(
-      criarFake({
-        listarLotesParaValidade: async () => [
-          { loteId: "1", validade: "2026-10-12", saldoAtual: 10 }, // ontem: vencido
-          { loteId: "2", validade: "2026-10-13", saldoAtual: 10 }, // hoje: não vencido
-          { loteId: "3", validade: "2027-01-11", saldoAtual: 10 }, // dia 90: dentro
-          { loteId: "4", validade: "2027-01-12", saldoAtual: 10 }, // dia 91: fora
-        ],
-      }),
+  it("não classifica risco quando a cobertura é de 21 dias", async () => {
+    // saldo 105 / CMD 5 = 21 dias
+    const repo = criarRepoFake({ consumos: [produto("a", 105)] });
+
+    const r = await new ObterMetricasEstoqueUseCase(repo).executar(
+      UBS_ID,
+      HOJE,
+      AGORA,
     );
-    const r = await useCase.executar("ubs-1", hoje, agora);
-    expect(r.lotesVencidos).toBe(1);
-    expect(r.lotesValidadeMesAtual).toBe(1);
-    expect(r.lotesValidadeCurta90d).toBe(2);
+
+    expect(r.itensRiscoRuptura).toBe(0);
   });
 
-  it("consulta o repositório com a UBS informada", async () => {
-    const ubsRecebidas: string[] = [];
-    const useCase = new ObterMetricasEstoqueUseCase(
-      criarFake({
-        obterTotais: async (ubsId) => {
-          ubsRecebidas.push(ubsId);
-          return { totalMedicamentosAtivos: 0, totalUnidadesFisicas: 0 };
-        },
-      }),
+  it("conta ruptura imediata quando o saldo é zero e há consumo", async () => {
+    const repo = criarRepoFake({ consumos: [produto("a", 0)] });
+
+    const r = await new ObterMetricasEstoqueUseCase(repo).executar(
+      UBS_ID,
+      HOJE,
+      AGORA,
     );
-    await useCase.executar("ubs-xyz", hoje, agora);
-    expect(ubsRecebidas).toEqual(["ubs-xyz"]);
+
+    expect(r.itensRiscoRuptura).toBe(1);
+  });
+
+  it("soma apenas os produtos em risco entre vários", async () => {
+    const repo = criarRepoFake({
+      consumos: [produto("a", 10), produto("b", 500), produto("c", 100)],
+    });
+
+    const r = await new ObterMetricasEstoqueUseCase(repo).executar(
+      UBS_ID,
+      HOJE,
+      AGORA,
+    );
+
+    expect(r.itensRiscoRuptura).toBe(2); // a (2 dias) e c (20 dias)
+  });
+
+  it("não quebra nem marca risco por divisão quando diasApurados é zero", async () => {
+    const repo = criarRepoFake({
+      consumos: [
+        { produtoId: "a", saldoAtual: 50, totalDispensado: 0, diasApurados: 0 },
+      ],
+    });
+
+    const r = await new ObterMetricasEstoqueUseCase(repo).executar(
+      UBS_ID,
+      HOJE,
+      AGORA,
+    );
+
+    expect(Number.isFinite(r.itensRiscoRuptura)).toBe(true);
+    expect(r.itensRiscoRuptura).toBe(0);
   });
 });

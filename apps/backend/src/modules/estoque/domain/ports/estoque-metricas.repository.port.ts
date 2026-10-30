@@ -10,11 +10,11 @@ export interface ConsumoProdutoAgregado {
   diasApurados: number;
 }
 
-/** Dados de um lote necessários para classificar a validade. */
-export interface LoteValidadeAgregado {
-  loteId: string;
-  validade: string; // AAAA-MM-DD
-  saldoAtual: number;
+/** Contagem de lotes por faixa de validade, já agregada no banco. */
+export interface ContagemLotesValidade {
+  lotesVencidos: number;
+  lotesValidadeMesAtual: number;
+  lotesValidadeCurta90d: number;
 }
 
 export interface RepositorioEstoqueMetricasPort {
@@ -22,6 +22,12 @@ export interface RepositorioEstoqueMetricasPort {
     totalMedicamentosAtivos: number;
     totalUnidadesFisicas: number;
   }>;
-  listarConsumoPorProduto(ubsId: string): Promise<ConsumoProdutoAgregado[]>;
-  listarLotesParaValidade(ubsId: string): Promise<LoteValidadeAgregado[]>;
+  listarConsumoPorProduto(
+    ubsId: string,
+    hoje: string,
+  ): Promise<ConsumoProdutoAgregado[]>;
+  contarLotesPorValidade(
+    ubsId: string,
+    hoje: string,
+  ): Promise<ContagemLotesValidade>;
 }

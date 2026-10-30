@@ -1,5 +1,4 @@
 import {
-  classificarValidadeLote,
   verificarRiscoRuptura,
   type EstoqueMetricasResponseDto,
 } from "@farmaubs/shared";
@@ -20,10 +19,10 @@ export class ObterMetricasEstoqueUseCase {
     hoje: string,
     agora: Date = new Date(),
   ): Promise<EstoqueMetricasResponseDto> {
-    const [totais, consumos, lotes] = await Promise.all([
+    const [totais, consumos, validade] = await Promise.all([
       this.repo.obterTotais(ubsId),
-      this.repo.listarConsumoPorProduto(ubsId),
-      this.repo.listarLotesParaValidade(ubsId),
+      this.repo.listarConsumoPorProduto(ubsId, hoje),
+      this.repo.contarLotesPorValidade(ubsId, hoje),
     ]);
 
     // Um produto sem dias apurados é tratado como consumo zero.
@@ -35,25 +34,13 @@ export class ObterMetricasEstoqueUseCase {
       }),
     ).length;
 
-    let lotesValidadeMesAtual = 0;
-    let lotesValidadeCurta90d = 0;
-    let lotesVencidos = 0;
-
-    // Lotes com saldo zero não geram alerta de validade.
-    for (const lote of lotes.filter((l) => l.saldoAtual > 0)) {
-      const c = classificarValidadeLote(lote.validade, hoje);
-      if (c.vencido) lotesVencidos++;
-      if (c.vencendoMesCorrente) lotesValidadeMesAtual++;
-      if (c.validadeCurta90d) lotesValidadeCurta90d++;
-    }
-
     return {
       totalMedicamentosAtivos: totais.totalMedicamentosAtivos,
       totalUnidadesFisicas: totais.totalUnidadesFisicas,
       itensRiscoRuptura,
-      lotesValidadeMesAtual,
-      lotesValidadeCurta90d,
-      lotesVencidos,
+      lotesValidadeMesAtual: validade.lotesValidadeMesAtual,
+      lotesValidadeCurta90d: validade.lotesValidadeCurta90d,
+      lotesVencidos: validade.lotesVencidos,
       calculadoEm: agora.toISOString(),
     };
   }
