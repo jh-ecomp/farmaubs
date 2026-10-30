@@ -5,15 +5,30 @@ import type { EstoqueMetricasResponseDto } from "@farmaubs/shared";
 import { ObterMetricasEstoqueUseCase } from "../../../src/modules/estoque/application/use-cases/obter-metricas-estoque.use-case";
 import type {
   ConsumoProdutoAgregado,
-  LoteValidadeAgregado,
+  ContagemLotesValidade,
   RepositorioEstoqueMetricasPort,
 } from "../../../src/modules/estoque/domain/ports/estoque-metricas.repository.port";
+
+interface LoteFake {
+  loteId: string;
+  validade: string; // 'AAAA-MM-DD'
+  saldoAtual: number;
+}
 
 interface DadosUbs {
   totalMedicamentosAtivos: number;
   totalUnidadesFisicas: number;
   consumo: ConsumoProdutoAgregado[];
-  lotes: LoteValidadeAgregado[];
+  lotes: LoteFake[];
+}
+
+/** Dias corridos entre duas datas 'AAAA-MM-DD' (ate - de), calculados em UTC. */
+function diasEntre(de: string, ate: string): number {
+  const ms = (d: string): number => {
+    const [ano, mes, dia] = d.split("-").map(Number);
+    return Date.UTC(ano, mes - 1, dia);
+  };
+  return Math.round((ms(ate) - ms(de)) / 86_400_000);
 }
 
 /** Repositório em memória que registra as UBSs consultadas. */
@@ -46,8 +61,22 @@ class RepositorioMetricasFake implements RepositorioEstoqueMetricasPort {
     return this.dadosDa(ubsId).consumo;
   }
 
-  async listarLotesParaValidade(ubsId: string) {
-    return this.dadosDa(ubsId).lotes;
+  async contarLotesPorValidade(
+    ubsId: string,
+    hojeRef: string,
+  ): Promise<ContagemLotesValidade> {
+    const lotes = this.dadosDa(ubsId).lotes.filter((l) => l.saldoAtual > 0);
+    const mesAtual = hojeRef.slice(0, 7);
+    const vigentes = lotes.filter((l) => l.validade >= hojeRef);
+    return {
+      lotesVencidos: lotes.filter((l) => l.validade < hojeRef).length,
+      lotesValidadeMesAtual: vigentes.filter(
+        (l) => l.validade.slice(0, 7) === mesAtual,
+      ).length,
+      lotesValidadeCurta90d: vigentes.filter(
+        (l) => diasEntre(hojeRef, l.validade) <= 90,
+      ).length,
+    };
   }
 }
 
