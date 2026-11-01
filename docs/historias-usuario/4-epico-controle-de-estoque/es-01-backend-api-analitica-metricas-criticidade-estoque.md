@@ -116,7 +116,7 @@ Funcionalidade: Métricas e Indicadores de Estoque (Camadas A e C)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Caso de uso `ObterMetricasEstoqueUseCase` implementado com agregação SQL performática indexada.
-- [ ] Endpoint `GET /api/v1/estoque/metricas` documentado no Swagger.
-- [ ] Testes unitários (Camada A) cobrindo regras de cálculo de CMD, cobertura e limites de 90 dias.
-- [ ] Testes E2E (Camada C) validando integridade de dados e aplicação de RLS por tenant.
+- [x] Caso de uso `ObterMetricasEstoqueUseCase` implementado com agregação SQL performática indexada.
+- [x] Endpoint `GET /api/v1/estoque/metricas` documentado no Swagger.
+- [x] Testes unitários (Camada A) cobrindo regras de cálculo de CMD, cobertura e limites de 90 dias.
+- [x] Testes E2E (Camada C) validando integridade de dados e aplicação de RLS por tenant.
