@@ -116,14 +116,12 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     await admin.query(`DELETE FROM users WHERE email LIKE $1`, [
       `%${EMAIL_SUFIXO}`,
     ]);
-    await admin.query(
-      `DELETE FROM unidades_saude WHERE id = ANY($1::uuid[])`,
-      [ubss],
-    );
-    await admin.query(
-      `DELETE FROM municipios WHERE id = ANY($1::uuid[])`,
-      [muns],
-    );
+    await admin.query(`DELETE FROM unidades_saude WHERE id = ANY($1::uuid[])`, [
+      ubss,
+    ]);
+    await admin.query(`DELETE FROM municipios WHERE id = ANY($1::uuid[])`, [
+      muns,
+    ]);
     await admin.query(`DELETE FROM produtos WHERE id = ANY($1::uuid[])`, [
       PRODUTOS,
     ]);
@@ -156,7 +154,16 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
       `INSERT INTO lotes (municipio_id, ubs_id, produto_id, fabricante_id,
          numero_lote, data_validade, saldo_atual, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [municipioId, ubsId, produtoId, FABRICANTE, numero, validade, saldo, status],
+      [
+        municipioId,
+        ubsId,
+        produtoId,
+        FABRICANTE,
+        numero,
+        validade,
+        saldo,
+        status,
+      ],
     );
     return rows[0].id;
   }
@@ -221,7 +228,15 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
       `INSERT INTO users (id, nome_completo, email, senha_hash, perfil_id, municipio_id) VALUES
          ($1, 'Dispensador A', $3, 'hash-dummy', $5, $6),
          ($2, 'Dispensador B', $4, 'hash-dummy', $5, $7)`,
-      [USER_A, USER_B, `a${EMAIL_SUFIXO}`, `b${EMAIL_SUFIXO}`, perfilId, MUN_A, MUN_B],
+      [
+        USER_A,
+        USER_B,
+        `a${EMAIL_SUFIXO}`,
+        `b${EMAIL_SUFIXO}`,
+        perfilId,
+        MUN_A,
+        MUN_B,
+      ],
     );
     await admin.query(
       `INSERT INTO pacientes (id, municipio_id, cns, cpf, nome_completo, data_nascimento) VALUES
@@ -231,7 +246,12 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     );
 
     await inserirProduto(1, "Dipirona sódica", "Comprimido 500 mg", "GERAL");
-    await inserirProduto(2, "Ácido acetilsalicílico", "Comprimido 100 mg", "GERAL");
+    await inserirProduto(
+      2,
+      "Ácido acetilsalicílico",
+      "Comprimido 100 mg",
+      "GERAL",
+    );
     await inserirProduto(3, "Amoxicilina", "Cápsula 500 mg", "ANTIMICROBIANO");
     await inserirProduto(4, "Losartana potássica", "Comprimido 50 mg", "GERAL");
     await inserirProduto(5, "Princípio Saldos 05", "Frasco Saldos", "GERAL");
@@ -248,7 +268,8 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
       dias: number,
       saldo: number,
       status = "ATIVO",
-    ) => inserirLote(mun, ubs, P(p), numero, somarDias(HOJE, dias), saldo, status);
+    ) =>
+      inserirLote(mun, ubs, P(p), numero, somarDias(HOJE, dias), saldo, status);
 
     // UBS A1
     await lote(MUN_A, UBS_A1, 1, "P1-B", 200, 50);
@@ -265,11 +286,24 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     await lote(MUN_A, UBS_A1, 9, "P9-INAT", -1, 500, "INATIVO");
 
     const disp = (
-      numero: string, dias: number, status: string,
-      loteId: string, qtd: number, p: number,
+      numero: string,
+      dias: number,
+      status: string,
+      loteId: string,
+      qtd: number,
+      p: number,
     ) =>
       inserirDispensacao(
-        MUN_A, UBS_A1, PACIENTE_A, USER_A, numero, dias, status, loteId, qtd, P(p),
+        MUN_A,
+        UBS_A1,
+        PACIENTE_A,
+        USER_A,
+        numero,
+        dias,
+        status,
+        loteId,
+        qtd,
+        P(p),
       );
     // Consumo de 13/dia: 130 unidades em 10 dias.
     await disp("ES2-P3-10D", 10, "concluida", loteP3, 130, 3);
@@ -310,17 +344,24 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     it("páginas de 3 itens: 3 + 3 + 2, sem repetir medicamento", async () => {
       const paginas: Awaited<ReturnType<typeof consultar>>[] = [];
       for (const pagina of [1, 2, 3]) {
-        paginas.push(await consultar(MUN_A, UBS_A1, { pagina, itensPorPagina: 3 }));
+        paginas.push(
+          await consultar(MUN_A, UBS_A1, { pagina, itensPorPagina: 3 }),
+        );
       }
       expect(paginas.map((p) => p.itens.length)).toEqual([3, 3, 2]);
-      expect(paginas.every((p) => p.total === 8 && p.totalPaginas === 3)).toBe(true);
+      expect(paginas.every((p) => p.total === 8 && p.totalPaginas === 3)).toBe(
+        true,
+      );
       const ids = paginas.flatMap((p) => p.itens.map((i) => i.produtoId));
       expect(new Set(ids).size).toBe(8);
       expect(paginas[0].itens[0].lotes).toHaveLength(3);
     });
 
     it("página além do fim: sem itens, total preservado", async () => {
-      const r = await consultar(MUN_A, UBS_A1, { pagina: 4, itensPorPagina: 3 });
+      const r = await consultar(MUN_A, UBS_A1, {
+        pagina: 4,
+        itensPorPagina: 3,
+      });
       expect(r.itens).toEqual([]);
       expect(r.total).toBe(8);
     });
@@ -330,7 +371,11 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     it("lotes em ordem FEFO, sem lote de saldo 0; saldoTotal soma só ativos", async () => {
       const r = await consultar(MUN_A, UBS_A1);
       const p1 = r.itens.find((i) => i.produtoId === P(1));
-      expect(p1?.lotes.map((l) => l.numeroLote)).toEqual(["P1-B", "P1-C", "P1-A"]);
+      expect(p1?.lotes.map((l) => l.numeroLote)).toEqual([
+        "P1-B",
+        "P1-C",
+        "P1-A",
+      ]);
       expect(p1?.saldoTotal).toBe(175);
       expect(p1?.statusEstoque).toBe("REGULAR");
     });
@@ -338,7 +383,11 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     it("medicamento só com lote de saldo 0 aparece ZERADO, sem lotes", async () => {
       const r = await consultar(MUN_A, UBS_A1);
       const p2 = r.itens.find((i) => i.produtoId === P(2));
-      expect(p2).toMatchObject({ saldoTotal: 0, statusEstoque: "ZERADO", lotes: [] });
+      expect(p2).toMatchObject({
+        saldoTotal: 0,
+        statusEstoque: "ZERADO",
+        lotes: [],
+      });
     });
 
     it("medicamento só com lote INATIVO não aparece", async () => {
@@ -349,7 +398,8 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     it("classifica ontem, hoje, dia 90 e dia 91 (hoje injetado)", async () => {
       const r = await consultar(MUN_A, UBS_A1);
       const lotes = r.itens.flatMap((i) => i.lotes);
-      const st = (n: string) => lotes.find((l) => l.numeroLote === n)?.statusValidade;
+      const st = (n: string) =>
+        lotes.find((l) => l.numeroLote === n)?.statusValidade;
       expect(st("P5-VENC")).toBe("VENCIDO");
       expect(st("P6-HOJE")).toBe("MES_CORRENTE");
       expect(st("P7-D90")).toBe("CURTA_90D");
@@ -365,28 +415,43 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     });
 
     it("MES_CORRENTE: de hoje até o fim do mês", async () => {
-      const r = await consultar(MUN_A, UBS_A1, { filtroValidade: "MES_CORRENTE" });
+      const r = await consultar(MUN_A, UBS_A1, {
+        filtroValidade: "MES_CORRENTE",
+      });
       expect(nomes(r)).toEqual([NOME[6]]);
     });
 
     it("VALIDADE_90D: hoje até o dia 90, inclusive; dia 91 e vencidos ficam de fora", async () => {
-      const r = await consultar(MUN_A, UBS_A1, { filtroValidade: "VALIDADE_90D" });
+      const r = await consultar(MUN_A, UBS_A1, {
+        filtroValidade: "VALIDADE_90D",
+      });
       expect(nomes(r)).toEqual([NOME[6], NOME[7]]);
     });
   });
 
   describe("busca", () => {
     it("ignora acento e caixa (com e sem acento no termo)", async () => {
-      for (const termo of ["acetilsalicilico", "acetilsalicílico", "ÁCIDO", "acido acetil"]) {
+      for (const termo of [
+        "acetilsalicilico",
+        "acetilsalicílico",
+        "ÁCIDO",
+        "acido acetil",
+      ]) {
         const r = await consultar(MUN_A, UBS_A1, { termo });
         expect(nomes(r)).toEqual([NOME[2]]);
       }
     });
 
     it("busca por princípio ativo, apresentação e número do lote", async () => {
-      expect(nomes(await consultar(MUN_A, UBS_A1, { termo: "dipirona sodica" }))).toEqual([NOME[1]]);
-      expect(nomes(await consultar(MUN_A, UBS_A1, { termo: "500 mg" }))).toEqual([NOME[1], NOME[3]]);
-      expect(nomes(await consultar(MUN_A, UBS_A1, { termo: "lote-p3" }))).toEqual([NOME[3]]);
+      expect(
+        nomes(await consultar(MUN_A, UBS_A1, { termo: "dipirona sodica" })),
+      ).toEqual([NOME[1]]);
+      expect(
+        nomes(await consultar(MUN_A, UBS_A1, { termo: "500 mg" })),
+      ).toEqual([NOME[1], NOME[3]]);
+      expect(
+        nomes(await consultar(MUN_A, UBS_A1, { termo: "lote-p3" })),
+      ).toEqual([NOME[3]]);
     });
 
     it("%, _ e termo inexistente são literais: não casam tudo", async () => {
@@ -400,13 +465,26 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
 
   describe("status de estoque e categoria", () => {
     it("260 un. com consumo de 13/dia é BAIXO_ESTOQUE (<= 20 dias); 261 já é REGULAR", async () => {
-      const baixo = await consultar(MUN_A, UBS_A1, { statusEstoque: "BAIXO_ESTOQUE" });
+      const baixo = await consultar(MUN_A, UBS_A1, {
+        statusEstoque: "BAIXO_ESTOQUE",
+      });
       expect(nomes(baixo)).toEqual([NOME[3]]);
       expect(baixo.itens[0].statusEstoque).toBe("BAIXO_ESTOQUE");
 
-      const regular = await consultar(MUN_A, UBS_A1, { statusEstoque: "REGULAR" });
-      expect(nomes(regular)).toEqual([NOME[1], NOME[4], NOME[5], NOME[6], NOME[7], NOME[8]]);
-      expect(regular.itens.find((i) => i.produtoId === P(4))?.statusEstoque).toBe("REGULAR");
+      const regular = await consultar(MUN_A, UBS_A1, {
+        statusEstoque: "REGULAR",
+      });
+      expect(nomes(regular)).toEqual([
+        NOME[1],
+        NOME[4],
+        NOME[5],
+        NOME[6],
+        NOME[7],
+        NOME[8],
+      ]);
+      expect(
+        regular.itens.find((i) => i.produtoId === P(4))?.statusEstoque,
+      ).toBe("REGULAR");
     });
 
     it("ZERADO traz só o medicamento sem saldo", async () => {
@@ -417,8 +495,12 @@ describe("EstoqueSaldosPgRepository - integração (farmaubs_app, RLS)", () => {
     it("filtro do SQL e rótulo do TypeScript concordam em todos os medicamentos", async () => {
       const todos = await consultar(MUN_A, UBS_A1);
       for (const item of todos.itens) {
-        const filtrado = await consultar(MUN_A, UBS_A1, { statusEstoque: item.statusEstoque });
-        expect(filtrado.itens.map((i) => i.produtoId)).toContain(item.produtoId);
+        const filtrado = await consultar(MUN_A, UBS_A1, {
+          statusEstoque: item.statusEstoque,
+        });
+        expect(filtrado.itens.map((i) => i.produtoId)).toContain(
+          item.produtoId,
+        );
       }
     });
 
