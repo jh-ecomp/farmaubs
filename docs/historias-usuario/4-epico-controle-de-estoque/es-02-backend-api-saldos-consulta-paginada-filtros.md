@@ -180,8 +180,8 @@ Funcionalidade: Consulta Paginada de Saldos de Estoque (Camadas A e C)
 ## 6. Checklist de DoD e aceitação
 
 - [x] Query otimizada com índices compostos no PostgreSQL cobrindo `(ubs_id, produto_id)` e `(ubs_id, data_validade)`.
-- [ ] Endpoint documentado no Swagger com exemplos de parâmetros de consulta.
+- [x] Endpoint documentado no Swagger com exemplos de parâmetros de consulta.
 - [x] Testes unitários (Camada A) cobrindo ordenação por data de validade (FEFO) e cálculo de status semântico.
 - [x] Testes E2E (Camada C) validando paginação, filtros de mês corrente e isolamento por tenant.
 - [x] NF007: consulta medida em ~177 a 218 ms (página sem filtro) e ~172 a 177 ms (`VALIDADE_90D`) com 180 mil lotes sintéticos, abaixo de 500 ms.
-- [ ] Validação manual (passo 6 do CONTRIBUTING) com relato e evidências no PR.
+- [x] Validação manual (passo 6 do CONTRIBUTING) com relato e evidências no PR.
