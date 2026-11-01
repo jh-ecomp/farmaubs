@@ -66,7 +66,7 @@ export interface EstoqueMetricasResponseDto {
 
 ### 1. Pacote Compartilhado (`@farmaubs/shared`)
 - **`packages/shared/src/estoque/metricas.types.ts`**: `EstoqueMetricasResponseDto` e chaves de cache `['estoque', 'metricas', ubsId]`.
-- **`src/domain/estoque/criticidade-helpers.ts`**: Funções puras de cálculo de cobertura em dias (`calcularCoberturaDias`), identificação de risco de ruptura (`verificarRiscoRuptura`) e classificação de vencimento no mês/90 dias (`classificarValidadeLote`), compartilhadas com frontend e mobile.
+- **`packages/shared/src/utils/criticidade-estoque.ts`**: Funções puras de cálculo de cobertura em dias (`calcularCoberturaDias`), identificação de risco de ruptura (`verificarRiscoRuptura`) e classificação de vencimento no mês/90 dias (`classificarValidadeLote`), compartilhadas com frontend e mobile.
 
 ### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
 - **Use Cases**:
@@ -79,8 +79,8 @@ export interface EstoqueMetricasResponseDto {
 ### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
 - **Adaptadores de Banco (`adapters/`)**:
   - `estoque-metricas-pg.repository.ts`: Queries agregadas otimizadas no PostgreSQL utilizando CTEs, com filtro explícito por `ubs_id` e RLS por município (`app.municipio_id`).
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
-  - `estoque-analitica.controller.ts`: Endpoint `GET /api/v1/estoque/metricas` com autenticação JWT e extração de `ubsId`.
+- **Adaptadores de Entrada HTTP (em `api/controllers/`, fora de `infrastructure/`)**:
+  - `estoque-analitica.controller.ts`: Endpoint `GET /api/v1/estoque/metricas?unidadeId=<uuid>` com sessão autenticada, RBAC e escopo de UBS validado pelo `TenantScopeGuard`.
 
 ---
 
