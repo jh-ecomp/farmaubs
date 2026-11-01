@@ -119,9 +119,9 @@ Funcionalidade: Painel de Histórico de Dispensações e Exportação XLSX (Cama
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Filtro padrão ativo na carga inicial configurado para "Ontem e Hoje".
-- [ ] Seletor flexível permitindo range de datas livre e atalhos rápidos.
-- [ ] Exportação funcional em `.xlsx` com download em background sem perda de estado.
-- [ ] Modal de estorno com validação de motivo mínimo e atualização reativa da lista.
-- [ ] Acessibilidade WCAG 2.1 AA na tabela (cabeçalhos semânticos e tags aria).
-- [ ] Testes automatizados da Camada D aprovados.
+- [x] Filtro padrão ativo na carga inicial configurado para "Ontem e Hoje".
+- [x] Seletor flexível permitindo range de datas livre e atalhos rápidos.
+- [x] Exportação funcional em `.xlsx` com download em background sem perda de estado.
+- [x] Modal de estorno com validação de motivo mínimo e atualização reativa da lista.
+- [x] Acessibilidade WCAG 2.1 AA na tabela (cabeçalhos semânticos e tags aria).
+- [x] Testes automatizados da Camada D aprovados.
