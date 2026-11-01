@@ -35,7 +35,10 @@ export class ConsultarSaldosQueryDto {
   @MaxLength(100)
   termo?: string;
 
-  @ApiPropertyOptional({ description: "Categoria clínica do medicamento.", example: "ANTIBIOTICO" })
+  @ApiPropertyOptional({
+    description: "Categoria clínica do medicamento.",
+    example: "ANTIBIOTICO",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(50)
