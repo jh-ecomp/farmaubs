@@ -17,6 +17,7 @@ import { FabricanteEntity } from "./fabricante.entity";
  * [RF008 / NF015]: Entidade TypeORM para lotes físicos de medicamentos por UBS.
  */
 @Entity("lotes")
+@Index("idx_lotes_ubs_validade", ["ubs_id", "data_validade"])
 @Index("uq_lotes_ubs_produto_lote_fabricante", [
   "ubs_id",
   "produto_id",
