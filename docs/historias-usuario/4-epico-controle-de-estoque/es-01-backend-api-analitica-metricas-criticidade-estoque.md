@@ -37,7 +37,7 @@
      - **Validade Curta (< 90 dias)**: Data de validade entre a data de hoje e 90 dias corridos à frente.
    - Lotes já expirados (`validade < hoje`) são contabilizados separadamente para alimentar os relatórios de perda.
 5. **Isolamento Multi-tenant (ADR-016)**:
-   - Todas as queries agregadas filtram estritamente pelo `ubs_id` do usuário logado via variável de sessão RLS do PostgreSQL (`app.current_ubs_id`).
+   - Todas as queries agregadas filtram estritamente pelo `ubs_id` informado (escopo validado pelo `TenantScopeGuard`); o RLS do PostgreSQL isola o município via `app.municipio_id`.
 
 ---
 
@@ -65,7 +65,7 @@ export interface EstoqueMetricasResponseDto {
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 ### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/estoque/metricas.types.ts`**: `EstoqueMetricasResponseDto` e chaves de cache `['estoque', 'metricas', ubsId]`.
+- **`packages/shared/src/estoque/metricas.types.ts`**: `EstoqueMetricasResponseDto` e chaves de cache `['estoque', 'metricas', ubsId]`.
 - **`src/domain/estoque/criticidade-helpers.ts`**: Funções puras de cálculo de cobertura em dias (`calcularCoberturaDias`), identificação de risco de ruptura (`verificarRiscoRuptura`) e classificação de vencimento no mês/90 dias (`classificarValidadeLote`), compartilhadas com frontend e mobile.
 
 ### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
@@ -78,7 +78,7 @@ export interface EstoqueMetricasResponseDto {
 
 ### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
 - **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-estoque-metricas.repository.ts`: Queries agregadas otimizadas no PostgreSQL utilizando CTEs e RLS (`app.current_ubs_id`).
+  - `estoque-metricas-pg.repository.ts`: Queries agregadas otimizadas no PostgreSQL utilizando CTEs, com filtro explícito por `ubs_id` e RLS por município (`app.municipio_id`).
 - **Adaptadores de Entrada HTTP (`controllers/`)**:
   - `estoque-analitica.controller.ts`: Endpoint `GET /api/v1/estoque/metricas` com autenticação JWT e extração de `ubsId`.
 
