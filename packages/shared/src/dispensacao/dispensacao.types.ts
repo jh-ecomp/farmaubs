@@ -48,3 +48,24 @@ export interface DispensacaoEfetivadaResultado {
   itens: ItemDispensadoResultadoDto[];
 }
 
+export interface TotaisCarrinhoDispensacao {
+  totalItens: number;
+  totalUnidades: number;
+}
+
+/**
+ * [RF010]: Calcula o total de medicamentos distintos e a soma de unidades físicas no carrinho.
+ * @param itens - Lista de itens do carrinho de dispensação.
+ * @returns Objeto com totalItens e totalUnidades.
+ */
+export function calcularTotaisCarrinho(
+  itens: Array<{ quantidadeDispensada?: number; quantidade?: number }>,
+): TotaisCarrinhoDispensacao {
+  const totalItens = itens.length;
+  const totalUnidades = itens.reduce((acc, item) => {
+    const qtd = item.quantidadeDispensada ?? item.quantidade ?? 0;
+    return acc + (Number.isFinite(qtd) && qtd > 0 ? qtd : 0);
+  }, 0);
+  return { totalItens, totalUnidades };
+}
+
