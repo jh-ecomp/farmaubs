@@ -28,14 +28,14 @@ export class ConsultarSaldosQueryDto {
   @ApiPropertyOptional({
     description:
       "Busca parcial, sem acentos e sem diferenciar maiúsculas, em nome, princípio ativo, apresentação ou número do lote.",
-    example: "dipirona",
+    example: "amoxicilina",
   })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   termo?: string;
 
-  @ApiPropertyOptional({ description: "Categoria clínica do medicamento.", example: "GERAL" })
+  @ApiPropertyOptional({ description: "Categoria clínica do medicamento.", example: "ANTIBIOTICO" })
   @IsOptional()
   @IsString()
   @MaxLength(50)
