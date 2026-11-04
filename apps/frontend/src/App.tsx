@@ -12,6 +12,7 @@ import { RoleRoute } from "./components/RoleRoute";
 import { MainLayout } from "./components/MainLayout";
 import { AdminUsuarios } from "./pages/AdminUsuarios";
 import { Dispensacao } from "./pages/Dispensacao";
+import { RecebimentoPage } from "./features/recebimento/pages/RecebimentoPage";
 import { AccessDenied } from "./pages/AccessDenied";
 import { ServerError } from "./pages/ServerError";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -66,17 +67,29 @@ export default function App() {
             }
           />
 
-          {/* Rotas de Operação da UBS */}
+          {/* Rotas de Operação da UBS: Estoque e Recebimento de Medicamentos (RE-05 a RE-08) */}
           <Route
             path="/estoque"
             element={
               <ProtectedRoute>
                 <RoleRoute allowedRoles={MATRIZ_PERMISSOES_ROTAS["/estoque"]}>
-                  <MainLayout titulo="Controle de Estoque">
-                    <EmDesenvolvimento
-                      titulo="Controle de Estoque"
-                      descricao="Módulo de estoque, entradas e lotes de medicamentos em desenvolvimento."
-                    />
+                  <MainLayout titulo="Recebimento e Controle de Estoque">
+                    <RecebimentoPage />
+                  </MainLayout>
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/recebimento"
+            element={
+              <ProtectedRoute>
+                <RoleRoute
+                  allowedRoles={MATRIZ_PERMISSOES_ROTAS["/recebimento"]}
+                >
+                  <MainLayout titulo="Recebimento de Medicamentos">
+                    <RecebimentoPage />
                   </MainLayout>
                 </RoleRoute>
               </ProtectedRoute>

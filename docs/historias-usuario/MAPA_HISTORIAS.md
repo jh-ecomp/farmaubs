@@ -60,10 +60,10 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | RE-02 | Backend | API de Catálogo: busca de produtos, apresentações e fabricantes | ✅ Redigida | ✅ Concluída | — |
 | RE-03 | Backend | API de Efetivação: transação de entrada de estoque e atualização de lotes | ✅ Redigida | ✅ Concluída | — |
 | RE-04 | Backend | API de Histórico: filtro ontem/hoje, comprovante, estorno e XLSX | ✅ Redigida | ✅ Concluída | — |
-| RE-05 | Frontend | Cabeçalho do recebimento: formulário de guia CAF/documento e origem | ✅ Redigida | ⏳ Não iniciada | RE-MOB-01 |
-| RE-06 | Frontend | Busca no catálogo, fabricante obrigatório, lote e avisos de validade | ✅ Redigida | ⏳ Não iniciada | RE-MOB-02 |
-| RE-07 | Frontend | Efetivação da entrada: envio da carga e atualização de estoque | ✅ Redigida | ⏳ Não iniciada | RE-MOB-03 |
-| RE-08 | Frontend | Painel de histórico: visualização ontem/hoje, XLSX, termo e estorno | ✅ Redigida | ⏳ Não iniciada | RE-MOB-04 |
+✅ Concluída | RE-MOB-01 |
+✅ Concluída | RE-MOB-02 |
+✅ Concluída | RE-MOB-03 |
+✅ Concluída | RE-MOB-04 |
 | RE-MOB-01 | Mobile | Conferência rápida de guia de recebimento CAF na doca de entrega | ✅ Redigida | ⏳ Não iniciada | RE-05 |
 | RE-MOB-02 | Mobile | Conferência física de lotes e aviso de validade no celular | ✅ Redigida | ⏳ Não iniciada | RE-06 |
 | RE-MOB-03 | Mobile | Confirmação de entrada de estoque e recibo digital mobile | ✅ Redigida | ⏳ Não iniciada | RE-07 |
