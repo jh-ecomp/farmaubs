@@ -279,4 +279,37 @@ describe("RE-07: RecebimentoPage (BDD Camada D)", () => {
     expect(screen.getByText(/Amoxicilina/i)).toBeInTheDocument();
     expect(screen.getByText(/Dipirona Sódica/i)).toBeInTheDocument();
   });
+
+  it("Cenário 5: Exibição da mensagem de erro de negócio retornada pela API", async () => {
+    const user = userEvent.setup();
+    vi.mocked(recebimentoService.efetivarEntrada).mockRejectedValue(
+      new Error("Lote LOTE-2026A encontra-se vencido e não pode ser recebido."),
+    );
+
+    renderComQueryClient(
+      <RecebimentoPage
+        cabecalhoInicial={{
+          numeroDocumento: "GUIA-CAF-2026/104",
+          tipoDocumento: "GUIA_CAF",
+          fornecedorOrigem: "CAF Central - SMS Parnaíba",
+        }}
+        itensIniciais={ITENS_INICIAIS_MOCK.slice(0, 1)}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /Confirmar Entrada no Estoque/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /Confirmar e Abastecer Estoque/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Lote LOTE-2026A encontra-se vencido e não pode ser recebido.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
 });

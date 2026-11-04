@@ -134,11 +134,13 @@ export const RecebimentoPage: React.FC<RecebimentoPageProps> = ({
         "Entrada registrada! O estoque da UBS foi abastecido com sucesso.",
       );
       setAbaAtiva("HISTORICO");
-    } catch {
+    } catch (err) {
       setModalConfirmacaoAberto(false);
-      setErroSubmissao(
-        "Falha ao registrar entrada. Verifique sua conexão e tente novamente.",
-      );
+      const mensagem =
+        err instanceof Error && err.message && err.message !== "Network error"
+          ? err.message
+          : "Falha ao registrar entrada. Verifique sua conexão e tente novamente.";
+      setErroSubmissao(mensagem);
     } finally {
       setSubmetendo(false);
     }

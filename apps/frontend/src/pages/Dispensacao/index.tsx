@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   normalizarDataParaIso,
+  obterIntervaloOntemHoje,
+  type DispensacaoItemListaDto,
   type MedicamentoBuscaDto,
 } from "@farmaubs/shared";
 import {
@@ -18,6 +20,52 @@ import { ModalConfirmacaoDispensacao } from "../../components/dispensacao/ModalC
 import { HistoricoDispensacoes } from "./HistoricoDispensacoes";
 
 type AbaModuloDispensacao = "ATENDIMENTO" | "HISTORICO";
+
+/**
+ * Extrai o total de unidades físicas a partir do resumo textual de medicamentos
+ * (ex: "Losartana 50mg (60), Dipirona 500mg (10)" -> 70).
+ */
+function extrairUnidadesResumo(
+  resumo: string,
+  fallbackTotalItens: number,
+): number {
+  const matches = [...(resumo || "").matchAll(/\((\d+)\)/g)];
+  if (matches.length === 0) return fallbackTotalItens;
+  return matches.reduce((soma, m) => soma + Number(m[1] || 0), 0);
+}
+
+/**
+ * Calcula os totalizadores operacionais do dia a partir das dispensações retornadas pela API.
+ */
+function calcularMetricasDispensacao(itens: DispensacaoItemListaDto[]) {
+  const concluidas = itens.filter((item) => item.status === "concluida");
+  const agora = new Date();
+  const hojeIso = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
+
+  const doDia = concluidas.filter((item) => {
+    const dt = new Date(item.dataAtendimento);
+    if (Number.isNaN(dt.getTime())) return false;
+    const itemIsoLocal = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    const itemIsoUtc = dt.toISOString().slice(0, 10);
+    return itemIsoLocal === hojeIso || itemIsoUtc === hojeIso;
+  });
+
+  const base = doDia.length > 0 ? doDia : concluidas;
+
+  return {
+    totalAtendimentosHoje: base.length,
+    totalUnidadesHoje: base.reduce(
+      (acc, item) =>
+        acc + extrairUnidadesResumo(item.medicamentosResumo, item.totalItens),
+      0,
+    ),
+    totalPacientesHoje: new Set(
+      base.map(
+        (item) => item.pacienteCpf || item.pacienteCns || item.pacienteNome,
+      ),
+    ).size,
+  };
+}
 
 function ConteudoTelaDispensacao() {
   let queryClient: ReturnType<typeof useQueryClient> | null = null;
@@ -54,6 +102,27 @@ function ConteudoTelaDispensacao() {
     totalUnidadesHoje: 0,
     totalPacientesHoje: 0,
   });
+
+  const carregarMetricasDia = useCallback(async () => {
+    try {
+      const intervalo = obterIntervaloOntemHoje(new Date());
+      const resposta = await dispensacaoService.listarDispensacoes({
+        pagina: 1,
+        limite: 100,
+        dataInicio: intervalo.dataInicio,
+        dataFim: intervalo.dataFim,
+      });
+      if (resposta && Array.isArray(resposta.itens)) {
+        setMetricasDia(calcularMetricasDispensacao(resposta.itens));
+      }
+    } catch {
+      // Mantém métricas atuais em caso de falha silenciosa de rede
+    }
+  }, []);
+
+  useEffect(() => {
+    void carregarMetricasDia();
+  }, [carregarMetricasDia, abaAtiva]);
 
   const [notificacao, setNotificacao] = useState<{
     tipo: "sucesso" | "erro";
@@ -200,7 +269,7 @@ function ConteudoTelaDispensacao() {
       )}
 
       {abaAtiva === "HISTORICO" ? (
-        <HistoricoDispensacoes />
+        <HistoricoDispensacoes onEstornoConcluido={carregarMetricasDia} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Coluna da Esquerda: Identificação do Paciente + Busca Textual e Seletor FEFO */}

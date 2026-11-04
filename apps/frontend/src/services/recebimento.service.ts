@@ -357,7 +357,7 @@ export const recebimentoService = {
       "Unidades",
       "Responsavel",
       "Status",
-    ].join("\t");
+    ].join(";");
     const linhas = paginado.itens.map((item) =>
       [
         new Date(item.dataRecebimento).toLocaleString("pt-BR"),
@@ -368,13 +368,16 @@ export const recebimentoService = {
         item.totalUnidades,
         item.usuarioRecebedorNome,
         item.status,
-      ].join("\t"),
+      ]
+        .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+        .join(";"),
     );
-    const conteudo = [cabecalho, ...linhas].join("\n");
+    const conteudo = "\uFEFF" + [cabecalho, ...linhas].join("\r\n");
     const blob = new Blob([conteudo], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      type: "text/csv;charset=utf-8;",
     });
+    const nomeFallbackCsv = nomePadrao.replace(/\.xlsx$/i, ".csv");
 
-    return { blob, nomeArquivo: nomePadrao };
+    return { blob, nomeArquivo: nomeFallbackCsv };
   },
 };

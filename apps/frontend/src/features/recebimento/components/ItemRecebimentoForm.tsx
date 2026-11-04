@@ -299,6 +299,13 @@ export const ItemRecebimentoForm: React.FC<ItemRecebimentoFormProps> = ({
                 aria-expanded={dropdownAberto}
                 aria-controls={listboxId}
                 aria-autocomplete="list"
+                aria-activedescendant={
+                  dropdownAberto &&
+                  indiceDestacado >= 0 &&
+                  produtosSugeridos[indiceDestacado]
+                    ? `${listboxId}-opt-${produtosSugeridos[indiceDestacado].id}`
+                    : undefined
+                }
                 value={termoBusca}
                 onChange={(e) => {
                   setTermoBusca(e.target.value);
@@ -336,6 +343,7 @@ export const ItemRecebimentoForm: React.FC<ItemRecebimentoFormProps> = ({
                     return (
                       <li
                         key={prod.id}
+                        id={`${listboxId}-opt-${prod.id}`}
                         role="option"
                         aria-selected={ativo}
                         onMouseDown={(e) => {

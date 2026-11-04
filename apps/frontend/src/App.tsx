@@ -73,7 +73,7 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <RoleRoute allowedRoles={MATRIZ_PERMISSOES_ROTAS["/estoque"]}>
-                  <MainLayout titulo="Recebimento e Controle de Estoque">
+                  <MainLayout titulo="Recebimento de Medicamentos">
                     <RecebimentoPage />
                   </MainLayout>
                 </RoleRoute>
