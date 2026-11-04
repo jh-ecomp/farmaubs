@@ -83,11 +83,11 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 
 | ID | Título | Testes | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| [DI-06](./di-06-frontend-identificacao-paciente-formulario-historico.md) | Formulário de identificação do paciente (CNS, CPF, nome e nascimento) e histórico | D | DI-02 | ✅ Redigida |
-| [DI-07](./di-07-frontend-busca-textual-medicamentos-seletor-lotes-fefo.md) | Busca textual de medicamentos e seleção de lote FEFO com avisos de dosagem | D | DI-03 | ✅ Redigida |
-| [DI-08](./di-08-frontend-carrinho-receita-posologia-antimicrobianos.md) | Carrinho de dispensação: múltiplos itens, posologia e checagem de receita | D | DI-03, DI-07 | ✅ Redigida |
-| [DI-09](./di-09-frontend-tela-principal-dispensacao-fechamento-atendimento.md) | Tela principal integrando identificação, produtos e baixa de estoque | D | DI-04, DI-06, DI-08 | ✅ Redigida |
-| [DI-10](./di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md) | Painel de histórico: visualização ontem/hoje, busca e exportação em XLSX | D | DI-05, DI-09 | ✅ Redigida |
+| [DI-06](./di-06-frontend-identificacao-paciente-formulario-historico.md) | Formulário de identificação do paciente (CNS, CPF, nome e nascimento) e histórico | D | DI-02 | ✅ Concluída |
+| [DI-07](./di-07-frontend-busca-textual-medicamentos-seletor-lotes-fefo.md) | Busca textual de medicamentos e seleção de lote FEFO com avisos de dosagem | D | DI-03 | ✅ Concluída |
+| [DI-08](./di-08-frontend-carrinho-receita-posologia-antimicrobianos.md) | Carrinho de dispensação: múltiplos itens, posologia e checagem de receita | D | DI-03, DI-07 | ✅ Concluída |
+| [DI-09](./di-09-frontend-tela-principal-dispensacao-fechamento-atendimento.md) | Tela principal integrando identificação, produtos e baixa de estoque | D | DI-04, DI-06, DI-08 | ✅ Concluída |
+| [DI-10](./di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md) | Painel de histórico: visualização ontem/hoje, busca e exportação em XLSX | D | DI-05, DI-09 | ✅ Concluída |
 
 ---
 
@@ -99,5 +99,5 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 - [x] Algoritmo de sugestão de lotes por FEFO em tempo de execução.
 - [x] Validação obrigatória de dados de receita médica para antimicrobianos.
 - [x] Baixa transacional em banco de dados com registro imediato de movimentação de auditoria.
-- [ ] Painel de histórico com filtro padrão ontem/hoje e download de relatório em formato Excel (.xlsx).
-- [ ] Testes automatizados cobrindo as camadas A, B, C e D.
+- [x] Painel de histórico com filtro padrão ontem/hoje e download de relatório em formato Excel (.xlsx).
+- [x] Testes automatizados cobrindo as camadas A, B, C e D.
