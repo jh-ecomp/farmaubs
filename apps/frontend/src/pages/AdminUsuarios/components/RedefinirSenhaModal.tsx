@@ -15,6 +15,9 @@ interface RedefinirSenhaModalProps {
   onSuccess?: (mensagem: string) => void;
 }
 
+export const SENHA_COMPLEXA_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+
 export function gerarSenhaSegura(): string {
   const maiusculas = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   const minusculas = "abcdefghjkmnpqrstuvwxyz";
@@ -89,8 +92,10 @@ export function RedefinirSenhaModal({
 
     const senhaFinal = senhaInput.trim() || gerarSenhaSegura();
 
-    if (senhaFinal.length < 8) {
-      setErro("A senha provisória deve ter no mínimo 8 caracteres.");
+    if (!SENHA_COMPLEXA_REGEX.test(senhaFinal)) {
+      setErro(
+        "A senha provisória deve ter no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.",
+      );
       return;
     }
 
