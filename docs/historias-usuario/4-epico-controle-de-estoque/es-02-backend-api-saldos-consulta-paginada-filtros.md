@@ -37,6 +37,18 @@
    - Suporte a busca parcial (case-insensitive e sem acentos) em nome comercial, princípio ativo, apresentação ou código do lote.
 5. **Paginação Eficiente**:
    - Retorno estruturado contendo dados paginados (`itens`, `total`, `pagina`, `itensPorPagina`, `totalPaginas`).
+6. **Situação do Estoque (`statusEstoque`)**:
+   - `ZERADO`: saldo total do medicamento na UBS igual a zero; nesse caso `lotes` vem vazio, pois só traz lotes ATIVOS com saldo maior que zero.
+   - `BAIXO_ESTOQUE`: cobertura menor ou igual a 20 dias (prazo da CAF de 15 dias + margem de 5 dias, constantes do `@farmaubs/shared`), calculada sobre o consumo da janela de 90 dias; no SQL a comparação é feita em inteiros (`saldo_total * dias_apurados <= 20 * total_dispensado`).
+   - `REGULAR`: demais casos.
+7. **Universo e validade**:
+   - A listagem parte dos medicamentos ativos com ao menos um lote ATIVO na UBS.
+   - `VALIDADE_90D` inclui o mês corrente; `VENCIDOS` considera apenas lotes com saldo maior que zero.
+8. **Paginação por medicamento e desempenho (NF007)**:
+   - A página é definida por medicamento; os lotes são carregados apenas para os medicamentos da página.
+   - Busca, filtros e agregação ocorrem no PostgreSQL, nunca em memória.
+9. **Escopo de acesso**:
+   - `unidadeId` é obrigatório (UUID) e validado contra o escopo do usuário (`@TenantScoped({ checkUbs: true })`); perfis permitidos: Farmacêutico Responsável, Farmacêutico Residente, Gerente e Administrador.
 
 ---
 
@@ -49,6 +61,9 @@
 
 ```typescript
 export class ConsultarSaldosQueryDto {
+  @IsUUID()
+  unidadeId!: string;
+
   @IsOptional()
   @IsString()
   termo?: string;
@@ -62,15 +77,17 @@ export class ConsultarSaldosQueryDto {
   filtroValidade?: 'TODOS' | 'MES_CORRENTE' | 'VALIDADE_90D' | 'VENCIDOS' = 'TODOS';
 
   @IsOptional()
-  @IsEnum(['TODOS', 'EM_ESTOQUE', 'BAIXO_ESTOQUE', 'ZERADO'])
-  statusEstoque?: 'TODOS' | 'EM_ESTOQUE' | 'BAIXO_ESTOQUE' | 'ZERADO' = 'TODOS';
+  @IsEnum(['TODOS', 'REGULAR', 'BAIXO_ESTOQUE', 'ZERADO'])
+  statusEstoque?: 'TODOS' | 'REGULAR' | 'BAIXO_ESTOQUE' | 'ZERADO' = 'TODOS';
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   pagina?: number = 1;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
@@ -114,8 +131,8 @@ export interface ConsultarSaldosPaginadosResponseDto {
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 ### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/estoque/saldos.types.ts`**: `ConsultarSaldosQueryDto`, `MedicamentoSaldoItemDto`, `LoteEstoqueDto` e schema Zod `consultarSaldosQuerySchema`.
-- **`src/domain/estoque/fefo-helpers.ts`**: Funções puras `calcularStatusValidade(validadeDate)` e `ordenarLotesPorFEFO(lotes)`.
+- **`packages/shared/src/estoque/saldos.types.ts`**: constantes `STATUS_VALIDADE_LOTE`, `STATUS_ESTOQUE`, `FILTROS_VALIDADE_SALDOS`, `FILTROS_STATUS_ESTOQUE` e interfaces `LoteEstoqueDto`, `MedicamentoSaldoItemDto` e `ConsultarSaldosPaginadosResponseDto`. O DTO de query (class-validator) fica no backend, em `api/dto/consultar-saldos-query.dto.ts`; o schema Zod previsto originalmente não foi implementado.
+- **`packages/shared/src/utils/fefo-estoque.ts`**: funções puras `calcularStatusValidade`, `ordenarLotesSaldoPorFEFO` e `calcularStatusEstoque`, que reutilizam `classificarValidadeLote` (`utils/criticidade-estoque.ts`, ES-01).
 
 ### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
 - **Use Cases**:
@@ -123,12 +140,12 @@ export interface ConsultarSaldosPaginadosResponseDto {
 
 ### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
 - **Portas (Interfaces)**:
-  - `estoque-saldos.repository.port.ts`: Contrato `consultarSaldosPaginados(ubsId: string, filtros: ConsultarSaldosQueryDto)`.
+  - `estoque-saldos.repository.port.ts`: contrato `RepositorioEstoqueSaldosPort.consultarSaldosPaginados(ubsId, filtros: FiltrosConsultaSaldos, hoje)`.
 
 ### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
 - **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-estoque-saldos.repository.ts`: Implementa `EstoqueSaldosRepositoryPort` com query builder, paginação e joins otimizados.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
+  - `estoque-saldos-pg.repository.ts`: Implementa `RepositorioEstoqueSaldosPort` com SQL parametrizado (CTE) via TransactionContext, paginação por medicamento e agregação no PostgreSQL.
+- **Controller HTTP (`api/controllers/`) e DTO de entrada (`api/dto/`)**:
   - `estoque-saldos.controller.ts`: Endpoint `GET /api/v1/estoque/saldos` com validação de query parameters e RBAC.
 
 ---
@@ -152,12 +169,19 @@ Funcionalidade: Consulta Paginada de Saldos de Estoque (Camadas A e C)
     Então a API deve retornar apenas os medicamentos que contêm lotes com statusValidade "MES_CORRENTE"
     E os metadados de paginação devem refletir o total de registros filtrados
 ```
+**Cenários implementados** (`apps/backend/test/features/estoque_saldos.feature`, Camada C/BDD):
+- Paginação por medicamento com lotes agrupados
+- Segunda página não repete medicamentos da primeira
+- Filtro de validade do mês corrente
+- Isolamento dos saldos entre UBSs
 
 ---
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Query otimizada com índices compostos no PostgreSQL cobrindo `(ubs_id, produto_id)` e `(ubs_id, data_validade)`.
-- [ ] Endpoint documentado no Swagger com exemplos de parâmetros de consulta.
-- [ ] Testes unitários (Camada A) cobrindo ordenação por data de validade (FEFO) e cálculo de status semântico.
-- [ ] Testes E2E (Camada C) validando paginação, filtros de mês corrente e isolamento por tenant.
+- [x] Query otimizada com índices compostos no PostgreSQL cobrindo `(ubs_id, produto_id)` e `(ubs_id, data_validade)`.
+- [x] Endpoint documentado no Swagger com exemplos de parâmetros de consulta.
+- [x] Testes unitários (Camada A) cobrindo ordenação por data de validade (FEFO) e cálculo de status semântico.
+- [x] Testes E2E (Camada C) validando paginação, filtros de mês corrente e isolamento por tenant.
+- [x] NF007: consulta medida em ~177 a 218 ms (página sem filtro) e ~172 a 177 ms (`VALIDADE_90D`) com 180 mil lotes sintéticos, abaixo de 500 ms.
+- [x] Validação manual (passo 6 do CONTRIBUTING) com relato e evidências no PR.
