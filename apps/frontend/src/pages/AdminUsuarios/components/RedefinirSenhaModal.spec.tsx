@@ -137,4 +137,71 @@ describe("RedefinirSenhaModal — Ação do Administrador (RF001 / RF003)", () =
     await user.click(btnConcluir);
     expect(onCloseMock).toHaveBeenCalled();
   });
+
+  it("deve validar formato e rejeitar senha provisória manual que não atenda à complexidade", async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <RedefinirSenhaModal
+        isOpen={true}
+        usuario={mockUsuario}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const inputSenha = screen.getByPlaceholderText(
+      /Clique em Gerar Senha ou digite aqui.../i,
+    );
+
+    // Digita senha fraca (apenas números ou sem caractere especial)
+    await user.type(inputSenha, "12345678");
+
+    const btnConfirmar = screen.getByRole("button", {
+      name: /Confirmar Emissão/i,
+    });
+    await user.click(btnConfirmar);
+
+    expect(
+      screen.getByText(
+        /A senha provisória deve ter no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial/i,
+      ),
+    ).toBeInTheDocument();
+    expect(mockAuthService.redefinirSenhaProvisoria).not.toHaveBeenCalled();
+  });
+
+  it("deve aceitar senha provisória manual válida com complexidade adequada", async () => {
+    const user = userEvent.setup();
+
+    mockAuthService.redefinirSenhaProvisoria.mockResolvedValueOnce({
+      usuarioId: "usr-carlos-123",
+      senhaProvisoria: "TempPass#2026",
+      mensagem: "Senha provisória gerada",
+    });
+
+    renderWithProviders(
+      <RedefinirSenhaModal
+        isOpen={true}
+        usuario={mockUsuario}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const inputSenha = screen.getByPlaceholderText(
+      /Clique em Gerar Senha ou digite aqui.../i,
+    );
+
+    await user.type(inputSenha, "TempPass#2026");
+
+    const btnConfirmar = screen.getByRole("button", {
+      name: /Confirmar Emissão/i,
+    });
+    await user.click(btnConfirmar);
+
+    await waitFor(() => {
+      expect(mockAuthService.redefinirSenhaProvisoria).toHaveBeenCalledWith(
+        "usr-carlos-123",
+        "TempPass#2026",
+      );
+    });
+  });
 });

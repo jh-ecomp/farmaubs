@@ -428,9 +428,8 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
         within(modal).getByLabelText(/e-mail institucional/i),
         "beatriz.santos@saude.gov.br",
       );
-      // Senha provisória é gerada automaticamente pelo sistema e é readOnly
+      // Senha provisória é gerada automaticamente pelo sistema
       const inputSenha = within(modal).getByLabelText(/senha provisória/i);
-      expect(inputSenha).toHaveAttribute("readonly");
       expect(inputSenha).not.toHaveValue("");
 
       // Aguarda opções de município no modal
@@ -475,7 +474,6 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
           perfil: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
           ubsIds: ["ubs-frei-higino"],
           cpf: undefined,
-          crf: undefined,
           deveTrocarSenha: true,
         });
       });
@@ -549,7 +547,6 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
 
       await user.type(inputNome, "Dra. Mariana Vasconcelos");
       await user.type(inputEmail, "mariana.vasconcelos@saude.gov.br");
-      expect(inputSenha).toHaveAttribute("readonly");
       const senhaGerada = (inputSenha as HTMLInputElement).value;
       expect(senhaGerada.length).toBeGreaterThanOrEqual(8);
 
@@ -592,6 +589,121 @@ describe("Gestão de Usuários no Painel Administrativo — Camada D (ADR-030 / 
       expect(inputEmail).toHaveValue("mariana.vasconcelos@saude.gov.br");
       expect(inputSenha).toHaveValue(senhaGerada);
       expect(selectMunicipio).toHaveValue("mun-parnaiba");
+    });
+
+    it("deve rejeitar CPF inválido matematicamente e bloquear o envio do formulário", async () => {
+      const user = userEvent.setup();
+      setupAuthenticatedAdmin();
+
+      renderWithProviders(<AdminUsuarios />, {
+        initialEntries: ["/usuarios"],
+      });
+
+      const btnNovoUsuario = await screen.findByRole("button", {
+        name: /\+ novo usuário/i,
+      });
+      await user.click(btnNovoUsuario);
+
+      const modal = await screen.findByRole("dialog");
+      await user.type(
+        within(modal).getByLabelText(/nome completo/i),
+        "Dra. Mariana Vasconcelos",
+      );
+      await user.type(
+        within(modal).getByLabelText(/e-mail institucional/i),
+        "mariana.vasconcelos@saude.gov.br",
+      );
+
+      // Preenche CPF inválido (todos dígitos iguais)
+      const inputCpf = within(modal).getByLabelText(/cpf/i);
+      await user.type(inputCpf, "11111111111");
+
+      const selectMunicipio =
+        within(modal).getByLabelText(/município de lotação/i);
+      await waitFor(() => {
+        expect(
+          within(modal).getByRole("option", { name: /parnaíba/i }),
+        ).toBeInTheDocument();
+      });
+      await user.selectOptions(selectMunicipio, "mun-parnaiba");
+
+      await waitFor(() => {
+        expect(within(modal).getByText("UBS Frei Higino")).toBeInTheDocument();
+      });
+      const checkboxUbs = within(modal).getByRole("checkbox", {
+        name: /ubs frei higino/i,
+      });
+      await user.click(checkboxUbs);
+
+      // Tenta submeter
+      const btnSubmit = within(modal).getByRole("button", {
+        name: /cadastrar usuário/i,
+      });
+      await user.click(btnSubmit);
+
+      // Deve exibir mensagem de erro e não chamar cadastrarUsuario
+      expect(
+        await within(modal).findByText("Informe um CPF válido."),
+      ).toBeInTheDocument();
+      expect(mockUsuarioService.cadastrarUsuario).not.toHaveBeenCalled();
+    });
+
+    it("deve rejeitar senha provisória fraca digitada manualmente fora do formato exigido", async () => {
+      const user = userEvent.setup();
+      setupAuthenticatedAdmin();
+
+      renderWithProviders(<AdminUsuarios />, {
+        initialEntries: ["/usuarios"],
+      });
+
+      const btnNovoUsuario = await screen.findByRole("button", {
+        name: /\+ novo usuário/i,
+      });
+      await user.click(btnNovoUsuario);
+
+      const modal = await screen.findByRole("dialog");
+      await user.type(
+        within(modal).getByLabelText(/nome completo/i),
+        "Dra. Mariana Vasconcelos",
+      );
+      await user.type(
+        within(modal).getByLabelText(/e-mail institucional/i),
+        "mariana.vasconcelos@saude.gov.br",
+      );
+
+      // Apaga a senha gerada e digita uma senha fraca sem símbolos/maiúsculas
+      const inputSenha = within(modal).getByLabelText(/senha provisória/i);
+      await user.clear(inputSenha);
+      await user.type(inputSenha, "fraca123");
+
+      const selectMunicipio =
+        within(modal).getByLabelText(/município de lotação/i);
+      await waitFor(() => {
+        expect(
+          within(modal).getByRole("option", { name: /parnaíba/i }),
+        ).toBeInTheDocument();
+      });
+      await user.selectOptions(selectMunicipio, "mun-parnaiba");
+
+      await waitFor(() => {
+        expect(within(modal).getByText("UBS Frei Higino")).toBeInTheDocument();
+      });
+      const checkboxUbs = within(modal).getByRole("checkbox", {
+        name: /ubs frei higino/i,
+      });
+      await user.click(checkboxUbs);
+
+      const btnSubmit = within(modal).getByRole("button", {
+        name: /cadastrar usuário/i,
+      });
+      await user.click(btnSubmit);
+
+      expect(
+        await within(modal).findByText(
+          "A senha deve ter no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.",
+        ),
+      ).toBeInTheDocument();
+      expect(mockUsuarioService.cadastrarUsuario).not.toHaveBeenCalled();
     });
   });
 
