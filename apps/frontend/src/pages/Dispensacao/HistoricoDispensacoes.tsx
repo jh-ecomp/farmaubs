@@ -18,6 +18,7 @@ import { ModalEstornoDispensacao } from "../../components/dispensacao/ModalEstor
 export interface HistoricoDispensacoesProps {
   ubsId?: string;
   dataReferencia?: Date;
+  onEstornoConcluido?: () => void;
 }
 
 /**
@@ -27,6 +28,7 @@ export interface HistoricoDispensacoesProps {
 export function HistoricoDispensacoes({
   ubsId,
   dataReferencia,
+  onEstornoConcluido,
 }: HistoricoDispensacoesProps) {
   let queryClient: ReturnType<typeof useQueryClient> | null = null;
   try {
@@ -123,6 +125,7 @@ export function HistoricoDispensacoes({
         void queryClient.invalidateQueries({ queryKey: ["estoque-saldos"] });
         void queryClient.invalidateQueries({ queryKey: ["ultimas-dispensas"] });
       }
+      onEstornoConcluido?.();
     } catch (err) {
       setMensagemFeedback({
         tipo: "erro",

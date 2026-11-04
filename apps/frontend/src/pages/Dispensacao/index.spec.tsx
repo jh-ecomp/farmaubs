@@ -176,4 +176,56 @@ describe("Funcionalidade: Fluxo Completo da Tela Principal de Dispensação (Cam
       screen.getByText(/Nenhum medicamento adicionado à receita/i),
     ).toBeInTheDocument();
   });
+
+  it("Cenário: Carrega os indicadores do dia a partir do histórico de dispensações ao montar a tela", async () => {
+    const hojeIso = new Date().toISOString();
+    vi.mocked(dispensacaoService.listarDispensacoes).mockResolvedValue({
+      itens: [
+        {
+          id: "disp-1",
+          numeroAtendimento: "ATD-2026-0001",
+          dataAtendimento: hojeIso,
+          status: "concluida",
+          pacienteNome: "Maria Silva",
+          pacienteCpf: "11122233344",
+          pacienteCns: "700000000000001",
+          dispensadorNome: "Farmacêutico UBS",
+          totalItens: 2,
+          medicamentosResumo: "Losartana Potássica (60), Hidroclorotiazida (30)",
+        },
+        {
+          id: "disp-2",
+          numeroAtendimento: "ATD-2026-0002",
+          dataAtendimento: hojeIso,
+          status: "concluida",
+          pacienteNome: "João Souza",
+          pacienteCpf: "55566677788",
+          pacienteCns: "700000000000002",
+          dispensadorNome: "Farmacêutico UBS",
+          totalItens: 1,
+          medicamentosResumo: "Dipirona Sódica (10)",
+        },
+      ],
+      totalItens: 2,
+      pagina: 1,
+      limite: 200,
+      totalPaginas: 1,
+      dataInicioEfetiva: hojeIso.slice(0, 10),
+      dataFimEfetiva: hojeIso.slice(0, 10),
+    });
+
+    render(<Dispensacao />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("metrica-atendimentos-hoje")).toHaveTextContent(
+        "2",
+      );
+      expect(screen.getByTestId("metrica-unidades-hoje")).toHaveTextContent(
+        "100",
+      );
+      expect(screen.getByTestId("metrica-pacientes-hoje")).toHaveTextContent(
+        "2",
+      );
+    });
+  });
 });

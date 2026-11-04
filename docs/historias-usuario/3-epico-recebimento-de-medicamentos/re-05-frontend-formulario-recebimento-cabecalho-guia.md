@@ -118,7 +118,7 @@ Funcionalidade: Cabeçalho de Recebimento de Cargas (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Componente implementado com React Hook Form e Zod.
-- [ ] Testes unitários de componente (Camada D) via Vitest e Testing Library validando renderização, mensagens de erro e preenchimento padrão.
-- [ ] Validação de contraste e navegabilidade por teclado atendendo aos requisitos da ADR-032.
-- [ ] Tipos e enums importados ou exportados via `@farmaubs/shared`.
+- [x] Componente implementado com React Hook Form e Zod.
+- [x] Testes unitários de componente (Camada D) via Vitest e Testing Library validando renderização, mensagens de erro e preenchimento padrão.
+- [x] Validação de contraste e navegabilidade por teclado atendendo aos requisitos da ADR-032.
+- [x] Tipos e enums importados ou exportados via `@farmaubs/shared`.

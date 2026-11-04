@@ -29,6 +29,12 @@ export const MATRIZ_PERMISSOES_ROTAS: Record<string, PerfilCodigo[]> = {
     PerfilCodigo.GERENTE,
     PerfilCodigo.ADMINISTRADOR,
   ],
+  "/recebimento": [
+    PerfilCodigo.FARMACEUTICO_RESIDENTE,
+    PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+    PerfilCodigo.GERENTE,
+    PerfilCodigo.ADMINISTRADOR,
+  ],
   "/dispensas": [
     PerfilCodigo.FARMACEUTICO_RESIDENTE,
     PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
@@ -122,4 +128,3 @@ export function podeAcessarRecurso(
   }
   return verificarPerfilPermitido(perfilUsuario, perfisAutorizados);
 }
-
