@@ -74,7 +74,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 ## Épico 4: Controle de Estoque
 | ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
 | --- | --- | --- | --- | --- | --- |
-| ES-01 | Backend | API Analítica: métricas globais, cálculo de ruptura e validade curta | ✅ Redigida | ⏳ Não iniciada | — |
+| ES-01 | Backend | API Analítica: métricas globais, cálculo de ruptura e validade curta | ✅ Redigida | ⏳ Especificada / Em andamento | — |
 | ES-02 | Backend | API de Saldos: consulta paginada com busca, categorias e lotes | ✅ Redigida | ⏳ Não iniciada | — |
 | ES-03 | Backend | API de Ajustes: ajuste manual transacional com motivo e auditoria | ✅ Redigida | ⏳ Não iniciada | — |
 | ES-04 | Backend | API de Rastreabilidade: linha do tempo de movimentações por lote | ✅ Redigida | ⏳ Não iniciada | — |

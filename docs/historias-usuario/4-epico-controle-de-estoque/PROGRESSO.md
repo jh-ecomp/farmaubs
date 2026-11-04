@@ -21,7 +21,7 @@ Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/
 
 | Código | Camada | Título | Especificação | Status Redação | Status Implementação |
 | --- | --- | --- | --- | --- | --- |
-| **ES-01** | Backend | API Analítica: Métricas de criticidade, totalizadores e cálculo de ruptura e validade curta (RF018, RF022, RF023) | [es-01-backend-api-analitica-metricas-criticidade-estoque.md](./es-01-backend-api-analitica-metricas-criticidade-estoque.md) | ✅ Redigida | ⏳ Não iniciada |
+| **ES-01** | Backend | API Analítica: Métricas de criticidade, totalizadores e cálculo de ruptura e validade curta (RF018, RF022, RF023) | [es-01-backend-api-analitica-metricas-criticidade-estoque.md](./es-01-backend-api-analitica-metricas-criticidade-estoque.md) | ✅ Redigida | ⏳ Especificada / Em andamento |
 | **ES-02** | Backend | API de Saldos: Consulta paginada com busca textual, categorias, agrupamento por lote e status (RF005, RF022) | [es-02-backend-api-saldos-consulta-paginada-filtros.md](./es-02-backend-api-saldos-consulta-paginada-filtros.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-03** | Backend | API de Ajustes: Rota atômica para ajustes rápidos (+/-) com motivo, justificativa e auditoria (RF009, RF011, RF028) | [es-03-backend-api-ajustes-estoque-transacao-justificada.md](./es-03-backend-api-ajustes-estoque-transacao-justificada.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-04** | Backend | API de Rastreabilidade: Histórico cronológico e linha do tempo de movimentações por lote (RF028) | [es-04-backend-api-rastreabilidade-historico-lote.md](./es-04-backend-api-rastreabilidade-historico-lote.md) | ✅ Redigida | ⏳ Não iniciada |

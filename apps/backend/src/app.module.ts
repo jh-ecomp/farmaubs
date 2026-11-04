@@ -9,6 +9,7 @@ import { AcessoModule } from "./modules/acesso/acesso.module";
 import { AdministracaoModule } from "./modules/administracao/administracao.module";
 import { RecebimentoModule } from "./modules/recebimento/recebimento.module";
 import { DispensacaoModule } from "./modules/dispensacao/dispensacao.module";
+import { EstoqueModule } from "./modules/estoque/estoque.module";
 import { SessionAuthGuard } from "./common/guards/session-auth.guard";
 import { MustChangePasswordGuard } from "./modules/acesso/api/guards/must-change-password.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
@@ -78,6 +79,7 @@ import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/pers
     AdministracaoModule,
     RecebimentoModule,
     DispensacaoModule,
+    EstoqueModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionAuthGuard },
