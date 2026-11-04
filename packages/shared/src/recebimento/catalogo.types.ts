@@ -8,7 +8,9 @@ export interface ProdutoCatalogoResponseDto {
   codigoAtc?: string | null;
   nomeComercial?: string | null;
   principioAtivo: string;
+  denominacaoGenerica?: string | null;
   dosagem?: string | null;
+  concentracao?: string | null;
   formaFarmaceutica?: string | null;
   apresentacao?: string | null;
   unidadeMedida?: string | null;

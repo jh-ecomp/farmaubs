@@ -2,6 +2,8 @@
  * [RF024]: Utilitários puros para validação de datas de validade de lotes de medicamentos.
  */
 
+export type StatusValidadeRecebimento = "VENCIDO" | "VALIDADE_CURTA" | "NORMAL";
+
 /**
  * Calcula a quantidade de dias corridos entre a data de referência e a validade do lote.
  * @param dataValidade - Data de expiração (string YYYY-MM-DD ou Date).
@@ -12,7 +14,7 @@ export function calcularDiasAteValidade(
   dataValidade: string | Date,
   dataReferencia: Date = new Date(),
 ): number {
-  const dVal = typeof dataValidade === "string" ? new Date(dataValidade) : dataValidade;
+  const dVal = typeof dataValidade === "string" ? new Date(dataValidade) : new Date(dataValidade);
   const dRef = new Date(dataReferencia);
 
   // Normaliza horas para comparar apenas dia civil
@@ -46,4 +48,20 @@ export function validarValidadeRecebimento(
     validadeCurta,
     diasRestantes,
   };
+}
+
+/**
+ * Classifica o status da data de validade no momento do recebimento físico.
+ * @param dataValidade - Data de validade do lote (string YYYY-MM-DD ou Date).
+ * @param dataReferencia - Data de referência para comparação (padrão: hoje).
+ * @returns 'VENCIDO' (<= 0 dias), 'VALIDADE_CURTA' (< 180 dias) ou 'NORMAL' (>= 180 dias).
+ */
+export function classificarValidadeRecebimento(
+  dataValidade: string | Date,
+  dataReferencia: Date = new Date(),
+): StatusValidadeRecebimento {
+  const { vencido, validadeCurta } = validarValidadeRecebimento(dataValidade, dataReferencia);
+  if (vencido) return "VENCIDO";
+  if (validadeCurta) return "VALIDADE_CURTA";
+  return "NORMAL";
 }
