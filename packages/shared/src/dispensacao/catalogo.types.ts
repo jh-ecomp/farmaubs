@@ -5,6 +5,7 @@ export interface MedicamentoBuscaDto {
   apresentacao: string;
   categoria: string;
   antimicrobiano: boolean;
+  indiceTerapeuticoEstreito?: boolean;
   requerDataReceita?: boolean;
   saldoTotalUbs: number;
 }

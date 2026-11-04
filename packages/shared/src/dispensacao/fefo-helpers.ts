@@ -74,3 +74,59 @@ export function selecionarLoteSugeridoFEFO(
   );
 }
 
+export type CriticidadeValidadeLote = "NORMAL" | "ALERTA" | "CRITICO" | "VENCIDO";
+
+/**
+ * [RF010]: Classifica visualmente a criticidade de vencimento de um lote com base nos dias restantes.
+ * @param diasParaVencimento - Dias até a data de validade do lote.
+ * @returns Nível de criticidade ('VENCIDO', 'CRITICO', 'ALERTA' ou 'NORMAL').
+ */
+export function obterCriticidadeValidade(
+  diasParaVencimento: number,
+): CriticidadeValidadeLote {
+  if (diasParaVencimento < 0) return "VENCIDO";
+  if (diasParaVencimento <= 15) return "CRITICO";
+  if (diasParaVencimento <= 30) return "ALERTA";
+  return "NORMAL";
+}
+
+const TERMOS_INDICE_TERAPEUTICO_ESTREITO = [
+  "digoxina",
+  "litio",
+  "lítio",
+  "carbonato de litio",
+  "carbonato de lítio",
+  "varfarina",
+  "carbamazepina",
+  "fenitoina",
+  "fenitoína",
+  "valproato",
+  "acido valproico",
+  "ácido valproico",
+  "levotiroxina",
+  "teofilina",
+];
+
+/**
+ * [RF010]: Identifica se um medicamento possui Índice Terapêutico Estreito (ex.: Digoxina, Lítio, Varfarina, Carbamazepina).
+ * @param medicamento - Objeto de medicamento ou texto do princípio ativo / nome comercial.
+ * @returns Verdadeiro se requerer alerta clínico de Índice Terapêutico Estreito.
+ */
+export function ehMedicamentoIndiceTerapeuticoEstreito(
+  medicamento: {
+    principioAtivo?: string;
+    nomeComercial?: string;
+    indiceTerapeuticoEstreito?: boolean;
+  },
+): boolean {
+  if (typeof medicamento.indiceTerapeuticoEstreito === "boolean") {
+    return medicamento.indiceTerapeuticoEstreito;
+  }
+  const texto = `${medicamento.principioAtivo ?? ""} ${medicamento.nomeComercial ?? ""}`
+    .toLowerCase()
+    .trim();
+  return TERMOS_INDICE_TERAPEUTICO_ESTREITO.some((termo) =>
+    texto.includes(termo),
+  );
+}
+

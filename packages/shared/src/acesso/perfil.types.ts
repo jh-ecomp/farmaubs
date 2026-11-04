@@ -35,6 +35,12 @@ export const MATRIZ_PERMISSOES_ROTAS: Record<string, PerfilCodigo[]> = {
     PerfilCodigo.GERENTE,
     PerfilCodigo.ADMINISTRADOR,
   ],
+  "/dispensacao": [
+    PerfilCodigo.FARMACEUTICO_RESIDENTE,
+    PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+    PerfilCodigo.GERENTE,
+    PerfilCodigo.ADMINISTRADOR,
+  ],
   "/indicadores": [
     PerfilCodigo.FARMACEUTICO_RESIDENTE,
     PerfilCodigo.FARMACEUTICO_RESPONSAVEL,

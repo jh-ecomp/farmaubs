@@ -109,8 +109,8 @@ Funcionalidade: Busca Textual e Seleção de Lote FEFO (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Campo de busca puramente textual sem dependência de hardware de leitura de código de barras.
-- [ ] Lote com menor data de validade pré-selecionado por padrão com badge FEFO.
-- [ ] Possibilidade de trocar manualmente o lote para outro com saldo positivo.
-- [ ] Alertas visuais para medicamentos de validade curta e índice terapêutico estreito.
-- [ ] Testes da Camada D (Vitest) aprovados com cobertura de interação e acessibilidade.
+- [x] Campo de busca puramente textual sem dependência de hardware de leitura de código de barras.
+- [x] Lote com menor data de validade pré-selecionado por padrão com badge FEFO.
+- [x] Possibilidade de trocar manualmente o lote para outro com saldo positivo.
+- [x] Alertas visuais para medicamentos de validade curta e índice terapêutico estreito.
+- [x] Testes da Camada D (Vitest) aprovados com cobertura de interação e acessibilidade.

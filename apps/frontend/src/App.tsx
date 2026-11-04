@@ -11,6 +11,7 @@ import SessionTimeoutModal from "./components/SessionTimeoutModal";
 import { RoleRoute } from "./components/RoleRoute";
 import { MainLayout } from "./components/MainLayout";
 import { AdminUsuarios } from "./pages/AdminUsuarios";
+import { Dispensacao } from "./pages/Dispensacao";
 import { AccessDenied } from "./pages/AccessDenied";
 import { ServerError } from "./pages/ServerError";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -43,12 +44,12 @@ export default function App() {
             }
           />
 
-          {/* Rotas protegidas gerais */}
+          {/* Redireciona a rota transitória pós-login para a bancada de Dispensação (DI-09) */}
           <Route
             path="/em-desenvolvimento"
             element={
               <ProtectedRoute>
-                <EmDesenvolvimento />
+                <Navigate to="/dispensas" replace />
               </ProtectedRoute>
             }
           />
@@ -88,10 +89,22 @@ export default function App() {
               <ProtectedRoute>
                 <RoleRoute allowedRoles={MATRIZ_PERMISSOES_ROTAS["/dispensas"]}>
                   <MainLayout titulo="Dispensação de Medicamentos">
-                    <EmDesenvolvimento
-                      titulo="Dispensação"
-                      descricao="Módulo de registro e conferência de dispensações em desenvolvimento."
-                    />
+                    <Dispensacao />
+                  </MainLayout>
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dispensacao"
+            element={
+              <ProtectedRoute>
+                <RoleRoute
+                  allowedRoles={MATRIZ_PERMISSOES_ROTAS["/dispensacao"]}
+                >
+                  <MainLayout titulo="Dispensação de Medicamentos">
+                    <Dispensacao />
                   </MainLayout>
                 </RoleRoute>
               </ProtectedRoute>

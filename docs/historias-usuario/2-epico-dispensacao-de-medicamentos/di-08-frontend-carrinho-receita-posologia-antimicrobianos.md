@@ -109,8 +109,8 @@ Funcionalidade: Carrinho da Receita e Validação de Antimicrobianos (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Suporte à adição e remoção fluida de múltiplos itens no mesmo atendimento.
-- [ ] Campo de posologia livre editável por medicamento.
-- [ ] Regra de 10 dias para antimicrobianos validada no frontend impedindo avanço com receita vencida.
-- [ ] Teclado e leitores de tela compatíveis com WCAG 2.1 AA.
-- [ ] Testes automatizados da Camada D cobrindo cenários com e sem antimicrobianos.
+- [x] Suporte à adição e remoção fluida de múltiplos itens no mesmo atendimento.
+- [x] Campo de posologia livre editável por medicamento.
+- [x] Regra de 10 dias para antimicrobianos validada no frontend impedindo avanço com receita vencida.
+- [x] Teclado e leitores de tela compatíveis com WCAG 2.1 AA.
+- [x] Testes automatizados da Camada D cobrindo cenários com e sem antimicrobianos.
