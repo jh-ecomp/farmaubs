@@ -2,6 +2,7 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcrypt';
+import { seedCicloOperacionalParnaiba } from './seed-parnaiba-epicos';
 
 // Leitura do arquivo de variáveis de ambiente (raiz do monorepo)
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
@@ -927,78 +928,6 @@ async function seedProdutos(client: PoolClient): Promise<Map<string, string>> {
   return ids;
 }
 
-async function seedRecebimentosIniciais(
-  client: PoolClient,
-  municipioIds: Map<string, string>,
-  unidadeIds: Map<string, string>,
-  usuarioIds: Map<string, string>,
-  fabricanteIds: Map<string, string>,
-  produtoIds: Map<string, string>,
-): Promise<void> {
-  console.log('  → Inserindo recebimento de carga inicial para testes...');
-
-  const municipioSpId = municipioIds.get('3550308');
-  const ubsJardimId = unidadeIds.get('UBS Jardim Primavera');
-  const farmaSpId = usuarioIds.get('farmaceutico.responsavel@farmaubs.dev');
-  const emsId = fabricanteIds.get('EMS');
-  const amoxId = produtoIds.get('Amoxicilina 500 mg');
-
-  if (municipioSpId && ubsJardimId && farmaSpId && emsId && amoxId) {
-    await client.query(`SET LOCAL app.municipio_id = '${municipioSpId}'`);
-
-    const docExistente = await client.query<{ id: string }>(
-      `SELECT id FROM documentos_entrada WHERE numero_documento = 'NF-10240' AND municipio_id = $1`,
-      [municipioSpId],
-    );
-
-    if (docExistente.rows.length === 0) {
-      const doc = await client.query<{ id: string }>(
-        `INSERT INTO documentos_entrada (
-           municipio_id, ubs_id, numero_documento, tipo_documento,
-           fornecedor_origem, data_recebimento, usuario_recebedor_id,
-           status, observacoes
-         )
-         VALUES ($1, $2, 'NF-10240', 'NOTA_FISCAL', 'EMS S/A', now(), $3, 'CONCLUIDO', 'Carga inicial de antibióticos para assistência básica')
-         RETURNING id`,
-        [municipioSpId, ubsJardimId, farmaSpId],
-      );
-      const docId = doc.rows[0].id;
-
-      const lote = await client.query<{ id: string }>(
-        `INSERT INTO lotes (
-           municipio_id, ubs_id, produto_id, fabricante_id,
-           numero_lote, data_validade, saldo_atual, status
-         )
-         VALUES ($1, $2, $3, $4, 'EMS-2026-X1', CURRENT_DATE + 365, 1000, 'ATIVO')
-         RETURNING id`,
-        [municipioSpId, ubsJardimId, amoxId, emsId],
-      );
-      const loteId = lote.rows[0].id;
-
-      await client.query(
-        `INSERT INTO recebimento_itens (
-           municipio_id, documento_entrada_id, produto_id, fabricante_id, lote_id,
-           numero_lote, data_validade, quantidade_recebida, observacoes
-         )
-         VALUES ($1, $2, $3, $4, $5, 'EMS-2026-X1', CURRENT_DATE + 365, 1000, 'Lote padrão de recebimento')`,
-        [municipioSpId, docId, amoxId, emsId, loteId],
-      );
-
-      await client.query(
-        `INSERT INTO movimentacoes_estoque (
-           municipio_id, ubs_id, lote_id, tipo_movimentacao,
-           quantidade, saldo_anterior, saldo_posterior,
-           documento_referencia_id, tipo_documento_referencia,
-           usuario_id, justificativa
-         )
-         VALUES ($1, $2, $3, 'ENTRADA_RECEBIMENTO', 1000, 0, 1000, $4, 'DOCUMENTO_ENTRADA', $5, 'Recebimento de carga regular via NF-10240')`,
-        [municipioSpId, ubsJardimId, loteId, docId, farmaSpId],
-      );
-    }
-  }
-  console.log(`     ✔ Recebimento inicial e lote de teste configurados com sucesso.`);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1022,7 +951,7 @@ async function main(): Promise<void> {
 
     const fabricanteIds = await seedFabricantes(client);
     const produtoIds = await seedProdutos(client);
-    await seedRecebimentosIniciais(
+    await seedCicloOperacionalParnaiba(
       client,
       municipioIds,
       unidadeIds,

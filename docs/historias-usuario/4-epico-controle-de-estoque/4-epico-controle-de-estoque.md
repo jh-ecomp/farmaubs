@@ -98,8 +98,8 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 
 | ID | Título | Testes | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| [ES-01](./es-01-backend-api-analitica-metricas-criticidade-estoque.md) | API Analítica: métricas globais, cálculo de cobertura e lotes com vencimento próximo | A, C | RE-01 | ✅ Redigida |
-| [ES-02](./es-02-backend-api-saldos-consulta-paginada-filtros.md) | API de Saldos: listagem paginada com busca, categorias e visão por lote | A, C | ES-01 | ✅ Redigida |
+| [ES-01](./es-01-backend-api-analitica-metricas-criticidade-estoque.md) | API Analítica: métricas globais, cálculo de cobertura e lotes com vencimento próximo | A, C | RE-01 | ✅ Concluída |
+| [ES-02](./es-02-backend-api-saldos-consulta-paginada-filtros.md) | API de Saldos: listagem paginada com busca, categorias e visão por lote | A, C | ES-01 | ✅ Concluída |
 | [ES-03](./es-03-backend-api-ajustes-estoque-transacao-justificada.md) | API de Ajustes: ajuste manual transacional com motivo, justificativa e auditoria | A, B, C | ES-02 | ✅ Redigida |
 | [ES-04](./es-04-backend-api-rastreabilidade-historico-lote.md) | API de Rastreabilidade: linha do tempo com histórico de movimentações por lote | A, C | ES-03 | ✅ Redigida |
 | [ES-05](./es-05-backend-api-relatorios-exportacao-planilha-xlsx.md) | API de Relatórios: geração de planilha XLSX por período, produto e perdas | A, C | ES-02, ES-04 | ✅ Redigida |
