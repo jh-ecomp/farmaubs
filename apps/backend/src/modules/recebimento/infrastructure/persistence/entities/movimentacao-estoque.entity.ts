@@ -108,6 +108,13 @@ export class MovimentacaoEstoqueEntity {
   })
   justificativa?: string | null;
 
+  @Column({
+    type: "varchar",
+    length: 40,
+    nullable: true,
+  })
+  motivo?: string | null;
+
   @Index("idx_movimentacoes_created_at")
   @CreateDateColumn({
     type: "timestamptz",
