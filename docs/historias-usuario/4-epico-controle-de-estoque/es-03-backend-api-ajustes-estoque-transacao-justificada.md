@@ -161,8 +161,8 @@ Funcionalidade: Ajustes Pontuais de Estoque (Camadas A, B e C)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Caso de uso `RegistrarAjusteEstoqueUseCase` implementado com lock pessimista (`SELECT FOR UPDATE`).
-- [ ] Validação rigorosa de motivo x tipo de operação (ex: impede motivo `VENCIMENTO` em operação de `ENTRADA`).
-- [ ] Testes unitários (Camada A) cobrindo regras de saldo negativo, validação de caracteres e autorização RBAC.
-- [ ] Testes de integração de concorrência (Camada B) simulando 2 ajustes simultâneos no mesmo lote para garantir consistência ACID.
-- [ ] Testes E2E (Camada C) validando persistência do histórico e integridade do saldo atualizado.
+- [x] Caso de uso `RegistrarAjusteEstoqueUseCase` implementado com lock pessimista (`SELECT FOR UPDATE`).
+- [x] Validação rigorosa de motivo x tipo de operação (ex: impede motivo `VENCIMENTO` em operação de `ENTRADA`).
+- [x] Testes unitários (Camada A) cobrindo regras de saldo negativo, validação de caracteres e autorização RBAC.
+- [x] Testes de integração de concorrência (Camada B) simulando 2 ajustes simultâneos no mesmo lote para garantir consistência ACID.
+- [x] Testes E2E (Camada C) validando persistência do histórico e integridade do saldo atualizado.
