@@ -57,7 +57,7 @@ export class EstoqueAjustesPgRepository implements RepositorioEstoqueAjustesPort
   }
 
   /**
-   * [RF028]: Insere a movimentação de auditoria do ajuste (livro-razão imutável).
+   * [RF028]: Insere a movimentação de auditoria do ajuste (registro de rastreabilidade do lote).
    * @param dados - Dados do ajuste, usuário, motivo e justificativa.
    * @returns Identificador e data/hora (ISO 8601) da movimentação criada.
    */
