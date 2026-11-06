@@ -244,9 +244,9 @@ Funcionalidade: Histórico de Recebimentos, Exportação XLSX e Estorno (Camadas
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Endpoint de listagem implementado com filtro padrão ontem/hoje e suporte a range arbitrário de datas.
-- [ ] Endpoint de exportação `.xlsx` implementado com cabeçalhos apropriados e formatação tabular limpa via biblioteca ExcelJS.
-- [ ] Endpoint de comprovante oficial retornando dados completos para impressão do Termo SUS.
-- [ ] Endpoint de estorno implementado com lock pessimista, validação de saldo remanescente e rollback em caso de falha.
-- [ ] Testes unitários (Camada A) cobrindo regras de range de datas, cálculo de saldo remanescente e validação de justificativa.
-- [ ] Testes E2E (Camada C) cobrindo listagem com filtros temporais, download do XLSX e fluxo completo de estorno.
+- [x] Endpoint de listagem implementado com filtro padrão ontem/hoje e suporte a range arbitrário de datas.
+- [x] Endpoint de exportação `.xlsx` implementado com cabeçalhos apropriados e formatação tabular limpa via biblioteca ExcelJS.
+- [x] Endpoint de comprovante oficial retornando dados completos para impressão do Termo SUS.
+- [x] Endpoint de estorno implementado com lock pessimista, validação de saldo remanescente e rollback em caso de falha.
+- [x] Testes unitários (Camada A) cobrindo regras de range de datas, cálculo de saldo remanescente e validação de justificativa.
+- [x] Testes E2E (Camada C) cobrindo listagem com filtros temporais, download do XLSX e fluxo completo de estorno.

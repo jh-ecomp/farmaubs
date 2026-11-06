@@ -179,7 +179,7 @@ Funcionalidade: Efetivação Transacional de Entrada de Estoque (Camadas A, B e 
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Caso de uso implementado com rollback automático em caso de exceção.
-- [ ] Testes unitários (Camada A) cobrindo regras de cálculo de saldo, validação de datas e integridade do payload.
-- [ ] Testes de concorrência transacional (Camada B) simulando recebimentos simultâneos para o mesmo lote.
-- [ ] Teste E2E (Camada C) validando o fluxo completo desde o endpoint HTTP até a verificação dos saldos no banco de dados.
+- [x] Caso de uso implementado com rollback automático em caso de exceção.
+- [x] Testes unitários (Camada A) cobrindo regras de cálculo de saldo, validação de datas e integridade do payload.
+- [x] Testes de concorrência transacional (Camada B) simulando recebimentos simultâneos para o mesmo lote.
+- [x] Teste E2E (Camada C) validando o fluxo completo desde o endpoint HTTP até a verificação dos saldos no banco de dados.

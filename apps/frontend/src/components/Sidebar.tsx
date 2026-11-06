@@ -21,7 +21,7 @@ const MENU_ITEMS: MenuItem[] = [
     grupo: "operacional",
   },
   {
-    label: "Estoque",
+    label: "Recebimento",
     path: "/estoque",
     icon: "inventory_2",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/estoque"],
@@ -99,13 +99,13 @@ export function Sidebar() {
 
   return (
     <aside
-      className="h-screen w-layout-sidebar-width bg-surface-container-lowest border-r border-border-crisp flex flex-col justify-between select-none shrink-0"
+      className="h-screen w-64 w-layout-sidebar-width bg-surface-container-lowest border-r border-border-crisp flex flex-col justify-between select-none shrink-0"
       aria-label="Navegação Lateral"
     >
       <div className="flex flex-col flex-1 min-h-0">
         {/* Cabeçalho do FarmaUBS */}
-        <div className="h-layout-header-height px-space-md border-b border-border-crisp flex items-center justify-between bg-surface-container-lowest shrink-0">
-          <div className="flex items-center gap-space-xs">
+        <div className="min-h-16 pt-[1.5vh] pb-3 px-4 h-layout-header-height px-space-md border-b border-border-crisp flex items-center justify-between bg-surface-container-lowest shrink-0">
+          <div className="flex items-center gap-2.5 gap-space-xs">
             <img
               src={iconeFarmaUbs}
               alt="FarmaUBS"
@@ -127,7 +127,7 @@ export function Sidebar() {
 
         {/* Links de Navegação Agrupados */}
         <nav
-          className="flex-1 overflow-y-auto px-space-xs py-space-sm space-y-space-md"
+          className="flex-1 overflow-y-auto px-3 py-4 px-space-xs py-space-sm space-y-4 space-y-space-md"
           aria-label="Menu Principal"
         >
           {grupos.map((grupo) => {
@@ -137,20 +137,23 @@ export function Sidebar() {
             if (itemsDoGrupo.length === 0) return null;
 
             return (
-              <div key={grupo.id} className="space-y-space-xxs pt-space-xs">
-                <div className="px-space-xs py-1 text-text-tertiary font-label-caps text-label-caps uppercase tracking-wider">
+              <div key={grupo.id} className="space-y-1 space-y-space-xxs pt-2 pt-space-xs">
+                <div className="px-2.5 px-space-xs py-1 text-text-tertiary font-label-caps text-label-caps uppercase tracking-wider">
                   {grupo.label}
                 </div>
                 <div className="space-y-0.5">
                   {itemsDoGrupo.map((item) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive =
+                      location.pathname === item.path ||
+                      (item.path === "/estoque" &&
+                        location.pathname === "/recebimento");
 
                     return (
                       <Link
                         key={item.path}
                         to={item.path}
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-space-xs px-space-xs py-2 rounded-lg font-body-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        className={`flex items-center gap-2.5 gap-space-xs px-3 px-space-xs py-2 rounded-lg font-body-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                           isActive
                             ? "bg-primary-container text-on-primary font-body-md-medium"
                             : "text-text-secondary hover:bg-surface-subtle hover:text-on-surface"

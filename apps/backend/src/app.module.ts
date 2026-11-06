@@ -7,6 +7,9 @@ import { CommonModule } from "./common/common.module";
 import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
 import { AdministracaoModule } from "./modules/administracao/administracao.module";
+import { RecebimentoModule } from "./modules/recebimento/recebimento.module";
+import { DispensacaoModule } from "./modules/dispensacao/dispensacao.module";
+import { EstoqueModule } from "./modules/estoque/estoque.module";
 import { SessionAuthGuard } from "./common/guards/session-auth.guard";
 import { MustChangePasswordGuard } from "./modules/acesso/api/guards/must-change-password.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
@@ -21,6 +24,15 @@ import { User } from "./modules/administracao/infrastructure/persistence/entitie
 import { UserUnit } from "./modules/administracao/infrastructure/persistence/entities/UserUnit.entity";
 import { MunicipioEntity } from "./modules/administracao/infrastructure/persistence/entities/municipio.entity";
 import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persistence/entities/unidade-saude.entity";
+import { ProdutoEntity } from "./modules/recebimento/infrastructure/persistence/entities/produto.entity";
+import { FabricanteEntity } from "./modules/recebimento/infrastructure/persistence/entities/fabricante.entity";
+import { DocumentoEntradaEntity } from "./modules/recebimento/infrastructure/persistence/entities/documento-entrada.entity";
+import { LoteEntity } from "./modules/recebimento/infrastructure/persistence/entities/lote.entity";
+import { RecebimentoItemEntity } from "./modules/recebimento/infrastructure/persistence/entities/recebimento-item.entity";
+import { MovimentacaoEstoqueEntity } from "./modules/recebimento/infrastructure/persistence/entities/movimentacao-estoque.entity";
+import { PacienteEntity } from "./modules/dispensacao/infrastructure/persistence/entities/paciente.entity";
+import { DispensacaoEntity } from "./modules/dispensacao/infrastructure/persistence/entities/dispensacao.entity";
+import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/persistence/entities/dispensacao-item.entity";
 
 @Module({
   imports: [
@@ -46,6 +58,15 @@ import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persi
           UserUnit,
           MunicipioEntity,
           UnidadeSaudeEntity,
+          ProdutoEntity,
+          FabricanteEntity,
+          DocumentoEntradaEntity,
+          LoteEntity,
+          RecebimentoItemEntity,
+          MovimentacaoEstoqueEntity,
+          PacienteEntity,
+          DispensacaoEntity,
+          DispensacaoItemEntity,
         ],
         autoLoadEntities: true,
         synchronize: false,
@@ -56,6 +77,9 @@ import { UnidadeSaudeEntity } from "./modules/administracao/infrastructure/persi
     HealthModule,
     AcessoModule,
     AdministracaoModule,
+    RecebimentoModule,
+    DispensacaoModule,
+    EstoqueModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionAuthGuard },

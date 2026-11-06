@@ -17,8 +17,8 @@ export function MainLayout({ children, titulo }: MainLayoutProps) {
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-layout-header-height bg-surface-container-lowest border-b border-border-crisp px-space-md flex items-center justify-between sticky top-0 z-40">
-          <div className="flex items-center gap-space-xs text-text-tertiary font-caption-micro">
+        <header className="min-h-16 pt-[1.5vh] pb-3 px-6 h-layout-header-height bg-surface-container-lowest border-b border-border-crisp px-space-md flex items-center justify-between sticky top-0 z-40">
+          <div className="flex items-center gap-2 gap-space-xs text-text-tertiary font-caption-micro">
             <span>FarmaUBS</span>
             <span>/</span>
             <strong className="text-text-primary">
@@ -29,7 +29,7 @@ export function MainLayout({ children, titulo }: MainLayoutProps) {
           <UserMenu />
         </header>
 
-        <main className="flex-1 p-space-md overflow-y-auto">
+        <main className="flex-1 p-6 p-space-md overflow-y-auto">
           {children || <Outlet />}
         </main>
       </div>

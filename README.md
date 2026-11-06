@@ -1,132 +1,175 @@
-<h1 align="center">
-   <a href="#"> FarmaUBS </a>
-</h1>
-<h3 align="center">
-    Um gerenciador de estoque voltado para a realidade das UBSs de Parnaíba-PI
-</h3>
+<h1 align="center">FarmaUBS</h1>
 
 <p align="center">
-    <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/jh-ecomp/farmaubs?color=%2304D361">
-    <img alt="Repository size" src="https://img.shields.io/github/repo-size/jh-ecomp/farmaubs">
-    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/jh-ecomp/farmaubs">
-    <img alt="License" src="https://img.shields.io/badge/license-GNU GPL 3-brightgreen">
+  <strong>Gestão farmacêutica e rastreabilidade de medicamentos para a Atenção Primária do SUS</strong>
 </p>
 
-#### Status: Done
+<p align="center">
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20_LTS-339933?logo=node.js&logoColor=white">
+  <img alt="PNPM" src="https://img.shields.io/badge/pnpm-11.21-F69220?logo=pnpm&logoColor=white">
+  <img alt="Moonrepo" src="https://img.shields.io/badge/moonrepo-2.5+-7952B3?logo=moonrepo&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white">
+  <img alt="NestJS" src="https://img.shields.io/badge/NestJS-11.x-E0234E?logo=nestjs&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black">
+  <img alt="Expo" src="https://img.shields.io/badge/Expo-SDK_52-000020?logo=expo&logoColor=white">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white">
+  <img alt="Licença" src="https://img.shields.io/badge/licença-GNU_GPL_v3-brightgreen">
+</p>
 
-## Summary
+---
 
-1. [Sobre](#1-sobre)
-2. [Instalação](#2-instalação)
-3. [Estrutura de pastas completa](#3-estrutura-de-pastas-completa)
-4. [Como usar](#4-como-usar)
-5. [Autores](#5-autores)
-6. [Licença](#6-licença)
+## Sumário
 
-## 1. Sobre
+1. [Sobre o projeto](#1-sobre-o-projeto)
+2. [Principais recursos](#2-principais-recursos)
+3. [Arquitetura e tecnologias](#3-arquitetura-e-tecnologias)
+4. [Estrutura do monorepo](#4-estrutura-do-monorepo)
+5. [Início rápido](#5-início-rápido)
+6. [Comandos do Moonrepo](#6-comandos-do-moonrepo)
+7. [Autores](#7-autores)
+8. [Licença](#8-licença)
 
-O FarmaUBS é uma aplicação voltada para profissionais farmacêuticos e operadores de saúde que atuam nas farmácias públicas das Unidades Básicas de Saúde (UBS) de Parnaíba-Piauí. O sistema tem como objetivo central prover controle de estoque de medicamentos com rastreabilidade por lote e validade, previsão de demanda e indicadores operacionais, eliminando a dependência de planilhas manuais e reduzindo o desperdício por vencimento de medicamentos.
+---
 
-O projeto é estruturado como um **Monorepo com Clean Architecture** orientado pelo modelo do **moonrepo/moon**, suportando múltiplos clientes (Web e Mobile) alimentados pela mesma API central.
+## 1. Sobre o projeto
 
-## 2. Instalação
+O **FarmaUBS** é um ecossistema de software concebido para atender à rotina dos profissionais farmacêuticos, operadores de saúde e gestores da Atenção Primária à Saúde (SUS), com foco na realidade operacional das Unidades Básicas de Saúde (UBS) de Parnaíba-PI.
 
-A instalação do projeto FarmaUBS está documentada no arquivo `/docs/onboarding/kickoff.md`, juntamente com todos os pré-requisitos de sistema.
+O sistema elimina o controle manual em planilhas físicas e cadernos de bancada, fornecendo rastreabilidade completa por lote, validade e fabricante, atualização de estoque em tempo real e controle estrito de perdas por validade curta.
 
-#### 2.1 Pré-requisitos do Sistema
+---
 
-- **Node.js:** Versão 22.x (LTS).
-- **pnpm:** Versão 11.21.0 (`corepack enable pnpm`).
-- **Docker Desktop:** Com backend WSL2 habilitado e funcional.
-- **Git:** Configurado para o repositório FarmaUBS.
-- **VS Code:** Recomendado com extensões para ESLint, Prettier e NestJS.
+## 2. Principais recursos
 
-## 3. Estrutura de pastas completa
+- **Controle de acesso e multi-tenancy (RLS):** Isolamento rigoroso de dados por município e unidade de saúde diretamente no banco de dados via Row-Level Security no PostgreSQL (ADR-016), com suporte a perfis de farmacêutico, operador e administrador.
+- **Recebimento de cargas e conferência:** Entrada atômica de remessas enviadas por CAF Central, Ministério da Saúde (DLOG) e fornecedores, com validação de documento fiscal, lote, validade, fabricante e bloqueio de itens vencidos.
+- **Alerta de validade curta:** Notificação automática e confirmação assistida para medicamentos com vencimento inferior a 6 meses (180 dias).
+- **Dispensação rastreada:** Atendimento a prescrições médicas com baixa atômica de saldo e registro no livro de movimentações.
+- **Histórico e auditoria operacional:** Filtros temporais inteligentes (padrão ontem e hoje ou range customizado), comprovante para impressão no navegador e exportação tabular em planilhas Excel (.xlsx).
+- **Multiplataforma:** Aplicação web para estações de trabalho e aplicativo nativo móvel para conferência física em campo.
 
-A árvore de diretórios abaixo reflete a organização do monorepo escalável, separando aplicações clientes, servidor, pacotes compartilhados e orquestração de tarefas:
+---
+
+## 3. Arquitetura e tecnologias
+
+O FarmaUBS é desenvolvido como um monorepo governado pelo **Moonrepo** (ADR-035) sobre o gerenciador de pacotes **PNPM**:
+
+- **Backend (`apps/backend`):** Clean Architecture pura desacoplada de frameworks (ADR-003, ADR-033). Regras de domínio e casos de uso em TypeScript puro; NestJS na borda como adaptador de infraestrutura; PostgreSQL 18 com Row-Level Security (RLS) e TypeORM para migrações.
+- **Frontend (`apps/frontend`):** Single Page Application com React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query (React Query) e React Router DOM (ADR-011, ADR-012).
+- **Mobile (`apps/mobile`):** Aplicativo nativo em React Native com Expo SDK 52, componentes visuais nativos e armazenamento criptografado de credenciais via Keystore/Keychain (ADR-034).
+- **Pacote compartilhado (`packages/shared`):** Contratos DTO de request e response, enums de negócio e validadores agnósticos consumidos por todos os clientes (ADR-022).
+- **Qualidade e BDD:** Especificação viva com Cucumber.js e Chai em português para cenários de negócio, somados a testes automatizados nas camadas unitária, integração de banco e componentes.
+
+---
+
+## 4. Estrutura do monorepo
 
 ```text
 farmaubs/
-├── .github/                # Workflows de CI/CD (ADR-024)
-├── apps/                   # Aplicações do Monorepo
-│   ├── backend/            # API NestJS (Clean Architecture Pura + Ports & Adapters + RLS)
-│   ├── frontend/           # SPA Web (React 19 + Vite + Tailwind CSS + TanStack Query)
-│   └── mobile/             # App Móvel (React Native + Expo SDK 52 + SecureStore)
-├── packages/               # Pacotes compartilhados
-│   └── shared/             # Contratos DTO, Schemas Zod, Enums e Regras de Negócio puras
-├── infra/                  # Configurações de infraestrutura (ADR-023)
-│   ├── nginx/              # Servidor web (Produção)
-│   ├── docker-compose.yml  # Base comum
-│   ├── docker-compose.dev.yml
-│   └── docker-compose.prod.yml
-├── docs/                   # Documentação arquitetural viva e histórias de usuário
-│   ├── adrs/               # Registros de Decisões de Arquitetura (ADR-001 a ADR-035)
-│   └── historias-usuario/  # Especificações funcionais em BDD/Gherkin
-├── pnpm-workspace.yaml     # Topologia de workspaces do pnpm
-└── README.md               # Documentação principal
+├── .moon/              # Configuração global de tarefas e toolchain do Moonrepo
+├── apps/
+│   ├── backend/        # API REST NestJS (Clean Architecture Pura + Ports & Adapters)
+│   ├── frontend/       # SPA Web React 19 + Vite
+│   └── mobile/         # App Móvel React Native + Expo SDK 52
+├── packages/
+│   └── shared/         # Contratos DTO, enums e validações agnósticas compartilhadas
+├── infra/              # Docker Compose (desenvolvimento, testes e produção) e Nginx
+├── docs/               # Documentação técnica, ADRs (ADR-001 a ADR-035) e histórias de usuário
+├── pnpm-workspace.yaml # Configuração de workspaces do PNPM
+└── CONTRIBUTING.md     # Guia do desenvolvedor e padrões de engenharia
 ```
 
 ---
 
-#### 3.1 Arquitetura do Backend (Clean Architecture Pura — ADR-003, ADR-033)
+## 5. Início rápido
 
-O backend segue a **Clean Architecture** e o padrão **Ports & Adapters**, mantendo os Casos de Uso totalmente desacoplados de frameworks (zero decorators NestJS na regra de negócio). O NestJS atua puramente como adaptador de infraestrutura na borda:
+### Pré-requisitos
 
-```text
-apps/backend/src/modules/<modulo>/
-├── domain/                 # Regras puras, Entidades, Value Objects e Portas (Interfaces)
-├── application/            # Casos de Uso puros (Classes TypeScript sem decorators)
-└── infrastructure/         # Adaptadores (TypeORM, Postgres, Repositórios, Controllers)
+- Node.js 20 LTS (especificado no toolchain do Moonrepo)
+- PNPM 11 (`corepack enable pnpm`)
+- Docker e Docker Compose
+
+### 1. Clonar o repositório e configurar variáveis
+
+```bash
+git clone https://github.com/jh-ecomp/farmaubs.git
+cd farmaubs
+
+# Copie o arquivo de exemplo de ambiente
+cp .env.example .env
 ```
 
----
+Gere segredos seguros para as variáveis `SESSION_SECRET` e `ENCRYPTION_KEY`:
 
-#### 3.2 Arquitetura dos Clientes (Frontend Web & Mobile Expo — ADR-011, ADR-034)
-
-- **Frontend (`apps/frontend`):** SPA React 19 + Vite voltada para desktop nas farmácias e almoxarifados.
-- **Mobile (`apps/mobile`):** Aplicativo nativo em React Native com Expo, consumindo os mesmos contratos de `@farmaubs/shared` com armazenamento seguro em Keystore/Keychain via `expo-secure-store`.
-
-## 4. Como usar
-
-Gere os segredos:
-
-```powershell
-# 1. Gerar os segredos e preencher
-# Copie .env.example para .env
+```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-# cole a saída em SESSION_SECRET e ENCRYPTION_KEY, e defina POSTGRES_PASSWORD
 ```
 
-Em seguida rode os comandos docker a partir da raiz do repositório:
+### 2. Infraestrutura e comandos Docker
 
-```powershell
-# 2. Subir a stack de dev (primeira vez constrói as imagens, demora alguns minutos)
+Inicie e gerencie os containers locais com os comandos abaixo:
+
+```bash
+# Subir todos os serviços em background
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
-# Alternativamente use --force-recreate para obrigar a recriação dos containers do zero
+
+# Forçar recriação completa dos containers
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --force-recreate
 
-# 3. Acompanhar os logs dos serviços
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api # <escolha um: api/frontend/postgres>
+# Acompanhar logs em tempo real (escolha: api, frontend ou postgres)
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml logs -f api
 
-# 4. Acompanhar saúde dos serviços
+# Verificar status e integridade dos containers
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml ps
 
-# 5. Derrubar infra (adicina a flag -v, ao final, para apagar os volumes - apagar os dados do Postgres)
+# Reiniciar um serviço específico
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml restart api
+
+# Parar os serviços mantendo o banco intacto
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down
 
-# 6. Caso precise restartar um serviço
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml restart # <escolha um: api/frontend/postgres>
+# Parar e apagar volumes do banco (reset completo dos dados)
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down -v
 ```
 
-Acessos:
+### 3. Acessos locais
 
-- API em http://localhost:3000/api/v1
-- Swagger em http://localhost:3000/api/v1/docs
-- Frontend em http://localhost:5173
-- Mobile: `pnpm dev:mobile` (Expo DevTools)
-- Postgres em localhost:5434.
+| Serviço | URL | Descrição |
+| --- | --- | --- |
+| **Frontend Web** | `http://localhost:5173` | Aplicação web para farmacêuticos e administradores |
+| **API REST** | `http://localhost:3000/api/v1` | Ponto de entrada da API |
+| **Swagger UI** | `http://localhost:3000/api/v1/docs` | Documentação interativa dos endpoints OpenAPI |
+| **PostgreSQL** | `localhost:5434` | Banco de dados local de desenvolvimento |
 
-## 5. Autores
+---
+
+## 6. Comandos do Moonrepo
+
+Todas as tarefas de compilação, testes e execução do projeto são gerenciadas através do Moonrepo:
+
+```bash
+# Desenvolvimento
+moon run backend:dev        # Inicia API NestJS (compila shared previamente)
+moon run frontend:dev       # Inicia SPA React no Vite
+moon run mobile:start       # Inicia ambiente Expo DevTools
+
+# Banco de dados e migrações
+moon run backend:migration-run   # Aplica migrações pendentes no banco local
+moon run backend:db-seed         # Popula o banco local com dados iniciais
+
+# Testes e validações
+moon run :test --affected   # Executa testes apenas nos projetos modificados pela branch
+moon check --affected       # Checagem de tipos e lint nos arquivos alterados
+moon run backend:test-bdd   # Executa especificação viva BDD com Cucumber
+moon run :build             # Compila todos os workspaces na ordem correta do grafo
+moon ci                     # Pipeline completo de validação contínua local
+```
+
+Para mais detalhes sobre padrões de código, arquitetura e fluxo de trabalho, consulte o [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+---
+
+## 7. Autores
 
 <div align="center">
     <table>
@@ -174,7 +217,8 @@ Acessos:
     </table>
 </div>
 
-## 6. Licença
+---
 
-Este projeto está sobre a licença [GNU GPL 3](./LICENSE).
+## 8. Licença
 
+Este projeto está sob a licença [GNU GPL v3](./LICENSE).
