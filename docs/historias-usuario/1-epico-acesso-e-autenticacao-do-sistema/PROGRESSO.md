@@ -61,7 +61,7 @@ Progresso: [████████████████████] 100% (
 
 | Código | Título | Especificação | Status |
 | --- | --- | --- | --- |
-| **AC-MOB-01** | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado | [ac-mob-01-tela-de-login-mobile-com-validacao-e-feedback.md](./ac-mob-01-tela-de-login-mobile-com-validacao-e-feedback.md) | ⏳ Especificada / Em andamento |
+| **AC-MOB-01** | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado | [ac-mob-01-tela-de-login-mobile-com-validacao-e-feedback.md](./ac-mob-01-tela-de-login-mobile-com-validacao-e-feedback.md) | ✅ Concluída |
 | **AC-MOB-02** | Armazenamento Seguro de Sessão e Token via Hardware Keystore/Keychain | [ac-mob-02-armazenamento-seguro-sessao-keystore-keychain.md](./ac-mob-02-armazenamento-seguro-sessao-keystore-keychain.md) | ⏳ Especificada / Em andamento |
 | **AC-MOB-03** | Seleção e Alternância de UBS Ativa em Dispositivo Móvel | [ac-mob-03-selecao-alternancia-ubs-ativa-mobile.md](./ac-mob-03-selecao-alternancia-ubs-ativa-mobile.md) | ⏳ Especificada |
 | **AC-MOB-04** | Fluxo de Troca Obrigatória de Senha Provisória no Mobile | [ac-mob-04-troca-obrigatoria-de-senha-mobile.md](./ac-mob-04-troca-obrigatoria-de-senha-mobile.md) | ⏳ Especificada |
