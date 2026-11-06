@@ -4,14 +4,14 @@
 
 - **Épico**: Controle de Estoque (RF005, RF006, RF007, RF009, RF011, RF018, RF020, RF022, RF023, RF028, NF001, NF002, NF003, NF007, NF009, NF015)
 - **Requisitos Funcionais**: RF028 (Consultar Log de Auditoria e Rastreabilidade Operacional)
-- **Requisitos Não-Funcionais**: NF007 (Performance de Resposta < 500ms), NF009 (RBAC de Consulta), NF015 (Isolamento Multi-tenant via RLS)
-- **ADRs Vinculadas**: ADR-002 / ADR-016 (Isolamento RLS por UBS), ADR-003 (Arquitetura Hexagonal), ADR-007 (Endpoints REST e Swagger), ADR-022 (`@farmaubs/shared`), ADR-030 (Pirâmide de Testes — Camadas A e C), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)
+- **Requisitos Não-Funcionais**: NF007 (Performance de Resposta < 500ms), NF009 (RBAC de Consulta: Farmacêutico Responsável, Farmacêutico Residente, Gerente), NF015 (Isolamento Multi-tenant via RLS por município `app.municipio_id` e segregação por UBS via filtro explícito `ubs_id = ANY($2::uuid[])`)
+- **ADRs Vinculadas**: ADR-002 / ADR-016 (Isolamento RLS por Município e segregação por UBS), ADR-003 (Arquitetura Hexagonal), ADR-007 (Endpoints REST e Swagger), ADR-022 (`@farmaubs/shared`), ADR-030 (Pirâmide de Testes — Camadas A, B e E2E), ADR-034 (Clean Architecture Fullstack), ADR-035 (Monorepo Moonrepo)
 
 ---
 
 ## 1. História de usuário
 
-> **Como** farmacêutico responsável ou gerente de saúde da UBS,  
+> **Como** farmacêutico responsável, farmacêutico residente ou gerente de saúde da UBS,  
 > **quero** consultar a linha do tempo cronológica completa e imutável de todas as movimentações ocorridas em um lote específico de medicamento,  
 > **para que** eu possa auditar desvios de estoque, responder a diligências e inspeções sanitárias da Anvisa e fiscalizar cada entrada, dispensa ou ajuste manual com identificação do operador responsável e documento de suporte (RF028).
 
@@ -20,10 +20,10 @@
 ## 2. Regras de negócio e casos de borda
 
 1. **Dados de Cabeçalho do Lote**:
-   - Identificação do produto: Nome comercial, princípio ativo, forma farmacêutica, concentração e código RENAME/REMUME.
-   - Dados do lote: Código do lote, fabricante/laboratório, data de validade, data de cadastro na UBS, saldo inicial recebido e saldo físico atual.
+   - Identificação do produto: Nome comercial, princípio ativo, apresentação, forma farmacêutica, concentração e código CATMAT e ATC.
+   - Dados do lote: Código do lote, fabricante/laboratório, data de validade, data de cadastro na UBS (`dataCadastro`), saldo inicial recebido (`saldoInicial`) e saldo físico atual (`saldoAtual`).
 2. **Cronologia Ordenada de Eventos de Estoque**:
-   - Ordenação cronológica estrita das movimentações.
+   - Ordenação cronológica estrita das movimentações (ordem do banco e conciliação por cadeia de saldos entre eventos de mesmo timestamp).
    - Eventos suportados:
      - `ENTRADA_RECEBIMENTO`: Recebimento de remessa da CAF ou compra (vinculado ao número da guia/NF);
      - `SAIDA_DISPENSACAO`: Saída por atendimento ao paciente;
@@ -41,20 +41,25 @@
 ### Endpoints REST
 - `GET /api/v1/estoque/lotes/:loteId/rastreabilidade`: Linha do tempo e histórico completo de movimentações do lote.
 
-### DTOs TypeScript
+### DTOs TypeScript (`@farmaubs/shared`)
 
 ```typescript
-export interface MovimentacaoLoteTimelineDto {
+export const TIPOS_MOVIMENTACAO_ESTOQUE = [
+  "ENTRADA_RECEBIMENTO",
+  "SAIDA_DISPENSACAO",
+  "AJUSTE_ENTRADA",
+  "AJUSTE_SAIDA",
+  "ESTORNO_ENTRADA",
+  "ESTORNO_DISPENSACAO",
+] as const;
+
+export type TipoMovimentacaoEstoque = (typeof TIPOS_MOVIMENTACAO_ESTOQUE)[number];
+
+export interface MovimentacaoLoteItemDto {
   id: string;
   dataHora: string; // ISO 8601
-  tipoMovimentacao:
-    | 'ENTRADA_RECEBIMENTO'
-    | 'SAIDA_DISPENSACAO'
-    | 'AJUSTE_ENTRADA'
-    | 'AJUSTE_SAIDA'
-    | 'ESTORNO_ENTRADA'
-    | 'ESTORNO_DISPENSACAO';
-  operacao: '+' | '-';
+  tipoMovimentacao: TipoMovimentacaoEstoque;
+  operacao: "+" | "-";
   quantidade: number;
   saldoResultante: number;
   documentoReferencia?: string;
@@ -66,12 +71,14 @@ export interface MovimentacaoLoteTimelineDto {
   };
 }
 
-export interface RastreabilidadeLoteResponseDto {
+export interface RastreabilidadeLoteDto {
   lote: {
     id: string;
     numeroLote: string;
     dataValidade: string;
+    dataCadastro: string;
     saldoAtual: number;
+    saldoInicial: number;
     fabricanteNome: string;
   };
   medicamento: {
@@ -79,9 +86,12 @@ export interface RastreabilidadeLoteResponseDto {
     nome: string;
     principioAtivo: string;
     apresentacao: string;
-    codigoRename?: string;
+    codigoCatmat?: string;
+    codigoAtc?: string;
+    formaFarmaceutica?: string;
+    concentracao?: string;
   };
-  movimentacoes: MovimentacaoLoteTimelineDto[];
+  movimentacoes: MovimentacaoLoteItemDto[];
 }
 ```
 
@@ -90,29 +100,29 @@ export interface RastreabilidadeLoteResponseDto {
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 ### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/estoque/rastreabilidade.types.ts`**: `RastreabilidadeLoteDto`, `MovimentacaoLoteItemDto` e enum `TipoMovimentacaoEstoque`.
+- **`src/estoque/rastreabilidade.types.ts`**: `RastreabilidadeLoteDto`, `MovimentacaoLoteItemDto` e tipo `TipoMovimentacaoEstoque`.
 
 ### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
 - **Use Cases**:
-  - `consultar-rastreabilidade-lote.use-case.ts`: Consulta os dados cadastrais do lote e enriquece a linha do tempo cronológica com cálculos de saldo resultante por movimentação.
+  - `consultar-rastreabilidade-lote.use-case.ts`: Consulta os dados cadastrais do lote e enriquece a linha do tempo cronológica com cálculos de saldo resultante por movimentação via `ordenarPorCadeia`, `conciliarCadeia` e `traduzirTipo`.
 
 ### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
 - **Portas (Interfaces)**:
-  - `estoque-rastreabilidade.repository.port.ts`: Contrato `buscarLinhaDoTempoLote(loteId: string, ubsId: string)`.
+  - `estoque-rastreabilidade.repository.port.ts`: Contrato `buscarLinhaDoTempoLote(loteId: string, unidadeIds: string[]): Promise<RastreabilidadeLoteBruta | null>`.
 
 ### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
 - **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-estoque-rastreabilidade.repository.ts`: Query combinada indexada na tabela `movimentacoes_estoque` ordenada por timestamp.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
+  - `estoque-rastreabilidade-pg.repository.ts`: Query combinada sobre as tabelas `lotes`, `produtos`, `fabricantes` e `movimentacoes_estoque`, filtrando por `ubs_id = ANY($2::uuid[])` sob RLS de município (`app.municipio_id`).
+- **Adaptadores de Entrada HTTP (`api/controllers/`)**:
   - `estoque-rastreabilidade.controller.ts`: Endpoint `GET /api/v1/estoque/lotes/:loteId/rastreabilidade`.
 
 ---
 
-## 5. Cenários de teste em BDD (Gherkin — camada A e C)
+## 5. Cenários de teste em BDD (Gherkin)
 
 ```gherkin
 # language: pt
-Funcionalidade: Rastreabilidade e Linha do Tempo do Lote (Camadas A e C)
+Funcionalidade: Rastreabilidade e Linha do Tempo do Lote
 
   Cenário: Consulta da linha do tempo do lote com múltiplos tipos de evento
     Dado que o farmacêutico está autenticado na UBS
@@ -126,7 +136,7 @@ Funcionalidade: Rastreabilidade e Linha do Tempo do Lote (Camadas A e C)
     E a lista de movimentações deve conter exatamente os 3 eventos ordenados por data
     E cada evento deve conter o nome do usuário responsável, quantidade e documento de referência
 
-  Cenário: Tentativa de acesso a lote pertencente a outra UBS
+  Cenário: Tentativa de acesso a lote pertencente a outra UBS do mesmo município
     Dado que o lote "uuid-outro-tenant" pertence à "UBS Ilha Grande"
     Quando o farmacêutico logado na "UBS Central" tentar consultar a sua rastreabilidade
     Então a API deve retornar status 404 (Not Found)
@@ -138,5 +148,6 @@ Funcionalidade: Rastreabilidade e Linha do Tempo do Lote (Camadas A e C)
 ## 6. Checklist de DoD e aceitação
 
 - [ ] Endpoint implementado com query otimizada sobre a tabela `movimentacoes_estoque`.
-- [ ] Testes unitários (Camada A) validando ordem cronológica e conferência de saldo resultante.
-- [ ] Testes E2E (Camada C) validando isolamento por RLS e formatação dos eventos de auditoria.
+- [ ] Testes unitários (Camada A) validando ordem cronológica (`ordenarPorCadeia`), tradução de tipos (`traduzirTipo`), conciliação de saldos (`conciliarCadeia`) e cálculo de `saldoInicial`.
+- [ ] Testes de integração (Camada B) contra PostgreSQL real com RLS (`farmaubs_app`), validando integridade do cabeçalho, isolamento por município e filtro por `unidadeIds`.
+- [ ] Testes E2E validando fluxo HTTP completo, autenticação RBAC com os 3 perfis e resposta 404 entre UBSs do mesmo município.

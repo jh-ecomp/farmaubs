@@ -77,7 +77,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | ES-01 | Backend | API Analítica: métricas globais, cálculo de ruptura e validade curta | ✅ Redigida | ✅ Concluída | — |
 | ES-02 | Backend | API de Saldos: consulta paginada com busca, categorias e lotes | ✅ Redigida | ✅ Concluída | — |
 | ES-03 | Backend | API de Ajustes: ajuste manual transacional com motivo e auditoria | ✅ Redigida | ✅ Concluída | — |
-| ES-04 | Backend | API de Rastreabilidade: linha do tempo de movimentações por lote | ✅ Redigida | ⏳ Não iniciada | — |
+| ES-04 | Backend | API de Rastreabilidade: linha do tempo de movimentações por lote | ✅ Redigida | ✅ Concluída | — |
 | ES-05 | Backend | API de Relatórios: geração de planilha XLSX por período e perdas | ✅ Redigida | ⏳ Não iniciada | — |
 | ES-06 | Frontend | Painel superior: cartões com indicadores em tempo real (RF018, RF022) | ✅ Redigida | ⏳ Não iniciada | ES-MOB-01 |
 | ES-07 | Frontend | Tabela de saldos por produto, expansão de lotes e destaque laranja | ✅ Redigida | ⏳ Não iniciada | ES-MOB-02 |
