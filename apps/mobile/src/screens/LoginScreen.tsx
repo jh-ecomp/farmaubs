@@ -22,7 +22,7 @@ import {
 } from "./login-form";
 
 interface LoginScreenProps {
-  onLoginSuccess: (dados: LoginSucesso) => void;
+  onLoginSuccess: (dados: LoginSucesso) => void | Promise<void>;
   apiBaseUrl: string;
 }
 
@@ -102,7 +102,7 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
         setErro(MENSAGEM_REDE);
         return;
       }
-      onLoginSuccess(sucesso);
+      await onLoginSuccess(sucesso);
     } catch {
       setErro(MENSAGEM_REDE);
     } finally {

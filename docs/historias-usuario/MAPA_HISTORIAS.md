@@ -22,7 +22,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | AC-24 | Frontend | Tela de troca obrigatória de senha (RF002) | ✅ Redigida | ✅ Concluída | AC-MOB-04 |
 | AC-25 | Frontend | Encerrar sessão no cliente e expurgo de cache | ✅ Redigida | ✅ Concluída | AC-MOB-05 |
 | AC-30 | Frontend | Migração de sessão para cookie HttpOnly e expurgo localStorage | ✅ Redigida | ✅ Concluída | AC-MOB-02 |
-| AC-MOB-01 | Mobile | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-16 |
+| AC-MOB-01 | Mobile | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado (RF002) | ✅ Redigida | ✅ Concluída | AC-16 |
 | AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AC-19 / AC-30 |
 | AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ⏳ Não iniciada | AC-19 |
 | AC-MOB-04 | Mobile | Fluxo de troca obrigatória de senha provisória no mobile (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-24 |

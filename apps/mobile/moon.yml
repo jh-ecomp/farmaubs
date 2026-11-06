@@ -47,10 +47,11 @@ tasks:
       - 'shared:build'
 
   test:
-    command: 'pnpm exec tsc --noEmit'
+    command: 'node --experimental-strip-types src/screens/login-form.check.ts'
     inputs:
       - 'src/**/*'
       - 'App.tsx'
       - 'tsconfig.json'
     deps:
       - 'shared:build'
+      - '~:typecheck'
