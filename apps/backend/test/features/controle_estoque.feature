@@ -1,5 +1,5 @@
 # language: pt
-Funcionalidade: Ajustes e Controle de Estoque (RF008, ES-03)
+Funcionalidade: Ajustes e Controle de Estoque (RF009, RF011, RF028, ES-03)
 
   Como operador ou farmacêutico da farmácia municipal
   Quero registrar ajustes justificados de entrada e saída no estoque dos lotes

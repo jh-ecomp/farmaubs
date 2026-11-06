@@ -58,7 +58,7 @@ O backend adota Clean Architecture combinada com Vertical Slicing por módulos d
 
 - **Regra de pureza:** A camada de domínio e os casos de uso (`application/use-cases/`) são agnósticos de framework. Não utilize decorators do NestJS (`@Injectable()`, `@Inject()`) ou do TypeORM dentro dos casos de uso.
 - **NestJS como infraestrutura:** O NestJS atua apenas na borda (controllers, guards, interceptors) e instancia os casos de uso via `useFactory` no módulo NestJS.
-- **Multi-tenancy com RLS:** Tabelas com isolamento municipal ou por unidade de saúde utilizam Row-Level Security no PostgreSQL via `TenantInterceptor` e `SET LOCAL farmaubs.current_tenant_id` (ADR-016).
+- **Multi-tenancy com RLS:** Tabelas com isolamento municipal ou por unidade de saúde utilizam Row-Level Security no PostgreSQL via `TenantInterceptor` e `SELECT set_config('app.municipio_id', ...)` (ADR-016).
 
 Estrutura padrão de um módulo do backend:
 
@@ -239,7 +239,8 @@ Tarefas atômicas por escopo:
 - **Testes unitários do backend (Camada A):** `moon run backend:test`.
 - **Execução de novas migrações no banco dev:** `moon run backend:migration-run` (e `moon run backend:migration-revert` para reversão).
 - **Testes de schema e migrações (Camada B):** `moon run backend:test-schema` (executa em banco efêmero porta **5435**). Para derrubar o banco de teste: `moon run backend:test-schema-down`.
-- **Testes de integração do backend (Camada C):** `moon run backend:test-integration`.
+- **Testes de integração do backend (Camada B):** `moon run backend:test-integration`.
+- **Testes E2E do backend (Camada C):** `moon run backend:test-e2e`.
 - **Testes de componentes web (Camada D):** `moon run frontend:test`.
 - **Checagem de tipos mobile:** `moon run mobile:typecheck`.
 - **Povoamento de banco local:** `moon run backend:db-seed`.

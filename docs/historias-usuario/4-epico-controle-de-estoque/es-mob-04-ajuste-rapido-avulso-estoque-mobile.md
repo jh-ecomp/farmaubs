@@ -50,9 +50,9 @@
 
 ### 2.3 Critérios de Aceite Detalhados
 1. **Identificação do Lote**: O modal deve deixar visível o lote e o saldo em tempo real antes de qualquer alteração.
-2. **Alternância Clara de Tipo**: A escolha entre `Entrada` e `Saída` deve alterar dinamicamente a lista de motivos sanitários disponíveis.
-3. **Validação de Quantidade em Saídas**: O sistema móvel deve impedir o envio se a saída exceder o saldo existente do lote.
-4. **Validação de Justificativa**: A validação Zod compartilhada (`registrarAjusteSchema`) deve bloquear a submissão com justificativas curtas ou vazias.
+2. **Alternância Clara de Tipo**: A escolha entre `Entrada` e `Saída` deve alterar dinamicamente a lista de motivos sanitários disponíveis (`MOTIVOS_AJUSTE_ENTRADA` vs `MOTIVOS_AJUSTE_SAIDA`).
+3. **Validação de Quantidade em Saídas**: O sistema móvel deve impedir o envio se a saída exceder o saldo existente do lote (`saldoSuficiente`).
+4. **Validação de Justificativa**: A função compartilhada `validarJustificativaAjuste` de `@farmaubs/shared` deve bloquear a submissão com justificativas curtas (< 10 caracteres, ou < 20 para `OUTRO`) ou vazias.
 5. **Atualização Imediata**: Após a confirmação, o saldo exibido na lista mobile deve ser atualizado sem recarregar o app.
 
 ---
@@ -61,10 +61,15 @@
 
 ```typescript
 import {
-  RegistrarAjusteLoteInputDto,
-  registrarAjusteSchema,
-  TipoOperacaoAjuste,
-  MotivoAjusteEstoque,
+  MOTIVOS_AJUSTE_ENTRADA,
+  MOTIVOS_AJUSTE_SAIDA,
+  motivoCompativelComTipo,
+  validarJustificativaAjuste,
+  saldoSuficiente,
+  type RegistrarAjusteLoteInputDto,
+  type AjusteEstoqueResultadoDto,
+  type TipoOperacaoAjuste,
+  type MotivoAjuste,
 } from '@farmaubs/shared';
 
 export interface UseAjusteEstoqueMobileProps {
@@ -84,9 +89,8 @@ export interface UseAjusteEstoqueMobileProps {
   - `ModalAjusteEstoqueMobile` (`apps/mobile/src/screens/estoque/components/`).
 - **Estratégia de Integração e Independência de Ciclos (Mobile ↔ Frontend Web)**:
   - **Contra-parte no Frontend Web**: `ES-09` (Modais de ficha de movimentação do lote e ajuste rápido justificado).
-  - **Contratos Compartilhados (`@farmaubs/shared`)**: `RegistrarAjusteLoteInputDto`, `registrarAjusteSchema`, `TipoOperacaoAjuste`, `MotivoAjusteEstoque`.
-  - **Se o Frontend Web já implementou ES-09**: O Mobile utiliza exatamente o mesmo schema Zod `registrarAjusteSchema` e a rota `POST /api/v1/estoque/ajustes`.
-  - **Se o Frontend Web ainda NÃO implementou ES-09**: O desenvolvedor Mobile define os enums de motivos e schemas em `packages/shared/src/contracts/estoque/`.
+  - **Contratos Compartilhados (`@farmaubs/shared`)**: `RegistrarAjusteLoteInputDto`, `AjusteEstoqueResultadoDto`, `TipoOperacaoAjuste`, `MotivoAjuste`, `MOTIVOS_AJUSTE_ENTRADA`, `MOTIVOS_AJUSTE_SAIDA`, `motivoCompativelComTipo`, `validarJustificativaAjuste` e `saldoSuficiente` em `packages/shared/src/estoque/`.
+  - **Endpoint Backend (`ES-03`)**: `POST /api/v1/estoque/lotes/:loteId/ajustes`.
 
 ---
 
