@@ -195,4 +195,46 @@ describe("RE-01 — Integridade do Schema de Recebimento e Estoque (Camada B)", 
       await qr.release();
     }
   });
+
+  it("garante coluna motivo e imutabilidade (bloqueio de UPDATE e DELETE) em movimentacoes_estoque para farmaubs_app", async () => {
+    const [lote] = await ds.query(
+      `INSERT INTO lotes (municipio_id, ubs_id, produto_id, fabricante_id, numero_lote, data_validade, saldo_atual)
+       VALUES ($1, $2, $3, $4, 'LOT-IMUTAVEL-01', '2028-12-31', 20) RETURNING id`,
+      [municipioParnaibaId, ubsCentroId, produtoId, fabricanteId],
+    );
+
+    const qr = ds.createQueryRunner();
+    await qr.connect();
+    await qr.startTransaction();
+
+    try {
+      await qr.query(`SET LOCAL ROLE farmaubs_app`);
+      await qr.query(`SELECT set_config('app.municipio_id', $1, true)`, [
+        municipioParnaibaId,
+      ]);
+
+      const [mov] = await qr.query(
+        `INSERT INTO movimentacoes_estoque
+           (municipio_id, ubs_id, lote_id, tipo_movimentacao, quantidade, saldo_anterior, saldo_posterior, usuario_id, motivo, justificativa)
+         VALUES ($1, $2, $3, 'AJUSTE_SAIDA', 2, 20, 18, $4, 'AVARIA_FISICA', 'Queda de frasco na bancada')
+         RETURNING id, motivo`,
+        [municipioParnaibaId, ubsCentroId, lote.id, usuarioId],
+      );
+      expect(mov.motivo).toBe("AVARIA_FISICA");
+
+      await expect(
+        qr.query(
+          `UPDATE movimentacoes_estoque SET quantidade = 1 WHERE id = $1`,
+          [mov.id],
+        ),
+      ).rejects.toThrow(/permission denied/i);
+
+      await expect(
+        qr.query(`DELETE FROM movimentacoes_estoque WHERE id = $1`, [mov.id]),
+      ).rejects.toThrow(/permission denied/i);
+    } finally {
+      await qr.rollbackTransaction().catch(() => undefined);
+      await qr.release();
+    }
+  });
 });

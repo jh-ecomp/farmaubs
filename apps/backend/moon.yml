@@ -59,6 +59,13 @@ tasks:
     deps:
       - 'shared:build'
 
+  test-e2e:
+    command: 'pnpm exec jest --config ./test/jest-e2e.json'
+    options:
+      runInCI: false
+    deps:
+      - 'shared:build'
+
   db-seed:
     script: 'pnpm exec ts-node src/database/seed-dev.ts'
     options:

@@ -1,8 +1,14 @@
 import { Module } from "@nestjs/common";
+import { EstoqueAjustesController } from "./api/controllers/estoque-ajustes.controller";
 import { EstoqueAnaliticaController } from "./api/controllers/estoque-analitica.controller";
 import { EstoqueSaldosController } from "./api/controllers/estoque-saldos.controller";
 import { ConsultarSaldosPaginadosUseCase } from "./application/use-cases/consultar-saldos-paginados.use-case";
 import { ObterMetricasEstoqueUseCase } from "./application/use-cases/obter-metricas-estoque.use-case";
+import { RegistrarAjusteEstoqueUseCase } from "./application/use-cases/registrar-ajuste-estoque.use-case";
+import {
+  REPOSITORIO_ESTOQUE_AJUSTES_PORT,
+  type RepositorioEstoqueAjustesPort,
+} from "./domain/ports/estoque-ajustes.repository.port";
 import {
   REPOSITORIO_ESTOQUE_METRICAS_PORT,
   type RepositorioEstoqueMetricasPort,
@@ -11,15 +17,20 @@ import {
   REPOSITORIO_ESTOQUE_SALDOS_PORT,
   type RepositorioEstoqueSaldosPort,
 } from "./domain/ports/estoque-saldos.repository.port";
+import { EstoqueAjustesPgRepository } from "./infrastructure/adapters/estoque-ajustes-pg.repository";
 import { EstoqueMetricasPgRepository } from "./infrastructure/adapters/estoque-metricas-pg.repository";
 import { EstoqueSaldosPgRepository } from "./infrastructure/adapters/estoque-saldos-pg.repository";
 
 /**
- * [RF005 / RF018 / RF022 / RF023]: Módulo de estoque. Instancia os casos de uso puros via
- * useFactory, ligando-os aos adaptadores PG pelas portas de repositório.
+ * [RF005 / RF009 / RF011 / RF018 / RF022 / RF023 / RF028]: Módulo de estoque. Instancia os casos de uso
+ * puros via useFactory, ligando-os aos adaptadores PG pelas portas de repositório.
  */
 @Module({
-  controllers: [EstoqueAnaliticaController, EstoqueSaldosController],
+  controllers: [
+    EstoqueAnaliticaController,
+    EstoqueSaldosController,
+    EstoqueAjustesController,
+  ],
   providers: [
     EstoqueMetricasPgRepository,
     {
@@ -42,6 +53,17 @@ import { EstoqueSaldosPgRepository } from "./infrastructure/adapters/estoque-sal
       useFactory: (repo: RepositorioEstoqueSaldosPort) =>
         new ConsultarSaldosPaginadosUseCase(repo),
       inject: [REPOSITORIO_ESTOQUE_SALDOS_PORT],
+    },
+    EstoqueAjustesPgRepository,
+    {
+      provide: REPOSITORIO_ESTOQUE_AJUSTES_PORT,
+      useExisting: EstoqueAjustesPgRepository,
+    },
+    {
+      provide: RegistrarAjusteEstoqueUseCase,
+      useFactory: (repo: RepositorioEstoqueAjustesPort) =>
+        new RegistrarAjusteEstoqueUseCase(repo),
+      inject: [REPOSITORIO_ESTOQUE_AJUSTES_PORT],
     },
   ],
   exports: [ObterMetricasEstoqueUseCase, ConsultarSaldosPaginadosUseCase],
