@@ -36,31 +36,26 @@
 
 ---
 
-## 3. Contratos de dados e Protocolo HTTP (DTOs / Schemas Zod)
+## 3. Contratos de dados e Protocolo HTTP (DTOs e Helpers Compartilhados)
+
+Consome diretamente os contratos e funções puras exportados por `@farmaubs/shared` (`packages/shared/src/estoque/ajustes.types.ts` e `ajustes-helpers.ts`):
 
 ```typescript
-import { z } from 'zod';
-
-export const registrarAjusteSchema = z.object({
-  tipoOperacao: z.enum(['ENTRADA', 'SAIDA']),
-  quantidade: z.number().int().positive('A quantidade deve ser maior que zero'),
-  motivo: z.string().min(1, 'Selecione o motivo do ajuste'),
-  justificativa: z.string().min(10, 'A justificativa deve conter pelo menos 10 caracteres'),
-}).refine(
-  (data) => {
-    if (data.motivo === 'OUTRO') {
-      return data.justificativa.trim().length >= 20;
-    }
-    return true;
-  },
-  {
-    message: "O motivo 'Outro' exige justificativa detalhada com no mínimo 20 caracteres",
-    path: ['justificativa'],
-  }
-);
-
-export type RegistrarAjusteLoteInputDto = z.infer<typeof registrarAjusteSchema>;
+import {
+  MOTIVOS_AJUSTE_ENTRADA,
+  MOTIVOS_AJUSTE_SAIDA,
+  motivoCompativelComTipo,
+  validarJustificativaAjuste,
+  saldoSuficiente,
+  type RegistrarAjusteLoteInputDto,
+  type AjusteEstoqueResultadoDto,
+  type TipoOperacaoAjuste,
+  type MotivoAjuste,
+} from '@farmaubs/shared';
 ```
+
+- **Endpoint de Ajuste**: `POST /api/v1/estoque/lotes/:loteId/ajustes` (retorna `201 Created` com `AjusteEstoqueResultadoDto`; `422 Unprocessable Entity` para saldo insuficiente; `400 Bad Request` para dados/motivo/justificativa inválidos; `404 Not Found` para lote inexistente ou fora da UBS).
+- **Endpoint de Rastreabilidade**: `GET /api/v1/estoque/lotes/:loteId/rastreabilidade` (**ES-04**).
 
 ---
 
@@ -73,8 +68,8 @@ export type RegistrarAjusteLoteInputDto = z.infer<typeof registrarAjusteSchema>;
 - **Hooks**: `useRegistrarAjusteEstoque()` e `useRastreabilidadeLote(loteId)`.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-04 e ES-MOB-05)
-- **DTOs de Operação e Schema Zod**: `RegistrarAjusteLoteInputDto`, `RastreabilidadeLoteDto` e `registrarAjusteSchema` centralizados em `@farmaubs/shared`.
-- **Validação de Justificativa e Saldo**: Regra de mínimo 10 caracteres (ou 20 para "Outro") validada pelo Zod compartilhado.
+- **DTOs e Catálogos de Operação**: `RegistrarAjusteLoteInputDto`, `AjusteEstoqueResultadoDto`, `MOTIVOS_AJUSTE_ENTRADA`, `MOTIVOS_AJUSTE_SAIDA` e `RastreabilidadeLoteDto` centralizados em `@farmaubs/shared`.
+- **Validação de Justificativa, Motivo e Saldo**: Regras de compatibilidade `motivoCompativelComTipo`, tamanho da justificativa `validarJustificativaAjuste` (mínimo 10 caracteres, ou 20 para `OUTRO`, máximo 500) e `saldoSuficiente` reutilizadas diretamente de `@farmaubs/shared`.
 - **Equivalência Mobile**:
   - Ajuste rápido implementado na tela/modal mobile `AjusteEstoqueScreen` (**ES-MOB-04**).
   - Linha do tempo de rastreabilidade implementada no componente nativo `FichaRastreabilidadeLoteMobile` (**ES-MOB-05**).

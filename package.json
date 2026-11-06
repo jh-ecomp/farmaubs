@@ -13,7 +13,7 @@
     "test:mobile": "pnpm --filter @farmaubs/mobile typecheck",
     "test:integration": "pnpm --filter @farmaubs/backend test:integration",
     "test:bdd": "pnpm --filter @farmaubs/backend test:bdd",
-    "db:seed": "pnpm --filter @farmaubs/backend db:seed",
+    "db:seed": "pnpm --filter @farmaubs/backend db:seed-dev",
     "moon": "moon"
   },
   "keywords": [],
