@@ -148,6 +148,6 @@ Funcionalidade: Rastreabilidade e Linha do Tempo do Lote
 ## 6. Checklist de DoD e aceitação
 
 - [ ] Endpoint implementado com query otimizada sobre a tabela `movimentacoes_estoque`.
-- [ ] Testes unitários (Camada A) validando ordem cronológica (`ordenarPorCadeia`), tradução de tipos (`traduzirTipo`), conciliação de saldos (`conciliarCadeia`) e cálculo de `saldoInicial`.
-- [ ] Testes de integração (Camada B) contra PostgreSQL real com RLS (`farmaubs_app`), validando integridade do cabeçalho, isolamento por município e filtro por `unidadeIds`.
-- [ ] Testes E2E validando fluxo HTTP completo, autenticação RBAC com os 3 perfis e resposta 404 entre UBSs do mesmo município.
+- [x] Testes unitários (Camada A) validando ordem cronológica (`ordenarPorCadeia`), tradução de tipos (`traduzirTipo`), conciliação de saldos (`conciliarCadeia`) e cálculo de `saldoInicial`.
+- [x] Testes de integração (Camada B) contra PostgreSQL real com RLS (`farmaubs_app`), validando integridade do cabeçalho, isolamento por município e filtro por `unidadeIds`.
+- [x] Testes E2E validando fluxo HTTP completo, autenticação RBAC com os 3 perfis e resposta 404 entre UBSs do mesmo município.
