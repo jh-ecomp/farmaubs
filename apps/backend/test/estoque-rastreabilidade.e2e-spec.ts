@@ -1,12 +1,14 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { Server } from "node:http";
+import { randomUUID } from "crypto";
 import request from "supertest";
 import * as bcrypt from "bcrypt";
 import { DataSource } from "typeorm";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/app.setup";
 import { adminDatabaseUrl } from "./test-db";
+import { PerfilCodigo } from "@farmaubs/shared";
 
 /**
  * ES-04 (#245) - GET /api/v1/estoque/lotes/:loteId/rastreabilidade de ponta a ponta
@@ -36,6 +38,16 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
   let tokenAdmin: string;
   let loteA1: string;
   let loteA2: string;
+
+  const PAPEIS_PERMITIDOS: string[] = [
+    PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+    PerfilCodigo.FARMACEUTICO_RESIDENTE,
+    PerfilCodigo.GERENTE,
+  ];
+  const PAPEIS_BLOQUEADOS: string[] = Object.values(PerfilCodigo).filter(
+    (p) => !PAPEIS_PERMITIDOS.includes(p),
+  );
+  const tokensPorPerfil = new Map<string, string>();
 
   const server = (): Server => app.getHttpServer() as Server;
 
@@ -113,9 +125,10 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
     ]);
     // Remove o que referenciar os usuários de teste (vínculos com UBS, sessões, etc.), seja qual for a tabela.
     const ids = (
-      await admin.query(`SELECT id FROM users WHERE email LIKE $1`, [
-        `%${EMAIL_SUFIXO}`,
-      ])
+      await admin.query(
+        `SELECT id FROM users WHERE email LIKE $1 OR municipio_id = $2::uuid`,
+        [`%${EMAIL_SUFIXO}`, MUN_A],
+      )
     ).map((u: { id: string }) => u.id);
     if (ids.length > 0) {
       const refs = await admin.query(
@@ -134,9 +147,10 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
         );
       }
     }
-    await admin.query(`DELETE FROM users WHERE email LIKE $1`, [
-      `%${EMAIL_SUFIXO}`,
-    ]);
+    await admin.query(
+      `DELETE FROM users WHERE email LIKE $1 OR municipio_id = $2::uuid`,
+      [`%${EMAIL_SUFIXO}`, MUN_A],
+    );
     await admin.query(`DELETE FROM unidades_saude WHERE id = ANY($1::uuid[])`, [
       [UBS_A1, UBS_A2],
     ]);
@@ -203,15 +217,48 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
     );
 
     loteA1 = await inserirLote(UBS_A1, "RT-E2E-A1", 460);
-    await inserirMovimentacao(UBS_A1, loteA1, "ENTRADA_RECEBIMENTO", 500, 0, 500, "2026-01-01T10:00:00.000Z");
-    await inserirMovimentacao(UBS_A1, loteA1, "SAIDA_DISPENSACAO", 30, 500, 470, "2026-01-02T10:00:00.000Z");
-    await inserirMovimentacao(UBS_A1, loteA1, "AJUSTE_SAIDA", 10, 470, 460, "2026-01-03T10:00:00.000Z", {
-      motivo: "AVARIA_FISICA",
-      justificativa: "Quebra no armazenamento",
-    });
+    await inserirMovimentacao(
+      UBS_A1,
+      loteA1,
+      "ENTRADA_RECEBIMENTO",
+      500,
+      0,
+      500,
+      "2026-01-01T10:00:00.000Z",
+    );
+    await inserirMovimentacao(
+      UBS_A1,
+      loteA1,
+      "SAIDA_DISPENSACAO",
+      30,
+      500,
+      470,
+      "2026-01-02T10:00:00.000Z",
+    );
+    await inserirMovimentacao(
+      UBS_A1,
+      loteA1,
+      "AJUSTE_SAIDA",
+      10,
+      470,
+      460,
+      "2026-01-03T10:00:00.000Z",
+      {
+        motivo: "AVARIA_FISICA",
+        justificativa: "Quebra no armazenamento",
+      },
+    );
 
     loteA2 = await inserirLote(UBS_A2, "RT-E2E-A2", 50);
-    await inserirMovimentacao(UBS_A2, loteA2, "ENTRADA_RECEBIMENTO", 50, 0, 50, "2026-01-01T10:00:00.000Z");
+    await inserirMovimentacao(
+      UBS_A2,
+      loteA2,
+      "ENTRADA_RECEBIMENTO",
+      50,
+      0,
+      50,
+      "2026-01-01T10:00:00.000Z",
+    );
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -222,6 +269,43 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
 
     tokenFarma = await login(EMAIL_FARMA, SENHA);
     tokenAdmin = await login(EMAIL_ADMIN, SENHA);
+
+    for (const codigo of Object.values(PerfilCodigo)) {
+      if (codigo === PerfilCodigo.FARMACEUTICO_RESPONSAVEL) {
+        tokensPorPerfil.set(codigo, tokenFarma);
+        continue;
+      }
+      if (codigo === PerfilCodigo.ADMINISTRADOR) {
+        tokensPorPerfil.set(codigo, tokenAdmin);
+        continue;
+      }
+      const [perfil] = await admin.query(
+        `SELECT id FROM perfis WHERE codigo = $1`,
+        [codigo],
+      );
+      if (!perfil)
+        throw new Error(`Perfil ausente no banco de teste: ${codigo}`);
+      const id = randomUUID();
+      const email = `${codigo.toLowerCase()}${EMAIL_SUFIXO}`;
+      await admin.query(
+        `INSERT INTO users (id, municipio_id, nome_completo, email, senha_hash, perfil_id,
+                            ativo, deve_trocar_senha, tentativas_login_falhas, senha_atualizada_em)
+         VALUES ($1, $2, $3, $4, $5, $6, true, false, 0, now())`,
+        [
+          id,
+          MUN_A,
+          `Perfil ${codigo} Rastreab E2E`,
+          email,
+          senhaHash,
+          perfil.id,
+        ],
+      );
+      await admin.query(
+        `INSERT INTO user_units (usuario_id, unidade_id, ativo) VALUES ($1, $2, true)`,
+        [id, UBS_A1],
+      );
+      tokensPorPerfil.set(codigo, await login(email, SENHA));
+    }
   });
 
   afterAll(async () => {
@@ -250,10 +334,14 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
       principioAtivo: "Dipirona sódica",
     });
     expect(
-      res.body.movimentacoes.map((m: { tipoMovimentacao: string }) => m.tipoMovimentacao),
+      res.body.movimentacoes.map(
+        (m: { tipoMovimentacao: string }) => m.tipoMovimentacao,
+      ),
     ).toEqual(["ENTRADA_RECEBIMENTO", "SAIDA_DISPENSACAO", "AJUSTE_SAIDA"]);
     expect(
-      res.body.movimentacoes.map((m: { saldoResultante: number }) => m.saldoResultante),
+      res.body.movimentacoes.map(
+        (m: { saldoResultante: number }) => m.saldoResultante,
+      ),
     ).toEqual([500, 470, 460]);
     expect(res.body.movimentacoes[2]).toMatchObject({
       quantidade: 10,
@@ -273,7 +361,10 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
   });
 
   it("404: lote inexistente", async () => {
-    const res = await consultar(tokenFarma, "7e000000-0000-4000-8000-0000000000ff");
+    const res = await consultar(
+      tokenFarma,
+      "7e000000-0000-4000-8000-0000000000ff",
+    );
     expect(res.status).toBe(404);
   });
 
@@ -287,9 +378,19 @@ describe("GET /api/v1/estoque/lotes/:loteId/rastreabilidade (E2E - camada C)", (
     expect(res.status).toBe(401);
   });
 
-  it("403: perfil sem permissão (ADMINISTRADOR não está em @Roles, NF009)", async () => {
-    const res = await consultar(tokenAdmin, loteA1);
-    expect(res.status).toBe(403);
-  });
-});
+  it.each(PAPEIS_PERMITIDOS)(
+    "200: perfil %s pode consultar (NF009)",
+    async (codigo) => {
+      const res = await consultar(tokensPorPerfil.get(codigo)!, loteA1);
+      expect(res.status).toBe(200);
+    },
+  );
 
+  it.each(PAPEIS_BLOQUEADOS)(
+    "403: perfil %s sem permissão de consulta (NF009)",
+    async (codigo) => {
+      const res = await consultar(tokensPorPerfil.get(codigo)!, loteA1);
+      expect(res.status).toBe(403);
+    },
+  );
+});
