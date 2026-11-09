@@ -60,6 +60,8 @@ describe("traduzirTipo", () => {
   it("resolve ajustes pela operação", () => {
     expect(traduzirTipo({ tipoBanco: "AJUSTE_ENTRADA", operacao: "+" })).toBe("AJUSTE_ENTRADA");
     expect(traduzirTipo({ tipoBanco: "AJUSTE_SAIDA", operacao: "-" })).toBe("AJUSTE_SAIDA");
+    expect(traduzirTipo({ tipoBanco: "AJUSTE_QUALQUER", operacao: "+" })).toBe("AJUSTE_ENTRADA");
+    expect(traduzirTipo({ tipoBanco: "AJUSTE_QUALQUER", operacao: "-" })).toBe("AJUSTE_SAIDA");
   });
 
   it("falha alto para tipo desconhecido", () => {
@@ -112,6 +114,19 @@ describe("ordenarPorCadeia", () => {
       mov({ id: "3", saldoAnterior: 20, saldoResultante: 30 }),
     ];
     expect(ordenarPorCadeia([...lista].reverse())).toHaveLength(3);
+  });
+
+  it("mantém a ordem do SQL quando a cadeia é circular (entrada e saída de mesma quantidade)", () => {
+    const entrada = [
+      mov({ id: "x", saldoAnterior: 10, saldoResultante: 20 }),
+      mov({ id: "y", saldoAnterior: 20, saldoResultante: 10 }),
+    ];
+    expect(ordenarPorCadeia(entrada).map((m) => m.id)).toEqual(["x", "y"]);
+    expect(ordenarPorCadeia([...entrada].reverse()).map((m) => m.id)).toEqual(["y", "x"]);
+  });
+
+  it("retorna lista vazia para entrada vazia", () => {
+    expect(ordenarPorCadeia([])).toEqual([]);
   });
 });
 
