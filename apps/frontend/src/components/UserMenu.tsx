@@ -54,12 +54,12 @@ export function UserMenu() {
 
   return (
     <div
-      className="flex items-center gap-space-md"
+      className="flex items-center gap-4 gap-space-md"
       role="region"
       aria-label="Perfil do Usuário e Sessão"
     >
       {/* Badge de Perfil RBAC */}
-      <div className="hidden lg:flex items-center gap-space-xs px-2.5 py-1 rounded bg-surface-subtle border border-border-crisp">
+      <div className="hidden lg:flex items-center gap-2 gap-space-xs px-2.5 py-1 rounded bg-surface-subtle border border-border-crisp">
         <span
           className="material-symbols-outlined text-[18px] text-primary"
           aria-hidden="true"
@@ -72,7 +72,7 @@ export function UserMenu() {
       </div>
 
       {/* Dados do Usuário */}
-      <div className="flex items-center gap-space-xs">
+      <div className="flex items-center gap-2.5 gap-space-xs">
         <div className="text-right hidden sm:block">
           <p className="font-body-md-medium text-body-md-medium text-text-primary leading-none">
             {userNome}

@@ -146,9 +146,9 @@ Funcionalidade: Gestão e Validação de Pacientes na Dispensação (Camada A)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Interfaces exportadas exclusivamente em `packages/shared/src/dispensacao/paciente.types.ts`.
-- [ ] DTOs validam rigorosamente CNS (15 dígitos), CPF (11 dígitos e cálculo de dígito), Nome e Data de Nascimento.
-- [ ] Endpoint `/api/v1/dispensacao/pacientes/:id/historico` calcula corretamente o intervalo de consumo.
-- [ ] Micro-TSDoc incluído em todas as funções públicas e use cases.
-- [ ] Testes unitários BDD (Camada A) cobrindo fluxo feliz e rejeições por validação.
-- [ ] Swagger documentado com exemplos representativos e códigos HTTP 200, 201, 400, 401, 403 e 409.
+- [x] Interfaces exportadas exclusivamente em `packages/shared/src/dispensacao/paciente.types.ts`.
+- [x] DTOs validam rigorosamente CNS (15 dígitos), CPF (11 dígitos e cálculo de dígito), Nome e Data de Nascimento.
+- [x] Endpoint `/api/v1/dispensacao/pacientes/:id/historico` calcula corretamente o intervalo de consumo.
+- [x] Micro-TSDoc incluído em todas as funções públicas e use cases.
+- [x] Testes unitários BDD (Camada A) cobrindo fluxo feliz e rejeições por validação.
+- [x] Swagger documentado com exemplos representativos e códigos HTTP 200, 201, 400, 401, 403 e 409.

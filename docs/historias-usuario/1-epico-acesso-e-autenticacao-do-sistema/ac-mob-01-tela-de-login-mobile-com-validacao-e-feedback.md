@@ -28,11 +28,11 @@
 
 2. **Fluxo de Submissão e Estado de Carregamento (Loading State)**:
    - Ao tocar em "Acessar Sistema", o botão entra em estado de carregamento (`<ActivityIndicator>`), o texto do botão é ocultado e a interação de toque é desabilitada para prevenir submissões duplicadas concorrentes.
-   - O payload enviado ao endpoint `POST /api/v1/auth/login` segue rigorosamente a interface `LoginRequest` compartilhada de `@farmaubs/shared`.
+   - O payload enviado ao endpoint `POST /api/v1/acesso/login` segue rigorosamente a interface `LoginRequest` compartilhada de `@farmaubs/shared`.
 
 3. **Tratamento Anti-Enumeração e Respostas de Erro (RF002, NF011)**:
    - **401 Unauthorized / Credenciais Inválidas**: O aplicativo exibe uma mensagem genérica amigável ("E-mail ou senha incorretos.") em uma caixa de alerta visual vermelha com ícone e borda, sem revelar se o e-mail existe no banco de dados.
-   - **423 Locked / Conta Bloqueada (5 falhas)**: Caso a conta esteja suspensa temporariamente, a API retorna `minutosRestantes`. O app exibe: *"Conta temporariamente bloqueada. Tente novamente em X minutos."* e impede novas tentativas enquanto o contador estiver ativo.
+   - **429 Too Many Requests / 423 Locked / Conta Bloqueada (5 falhas)**: Caso a conta esteja suspensa temporariamente, a API retorna `minutosRestantes`. O app exibe: *"Conta temporariamente bloqueada. Tente novamente em X minutos."* e impede novas tentativas enquanto o contador estiver ativo.
    - **Indisponibilidade de Conexão (Rede/Offline)**: Em caso de falha de conexão com a API ou timeout, o app exibe: *"Falha de conexão com o servidor da UBS. Verifique sua rede e tente novamente."*.
 
 4. **Persistência de Sessão Segura e Navegação Pós-Login (ADR-034, RF002)**:
@@ -46,7 +46,7 @@
 ## 3. Contratos de Dados e Tipagens (`@farmaubs/shared`)
 
 ### 3.1 Rotas Utilizadas
-- Endpoint de Autenticação: `POST /api/v1/auth/login`
+- Endpoint de Autenticação: `POST /api/v1/acesso/login`
 - Formato de envio: `Content-Type: application/json`
 
 ### 3.2 Tipagens Compartilhadas Consumidas
@@ -99,13 +99,13 @@ export interface UsuarioAutenticado {
 
 ## 4. Critérios de Aceite Detalhados
 
-- [ ] A tela de login é a porta de entrada não autenticada do `apps/mobile`, renderizada com SafeAreaView e layout responsivo nas dimensões de aparelhos móveis comuns (360dp a 430dp de largura).
-- [ ] O formulário contém os campos "E-mail institucional" e "Senha", com placeholders informativos e validações client-side em Português do Brasil.
-- [ ] O teclado virtual não sobrepõe os campos de entrada nem o botão de login em qualquer densidade de tela.
-- [ ] Disparo de mutação de login para `POST /api/v1/auth/login` com tipagem estrita de `LoginRequest`.
-- [ ] Exibição de indicador de progresso no botão durante o trânsito da requisição, bloqueando cliques adicionais.
-- [ ] Feedback acessível e destacado em caso de credenciais inválidas, bloqueio temporário por tentativas (com minutos restantes) e falhas de rede.
-- [ ] Login aprovado salva a sessão via `expo-secure-store` e navega corretamente de acordo com o estado de `deveTrocarSenha`.
+- [x] A tela de login é a porta de entrada não autenticada do `apps/mobile`, renderizada com SafeAreaView e layout responsivo nas dimensões de aparelhos móveis comuns (360dp a 430dp de largura).
+- [x] O formulário contém os campos "E-mail institucional" e "Senha", com placeholders informativos e validações client-side em Português do Brasil.
+- [x] O teclado virtual não sobrepõe os campos de entrada nem o botão de login em qualquer densidade de tela.
+- [x] Disparo de mutação de login para `POST /api/v1/acesso/login` com tipagem estrita de `LoginRequest`.
+- [x] Exibição de indicador de progresso no botão durante o trânsito da requisição, bloqueando cliques adicionais.
+- [x] Feedback acessível e destacado em caso de credenciais inválidas, bloqueio temporário por tentativas (com minutos restantes) e falhas de rede.
+- [x] Login aprovado salva a sessão via `expo-secure-store` e navega corretamente de acordo com o estado de `deveTrocarSenha`.
 
 ---
 

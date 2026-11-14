@@ -23,7 +23,7 @@ import {
 import { fetchApi, SessaoExpirada } from "../services/api";
 
 interface LoginScreenProps {
-  onLoginSuccess: (dados: LoginSucesso) => void;
+  onLoginSuccess: (dados: LoginSucesso) => void | Promise<void>;
   apiBaseUrl: string;
   avisoSessao?: string | null;
 }
@@ -108,7 +108,7 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl, avisoSessao }: LoginSc
         setErro(MENSAGEM_REDE);
         return;
       }
-      onLoginSuccess(sucesso);
+      await onLoginSuccess(sucesso);
     } catch (erroLogin) {
       if (erroLogin instanceof SessaoExpirada) return;
       setErro(MENSAGEM_REDE);

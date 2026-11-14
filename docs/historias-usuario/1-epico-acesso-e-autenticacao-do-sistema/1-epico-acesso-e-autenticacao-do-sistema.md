@@ -46,37 +46,37 @@
 
 | AC | Título | Camada de teste | Status |
 | --- | --- | --- | --- |
-| AC-01 | Migrations do schema de acesso (`users`, `profiles`, `user_units`, `sessions`, `password_reset_tokens`, `totp_secrets`) | — | ✅ Redigida |
-| AC-02 | Role `farmaubs_app`, RLS, interceptor de transação e harness de integração | B | ✅ Redigida |
-| AC-03 | Constraints e índices (e-mail único, `user_units` única, índices de sessão/token) | B | ✅ Redigida |
+| AC-01 | Migrations do schema de acesso (`users`, `profiles`, `user_units`, `sessions`, `password_reset_tokens`, `totp_secrets`) | — | ✅ Concluída |
+| AC-02 | Role `farmaubs_app`, RLS, interceptor de transação e harness de integração | B | ✅ Concluída |
+| AC-03 | Constraints e índices (e-mail único, `user_units` única, índices de sessão/token) | B | ✅ Concluída |
 
 ### Backend — autenticação e administração
 
 | AC | Título | Camada de teste | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| AC-04 | Cadastrar usuário com hash bcrypt, perfil e UBSs (RF001) | A, B | AC-01, AC-02, AC-03 | ✅ Redigida |
-| AC-05 | Login com validação e bloqueio por tentativas (RF002) | A, B, C | AC-04 | ✅ Redigida |
-| AC-06 | Logout com encerramento da sessão (RF004) | A, B, C | AC-05 | ✅ Redigida |
+| AC-04 | Cadastrar usuário com hash bcrypt, perfil e UBSs (RF001) | A, B | AC-01, AC-02, AC-03 | ✅ Concluída |
+| AC-05 | Login com validação e bloqueio por tentativas (RF002) | A, B, C | AC-04 | ✅ Concluída |
+| AC-06 | Logout com encerramento da sessão (RF004) | A, B, C | AC-05 | ✅ Concluída |
 | AC-07 | Recuperação de senha (RF003) | A, B | AC-04 | ⏳ Pendente de redação (Despriorizada) |
-| AC-08 | Gerenciar usuários: editar, inativar/reativar, perfil, UBSs (RF025) | A, B | AC-04, AC-05 | ✅ Redigida |
+| AC-08 | Gerenciar usuários: editar, inativar/reativar, perfil, UBSs (RF025) | A, B | AC-04, AC-05 | ✅ Concluída |
 | AC-09 | 2FA TOTP opt-in com segredo criptografado em repouso (NF011) | A, B, C | AC-04 | ⏳ Pendente de redação (Despriorizada) |
-| AC-10 | Timeout de sessão: expiração deslizante + timestamp absoluto (NF012) | A, B, C | AC-03, AC-05 | ✅ Redigida |
-| AC-11 | Endpoints REST `/api/v1/auth/*` com DTOs e Swagger (ADR-007) | A, C | AC-04 a AC-07, AC-10 | ✅ Redigida |
-| AC-12 | Endpoints REST `/api/v1/usuarios/*` com DTOs e Swagger (ADR-007, RF025) | A, C | AC-04, AC-08, AC-11 | ✅ Redigida |
-| AC-13 | Guards de autorização RBAC por perfil e escopo de tenant (ADR-006) | A, B | AC-05, AC-11, AC-12 | ✅ Redigida |
-| AC-14 | Porta `AuthProvider` e adaptador de sessão server-side (ADR-006) | A, B | AC-04, AC-05, AC-06, AC-10 | ✅ Redigida |
+| AC-10 | Timeout de sessão: expiração deslizante + timestamp absoluto (NF012) | A, B, C | AC-03, AC-05 | ✅ Concluída |
+| AC-11 | Endpoints REST `/api/v1/auth/*` com DTOs e Swagger (ADR-007) | A, C | AC-04 a AC-07, AC-10 | ✅ Concluída |
+| AC-12 | Endpoints REST `/api/v1/usuarios/*` com DTOs e Swagger (ADR-007, RF025) | A, C | AC-04, AC-08, AC-11 | ✅ Concluída |
+| AC-13 | Guards de autorização RBAC por perfil e escopo de tenant (ADR-006) | A, B | AC-05, AC-11, AC-12 | ✅ Concluída |
+| AC-14 | Porta `AuthProvider` e adaptador de sessão server-side (ADR-006) | A, B | AC-04, AC-05, AC-06, AC-10 | ✅ Concluída |
 | AC-15 | Criptografia AES-256 para dados sensíveis em repouso (NF010) | A, B | AC-14 | ⏳ Pendente de redação (Despriorizada) |
 
 ### Frontend — autenticação e administração
 
 | AC | Título | Camada de teste | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| AC-16 | Tela de login com validação e feedback de erro (RF002) | D | AC-05, AC-10, AC-11 | ✅ Redigida |
+| AC-16 | Tela de login com validação e feedback de erro (RF002) | D | AC-05, AC-10, AC-11 | ✅ Concluída |
 | AC-17 | Tela de recuperação de senha (RF003) | D | AC-07, AC-11, AC-16 | ⏳ Pendente de redação  (Despriorizada) |
-| AC-18 | Gestão de usuários no painel administrativo (RF001, RF025) | D | AC-08, AC-12, AC-13, AC-16 | ✅ Redigida |
-| AC-19 | Contexto de autenticação: usuário atual, perfil e escopo (ADR-013) | D | AC-06, AC-10, AC-11, AC-16 | ✅ Redigida |
-| AC-20 | Aviso de timeout e encerramento de sessão (NF012) | D | AC-10, AC-19 | ✅ Redigida |
-| AC-21 | Proteção de rotas por perfil e logout (NF009) | D | AC-13, AC-19 | ✅ Redigida |
+| AC-18 | Gestão de usuários no painel administrativo (RF001, RF025) | D | AC-08, AC-12, AC-13, AC-16 | ✅ Concluída |
+| AC-19 | Contexto de autenticação: usuário atual, perfil e escopo (ADR-013) | D | AC-06, AC-10, AC-11, AC-16 | ✅ Concluída |
+| AC-20 | Aviso de timeout e encerramento de sessão (NF012) | D | AC-10, AC-19 | ✅ Concluída |
+| AC-21 | Proteção de rotas por perfil e logout (NF009) | D | AC-13, AC-19 | ✅ Concluída |
 
 ### Mobile — aplicativo móvel do operador
 

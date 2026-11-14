@@ -1,9 +1,11 @@
+import { PerfilCodigo } from "@farmaubs/shared";
 import type { UsuarioPayload } from "../types/auth";
 
 /**
  * [RF002 / RBAC]: Retorna a rota inicial padrão do usuário de acordo com o perfil de acesso (RBAC).
- * Administrador -> /usuarios
- * Demais perfis (Farmacêutico, Gerente, etc.) -> /em-desenvolvimento
+ * - Administrador -> /usuarios
+ * - Farmacêuticos (Responsável / Residente) e Gerente -> /dispensas
+ * - Demais cenários / fallback -> /dashboard
  * @param usuario - Objeto do usuário autenticado no contexto global.
  * @returns Rota padrão para redirecionamento após autenticação.
  */
@@ -22,14 +24,21 @@ export function getDefaultRouteForUser(
       ? [rawPerfil.toUpperCase()]
       : [];
 
-  const isAdmin =
-    perfilCodigo === "ADMINISTRADOR" ||
-    perfilCodigo === "ADMIN" ||
-    perfis.some((p) => p === "ADMINISTRADOR" || p === "ADMIN");
+  const temPerfil = (codigo: string) =>
+    perfilCodigo === codigo || perfis.includes(codigo);
 
-  if (isAdmin) {
+  if (temPerfil(PerfilCodigo.ADMINISTRADOR) || temPerfil("ADMIN")) {
     return "/usuarios";
   }
 
-  return "/em-desenvolvimento";
+  if (
+    temPerfil(PerfilCodigo.FARMACEUTICO_RESPONSAVEL) ||
+    temPerfil(PerfilCodigo.FARMACEUTICO_RESIDENTE) ||
+    temPerfil(PerfilCodigo.GERENTE) ||
+    temPerfil("GESTOR")
+  ) {
+    return "/dispensas";
+  }
+
+  return "/dashboard";
 }

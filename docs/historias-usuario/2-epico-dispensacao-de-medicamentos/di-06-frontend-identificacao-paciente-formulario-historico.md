@@ -114,8 +114,8 @@ Funcionalidade: Formulário de Identificação do Paciente na UI (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Os 4 campos (CNS, CPF, Nome e Data de Nascimento) são estritamente validados antes de permitir o avanço.
-- [ ] Máscaras de entrada aplicadas de forma reativa sem travar a digitação.
-- [ ] Painel de histórico dos últimos 90 dias renderizado com destaque para possíveis retiradas antecipadas.
-- [ ] Conformidade com acessibilidade WCAG 2.1 AA (foco, labels e tags aria).
-- [ ] Testes da Camada D (Vitest + React Testing Library) aprovados.
+- [x] Os 4 campos (CNS, CPF, Nome e Data de Nascimento) são estritamente validados antes de permitir o avanço.
+- [x] Máscaras de entrada aplicadas de forma reativa sem travar a digitação.
+- [x] Painel de histórico dos últimos 90 dias renderizado com destaque para possíveis retiradas antecipadas.
+- [x] Conformidade com acessibilidade WCAG 2.1 AA (foco, labels e tags aria).
+- [x] Testes da Camada D (Vitest + React Testing Library) aprovados.

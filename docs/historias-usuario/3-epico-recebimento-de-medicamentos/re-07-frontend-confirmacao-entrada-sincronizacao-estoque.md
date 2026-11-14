@@ -139,7 +139,7 @@ Funcionalidade: Confirmação e Sincronização de Entrada de Estoque (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Tela integrada combinando cabeçalho, formulário de item e grid provisória de conferência.
-- [ ] Modal de confirmação acessível com suporte a fechamento por `Esc` e foco gerenciado.
-- [ ] Testes de fluxo e integração (Camada D) validando adição de múltiplos itens, remoção e envio da mutação com mock do MSW.
-- [ ] Invalidação dos caches de estoque e histórico no TanStack Query após sucesso.
+- [x] Tela integrada combinando cabeçalho, formulário de item e grid provisória de conferência.
+- [x] Modal de confirmação acessível com suporte a fechamento por `Esc` e foco gerenciado.
+- [x] Testes de fluxo e integração (Camada D) validando adição de múltiplos itens, remoção e envio da mutação com mock do MSW.
+- [x] Invalidação dos caches de estoque e histórico no TanStack Query após sucesso.

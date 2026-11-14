@@ -172,8 +172,8 @@ Funcionalidade: Painel de Histórico de Recebimentos e Estorno (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Painel implementado no frontend React com seletor de range de datas e atalho padrão "Ontem e Hoje".
-- [ ] Botão de exportação `.xlsx` integrado ao backend com download automático do arquivo.
-- [ ] Modal do Termo de Recebimento acessível com formatação para impressão em folha de estilo CSS print.
-- [ ] Modal de estorno justificado com validação em tempo real e atualização de estado no TanStack Query.
-- [ ] Testes de componentes (Camada D) validando alternância de filtros de data, exportação, abertura de modais e estorno justificado.
+- [x] Painel implementado no frontend React com seletor de range de datas e atalho padrão "Ontem e Hoje".
+- [x] Botão de exportação `.xlsx` integrado ao backend com download automático do arquivo.
+- [x] Modal do Termo de Recebimento acessível com formatação para impressão em folha de estilo CSS print.
+- [x] Modal de estorno justificado com validação em tempo real e atualização de estado no TanStack Query.
+- [x] Testes de componentes (Camada D) validando alternância de filtros de data, exportação, abertura de modais e estorno justificado.

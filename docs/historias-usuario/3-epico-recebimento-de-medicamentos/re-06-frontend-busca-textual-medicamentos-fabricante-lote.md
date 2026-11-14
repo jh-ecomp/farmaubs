@@ -131,7 +131,7 @@ Funcionalidade: Inclusão de Medicamentos, Lote e Validade (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Componente implementado com busca textual integrada ao TanStack Query com debounce.
-- [ ] Validação estrita de data futura e quantidade inteira positiva.
-- [ ] Testes unitários (Camada D) validando seleção no combobox, cálculo do badge de validade curta e submissão do item.
-- [ ] Modal de cadastro rápido de fabricante implementado e acessível.
+- [x] Componente implementado com busca textual integrada ao TanStack Query com debounce.
+- [x] Validação estrita de data futura e quantidade inteira positiva.
+- [x] Testes unitários (Camada D) validando seleção no combobox, cálculo do badge de validade curta e submissão do item.
+- [x] Modal de cadastro rápido de fabricante implementado e acessível.

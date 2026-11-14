@@ -157,13 +157,13 @@ describe("Autorização RBAC e TenantScope com Banco Real (AC-13, ADR-006, ADR-0
     // Cria sessões ativas
     const expiraEm = new Date(Date.now() + 60 * 60_000);
 
-    tokenPlainFarmaA = await acessoRepo.criarSessao({
+    tokenPlainFarmaA = await sessionRepo.criarSessao({
       usuarioId: USER_FARMA_A_ID,
       expiraEm,
     });
     tokenHashFarmaA = crypto.createHash("sha256").update(tokenPlainFarmaA).digest("hex");
 
-    tokenPlainAdmin = await acessoRepo.criarSessao({
+    tokenPlainAdmin = await sessionRepo.criarSessao({
       usuarioId: USER_ADMIN_ID,
       expiraEm,
     });

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { MainLayout } from "../components/MainLayout";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -20,7 +21,10 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md">
-          <div className="bg-surface-container-lowest border border-border-crisp rounded-xl p-space-md shadow-sm">
+          <Link
+            to="/estoque"
+            className="bg-surface-container-lowest border border-border-crisp rounded-xl p-space-md shadow-sm hover:border-primary transition-colors block"
+          >
             <div className="flex items-center gap-space-xs text-primary mb-2">
               <span className="material-symbols-outlined text-[24px]">inventory_2</span>
               <h2 className="font-title-sm text-title-sm text-text-primary">Estoque</h2>
@@ -28,9 +32,12 @@ export default function Dashboard() {
             <p className="font-body-md text-text-secondary text-caption-micro">
               Controle de lotes, validades e entradas de medicamentos.
             </p>
-          </div>
+          </Link>
 
-          <div className="bg-surface-container-lowest border border-border-crisp rounded-xl p-space-md shadow-sm">
+          <Link
+            to="/dispensas"
+            className="bg-surface-container-lowest border border-border-crisp rounded-xl p-space-md shadow-sm hover:border-primary transition-colors block"
+          >
             <div className="flex items-center gap-space-xs text-primary mb-2">
               <span className="material-symbols-outlined text-[24px]">medication</span>
               <h2 className="font-title-sm text-title-sm text-text-primary">Dispensas</h2>
@@ -38,9 +45,12 @@ export default function Dashboard() {
             <p className="font-body-md text-text-secondary text-caption-micro">
               Registro ágil e consulta de dispensações a pacientes do SUS.
             </p>
-          </div>
+          </Link>
 
-          <div className="bg-surface-container-lowest border border-border-crisp rounded-xl p-space-md shadow-sm">
+          <Link
+            to="/indicadores"
+            className="bg-surface-container-lowest border border-border-crisp rounded-xl p-space-md shadow-sm hover:border-primary transition-colors block"
+          >
             <div className="flex items-center gap-space-xs text-primary mb-2">
               <span className="material-symbols-outlined text-[24px]">analytics</span>
               <h2 className="font-title-sm text-title-sm text-text-primary">Indicadores</h2>
@@ -48,7 +58,7 @@ export default function Dashboard() {
             <p className="font-body-md text-text-secondary text-caption-micro">
               Métricas de consumo, curva ABC e taxa de cobertura da UBS.
             </p>
-          </div>
+          </Link>
         </div>
       </div>
     </MainLayout>

@@ -186,7 +186,7 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
         expiresAt: new Date(Date.now() + 3600_000).toISOString(),
         ttlSeconds: 3600,
         warningSeconds: 300,
-        redirectUrl: "/em-desenvolvimento",
+        redirectUrl: "/dispensas",
         usuario: {
           id: "123",
           nomeCompleto: "Farmacêutico",
@@ -199,7 +199,7 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
       });
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/em-desenvolvimento");
+        expect(mockNavigate).toHaveBeenCalledWith("/dispensas");
       });
     });
   });
@@ -282,14 +282,14 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
   });
 
   describe("5. Sucesso e Chamada da Mutação", () => {
-    it("deve chamar authService.login com email normalizado e senha, e redirecionar para /em-desenvolvimento", async () => {
+    it("deve chamar authService.login com email normalizado e senha, e redirecionar para /dispensas", async () => {
       const user = userEvent.setup();
       mockAuthService.login.mockResolvedValueOnce({
         token: "token-sessao-123",
         expiresAt: new Date(Date.now() + 3600_000).toISOString(),
         ttlSeconds: 3600,
         warningSeconds: 300,
-        redirectUrl: "/em-desenvolvimento",
+        redirectUrl: "/dispensas",
         usuario: {
           id: "uuid-user-1",
           nomeCompleto: "Maria Farmacêutica",
@@ -321,7 +321,7 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
       });
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/em-desenvolvimento");
+        expect(mockNavigate).toHaveBeenCalledWith("/dispensas");
       });
     });
 
@@ -458,7 +458,7 @@ describe("Login Component — Camada D (ADR-030 / #167)", () => {
       renderWithProviders(<Login />);
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/em-desenvolvimento", {
+        expect(mockNavigate).toHaveBeenCalledWith("/dispensas", {
           replace: true,
         });
       });

@@ -249,3 +249,20 @@ textarea {
   flex-direction: column;
   margin-top: 16px;
 }
+
+/* Impressão exclusiva do Termo de Recebimento de Carga SUS (RE-08) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #termoRecebimentoPrintArea,
+  #termoRecebimentoPrintArea * {
+    visibility: visible;
+  }
+  #termoRecebimentoPrintArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

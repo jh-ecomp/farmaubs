@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { PerfilCodigo } from "@farmaubs/shared";
+import {
+  PerfilCodigo,
+  validarCPF,
+  formatarCPF,
+  limparNaoNumericos,
+} from "@farmaubs/shared";
 import type { UsuarioItemTabela } from "@farmaubs/shared";
 import {
   useCadastrarUsuario,
@@ -14,6 +19,7 @@ import { UsuarioApiError } from "../../services/usuario.service";
 import {
   RedefinirSenhaModal,
   gerarSenhaSegura,
+  SENHA_COMPLEXA_REGEX,
 } from "./components/RedefinirSenhaModal";
 
 const usuarioSchema = z.object({
@@ -21,9 +27,33 @@ const usuarioSchema = z.object({
     .string()
     .min(3, "Nome completo deve ter pelo menos 3 caracteres."),
   email: z.string().email("Informe um endereço de e-mail válido."),
-  cpf: z.string().optional(),
-  crf: z.string().optional(),
-  senha: z.string().optional(),
+  cpf: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || !val.trim()) return true;
+        const limpo = limparNaoNumericos(val);
+        if (limpo.length === 0) return true;
+        return validarCPF(limpo);
+      },
+      {
+        message: "Informe um CPF válido.",
+      },
+    ),
+  senha: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || !val.trim()) return true;
+        return SENHA_COMPLEXA_REGEX.test(val);
+      },
+      {
+        message:
+          "A senha deve ter no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.",
+      },
+    ),
   municipioId: z.string().min(1, "Selecione um município de lotação."),
   perfil: z.string().min(1, "Selecione o perfil de acesso."),
   ubsIds: z
@@ -70,7 +100,6 @@ export function UsuarioModalForm({
       nomeCompleto: "",
       email: "",
       cpf: "",
-      crf: "",
       senha: "",
       municipioId: "",
       perfil: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
@@ -96,8 +125,7 @@ export function UsuarioModalForm({
         reset({
           nomeCompleto: usuarioParaEditar.nomeCompleto,
           email: usuarioParaEditar.email,
-          cpf: usuarioParaEditar.cpf || "",
-          crf: usuarioParaEditar.crf || "",
+          cpf: usuarioParaEditar.cpf ? formatarCPF(usuarioParaEditar.cpf) : "",
           senha: "",
           municipioId: usuarioParaEditar.municipioId,
           perfil: String(usuarioParaEditar.perfilCodigo),
@@ -111,7 +139,6 @@ export function UsuarioModalForm({
           nomeCompleto: "",
           email: "",
           cpf: "",
-          crf: "",
           senha: senhaAleatoria,
           municipioId: "",
           perfil: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
@@ -182,7 +209,6 @@ export function UsuarioModalForm({
             municipioId: values.municipioId,
             ubsIds: values.ubsIds,
             cpf: values.cpf?.trim() || undefined,
-            crf: values.crf?.trim() || undefined,
           },
         });
         onSuccess(values.nomeCompleto);
@@ -190,18 +216,23 @@ export function UsuarioModalForm({
         return;
       }
 
-      // No cadastro, a senha provisória é sempre uma senha forte gerada aleatoriamente
-      const senhaEfetiva = values.senha?.trim() || gerarSenhaSegura();
+      if (!values.senha || !values.senha.trim()) {
+        setError("senha", {
+          type: "manual",
+          message:
+            "A senha provisória é obrigatória. Digite ou gere uma senha.",
+        });
+        return;
+      }
 
       await cadastrarMutation.mutateAsync({
         nomeCompleto: values.nomeCompleto.trim(),
         email: values.email.trim().toLowerCase(),
-        senha: senhaEfetiva,
+        senha: values.senha.trim(),
         perfil: values.perfil,
         municipioId: values.municipioId,
         ubsIds: values.ubsIds,
         cpf: values.cpf?.trim() || undefined,
-        crf: values.crf?.trim() || undefined,
         deveTrocarSenha: true,
       });
 
@@ -280,52 +311,33 @@ export function UsuarioModalForm({
             className="space-y-4"
             noValidate
           >
-            {/* Nome Completo e CPF */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor="formUserName"
-                  className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1"
-                >
-                  Nome Completo *
-                </label>
-                <input
-                  id="formUserName"
-                  type="text"
-                  placeholder="Ex: Dra. Juliana Miranda"
-                  className={`w-full px-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all ${
-                    errors.nomeCompleto
-                      ? "border border-error ring-1 ring-error"
-                      : ""
-                  }`}
-                  {...register("nomeCompleto")}
-                />
-                {errors.nomeCompleto && (
-                  <p className="text-error text-caption-micro mt-1">
-                    {errors.nomeCompleto.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="formUserCpf"
-                  className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1"
-                >
-                  CPF (apenas números)
-                </label>
-                <input
-                  id="formUserCpf"
-                  type="text"
-                  maxLength={14}
-                  placeholder="000.000.000-00"
-                  className="w-full px-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all"
-                  {...register("cpf")}
-                />
-              </div>
+            {/* Nome Completo */}
+            <div>
+              <label
+                htmlFor="formUserName"
+                className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1"
+              >
+                Nome Completo *
+              </label>
+              <input
+                id="formUserName"
+                type="text"
+                placeholder="Ex: Dra. Juliana Miranda"
+                className={`w-full px-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all ${
+                  errors.nomeCompleto
+                    ? "border border-error ring-1 ring-error"
+                    : ""
+                }`}
+                {...register("nomeCompleto")}
+              />
+              {errors.nomeCompleto && (
+                <p className="text-error text-caption-micro mt-1">
+                  {errors.nomeCompleto.message}
+                </p>
+              )}
             </div>
 
-            {/* E-mail e CRF */}
+            {/* E-mail Institucional e CPF */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label
@@ -357,22 +369,34 @@ export function UsuarioModalForm({
 
               <div>
                 <label
-                  htmlFor="formUserCrf"
+                  htmlFor="formUserCpf"
                   className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1"
                 >
-                  Registro de Classe (CRF / COREN)
+                  CPF (opcional)
                 </label>
                 <input
-                  id="formUserCrf"
+                  id="formUserCpf"
                   type="text"
-                  placeholder="Ex: CRF-PI 5912"
-                  className="w-full px-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all"
-                  {...register("crf")}
+                  maxLength={14}
+                  placeholder="000.000.000-00"
+                  className={`w-full px-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all ${
+                    errors.cpf ? "border border-error ring-1 ring-error" : ""
+                  }`}
+                  {...register("cpf")}
+                  onChange={(e) => {
+                    const formatado = formatarCPF(e.target.value);
+                    setValue("cpf", formatado, { shouldValidate: true });
+                  }}
                 />
+                {errors.cpf && (
+                  <p className="text-error text-caption-micro mt-1 font-body-md-medium">
+                    {errors.cpf.message}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Senha Provisória: no cadastro é sempre gerada pelo sistema; na edição é um botão opcional */}
+            {/* Senha Provisória: no cadastro é gerada pelo sistema ou digitada; na edição é um botão opcional */}
             {isEditing ? (
               <div className="p-3.5 bg-surface-subtle border border-border-crisp/40 rounded-xl flex items-center justify-between gap-4">
                 <div>
@@ -399,7 +423,7 @@ export function UsuarioModalForm({
                     htmlFor="formUserPassword"
                     className="block font-label-caps text-label-caps text-text-secondary uppercase"
                   >
-                    Senha Provisória (Gerada Automaticamente) *
+                    Senha Provisória *
                   </label>
                   <button
                     type="button"
@@ -419,10 +443,17 @@ export function UsuarioModalForm({
                   <input
                     id="formUserPassword"
                     type="text"
-                    readOnly
+                    placeholder="Mínimo 8 caracteres (A-Z, a-z, 0-9 e símbolo)"
                     value={watch("senha") || ""}
-                    className="w-full font-mono text-body-md px-3 py-2 bg-surface-subtle border border-border-crisp/50 rounded-lg text-text-primary select-all cursor-default focus:outline-none"
+                    className={`w-full font-mono text-body-md px-3 py-2 bg-surface-subtle border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all ${
+                      errors.senha
+                        ? "border-error ring-1 ring-error bg-error-container/20"
+                        : "border-border-crisp/50"
+                    }`}
                     {...register("senha")}
+                    onChange={(e) => {
+                      setValue("senha", e.target.value, { shouldValidate: true });
+                    }}
                   />
                   <button
                     type="button"
@@ -462,11 +493,10 @@ export function UsuarioModalForm({
                   </button>
                 </div>
                 <p className="text-caption-micro text-text-tertiary mt-1">
-                  Senha segura gerada pelo sistema para evitar erros humanos. O
-                  profissional será forçado a alterá-la no primeiro acesso.
+                  Mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial (@$!%*?&#). O profissional será forçado a alterá-la no primeiro acesso.
                 </p>
                 {errors.senha && (
-                  <p className="text-error text-caption-micro mt-1">
+                  <p className="text-error text-caption-micro mt-1 font-body-md-medium">
                     {errors.senha.message}
                   </p>
                 )}

@@ -166,8 +166,8 @@ Funcionalidade: Integridade do Schema de Dispensação (Camada B)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Arquivo de migração TypeORM criado e idempotente.
-- [ ] Método `down()` desfaz todas as tabelas e índices em ordem reversa sem erros de dependência.
-- [ ] RLS ativado nas tabelas operacionais com grant para `farmaubs_app`.
-- [ ] Campos de identificação do paciente configurados como `NOT NULL` com constraints de tamanho.
-- [ ] Testes da Camada B aprovados no banco efêmero (`pnpm test:schema`).
+- [x] Arquivo de migração TypeORM criado e idempotente.
+- [x] Método `down()` desfaz todas as tabelas e índices em ordem reversa sem erros de dependência.
+- [x] RLS ativado nas tabelas operacionais com grant para `farmaubs_app`.
+- [x] Campos de identificação do paciente configurados como `NOT NULL` com constraints de tamanho.
+- [x] Testes da Camada B aprovados no banco efêmero (`pnpm test:schema`).

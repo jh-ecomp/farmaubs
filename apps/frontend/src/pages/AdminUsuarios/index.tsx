@@ -438,7 +438,7 @@ export function AdminUsuarios() {
                     type="text"
                     value={buscaInput}
                     onChange={(e) => setBuscaInput(e.target.value)}
-                    placeholder="Buscar por nome, e-mail institucional, CPF ou CRF..."
+                    placeholder="Buscar por nome, e-mail institucional ou CPF..."
                     className="w-full pl-9 pr-3 py-2 bg-surface-subtle rounded-lg text-body-md font-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all"
                   />
                 </div>
@@ -648,11 +648,9 @@ export function AdminUsuarios() {
                                   <p className="font-caption-micro text-caption-micro text-text-tertiary truncate">
                                     {u.email}
                                   </p>
-                                  {(u.crf || u.cpf) && (
+                                  {u.cpf && (
                                     <p className="font-caption-micro text-caption-micro text-text-secondary truncate">
-                                      {u.crf ? `CRF ${u.crf}` : ""}
-                                      {u.crf && u.cpf ? " • " : ""}
-                                      {u.cpf ? `CPF ${u.cpf}` : ""}
+                                      CPF {u.cpf}
                                     </p>
                                   )}
                                 </div>

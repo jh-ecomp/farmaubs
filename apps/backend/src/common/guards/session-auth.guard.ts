@@ -103,7 +103,12 @@ export class SessionAuthGuard implements CanActivate {
     // Propaga contexto da sessão no request para interceptors e controllers
     (req as any).session = sessao;
     (req as any).sessao = sessao;
-    (req as any).user = sessao;
+    (req as any).user = {
+      ...sessao,
+      id: sessao.usuarioId,
+      usuarioId: sessao.usuarioId,
+      sessionId: sessao.id,
+    };
 
     return true;
   }

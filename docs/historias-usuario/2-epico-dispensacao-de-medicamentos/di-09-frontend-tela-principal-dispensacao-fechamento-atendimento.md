@@ -115,9 +115,9 @@ Funcionalidade: Fluxo Completo da Tela Principal de Dispensação (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Tela estruturada e responsiva com Tailwind CSS e tokens visuais do FarmaUBS.
-- [ ] Métricas diárias de atendimento exibidas no topo da tela.
-- [ ] Modal de confirmação acessível com suporte a navegação por teclado e `Escape`.
-- [ ] Limpeza automática do formulário após confirmação de sucesso.
-- [ ] Invalidação de cache do TanStack Query sincronizando saldos de estoque e lista de dispensas.
-- [ ] Testes da Camada D cobrindo o fluxo feliz e tratamento de erros de rede.
+- [x] Tela estruturada e responsiva com Tailwind CSS e tokens visuais do FarmaUBS.
+- [x] Métricas diárias de atendimento exibidas no topo da tela.
+- [x] Modal de confirmação acessível com suporte a navegação por teclado e `Escape`.
+- [x] Limpeza automática do formulário após confirmação de sucesso.
+- [x] Invalidação de cache do TanStack Query sincronizando saldos de estoque e lista de dispensas.
+- [x] Testes da Camada D cobrindo o fluxo feliz e tratamento de erros de rede.

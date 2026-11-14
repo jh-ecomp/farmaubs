@@ -98,25 +98,25 @@ export interface AjusteEstoqueResponseDto {
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
 ### 1. Pacote Compartilhado (`@farmaubs/shared`)
-- **`src/contracts/estoque/ajustes.types.ts`**: `RegistrarAjusteLoteInputDto`, `AjusteEstoqueResultadoDto` e schema Zod `registrarAjusteSchema`.
-- **`src/domain/estoque/ajustes-helpers.ts`**: Validações de tamanho de justificativa (mínimo de 10 caracteres; mínimo de 20 caracteres se o motivo for `OUTRO`) e checagem de suficiência de saldo físico.
+- **`packages/shared/src/estoque/ajustes.types.ts`**: constantes `TIPOS_OPERACAO_AJUSTE`, `MOTIVOS_AJUSTE_ENTRADA`, `MOTIVOS_AJUSTE_SAIDA`, `MOTIVOS_AJUSTE`, `TIPO_MOVIMENTACAO_AJUSTE` e interfaces `RegistrarAjusteLoteInputDto` e `AjusteEstoqueResultadoDto`. O DTO HTTP (class-validator) fica no backend em `api/dto/registrar-ajuste-estoque.dto.ts`.
+- **`packages/shared/src/estoque/ajustes-helpers.ts`**: funções puras `motivoCompativelComTipo`, `validarJustificativaAjuste` (mínimo de 10 caracteres; mínimo de 20 caracteres se o motivo for `OUTRO`; máximo de 500) e `saldoSuficiente`.
 
 ### 2. Camada de Aplicação (`apps/backend/src/modules/estoque/application/`)
 - **Use Cases**:
-  - `registrar-ajuste-estoque.use-case.ts`: Orquestrador transacional de ajuste avulso via `UnitOfWorkPort` / `EstoqueAjustesRepositoryPort` com lock pessimista (`SELECT FOR UPDATE`), validação de saldo e gravação de auditoria.
+  - `registrar-ajuste-estoque.use-case.ts`: Orquestrador transacional de ajuste avulso via `RepositorioEstoqueAjustesPort` com lock pessimista (`SELECT FOR UPDATE`), checagem de UBS do usuário, validação de saldo e gravação de auditoria.
 
 ### 3. Camada de Domínio (`apps/backend/src/modules/estoque/domain/`)
-- **Entidades de Domínio**: `Lote` e `MovimentacaoEstoque`.
 - **Portas (Interfaces)**:
-  - `estoque-ajustes.repository.port.ts`: Métodos `bloquearLotePorId`, `atualizarSaldo` e `registrarMovimentacao`.
-  - `unit-of-work.port.ts`: Abstração de transação atômica.
-- **Erros de Domínio**: `SaldoInsuficienteException`, `JustificativaInvalidaException`, `LoteNaoEncontradoException`.
+  - `estoque-ajustes.repository.port.ts`: Contrato `RepositorioEstoqueAjustesPort` com os métodos `bloquearLotePorId`, `atualizarSaldo` e `registrarMovimentacao`.
+- **Erros de Domínio (`errors/ajuste-estoque.errors.ts`)**: `DadosAjusteInvalidosException`, `MotivoIncompativelException`, `JustificativaInvalidaException`, `LoteNaoEncontradoException` e `SaldoInsuficienteException`.
 
-### 4. Camada de Infraestrutura (`apps/backend/src/modules/estoque/infrastructure/`)
-- **Adaptadores de Banco (`adapters/`)**:
-  - `typeorm-estoque-ajustes.repository.ts`: Execução atômica via `QueryRunner` do TypeORM garantindo `START TRANSACTION`, `SELECT ... FOR UPDATE` e `COMMIT`.
-- **Adaptadores de Entrada HTTP (`controllers/`)**:
-  - `estoque-ajustes.controller.ts`: Endpoint `POST /api/v1/estoque/lotes/:loteId/ajustes` com proteção de perfil `FARMACEUTICO`.
+### 4. Camada de Infraestrutura e Entrada HTTP (`apps/backend/src/modules/estoque/`)
+- **Adaptadores de Banco (`infrastructure/adapters/`)**:
+  - `estoque-ajustes-pg.repository.ts`: Execução atômica via `TransactionContext` (gerenciado pelo `TransactionInterceptor` com GUC de tenant ativo), garantindo `SELECT ... FOR UPDATE` no lote, atualização de saldo e inserção em `movimentacoes_estoque`.
+- **Migração SQL (`apps/backend/src/modules/recebimento/infrastructure/persistence/migrations/`)**:
+  - `1792300000000AddMotivoMovimentacoesEstoque.ts`: Adiciona a coluna `motivo varchar(40)` (nullable) em `public.movimentacoes_estoque`.
+- **Controller HTTP (`api/controllers/`) e DTO (`api/dto/`)**:
+  - `estoque-ajustes.controller.ts`: Endpoint `POST /api/v1/estoque/lotes/:loteId/ajustes` restrito a `FARMACEUTICO_RESPONSAVEL` e `FARMACEUTICO_RESIDENTE` (NF009), mapeando saldo insuficiente para `422`, lote inexistente/outra UBS para `404` e dados/motivo/justificativa inválidos para `400`.
 
 ---
 
@@ -161,8 +161,8 @@ Funcionalidade: Ajustes Pontuais de Estoque (Camadas A, B e C)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Caso de uso `RegistrarAjusteEstoqueUseCase` implementado com lock pessimista (`SELECT FOR UPDATE`).
-- [ ] Validação rigorosa de motivo x tipo de operação (ex: impede motivo `VENCIMENTO` em operação de `ENTRADA`).
-- [ ] Testes unitários (Camada A) cobrindo regras de saldo negativo, validação de caracteres e autorização RBAC.
-- [ ] Testes de integração de concorrência (Camada B) simulando 2 ajustes simultâneos no mesmo lote para garantir consistência ACID.
-- [ ] Testes E2E (Camada C) validando persistência do histórico e integridade do saldo atualizado.
+- [x] Caso de uso `RegistrarAjusteEstoqueUseCase` implementado com lock pessimista (`SELECT FOR UPDATE`).
+- [x] Validação rigorosa de motivo x tipo de operação (ex: impede motivo `VENCIMENTO` em operação de `ENTRADA`).
+- [x] Testes unitários (Camada A) cobrindo regras de saldo negativo, validação de caracteres e autorização RBAC.
+- [x] Testes de integração de concorrência (Camada B) simulando 2 ajustes simultâneos no mesmo lote para garantir consistência ACID.
+- [x] Testes E2E (Camada C) validando persistência do histórico e integridade do saldo atualizado.
