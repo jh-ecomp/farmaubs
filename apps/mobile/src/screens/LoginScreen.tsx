@@ -20,21 +20,23 @@ import {
   validarCamposLogin,
   type LoginSucesso,
 } from "./login-form";
+import { fetchApi, SessaoExpirada } from "../services/api";
 
 interface LoginScreenProps {
   onLoginSuccess: (dados: LoginSucesso) => void;
   apiBaseUrl: string;
+  avisoSessao?: string | null;
 }
 
 // shortcut: 15s, quando a história definir o limite de timeout do login
 const TIMEOUT_LOGIN_MS = 15_000;
 
-export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
+export function LoginScreen({ onLoginSuccess, apiBaseUrl, avisoSessao }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(avisoSessao ?? null);
   const [bloqueioAte, setBloqueioAte] = useState<number | null>(null);
 
   const bloqueado = bloqueioAte != null && bloqueioAte > Date.now();
@@ -69,12 +71,16 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
         senha,
       };
 
-      const res = await fetch(`${apiBaseUrl}/api/v1/acesso/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
+      const res = await fetchApi(
+        `${apiBaseUrl}/api/v1/acesso/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        },
+        { autenticada: false },
+      );
 
       let data: unknown;
       try {
@@ -103,7 +109,8 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
         return;
       }
       onLoginSuccess(sucesso);
-    } catch {
+    } catch (erroLogin) {
+      if (erroLogin instanceof SessaoExpirada) return;
       setErro(MENSAGEM_REDE);
     } finally {
       clearTimeout(timer);
