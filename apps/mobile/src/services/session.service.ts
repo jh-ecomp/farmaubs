@@ -1,9 +1,12 @@
 import * as SecureStore from "expo-secure-store";
 import type { UsuarioAutenticado } from "@farmaubs/shared";
 import { lerSessaoGravada, serializarSessao } from "./session-gravada";
+import { lerCatalogoUnidades, type UnidadeResumo } from "./unidade-ativa";
 
 const TOKEN_KEY = "farmaubs_auth_token";
 const USER_KEY = "farmaubs_auth_user";
+const UNIDADE_KEY = "farmaubs_unidade_ativa";
+const CATALOGO_KEY = "farmaubs_unidades_catalogo";
 
 export type SessaoRestaurada = {
   token: string;
@@ -54,8 +57,44 @@ export const sessionService = {
     return { token, usuario: lida.usuario };
   },
 
+  /**
+   * [AC-MOB-04]: Depois que a API aceita a senha nova, a sessão local deixa de exigir a troca.
+   * @returns Usuário atualizado, ou null se a sessão gravada não estiver íntegra.
+   */
+  async marcarSenhaDefinitiva(): Promise<UsuarioAutenticado | null> {
+    const raw = await SecureStore.getItemAsync(USER_KEY);
+    const lida = lerSessaoGravada(raw, Date.now());
+    if (!lida.valida) return null;
+    const usuario = { ...lida.usuario, deveTrocarSenha: false };
+    await SecureStore.setItemAsync(USER_KEY, serializarSessao(usuario, lida.expiraEm));
+    return usuario;
+  },
+
+  async salvarUnidadeAtiva(id: string): Promise<void> {
+    await SecureStore.setItemAsync(UNIDADE_KEY, id);
+  },
+
+  async obterUnidadeAtiva(): Promise<string | null> {
+    return SecureStore.getItemAsync(UNIDADE_KEY);
+  },
+
+  async salvarCatalogoUnidades(lista: UnidadeResumo[]): Promise<void> {
+    await SecureStore.setItemAsync(CATALOGO_KEY, JSON.stringify(lista));
+  },
+
+  async obterCatalogoUnidades(): Promise<UnidadeResumo[]> {
+    const raw = await SecureStore.getItemAsync(CATALOGO_KEY);
+    try {
+      return lerCatalogoUnidades(raw ? JSON.parse(raw) : []);
+    } catch {
+      return [];
+    }
+  },
+
   async limparSessao(): Promise<void> {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(USER_KEY);
+    await SecureStore.deleteItemAsync(UNIDADE_KEY);
+    await SecureStore.deleteItemAsync(CATALOGO_KEY);
   },
 };

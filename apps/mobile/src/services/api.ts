@@ -1,5 +1,6 @@
 import { sessionService } from "./session.service";
 import { comBearer, sessaoDeveSerApagada } from "./session-gravada";
+import { comUnidade } from "./unidade-ativa";
 
 export class SessaoExpirada extends Error {
   constructor() {
@@ -31,10 +32,14 @@ export async function fetchApi(
 ): Promise<Response> {
   const autenticada = opcoes?.autenticada !== false;
   const token = autenticada ? await sessionService.obterToken() : null;
+  const unidadeId = autenticada ? await sessionService.obterUnidadeAtiva() : null;
   const usouBearer = !!token;
+  let headers = init.headers;
+  if (usouBearer) headers = comBearer(token, headers);
+  if (unidadeId) headers = comUnidade(unidadeId, headers);
   const res = await fetch(url, {
     ...init,
-    headers: usouBearer ? comBearer(token, init.headers) : init.headers,
+    headers,
   });
   if (sessaoDeveSerApagada(res.status, usouBearer)) {
     await sessionService.limparSessao();
