@@ -8,12 +8,21 @@ type SeletorUbsProps = {
   ativaId: string | null;
   aviso: string | null;
   onAlternar: (id: string) => void;
+  onSair: () => void;
+  reservaTopo?: boolean;
 };
 
 /**
  * [AC-MOB-03]: Topo do layout autenticado. Uma UBS fica fixa. Várias abrem o modal.
  */
-export function SeletorUbs({ unidades, ativaId, aviso, onAlternar }: SeletorUbsProps) {
+export function SeletorUbs({
+  unidades,
+  ativaId,
+  aviso,
+  onAlternar,
+  onSair,
+  reservaTopo = true,
+}: SeletorUbsProps) {
   const [aberto, setAberto] = useState(false);
   const ativa = unidades.find((unidade) => unidade.id === ativaId) ?? null;
   const nome = ativa?.nome ?? "Carregando unidade";
@@ -25,7 +34,7 @@ export function SeletorUbs({ unidades, ativaId, aviso, onAlternar }: SeletorUbsP
   }
 
   const folgaTopo =
-    (Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0) + theme.spacing.md;
+    (reservaTopo && Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0) + theme.spacing.md;
 
   return (
     <View style={[styles.barra, { paddingTop: folgaTopo }]}>
@@ -44,6 +53,14 @@ export function SeletorUbs({ unidades, ativaId, aviso, onAlternar }: SeletorUbsP
           UBS Ativa: {nome}
         </Text>
       )}
+      <Pressable
+        onPress={onSair}
+        accessibilityRole="button"
+        accessibilityLabel="Sair do Sistema"
+        style={styles.sair}
+      >
+        <Text style={styles.sairTexto}>Sair do Sistema</Text>
+      </Pressable>
       {aviso ? (
         <Text style={styles.aviso} accessibilityRole="alert">
           {aviso}
@@ -99,6 +116,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: theme.colors.text.primary,
+  },
+  sair: {
+    minHeight: 44,
+    justifyContent: "center",
+  },
+  sairTexto: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: theme.colors.status.danger,
   },
   aviso: {
     marginTop: theme.spacing.sm,

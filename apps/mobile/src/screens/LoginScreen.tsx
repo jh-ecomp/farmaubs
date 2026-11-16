@@ -21,17 +21,24 @@ import {
   type LoginSucesso,
 } from "./login-form";
 import { fetchApi, SessaoExpirada } from "../services/api";
+import { MENSAGEM_ACAO_OFFLINE } from "../services/conectividade";
 
 interface LoginScreenProps {
   onLoginSuccess: (dados: LoginSucesso) => void | Promise<void>;
   apiBaseUrl: string;
   avisoSessao?: string | null;
+  semConexao?: boolean;
 }
 
 // shortcut: 15s, quando a história definir o limite de timeout do login
 const TIMEOUT_LOGIN_MS = 15_000;
 
-export function LoginScreen({ onLoginSuccess, apiBaseUrl, avisoSessao }: LoginScreenProps) {
+export function LoginScreen({
+  onLoginSuccess,
+  apiBaseUrl,
+  avisoSessao,
+  semConexao = false,
+}: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -58,6 +65,10 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl, avisoSessao }: LoginSc
     const validacao = validarCamposLogin(email, senha);
     if (validacao) {
       setErro(validacao);
+      return;
+    }
+    if (semConexao) {
+      setErro(MENSAGEM_ACAO_OFFLINE);
       return;
     }
 
@@ -123,7 +134,8 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl, avisoSessao }: LoginSc
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        // No Android, height trava a medida e oscila quando a faixa de rede sai.
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
         <ScrollView

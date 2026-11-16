@@ -13,7 +13,9 @@ import {
   View,
 } from "react-native";
 import { theme } from "../theme/tokens";
-import { fetchApi, SessaoExpirada } from "../services/api";
+import { fetchApi, SessaoExpirada, TempoEsgotado } from "../services/api";
+import { MENSAGEM_ACAO_OFFLINE } from "../services/conectividade";
+import { MENSAGEM_REDE } from "./login-form";
 import {
   checklistSenha,
   MENSAGEM_SENHAS_DIFERENTES,
@@ -24,6 +26,9 @@ import {
 type TrocaSenhaScreenProps = {
   apiBaseUrl: string;
   onSucesso: () => void | Promise<void>;
+  onSair: () => void;
+  semConexao?: boolean;
+  reservaTopo?: boolean;
 };
 
 function mensagemApi(data: unknown): string {
@@ -39,7 +44,13 @@ function mensagemApi(data: unknown): string {
 /**
  * [AC-MOB-04]: Troca obrigatória. O Voltar do Android não sai desta tela.
  */
-export function TrocaSenhaScreen({ apiBaseUrl, onSucesso }: TrocaSenhaScreenProps) {
+export function TrocaSenhaScreen({
+  apiBaseUrl,
+  onSucesso,
+  onSair,
+  semConexao = false,
+  reservaTopo = true,
+}: TrocaSenhaScreenProps) {
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
   const [mostrar, setMostrar] = useState(false);
@@ -48,7 +59,7 @@ export function TrocaSenhaScreen({ apiBaseUrl, onSucesso }: TrocaSenhaScreenProp
   const itens = checklistSenha(novaSenha);
   const podeSalvar = podeSalvarSenha(novaSenha, confirmacao) && !enviando;
   const diverge = confirmacao.length > 0 && !senhasCoincidem(novaSenha, confirmacao);
-  const folgaTopo = (Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0) + theme.spacing.md;
+  const folgaTopo = (reservaTopo && Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0) + theme.spacing.md;
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => true);
@@ -57,6 +68,10 @@ export function TrocaSenhaScreen({ apiBaseUrl, onSucesso }: TrocaSenhaScreenProp
 
   async function salvar() {
     if (!podeSalvarSenha(novaSenha, confirmacao) || enviando) return;
+    if (semConexao) {
+      setErro(MENSAGEM_ACAO_OFFLINE);
+      return;
+    }
     setEnviando(true);
     setErro(null);
     try {
@@ -73,7 +88,7 @@ export function TrocaSenhaScreen({ apiBaseUrl, onSucesso }: TrocaSenhaScreenProp
       await onSucesso();
     } catch (falha) {
       if (falha instanceof SessaoExpirada) return;
-      setErro("Não foi possível alterar a senha.");
+      setErro(falha instanceof TempoEsgotado ? MENSAGEM_REDE : "Não foi possível alterar a senha.");
     } finally {
       setEnviando(false);
     }
@@ -162,6 +177,14 @@ export function TrocaSenhaScreen({ apiBaseUrl, onSucesso }: TrocaSenhaScreenProp
             ) : (
               <Text style={styles.botaoTexto}>Salvar Nova Senha</Text>
             )}
+          </Pressable>
+          <Pressable
+            onPress={onSair}
+            accessibilityRole="button"
+            accessibilityLabel="Sair do Sistema"
+            style={styles.sair}
+          >
+            <Text style={styles.sairTexto}>Sair do Sistema</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -260,5 +283,15 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     fontWeight: "700",
     fontSize: 16,
+  },
+  sair: {
+    marginTop: theme.spacing.md,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sairTexto: {
+    color: theme.colors.status.danger,
+    fontWeight: "700",
   },
 });

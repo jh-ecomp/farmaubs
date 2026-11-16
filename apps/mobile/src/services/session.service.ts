@@ -11,7 +11,13 @@ const CATALOGO_KEY = "farmaubs_unidades_catalogo";
 export type SessaoRestaurada = {
   token: string;
   usuario: UsuarioAutenticado;
+  expiraEm: string;
 };
+
+export type RestauracaoSessao =
+  | (SessaoRestaurada & { estado: "pronta" })
+  | { estado: "expirada" }
+  | { estado: "ausente" };
 
 /**
  * Serviço de armazenamento seguro em Keystore (Android) / Keychain (iOS).
@@ -45,16 +51,31 @@ export const sessionService = {
    * [NF012]: Na abertura do app, devolve a sessão só se o JSON estiver íntegro e a data não tiver passado.
    * @returns Token e usuário, ou null depois de apagar dados inválidos ou vencidos.
    */
-  async restaurarSessao(): Promise<SessaoRestaurada | null> {
+  async restaurarSessao(): Promise<RestauracaoSessao> {
     const token = await SecureStore.getItemAsync(TOKEN_KEY);
     const raw = await SecureStore.getItemAsync(USER_KEY);
-    if (!token && !raw) return null;
+    if (!token && !raw) return { estado: "ausente" };
     const lida = lerSessaoGravada(raw, Date.now());
     if (!token || !lida.valida) {
+      const expirada = !lida.valida && lida.motivo === "expirada";
       await this.limparSessao();
-      return null;
+      return expirada ? { estado: "expirada" } : { estado: "ausente" };
     }
-    return { token, usuario: lida.usuario };
+    return { estado: "pronta", token, usuario: lida.usuario, expiraEm: lida.expiraEm };
+  },
+
+  /**
+   * [AC-MOB-07]: Guarda a nova data devolvida por POST /api/v1/acesso/renovar ou pelo cabeçalho.
+   * @param expiraEm - ISO da API.
+   * @returns Usuário já gravado, ou null se a sessão local não estiver íntegra.
+   */
+  async atualizarExpiraEm(expiraEm: string): Promise<UsuarioAutenticado | null> {
+    if (Number.isNaN(Date.parse(expiraEm))) return null;
+    const raw = await SecureStore.getItemAsync(USER_KEY);
+    const lida = lerSessaoGravada(raw, Date.now());
+    if (!lida.valida) return null;
+    await SecureStore.setItemAsync(USER_KEY, serializarSessao(lida.usuario, expiraEm));
+    return lida.usuario;
   },
 
   /**

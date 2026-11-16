@@ -1,3 +1,4 @@
+/// <reference path="../types/node-assert.d.ts" />
 import assert from "node:assert/strict";
 import {
   classificarErroLogin,

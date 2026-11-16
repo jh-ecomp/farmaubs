@@ -1,6 +1,7 @@
 import { sessionService } from "./session.service";
 import { comBearer, sessaoDeveSerApagada } from "./session-gravada";
 import { comUnidade } from "./unidade-ativa";
+import { lerExpiresAtHeader } from "./alerta-sessao";
 
 export class SessaoExpirada extends Error {
   constructor() {
@@ -8,7 +9,16 @@ export class SessaoExpirada extends Error {
   }
 }
 
+export class TempoEsgotado extends Error {
+  constructor() {
+    super("tempo-esgotado");
+  }
+}
+
+const TIMEOUT_API_MS = 15_000;
+
 let aoExpirar: () => void = () => {};
+let aoNovaExpiracao: (expiraEm: string) => void = () => {};
 
 /**
  * [NF012]: O App registra o que fazer quando um 401 apaga a sessão.
@@ -16,6 +26,14 @@ let aoExpirar: () => void = () => {};
  */
 export function definirAoSessaoExpirar(fn: () => void): void {
   aoExpirar = fn;
+}
+
+/**
+ * [AC-MOB-07]: O App reagenda o alerta quando uma resposta traz X-Session-Expires-At.
+ * @param fn - Recebe o ISO novo.
+ */
+export function definirAoNovaExpiracao(fn: (expiraEm: string) => void): void {
+  aoNovaExpiracao = fn;
 }
 
 /**
@@ -37,14 +55,35 @@ export async function fetchApi(
   let headers = init.headers;
   if (usouBearer) headers = comBearer(token, headers);
   if (unidadeId) headers = comUnidade(unidadeId, headers);
-  const res = await fetch(url, {
-    ...init,
-    headers,
-  });
-  if (sessaoDeveSerApagada(res.status, usouBearer)) {
-    await sessionService.limparSessao();
-    aoExpirar();
-    throw new SessaoExpirada();
+  const controle = new AbortController();
+  const timer = init.signal ? null : setTimeout(() => controle.abort(), TIMEOUT_API_MS);
+  if (init.signal) {
+    if (init.signal.aborted) controle.abort();
+    else init.signal.addEventListener("abort", () => controle.abort(), { once: true });
   }
-  return res;
+  try {
+    const res = await fetch(url, { ...init, signal: controle.signal, headers });
+    if (sessaoDeveSerApagada(res.status, usouBearer)) {
+      await sessionService.limparSessao();
+      aoExpirar();
+      throw new SessaoExpirada();
+    }
+    if (res.ok) {
+      const iso = lerExpiresAtHeader(res.headers.get("X-Session-Expires-At"));
+      if (iso) {
+        try {
+          await aoNovaExpiracao(iso);
+        } catch {
+          // o alerta é extra; a resposta da API continua válida
+        }
+      }
+    }
+    return res;
+  } catch (erro) {
+    if (erro instanceof SessaoExpirada) throw erro;
+    if (controle.signal.aborted) throw new TempoEsgotado();
+    throw erro;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
