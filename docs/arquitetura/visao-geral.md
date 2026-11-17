@@ -49,7 +49,7 @@ O monorepo divide as responsabilidades em workspaces independentes conectados pe
 flowchart LR
     subgraph Clients["Camada de Apresentação"]
         Web["apps/frontend\nReact 19, Vite, Tailwind v4\nTanStack Query"]
-        Mobile["apps/mobile\nReact Native, Expo SDK 52\nexpo-secure-store"]
+        Mobile["apps/mobile\nReact Native, Expo SDK 58\nexpo-secure-store, expo-notifications"]
     end
 
     subgraph Core["Núcleo Compartilhado"]
@@ -93,8 +93,16 @@ flowchart TD
         Rec["Conferência de Guia CAF, Catálogo REMUME\nLaboratórios, Lotes, Validade Curta, Estorno"]
     end
 
-    subgraph Dispensacao["Módulo: Dispensação (Em andamento)"]
+    subgraph Dispensacao["Módulo: Dispensação"]
         Disp["Atendimento a Prescrições, Baixa de Saldo\nValidação de Paciente/CNS, Livro de Saída"]
+    end
+
+    subgraph Inventario["Módulo: Inventário Mensal"]
+        Inv["Ciclos de Contagem Física, Snapshot Teórico\nMapa de Divergências, Homologação e Ata Oficial"]
+    end
+
+    subgraph Alertas["Módulo: Alertas e Parâmetros (Incremento 2)"]
+        Al["Parâmetros Operacionais da UBS (RF027)\nMotor de Vencimento e Ruptura (RF022, RF023)\nTransactional Outbox e Worker de E-mail (ADR-004)"]
     end
 
     subgraph EstoqueAuditoria["Módulo Compartilhado: Estoque e Auditoria"]
@@ -106,8 +114,13 @@ flowchart TD
     Recebimento -->|Registra ENTRADA_RECEBIMENTO| Ledger
     Dispensacao -->|Deduz saldo com lock| Lotes
     Dispensacao -->|Registra SAIDA_DISPENSACAO| Ledger
+    Inventario -->|Homologa sobras e faltas| Lotes
+    Inventario -->|Registra AJUSTE_INVENTARIO| Ledger
+    Recebimento & Dispensacao & Inventario -.->|"Aciona porta de reavaliação"| Al
+    Al -->|Lê saldos e validades| Lotes
     Acesso -->|Propaga tenant_id e ubs_id| Recebimento
     Acesso -->|Propaga tenant_id e ubs_id| Dispensacao
+    Acesso -->|Propaga tenant_id e ubs_id| Alertas
     Administracao -->|Provê UBSs e Perfis| Acesso
 ```
 

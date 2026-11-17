@@ -107,3 +107,22 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | IN-MOB-02 | Mobile | Contagem física nas prateleiras com digitação ágil e salvamento local | ✅ Redigida | ⏳ Não iniciada | IN-06 |
 | IN-MOB-03 | Mobile | Conferência rápida de divergências e justificativas no aparelho | ✅ Redigida | ⏳ Não iniciada | IN-07 |
 | IN-MOB-04 | Mobile | Acompanhamento de homologação e protocolo digital de inventário | ✅ Redigida | ⏳ Não iniciada | IN-08 |
+
+---
+
+## Épico 6: Alertas, Notificações e Parâmetros Operacionais (Novo Incremento 2)
+| ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
+| --- | --- | --- | --- | --- | --- |
+| AL-01 | Backend | Migrações do schema de alertas, parâmetros operacionais por UBS e fila `outbox_events` (RF022, RF023, RF027, ADR-004) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-02 | Backend | API de Parâmetros Operacionais da UBS: consulta, atualização validada, auditoria e recálculo imediato (RF026, RF027, RF028) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-03 | Backend | Motor de Avaliação e API de Alertas: detecção contínua de vencimento próximo e risco de ruptura por cobertura em dias (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-04 | Backend | Worker Outbox e Notificações por E-mail: processamento assíncrono idempotente de alertas críticos (RF022, RF023, ADR-004) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-05 | Frontend | Sino de Notificações no Cabeçalho e Drawer Rápido: contador de não lidos, pré-visualização e marcação de leitura (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-01 |
+| AL-06 | Frontend | Tela Central de Alertas: abas de Vencimento Próximo e Risco de Ruptura, filtros de criticidade e atalhos operacionais (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-01 |
+| AL-07 | Frontend | Configuração de Parâmetros Operacionais da UBS: limiar de vencimento, estoque de segurança e *lead time* CAF (RF027, NF009) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-03 |
+| AL-08 | Frontend | Widget de Alertas no Dashboard e Modal de Confirmação Obrigatória para Validade Curta (< 6 meses) (RF022, RF023, RF024) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-04 |
+| AL-MOB-01 | Mobile | Central de Alertas no Celular: abas de vencimento próximo e risco de ruptura com marcação de leitura por toque (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | AL-05 / AL-06 |
+| AL-MOB-02 | Mobile | Notificações Locais/Push no Dispositivo Móvel para Novos Alertas Críticos de Ruptura e Vencimento na UBS Ativa (RF022, RF023, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-04 |
+| AL-MOB-03 | Mobile | Configuração Rápida de Parâmetros Operacionais da UBS no Celular (RF027, NF009, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-07 |
+| AL-MOB-04 | Mobile | Alerta Tátil Bloqueante de Confirmação no Recebimento de Lotes com Validade Curta (< 6 meses) no Celular (RF024, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-08 |
+
