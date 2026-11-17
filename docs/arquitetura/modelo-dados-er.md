@@ -35,6 +35,12 @@ erDiagram
 
     lotes ||--o{ recebimento_itens : "incrementa"
     lotes ||--o{ movimentacoes_estoque : "historico de saldo"
+    lotes ||--o{ alertas_estoque : "monitora validade"
+
+    unidades_saude ||--|| parametros_operacionais_ubs : "configura limiares"
+    unidades_saude ||--o{ alertas_estoque : "monitora estoque"
+    unidades_saude ||--o{ outbox_events : "enfileira eventos"
+    produtos ||--o{ alertas_estoque : "monitora cobertura"
 
     municipios {
         uuid id PK
@@ -169,6 +175,53 @@ erDiagram
         text justificativa
         timestamptz created_at
     }
+
+    parametros_operacionais_ubs {
+        uuid id PK
+        uuid municipio_id FK
+        uuid ubs_id FK_UK
+        int limiar_vencimento_dias
+        int estoque_seguranca_dias
+        int caf_lead_time_days
+        int janela_consumo_dias
+        boolean notificar_email_vencimento
+        boolean notificar_email_ruptura
+        uuid atualizado_por_id FK
+        timestamptz updated_at
+    }
+
+    alertas_estoque {
+        uuid id PK
+        uuid municipio_id FK
+        uuid ubs_id FK
+        uuid produto_id FK
+        uuid lote_id FK
+        varchar tipo_alerta
+        varchar severidade
+        varchar status
+        varchar titulo
+        int saldo_atual
+        numeric consumo_medio_diario
+        int cobertura_dias
+        int dias_para_vencer
+        date data_validade
+        timestamptz lido_em
+        timestamptz resolvido_em
+    }
+
+    outbox_events {
+        uuid id PK
+        uuid municipio_id FK
+        uuid ubs_id FK
+        varchar aggregate_type
+        uuid aggregate_id
+        varchar event_type
+        varchar idempotency_key UK
+        jsonb payload
+        varchar status
+        smallint tentativas
+        timestamptz processed_at
+    }
 ```
 
 ---
@@ -193,6 +246,11 @@ erDiagram
 - **`recebimento_itens`:** Linhas da guia com quantidade positiva conferida, fabricante, lote e validade.
 - **`movimentacoes_estoque`:** Livro-razão imutável de movimentação. Registra `ENTRADA_RECEBIMENTO`, `SAIDA_DISPENSACAO`, `ESTORNO_ENTRADA` e ajustes com saldo anterior e posterior para auditoria.
 
+### Alertas, parâmetros operacionais e Outbox (Incremento 2 — Épico 6)
+- **`parametros_operacionais_ubs`:** Configuração operacional 1:1 por UBS (`RF027`) definindo `limiar_vencimento_dias` (padrão 90d), `estoque_seguranca_dias` (padrão 7d), `caf_lead_time_days` (padrão 15d) e preferências de envio de e-mail.
+- **`alertas_estoque`:** Ciclo de vida dos alertas de vencimento (`RF022`) e risco de ruptura (`RF023`). Possui índice único parcial impedindo alertas abertos duplicados para o mesmo lote/produto na UBS.
+- **`outbox_events`:** Fila transacional (*Transactional Outbox* — `ADR-004`) para envio assíncrono e idempotente de e-mails de alerta ao farmacêutico responsável.
+
 ---
 
 ## 3. Políticas de Row-Level Security (RLS)
@@ -206,3 +264,6 @@ O isolamento de dados no PostgreSQL (ADR-002, ADR-016) é aplicado por municípi
 | `lotes` | `app.municipio_id` / `app.current_ubs_id` | Saldo isolado estritamente por UBS |
 | `movimentacoes_estoque` | `app.municipio_id` / `app.current_ubs_id` | Livro-razão isolado por UBS |
 | `users` | `app.municipio_id` | Administradores municipais enxergam apenas usuários da sua lotação |
+| `parametros_operacionais_ubs` | `app.municipio_id` / `app.current_ubs_id` | Parâmetros isolados para a UBS ativa na requisição |
+| `alertas_estoque` | `app.municipio_id` / `app.current_ubs_id` | Alertas visíveis apenas para operadores vinculados à UBS ativa |
+| `outbox_events` | `app.municipio_id` | Eventos de notificação isolados por município |
