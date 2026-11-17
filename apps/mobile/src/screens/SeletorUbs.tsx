@@ -36,31 +36,35 @@ export function SeletorUbs({
   const folgaTopo =
     (reservaTopo && Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0) + theme.spacing.md;
 
+  const unidade = alterna ? (
+    <Pressable
+      onPress={() => setAberto(true)}
+      accessibilityRole="button"
+      accessibilityLabel={`UBS ativa ${nome}. Toque para trocar.`}
+      style={styles.troca}
+    >
+      <Text style={styles.ativa}>UBS Ativa: {nome}</Text>
+    </Pressable>
+  ) : (
+    <Text style={styles.ativa} accessibilityRole="text">
+      UBS Ativa: {nome}
+    </Text>
+  );
+
   return (
     <View style={[styles.barra, { paddingTop: folgaTopo }]}>
-      <Text style={styles.marca}>FarmaUBS</Text>
-      {alterna ? (
+      <View style={styles.linha}>
+        <Text style={styles.marca}>FarmaUBS</Text>
         <Pressable
-          onPress={() => setAberto(true)}
+          onPress={onSair}
           accessibilityRole="button"
-          accessibilityLabel={`UBS ativa ${nome}. Toque para trocar.`}
-          style={styles.troca}
+          accessibilityLabel="Sair do Sistema"
+          style={styles.sair}
         >
-          <Text style={styles.ativa}>UBS Ativa: {nome}</Text>
+          <Text style={styles.sairTexto}>Sair do Sistema</Text>
         </Pressable>
-      ) : (
-        <Text style={styles.ativa} accessibilityRole="text">
-          UBS Ativa: {nome}
-        </Text>
-      )}
-      <Pressable
-        onPress={onSair}
-        accessibilityRole="button"
-        accessibilityLabel="Sair do Sistema"
-        style={styles.sair}
-      >
-        <Text style={styles.sairTexto}>Sair do Sistema</Text>
-      </Pressable>
+      </View>
+      {unidade}
       {aviso ? (
         <Text style={styles.aviso} accessibilityRole="alert">
           {aviso}
@@ -105,10 +109,6 @@ export function SeletorUbs({
 
 const styles = StyleSheet.create({
   barra: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.md,
@@ -116,13 +116,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
+  linha: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.spacing.sm,
+  },
   marca: {
+    flexShrink: 1,
     fontSize: 14,
     fontWeight: "700",
     color: theme.colors.action,
   },
   troca: {
-    flexShrink: 1,
+    alignSelf: "stretch",
   },
   ativa: {
     fontSize: 14,
@@ -139,7 +146,7 @@ const styles = StyleSheet.create({
     color: theme.colors.status.danger,
   },
   aviso: {
-    marginTop: theme.spacing.sm,
+    alignSelf: "stretch",
     color: theme.colors.secondary.dark,
   },
   fundo: {
