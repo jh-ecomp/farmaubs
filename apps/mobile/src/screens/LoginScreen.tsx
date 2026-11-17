@@ -9,7 +9,6 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   ScrollView,
-  Platform,
 } from "react-native";
 import type { LoginRequest } from "@farmaubs/shared";
 import { theme } from "../theme/tokens";
@@ -134,8 +133,8 @@ export function LoginScreen({
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        // No Android, height trava a medida e oscila quando a faixa de rede sai.
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        // height no Android entra em loop quando a faixa de rede sai.
+        behavior="padding"
         style={styles.flex}
       >
         <ScrollView

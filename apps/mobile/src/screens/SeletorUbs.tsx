@@ -66,8 +66,20 @@ export function SeletorUbs({
           {aviso}
         </Text>
       ) : null}
-      <Modal visible={aberto} transparent animationType="slide" onRequestClose={() => setAberto(false)}>
-        <Pressable style={styles.fundo} onPress={() => setAberto(false)}>
+      <Modal
+        visible={aberto}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        navigationBarTranslucent
+        onRequestClose={() => setAberto(false)}
+      >
+        <View style={styles.fundo}>
+          <Pressable
+            style={styles.fecha}
+            onPress={() => setAberto(false)}
+            accessibilityLabel="Fechar escolha de UBS"
+          />
           <View style={styles.folha}>
             <Text style={styles.titulo}>Escolher UBS</Text>
             {unidades.map((unidade) => (
@@ -85,7 +97,7 @@ export function SeletorUbs({
               </Pressable>
             ))}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
@@ -135,9 +147,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(15, 23, 42, 0.4)",
   },
+  fecha: {
+    flex: 1,
+  },
   folha: {
     backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md + (Platform.OS === "android" ? 12 : 0),
     borderTopLeftRadius: theme.borderRadius.lg,
     borderTopRightRadius: theme.borderRadius.lg,
   },
