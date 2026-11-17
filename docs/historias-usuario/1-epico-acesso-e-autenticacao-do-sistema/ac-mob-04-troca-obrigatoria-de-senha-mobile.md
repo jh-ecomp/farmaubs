@@ -79,11 +79,11 @@ export interface TrocarSenhaMobileState {
 
 ## 4. Critérios de Aceite Detalhados
 
-- [ ] Redirecionamento compulsório para `/trocar-senha` sempre que `deveTrocarSenha: true`.
-- [ ] Formulário com suporte a visualização de senha (ícone de alternância de texto protegido).
-- [ ] Validador de complexidade dinâmico com regras de NF011 em tempo real.
-- [ ] Bloqueio de submissão enquanto os requisitos ou confirmação de senha não forem atendidos.
-- [ ] Conclusão com sucesso atualiza o status de sessão e libera a navegação irrestrita ao app.
+- [x] Redirecionamento compulsório para `/trocar-senha` sempre que `deveTrocarSenha: true`.
+- [x] Formulário com suporte a visualização de senha (ícone de alternância de texto protegido).
+- [x] Validador de complexidade dinâmico com regras de NF011 em tempo real.
+- [x] Bloqueio de submissão enquanto os requisitos ou confirmação de senha não forem atendidos.
+- [x] Conclusão com sucesso atualiza o status de sessão e libera a navegação irrestrita ao app.
 
 ---
 

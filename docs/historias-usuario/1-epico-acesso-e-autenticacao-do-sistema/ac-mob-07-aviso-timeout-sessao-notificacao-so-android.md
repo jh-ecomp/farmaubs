@@ -96,15 +96,15 @@ export interface SessionNotificationPayload {
 
 ## 5. Critérios de Aceite Detalhados
 
-- [ ] A sessão no app mobile permanece salva e acessível no `expo-secure-store` após o fechamento completo do aplicativo.
-- [ ] Criação de `notification.service.ts` em `apps/mobile/src/services/` gerenciando agendamento e cancelamento de notificações locais via `expo-notifications`.
-- [ ] Configuração de `NotificationChannel` no Android com alta prioridade e nome legível ao usuário.
-- [ ] A cada requisição bem-sucedida ou login, uma notificação de alerta é agendada para exatamente 5 minutos antes de `expiresAt`.
-- [ ] O agendamento anterior é cancelado e recalculado a cada renovação de atividade da sessão.
-- [ ] A notificação é entregue pelo SO Android mesmo quando o processo do app está fechado/encerrado.
-- [ ] O toque na notificação abre o app e renova a sessão automaticamente se estiver dentro do prazo de tolerância.
-- [ ] Se o tempo limite foi ultrapassado ao tocar na notificação, o app limpa o `SecureStore` e redireciona para a tela de Login com mensagem amigável.
-- [ ] Solicitação de permissão de notificação no Android 13+ com tratamento de recusa sem quebrar a execução do app.
+- [x] A sessão no app mobile permanece salva e acessível no `expo-secure-store` após o fechamento completo do aplicativo.
+- [x] Criação de `notification.service.ts` em `apps/mobile/src/services/` gerenciando agendamento e cancelamento de notificações locais via `expo-notifications`.
+- [x] Configuração de `NotificationChannel` no Android com alta prioridade e nome legível ao usuário.
+- [x] A cada requisição bem-sucedida ou login, uma notificação de alerta é agendada para exatamente 5 minutos antes de `expiresAt`.
+- [x] O agendamento anterior é cancelado e recalculado a cada renovação de atividade da sessão.
+- [x] A notificação é entregue pelo SO Android mesmo quando o processo do app está fechado/encerrado.
+- [x] O toque na notificação abre o app e renova a sessão automaticamente se estiver dentro do prazo de tolerância.
+- [x] Se o tempo limite foi ultrapassado ao tocar na notificação, o app limpa o `SecureStore` e redireciona para a tela de Login com mensagem amigável.
+- [x] Solicitação de permissão de notificação no Android 13+ com tratamento de recusa sem quebrar a execução do app.
 
 ---
 

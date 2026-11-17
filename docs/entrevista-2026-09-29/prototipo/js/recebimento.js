@@ -1,130 +1,25 @@
 // FarmaUBS - Lógica de Recebimento de Medicamentos / Entrada de Estoque (js/recebimento.js)
 
-const RECEIVINGS_STORAGE_KEY = 'farmaubs_recebimentos';
+// Medicamentos em estoque (lidos do estoque compartilhado: js/estoque-store.js)
+let INVENTORY_MEDICINES = [];
 
-// Catálogo de Medicamentos da UBS
-const INVENTORY_MEDICINES = [
-  {
-    id: 'inv_1',
-    name: 'Paracetamol 500 mg',
-    form: 'Comprimido',
-    batch: 'LT-2026A1',
-    expiry: '2026-11-30',
-    stock: 350,
-    unit: 'unid.'
-  },
-  {
-    id: 'inv_2',
-    name: 'Amoxicilina 500 mg',
-    form: 'Cápsula',
-    batch: 'LT-2025F4',
-    expiry: '2027-04-15',
-    stock: 180,
-    unit: 'unid.'
-  },
-  {
-    id: 'inv_3',
-    name: 'Losartana Potássica 50 mg',
-    form: 'Comprimido',
-    batch: 'LT-2026C9',
-    expiry: '2026-12-31',
-    stock: 15,
-    unit: 'unid.'
-  },
-  {
-    id: 'inv_4',
-    name: 'Dipirona Sódica 500 mg/ml',
-    form: 'Solução Oral / Gotas',
-    batch: 'LT-2027B2',
-    expiry: '2027-08-20',
-    stock: 85,
-    unit: 'frascos'
-  },
-  {
-    id: 'inv_5',
-    name: 'Ibuprofeno 600 mg',
-    form: 'Comprimido',
-    batch: 'LT-2026M8',
-    expiry: '2026-10-10',
-    stock: 120,
-    unit: 'unid.'
-  },
-  {
-    id: 'inv_6',
-    name: 'Glibenclamida 5 mg',
-    form: 'Comprimido',
-    batch: 'LT-2027K3',
-    expiry: '2027-03-25',
-    stock: 200,
-    unit: 'unid.'
-  },
-  {
-    id: 'inv_7',
-    name: 'Omeprazol 20 mg',
-    form: 'Cápsula',
-    batch: 'LT-2026X1',
-    expiry: '2026-09-18',
-    stock: 90,
-    unit: 'unid.'
-  },
-  {
-    id: 'inv_8',
-    name: 'Sinvastatina 20 mg',
-    form: 'Comprimido',
-    batch: 'LT-2027S4',
-    expiry: '2027-06-05',
-    stock: 140,
-    unit: 'unid.'
-  }
-];
-
-// Dados Iniciais de Demonstração para Entradas de Estoque
-const DEFAULT_RECEIVINGS = [
-  {
-    id: 'rec_1',
-    medicine: 'Paracetamol 500 mg',
-    form: 'Comprimido',
-    batch: 'LT-2026A1',
-    expiry: '30/11/2026',
-    quantity: 1000,
-    unit: 'unid.',
-    invoiceNumber: 'GUIA-CAF-2026/098',
-    supplierOrigin: 'CAF Central - SMS Parnaíba',
-    notes: 'Remessa mensal regular • Lote conforme',
-    time: 'Hoje, 08:30'
-  },
-  {
-    id: 'rec_2',
-    medicine: 'Amoxicilina 500 mg',
-    form: 'Cápsula',
-    batch: 'LT-2025F4',
-    expiry: '15/04/2027',
-    quantity: 500,
-    unit: 'unid.',
-    invoiceNumber: 'NF-e 003.882',
-    supplierOrigin: 'Ministério da Saúde (DLOG / SUS)',
-    notes: 'Programa Farmácia Básica',
-    time: 'Hoje, 09:15'
-  },
-  {
-    id: 'rec_3',
-    medicine: 'Dipirona Sódica 500 mg/ml',
-    form: 'Solução Oral / Gotas',
-    batch: 'LT-2027B2',
-    expiry: '20/08/2027',
-    quantity: 120,
-    unit: 'frascos',
-    invoiceNumber: 'GUIA-CAF-2026/102',
-    supplierOrigin: 'CAF Central - SMS Parnaíba',
-    notes: 'Reposição emergencial',
-    time: 'Hoje, 10:00'
-  }
-];
+function refreshInventory() {
+  INVENTORY_MEDICINES = FarmaStore.load().map(m => ({
+    id: m.id,
+    name: `${m.name} ${m.dosage}`,
+    form: m.form,
+    batch: m.batch,
+    expiry: m.expiryDate,
+    stock: m.stock,
+    unit: m.unit
+  }));
+}
 
 let receivingsList = [];
 let pendingEstornoEntryId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  refreshInventory();
   initUserSession();
   initReceivingCombobox();
   setupDefaultExpiryDate();
@@ -260,7 +155,6 @@ function initReceivingCombobox() {
     dropdownList.style.display = 'none';
     if (btnClear) btnClear.style.display = 'block';
 
-    // Sugere o lote atual ou permite alteração para nova remessa
     if (recBatchNumber) recBatchNumber.value = med.batch;
     if (recUnitLabel) recUnitLabel.textContent = med.unit;
 
@@ -318,29 +212,13 @@ function initReceivingCombobox() {
  * Carrega a lista de recebimentos do LocalStorage
  */
 function loadReceivingsData() {
-  try {
-    const stored = localStorage.getItem(RECEIVINGS_STORAGE_KEY);
-    if (stored) {
-      receivingsList = JSON.parse(stored);
-    } else {
-      receivingsList = [...DEFAULT_RECEIVINGS];
-      saveToStorage();
-    }
-  } catch (e) {
-    console.error('Erro ao ler do LocalStorage:', e);
-    receivingsList = [...DEFAULT_RECEIVINGS];
-  }
-
+  receivingsList = FarmaStore.loadReceivings();
   renderReceivingsTable();
   updateStatistics();
 }
 
 function saveToStorage() {
-  try {
-    localStorage.setItem(RECEIVINGS_STORAGE_KEY, JSON.stringify(receivingsList));
-  } catch (e) {
-    console.error('Erro ao salvar no LocalStorage:', e);
-  }
+  FarmaStore.saveReceivings(receivingsList);
 }
 
 /**
@@ -385,10 +263,8 @@ function setupReceivingForm() {
     const expiryRaw = recExpiryDate.value;
     const expiryFormatted = formatDateBR(expiryRaw);
 
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const time = `Hoje, ${hours}:${minutes}`;
+    const date = FarmaStore.today();
+    const time = FarmaStore.nowTime();
 
     const newReceiving = {
       id: 'rec_' + Date.now(),
@@ -397,17 +273,19 @@ function setupReceivingForm() {
       form: med.form,
       batch: batch,
       expiry: expiryFormatted,
+      expiryDate: expiryRaw,
       quantity: quantity,
       unit: med.unit,
       invoiceNumber: invoiceNumber.value.trim(),
       supplierOrigin: supplierOrigin.value,
       notes: recNotes.value.trim() || 'Conferência física realizada sem divergências',
+      date: date,
       time: time
     };
 
-    // Atualiza saldo em estoque
-    med.stock += quantity;
-    med.batch = batch; // Atualiza lote para o novo recebido
+    // Atualiza saldo, lote e validade no estoque compartilhado
+    FarmaStore.adjust(med.id, quantity, { batch, expiryDate: expiryRaw });
+    refreshInventory();
 
     receivingsList.unshift(newReceiving);
     saveToStorage();
@@ -438,18 +316,17 @@ function formatDateBR(dateString) {
 }
 
 /**
- * Renderiza a Tabela de Recebimentos em Tempo Real
+ * Obtém a lista de recebimentos filtrada por range de datas e busca
  */
-function renderReceivingsTable(highlightedId = null) {
-  const tbody = document.getElementById('receivingsTableBody');
-  const emptyState = document.getElementById('emptyReceivingMessage');
-  const badgeCount = document.getElementById('badgeReceivingCount');
-  const footerSummary = document.getElementById('footerReceivingSummary');
+function getFilteredReceivings() {
+  const fromDate = document.getElementById('recDateFrom')?.value || '';
+  const toDate = document.getElementById('recDateTo')?.value || '';
   const searchFilter = document.getElementById('searchReceivingInput')?.value.toLowerCase().trim() || '';
 
-  if (!tbody) return;
-
-  const filteredList = receivingsList.filter(item => {
+  return receivingsList.filter(item => {
+    if (fromDate || toDate) {
+      if (!FarmaStore.inRange(item.date, fromDate, toDate)) return false;
+    }
     if (!searchFilter) return true;
     return (
       item.medicine.toLowerCase().includes(searchFilter) ||
@@ -458,6 +335,20 @@ function renderReceivingsTable(highlightedId = null) {
       item.supplierOrigin.toLowerCase().includes(searchFilter)
     );
   });
+}
+
+/**
+ * Renderiza a Tabela de Recebimentos em Tempo Real
+ */
+function renderReceivingsTable(highlightedId = null) {
+  const tbody = document.getElementById('receivingsTableBody');
+  const emptyState = document.getElementById('emptyReceivingMessage');
+  const badgeCount = document.getElementById('badgeReceivingCount');
+  const footerSummary = document.getElementById('footerReceivingSummary');
+
+  if (!tbody) return;
+
+  const filteredList = getFilteredReceivings();
 
   if (badgeCount) {
     badgeCount.textContent = `${filteredList.length} ${filteredList.length === 1 ? 'entrada' : 'entradas'}`;
@@ -466,7 +357,7 @@ function renderReceivingsTable(highlightedId = null) {
   if (filteredList.length === 0) {
     tbody.innerHTML = '';
     if (emptyState) emptyState.classList.remove('d-none');
-    if (footerSummary) footerSummary.textContent = 'Nenhum recebimento encontrado.';
+    if (footerSummary) footerSummary.textContent = 'Nenhum recebimento encontrado no período/busca.';
     return;
   }
 
@@ -478,6 +369,10 @@ function renderReceivingsTable(highlightedId = null) {
   tbody.innerHTML = filteredList.map(item => {
     const isRowNew = item.id === highlightedId ? 'row-flash' : '';
     const initial = item.medicine ? item.medicine.charAt(0).toUpperCase() : 'M';
+    const isToday = item.date === FarmaStore.today();
+    const dateDisplay = item.date
+      ? (isToday ? `<span class="fw-semibold text-primary">Hoje, ${item.time || ''}</span>` : `<span class="fw-semibold text-dark">${FarmaStore.fmtDate(item.date)}</span> <small class="text-muted d-block" style="font-size: 11px;">${item.time || ''}</small>`)
+      : (item.time || '—');
 
     return `
       <tr class="${isRowNew}" data-id="${item.id}">
@@ -520,8 +415,8 @@ function renderReceivingsTable(highlightedId = null) {
         </td>
 
         <td>
-          <span class="text-muted" style="font-size: 12px; white-space: nowrap;">
-            ${escapeHTML(item.time)}
+          <span style="font-size: 12px; white-space: nowrap;">
+            ${dateDisplay}
           </span>
         </td>
 
@@ -548,9 +443,10 @@ function updateStatistics() {
   const statTotalUnitsReceived = document.getElementById('statTotalUnitsReceived');
   const statTotalBatches = document.getElementById('statTotalBatches');
 
-  const totalReceivings = receivingsList.length;
-  const totalUnits = receivingsList.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
-  const totalBatches = new Set(receivingsList.map(item => item.batch)).size;
+  const filtered = getFilteredReceivings();
+  const totalReceivings = filtered.length;
+  const totalUnits = filtered.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
+  const totalBatches = new Set(filtered.map(item => item.batch)).size;
 
   if (statTotalReceivings) statTotalReceivings.textContent = totalReceivings;
   if (statTotalUnitsReceived) statTotalUnitsReceived.textContent = totalUnits.toLocaleString('pt-BR');
@@ -558,12 +454,14 @@ function updateStatistics() {
 }
 
 /**
- * Delegação de eventos da tabela (Estorno e Termo de Recebimento)
+ * Delegação de eventos da tabela e filtros
  */
 function setupTableEventListeners() {
   const tbody = document.getElementById('receivingsTableBody');
   const btnReload = document.getElementById('btnReloadMockReceivings');
   const btnPopulateEmpty = document.getElementById('btnPopulateEmptyReceiving');
+  const btnPrintReport = document.getElementById('btnPrintReceivingReport');
+  const btnClearFilters = document.getElementById('btnClearRecFilters');
 
   if (tbody) {
     tbody.addEventListener('click', (e) => {
@@ -583,22 +481,86 @@ function setupTableEventListeners() {
     });
   }
 
-  if (btnReload) {
-    btnReload.addEventListener('click', () => {
-      receivingsList = [...DEFAULT_RECEIVINGS];
-      saveToStorage();
+  // Relatório de Recebimento (impressão padrão A4 / SUS)
+  if (btnPrintReport) {
+    btnPrintReport.addEventListener('click', () => {
+      const filtered = getFilteredReceivings();
+      const fromDate = document.getElementById('recDateFrom')?.value || '';
+      const toDate = document.getElementById('recDateTo')?.value || '';
+      const totalUnits = filtered.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
+      const totalBatches = new Set(filtered.map(item => item.batch)).size;
+
+      FarmaReport.print({
+        title: 'RELATÓRIO DE RECEBIMENTO DE MEDICAMENTOS',
+        period: FarmaReport.periodText(fromDate, toDate),
+        summary: [
+          ['Total de Entradas', `${filtered.length} registro(s)`],
+          ['Total de Unidades Ingressadas', `${totalUnits.toLocaleString('pt-BR')}`],
+          ['Lotes Distintos', `${totalBatches}`]
+        ],
+        groups: {
+          title: 'Consolidação por Medicamento',
+          head: ['Medicamento', 'Entradas', 'Total Ingressado'],
+          rows: FarmaReport.groupByMedicine(filtered),
+          aligns: ['left', 'center', 'right']
+        },
+        detail: {
+          title: 'Detalhamento das Entradas',
+          head: ['Data/Hora', 'Medicamento & Forma', 'Lote', 'Validade', 'Qtd.', 'Documento / Fornecedor'],
+          rows: filtered.map(r => [
+            `${FarmaStore.fmtDate(r.date)} ${r.time || ''}`,
+            `${r.medicine} (${r.form})`,
+            r.batch,
+            r.expiry,
+            `+${r.quantity} ${r.unit || 'un.'}`,
+            `${r.invoiceNumber} • ${r.supplierOrigin}`
+          ]),
+          aligns: ['left', 'left', 'left', 'center', 'right', 'left']
+        }
+      });
+    });
+  }
+
+  // Filtros por Range de Data
+  ['recDateFrom', 'recDateTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => {
+        renderReceivingsTable();
+        updateStatistics();
+      });
+    }
+  });
+
+  if (btnClearFilters) {
+    btnClearFilters.addEventListener('click', () => {
+      const df = document.getElementById('recDateFrom');
+      const dt = document.getElementById('recDateTo');
+      const si = document.getElementById('searchReceivingInput');
+      if (df) df.value = '';
+      if (dt) dt.value = '';
+      if (si) si.value = '';
       renderReceivingsTable();
       updateStatistics();
-      showToast('Histórico demonstrativo de entradas restaurado!', 'info');
+    });
+  }
+
+  if (btnReload) {
+    btnReload.addEventListener('click', () => {
+      if (confirm('Deseja recarregar o ciclo completo de demonstração (setembro e outubro) com 8 medicamentos?')) {
+        FarmaStore.resetAll();
+        refreshInventory();
+        loadReceivingsData();
+        showToast('Histórico demonstrativo de entradas restaurado com sucesso!', 'info');
+      }
     });
   }
 
   if (btnPopulateEmpty) {
     btnPopulateEmpty.addEventListener('click', () => {
-      receivingsList = [...DEFAULT_RECEIVINGS];
-      saveToStorage();
-      renderReceivingsTable();
-      updateStatistics();
+      FarmaStore.resetAll();
+      refreshInventory();
+      loadReceivingsData();
       showToast('Entradas de exemplo carregadas com sucesso!', 'success');
     });
   }
@@ -634,12 +596,10 @@ function setupModals() {
         const medName = item ? item.medicine : 'Medicamento';
         const qty = item ? item.quantity : 0;
 
-        // Subtrai do catálogo
+        // Subtrai do estoque compartilhado
         if (item && item.medId) {
-          const invMed = INVENTORY_MEDICINES.find(m => m.id === item.medId);
-          if (invMed) {
-            invMed.stock = Math.max(0, invMed.stock - qty);
-          }
+          FarmaStore.adjust(item.medId, -qty);
+          refreshInventory();
         }
 
         receivingsList = receivingsList.filter(m => m.id !== pendingEstornoEntryId);
@@ -742,7 +702,7 @@ function openEntryReceiptModal(id) {
       </div>
 
       <div style="font-size: 11px; color: #64748B; text-align: right; margin-top: 8px;">
-        Entrada Registrada em: <strong>${escapeHTML(item.time)}</strong>
+        Entrada Registrada em: <strong>${item.date ? FarmaStore.fmtDate(item.date) + ' às ' : ''}${escapeHTML(item.time || '')}</strong>
       </div>
     `;
   }
@@ -755,6 +715,7 @@ function setupSearchFilter() {
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       renderReceivingsTable();
+      updateStatistics();
     });
   }
 }

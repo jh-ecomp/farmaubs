@@ -58,10 +58,10 @@ export interface ConectividadeState {
 
 ## 4. Critérios de Aceite Detalhados
 
-- [ ] Detecção em tempo real de queda e restabelecimento de sinal de rede móvel/Wi-Fi.
-- [ ] Exibição de banner discreto no topo da aplicação sem cobrir botões ou elementos vitais de navegação.
-- [ ] Transição automática para aviso de sucesso ao reconectar e posterior desaparecimento.
-- [ ] Tratamento gracioso de erros de timeout de rede em requisições à API.
+- [x] Detecção em tempo real de queda e restabelecimento de sinal de rede móvel/Wi-Fi.
+- [x] Exibição de banner discreto no topo da aplicação sem cobrir botões ou elementos vitais de navegação.
+- [x] Transição automática para aviso de sucesso ao reconectar e posterior desaparecimento.
+- [x] Tratamento gracioso de erros de timeout de rede em requisições à API.
 
 ---
 

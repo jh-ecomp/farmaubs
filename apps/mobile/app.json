@@ -2,6 +2,7 @@
   "expo": {
     "name": "FarmaUBS Mobile",
     "slug": "farmaubs-mobile",
+    "scheme": "farmaubs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,7 +24,8 @@
       "package": "gov.br.farmaubs.app"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications"
     ]
   }
 }

@@ -47,7 +47,7 @@ tasks:
       - 'shared:build'
 
   test:
-    command: 'node --experimental-strip-types src/screens/login-form.check.ts'
+    command: 'pnpm test'
     inputs:
       - 'src/**/*'
       - 'App.tsx'

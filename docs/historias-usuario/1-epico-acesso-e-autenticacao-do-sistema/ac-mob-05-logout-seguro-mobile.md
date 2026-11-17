@@ -56,11 +56,11 @@
 
 ## 4. Critérios de Aceite Detalhados
 
-- [ ] Botão de logout visível e acessível em todas as telas principais do aplicativo.
-- [ ] Diálogo de confirmação com prevenção de toques acidentais.
-- [ ] Chamada de revogação de sessão ao backend (`POST /api/v1/auth/logout`).
-- [ ] Expurgo obrigatório das chaves locais do `SecureStore` mesmo se a chamada de rede falhar.
-- [ ] Reset da navegação para a tela de login impedindo que o botão "Voltar" reabra telas privadas.
+- [x] Botão de logout visível e acessível em todas as telas principais do aplicativo.
+- [x] Diálogo de confirmação com prevenção de toques acidentais.
+- [x] Chamada de revogação de sessão ao backend (`POST /api/v1/auth/logout`).
+- [x] Expurgo obrigatório das chaves locais do `SecureStore` mesmo se a chamada de rede falhar.
+- [x] Reset da navegação para a tela de login impedindo que o botão "Voltar" reabra telas privadas.
 
 ---
 

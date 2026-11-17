@@ -353,40 +353,64 @@
         <div class="col-12 col-xl-7 col-lg-7">
           <div class="farma-card h-100 d-flex flex-column">
             
-            <!-- Cabeçalho da Tabela & Barra de Busca -->
+            <!-- Cabeçalho da Tabela & Barra de Filtros / Busca -->
             <div class="farma-card-header">
-              <div class="row align-items-center g-3">
-                <div class="col-12 col-md-6 d-flex align-items-center gap-2">
+              <div class="row align-items-center g-2">
+                <div class="col-12 col-lg-5 d-flex align-items-center gap-2">
                   <div class="rounded-2 p-1 d-flex align-items-center justify-content-center" style="background-color: #dde9ff; color: #001c6d;">
                     <span class="material-symbols-outlined" style="font-size: 20px;">inventory</span>
                   </div>
                   <div>
                     <div class="d-flex align-items-center gap-2">
-                      <h5 class="fw-bold mb-0 text-dark" style="font-size: 15px;">Últimos Recebimentos de Estoque</h5>
+                      <h5 class="fw-bold mb-0 text-dark" style="font-size: 15px;">Recebimentos de Estoque</h5>
                       <span class="badge rounded-pill bg-primary" id="badgeReceivingCount" style="font-size: 11px; background-color: #0b3099 !important;">0</span>
                     </div>
                     <small class="text-muted" style="font-size: 12px;">Entradas físicas registradas na UBS</small>
                   </div>
                 </div>
 
-                <!-- Busca Rápida -->
-                <div class="col-12 col-md-6 d-flex align-items-center justify-content-md-end gap-2">
-                  <div class="position-relative flex-grow-1" style="max-width: 260px;">
-                    <span class="material-symbols-outlined position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;">
+                <!-- Botões Globais: Relatório e Restaurar Exemplos -->
+                <div class="col-12 col-lg-7 d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+                  <button type="button" class="btn-farma-outline py-1 px-2 d-inline-flex align-items-center gap-1" id="btnPrintReceivingReport" title="Imprimir Relatório Consolidado de Recebimentos" style="font-size: 12px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
+                    <span>Relatório</span>
+                  </button>
+                  <button type="button" class="btn-farma-outline py-1 px-2 d-inline-flex align-items-center gap-1" id="btnReloadMockReceivings" title="Restaurar histórico demonstrativo" style="font-size: 12px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                    <span class="d-none d-sm-inline">Exemplos</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Barra Secundária: Filtro por Range de Datas e Busca Textual -->
+              <div class="row g-2 mt-2 pt-2 border-top align-items-center">
+                <div class="col-12 col-sm-4 col-md-3">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white text-muted border-end-0" style="font-size: 11px;">De</span>
+                    <input type="date" id="recDateFrom" class="form-control farma-input form-control-sm border-start-0 ps-1" style="font-size: 12px;" title="Data inicial">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-4 col-md-3">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white text-muted border-end-0" style="font-size: 11px;">Até</span>
+                    <input type="date" id="recDateTo" class="form-control farma-input form-control-sm border-start-0 ps-1" style="font-size: 12px;" title="Data final">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-4 col-md-6 d-flex align-items-center gap-2">
+                  <div class="position-relative flex-grow-1">
+                    <span class="material-symbols-outlined position-absolute text-muted" style="left: 8px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;">
                       search
                     </span>
                     <input
                       type="text"
                       id="searchReceivingInput"
-                      class="form-control farma-input form-control-sm ps-4 ms-2"
+                      class="form-control farma-input form-control-sm ps-4"
                       placeholder="Buscar medicamento, lote, NF..."
-                      style="font-size: 13px; width: calc(100% - 8px);"
+                      style="font-size: 12px;"
                     />
                   </div>
-
-                  <button class="btn-farma-outline py-1 px-2" id="btnReloadMockReceivings" title="Restaurar histórico demonstrativo" style="font-size: 12px;">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
-                    <span class="d-none d-sm-inline">Exemplos</span>
+                  <button type="button" class="btn btn-sm btn-light border text-muted px-2 py-1" id="btnClearRecFilters" title="Limpar filtros" style="font-size: 11px;">
+                    Limpar
                   </button>
                 </div>
               </div>
@@ -560,6 +584,8 @@
   <!-- Bootstrap 5 Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Script de Recebimento em Tempo Real -->
+  <script src="js/estoque-store.js"></script>
+  <script src="js/relatorio.js"></script>
   <script src="js/recebimento.js"></script>
 </body>
 </html>

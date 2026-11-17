@@ -1,136 +1,19 @@
 // FarmaUBS - Lógica de Inventário Mensal & Apuração de Divergências (js/inventario.js)
+// Conforme especificações do SUS e RDC 430/2020:
+// - Ciclo ativo: mês corrente (Outubro / 2026)
+// - Histórico de ciclos anteriores homologados (ex: 28/09/2026 e ciclos fechados pelo usuário)
+// - Impressão da Ata oficial para qualquer ciclo
+// - Retificação de contagem pós-homologação protegida com justificativa obrigatória e trilha de auditoria.
 
-const CATALOG_STORAGE_KEY = 'farmaubs_catalogo_estoque';
-const INVENTORY_STORAGE_KEY = 'farmaubs_inventario_dados';
-
-// Catálogo padrão caso ainda não exista no LocalStorage
-const DEFAULT_CATALOG = [
-  {
-    id: 'inv_1',
-    name: 'Paracetamol',
-    dosage: '500 mg',
-    form: 'Comprimido',
-    category: 'Analgésico',
-    batch: 'LT-2026A1',
-    expiry: '30/11/2026',
-    expiryDate: '2026-11-30',
-    stock: 350,
-    minStock: 60,
-    unit: 'unid.',
-    manufacturer: 'EMS / Farmacêutica SUS',
-    location: 'Prateleira A1 - Armário Central'
-  },
-  {
-    id: 'inv_2',
-    name: 'Amoxicilina',
-    dosage: '500 mg',
-    form: 'Cápsula',
-    category: 'Antibiótico',
-    batch: 'LT-2025F4',
-    expiry: '15/04/2027',
-    expiryDate: '2027-04-15',
-    stock: 180,
-    minStock: 50,
-    unit: 'unid.',
-    manufacturer: 'Medley Genéricos',
-    location: 'Prateleira B3 - Antibióticos'
-  },
-  {
-    id: 'inv_3',
-    name: 'Losartana Potássica',
-    dosage: '50 mg',
-    form: 'Comprimido',
-    category: 'Anti-hipertensivo',
-    batch: 'LT-2026C9',
-    expiry: '31/12/2026',
-    expiryDate: '2026-12-31',
-    stock: 15,
-    minStock: 40,
-    unit: 'unid.',
-    manufacturer: 'Eurofarma',
-    location: 'Prateleira C2 - Hipertensão/Diabetes'
-  },
-  {
-    id: 'inv_4',
-    name: 'Dipirona Sódica',
-    dosage: '500 mg/ml',
-    form: 'Solução Oral / Gotas',
-    category: 'Analgésico',
-    batch: 'LT-2027B2',
-    expiry: '20/08/2027',
-    expiryDate: '2027-08-20',
-    stock: 85,
-    minStock: 30,
-    unit: 'frascos',
-    manufacturer: 'Neo Química',
-    location: 'Prateleira A2 - Líquidos/Soluções'
-  },
-  {
-    id: 'inv_5',
-    name: 'Ibuprofeno',
-    dosage: '600 mg',
-    form: 'Comprimido',
-    category: 'Anti-inflamatório',
-    batch: 'LT-2026M8',
-    expiry: '10/10/2026',
-    expiryDate: '2026-10-10',
-    stock: 120,
-    minStock: 40,
-    unit: 'unid.',
-    manufacturer: 'Aché Laboratórios',
-    location: 'Prateleira A3 - Anti-inflamatórios'
-  },
-  {
-    id: 'inv_6',
-    name: 'Glibenclamida',
-    dosage: '5 mg',
-    form: 'Comprimido',
-    category: 'Hipoglicemiante',
-    batch: 'LT-2027K3',
-    expiry: '25/03/2027',
-    expiryDate: '2027-03-25',
-    stock: 200,
-    minStock: 50,
-    unit: 'unid.',
-    manufacturer: 'Prati-Donaduzzi',
-    location: 'Prateleira C1 - Hipertensão/Diabetes'
-  },
-  {
-    id: 'inv_7',
-    name: 'Omeprazol',
-    dosage: '20 mg',
-    form: 'Cápsula',
-    category: 'Gástrico',
-    batch: 'LT-2026P5',
-    expiry: '18/11/2026',
-    expiryDate: '2026-11-18',
-    stock: 240,
-    minStock: 60,
-    unit: 'unid.',
-    manufacturer: 'Teuto Farmacêutica',
-    location: 'Prateleira B1 - Gastrointestinais'
-  },
-  {
-    id: 'inv_8',
-    name: 'Atenolol',
-    dosage: '50 mg',
-    form: 'Comprimido',
-    category: 'Anti-hipertensivo',
-    batch: 'LT-2026T7',
-    expiry: '05/09/2026',
-    expiryDate: '2026-09-05',
-    stock: 90,
-    minStock: 30,
-    unit: 'unid.',
-    manufacturer: 'EMS Genéricos',
-    location: 'Prateleira C3 - Hipertensão/Diabetes'
-  }
-];
+const INVENTORY_STORAGE_KEY = (typeof FarmaStore !== 'undefined' && FarmaStore.keys && FarmaStore.keys.session)
+  ? FarmaStore.keys.session
+  : 'farmaubs_inventario_v2';
 
 // Estado da Aplicação
 let inventorySession = null;
 let currentCatalog = [];
 let selectedMedicine = null;
+let currentEditingHistoryCycle = null;
 
 // ==========================================================================
 // INICIALIZAÇÃO
@@ -144,90 +27,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Inicializa o catálogo de estoque
 function initCatalog() {
-  try {
-    const stored = localStorage.getItem(CATALOG_STORAGE_KEY);
-    if (stored) {
-      currentCatalog = JSON.parse(stored);
-    } else {
-      currentCatalog = [...DEFAULT_CATALOG];
-      localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(currentCatalog));
-    }
-  } catch (e) {
-    console.error('Erro ao carregar catálogo:', e);
-    currentCatalog = [...DEFAULT_CATALOG];
-  }
+  currentCatalog = FarmaStore.load();
 }
 
-// Inicializa a sessão do inventário mensal
+// Inicializa a sessão do inventário mensal corrente (Outubro / 2026)
 function initInventorySession() {
   try {
     const stored = localStorage.getItem(INVENTORY_STORAGE_KEY);
     if (stored) {
-      inventorySession = JSON.parse(stored);
-    } else {
-      // Cria sessão inicial com contagens padrão para demonstração interativa
-      inventorySession = {
-        cycle: 'Setembro / 2026',
-        startDate: '01/09/2026',
-        status: 'EM_ANDAMENTO', // 'EM_ANDAMENTO' ou 'HOMOLOGADO'
-        pharmacist: 'Dr. Carlos Eduardo (CRF/PI 4821)',
-        unit: 'SMS Parnaíba - UBS Centro',
-        items: [
-          {
-            medId: 'inv_1',
-            physicalCount: 350,
-            conferred: true,
-            divergence: 0,
-            reason: '',
-            notes: 'Conferência física 100% conforme.',
-            date: '28/09/2026 09:15'
-          },
-          {
-            medId: 'inv_2',
-            physicalCount: 178,
-            conferred: true,
-            divergence: -2,
-            reason: 'Avaria / Frasco Quebrado',
-            notes: '2 cápsulas danificadas com umidade na caixa.',
-            date: '28/09/2026 09:30'
-          },
-          {
-            medId: 'inv_3',
-            physicalCount: 15,
-            conferred: true,
-            divergence: 0,
-            reason: '',
-            notes: 'Estoque baixo verificado.',
-            date: '28/09/2026 09:45'
-          },
-          {
-            medId: 'inv_4',
-            physicalCount: 88,
-            conferred: true,
-            divergence: 3,
-            reason: 'Sobra Não Registrada',
-            notes: 'Identificados 3 frascos excedentes da última remessa CAF.',
-            date: '28/09/2026 10:10'
-          },
-          {
-            medId: 'inv_5',
-            physicalCount: 120,
-            conferred: true,
-            divergence: 0,
-            reason: '',
-            notes: 'Contagem bate com o livro de registro.',
-            date: '28/09/2026 10:25'
-          }
-          // inv_6, inv_7, inv_8 propositalmente pendentes para o usuário experimentar registrar
-        ]
-      };
-      saveInventorySession();
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.cycleKey === '2026-10') {
+        inventorySession = parsed;
+        return;
+      }
     }
+
+    // Gera itens iniciais de demonstração alinhados aos lotes reais do catálogo
+    const initialItems = currentCatalog.slice(0, 6).map((med, idx) => ({
+      medId: med.id,
+      physicalCount: med.stock,
+      conferred: true,
+      divergence: 0,
+      reason: '',
+      notes: `Conferência física 100% conforme para o lote ${med.batch}.`,
+      date: `23/10/2026 09:${String(10 + idx * 8).padStart(2, '0')}`
+    }));
+
+    // Sessão padrão de Outubro / 2026 (mês corrente) com dados de demonstração interativos
+    inventorySession = {
+      id: 'sess_2026-10',
+      cycleKey: '2026-10',
+      cycle: 'Outubro / 2026',
+      startDate: '01/10/2026',
+      status: 'EM_ANDAMENTO', // 'EM_ANDAMENTO' ou 'HOMOLOGADO'
+      pharmacist: 'Dr. Carlos Eduardo (CRF/PI 4821)',
+      unit: 'SMS Parnaíba - UBS Centro',
+      items: initialItems
+    };
+    saveInventorySession();
   } catch (e) {
     console.error('Erro ao carregar sessão de inventário:', e);
     inventorySession = {
-      cycle: 'Setembro / 2026',
-      startDate: '01/09/2026',
+      id: 'sess_2026-10',
+      cycleKey: '2026-10',
+      cycle: 'Outubro / 2026',
+      startDate: '01/10/2026',
       status: 'EM_ANDAMENTO',
       pharmacist: 'Dr. Carlos Eduardo (CRF/PI 4821)',
       unit: 'SMS Parnaíba - UBS Centro',
@@ -246,6 +90,7 @@ function saveInventorySession() {
 function renderAll() {
   renderMetrics();
   renderInventoryTable();
+  renderHistoryTable();
 }
 
 // Atualiza Métricas Superiores
@@ -253,7 +98,7 @@ function renderMetrics() {
   const totalCatalogItems = currentCatalog.length;
   const countedItems = inventorySession.items.filter(i => i.conferred);
   const countedCount = countedItems.length;
-  
+
   // Itens com divergência
   const divergentItems = countedItems.filter(i => i.divergence !== 0);
   const divergenceCount = divergentItems.length;
@@ -485,6 +330,118 @@ function renderInventoryTable() {
 }
 
 // ==========================================================================
+// RENDERIZAÇÃO DO HISTÓRICO DE INVENTÁRIOS ANTERIORES
+// ==========================================================================
+function renderHistoryTable() {
+  const tbody = document.getElementById('historyInventoryTableBody');
+  const countText = document.getElementById('historyTableCountText');
+  if (!tbody) return;
+
+  const history = FarmaStore.loadHistory();
+  tbody.innerHTML = '';
+
+  if (!history || history.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center py-4 text-muted" style="font-size: 13px;">
+          Nenhum inventário anterior homologado registrado.
+        </td>
+      </tr>
+    `;
+    if (countText) countText.textContent = '0 ciclos homologados';
+    return;
+  }
+
+  history.forEach(cycle => {
+    const tr = document.createElement('tr');
+
+    // Data de homologação formatada
+    let dateFormatted = '—';
+    if (cycle.homologatedAt) {
+      const d = cycle.homologatedAt.slice(0, 10);
+      const t = cycle.homologatedAt.length >= 16 ? cycle.homologatedAt.slice(11, 16) : '';
+      dateFormatted = `${FarmaStore.fmtDate(d)}${t ? ` às ${t}` : ''}`;
+    }
+
+    // Selo de Homologado
+    const badgeStatus = `
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 11px; font-weight: 600;">
+        <span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
+        <span>Homologado</span>
+      </span>
+    `;
+
+    // Última edição / retificação
+    let editCell = `<span class="text-muted" style="font-size: 12px;">—</span>`;
+    if (cycle.editedAt) {
+      const editD = cycle.editedAt.slice(0, 10);
+      const editT = cycle.editedAt.length >= 16 ? cycle.editedAt.slice(11, 16) : '';
+      const lastEditDesc = (cycle.edits && cycle.edits.length > 0)
+        ? `Último motivo: ${cycle.edits[cycle.edits.length - 1].reason}`
+        : 'Retificado pelo Farmacêutico';
+
+      editCell = `
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 11px;" title="${escapeHtml(lastEditDesc)}">
+          <span class="material-symbols-outlined" style="font-size: 14px;">edit_note</span>
+          <span>${FarmaStore.fmtDate(editD)} ${editT}</span>
+        </span>
+      `;
+    }
+
+    // Botões de Ação: Baixar Ata e Editar (Retificar)
+    const actionCell = `
+      <div class="text-end d-flex align-items-center justify-content-end gap-1">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary py-1 px-2 d-inline-flex align-items-center gap-1 btn-print-hist-ata"
+          data-cycle-id="${cycle.id}"
+          title="Baixar e imprimir Ata Oficial do Inventário"
+          style="font-size: 11px;"
+        >
+          <span class="material-symbols-outlined" style="font-size: 15px;">print</span>
+          <span>Ata</span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center gap-1 btn-edit-hist-cycle"
+          data-cycle-id="${cycle.id}"
+          title="Retificar contagem de item deste inventário homologado (requer justificativa)"
+          style="font-size: 11px;"
+        >
+          <span class="material-symbols-outlined" style="font-size: 15px;">edit</span>
+          <span>Editar</span>
+        </button>
+      </div>
+    `;
+
+    tr.innerHTML = `
+      <td>
+        <strong class="text-dark d-block" style="font-size: 13px;">${escapeHtml(cycle.cycle)}</strong>
+        <span class="text-muted" style="font-size: 11px;">${escapeHtml(cycle.pharmacist || 'Responsável Técnico')}</span>
+      </td>
+      <td style="font-size: 12px; color: #334155;">
+        ${dateFormatted}
+      </td>
+      <td class="text-center">
+        ${badgeStatus}
+      </td>
+      <td>
+        ${editCell}
+      </td>
+      <td>
+        ${actionCell}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  if (countText) {
+    countText.textContent = `${history.length} ciclo(s) homologado(s) arquivado(s)`;
+  }
+}
+
+// ==========================================================================
 // CONFIGURAÇÃO DE EVENTOS & UI
 // ==========================================================================
 function setupUIEvents() {
@@ -502,6 +459,12 @@ function setupUIEvents() {
   const btnCancelHomologate = document.getElementById('btnCancelHomologate');
   const btnConfirmHomologate = document.getElementById('btnConfirmHomologate');
   const btnPrintAta = document.getElementById('btnPrintAta');
+
+  // Modal de Retificação de Histórico
+  const btnCloseEditHistoryModal = document.getElementById('btnCloseEditHistoryModal');
+  const btnCancelEditHistory = document.getElementById('btnCancelEditHistory');
+  const btnSaveEditHistory = document.getElementById('btnSaveEditHistory');
+  const editHistoryMedicineSelect = document.getElementById('editHistoryMedicineSelect');
 
   // Mobile sidebar toggle
   const btnToggleSidebar = document.getElementById('btnToggleSidebar');
@@ -561,7 +524,7 @@ function setupUIEvents() {
     });
   }
 
-  // 4. Delegação de Clique na Tabela para botão "Contar / Editar"
+  // 4. Delegação de Clique na Tabela Ativa para botão "Contar / Editar"
   const tbody = document.getElementById('inventoryTableBody');
   if (tbody) {
     tbody.addEventListener('click', (e) => {
@@ -594,9 +557,42 @@ function setupUIEvents() {
     btnConfirmHomologate.addEventListener('click', handleConfirmHomologation);
   }
 
-  // 7. Impressão da Ata
+  // 7. Impressão da Ata do Ciclo Atual
   if (btnPrintAta) {
-    btnPrintAta.addEventListener('click', handlePrintAta);
+    btnPrintAta.addEventListener('click', () => handlePrintAta());
+  }
+
+  // 8. Tabela de Histórico: Delegação para Baixar Ata e Editar
+  const historyTbody = document.getElementById('historyInventoryTableBody');
+  if (historyTbody) {
+    historyTbody.addEventListener('click', (e) => {
+      const btnPrint = e.target.closest('.btn-print-hist-ata');
+      if (btnPrint) {
+        const cycleId = btnPrint.getAttribute('data-cycle-id');
+        handlePrintAta(cycleId);
+        return;
+      }
+
+      const btnEdit = e.target.closest('.btn-edit-hist-cycle');
+      if (btnEdit) {
+        const cycleId = btnEdit.getAttribute('data-cycle-id');
+        openEditHistoryModal(cycleId);
+      }
+    });
+  }
+
+  // 9. Eventos do Modal de Retificação de Histórico
+  if (btnCloseEditHistoryModal) {
+    btnCloseEditHistoryModal.addEventListener('click', closeEditHistoryModal);
+  }
+  if (btnCancelEditHistory) {
+    btnCancelEditHistory.addEventListener('click', closeEditHistoryModal);
+  }
+  if (btnSaveEditHistory) {
+    btnSaveEditHistory.addEventListener('click', handleSaveEditHistory);
+  }
+  if (editHistoryMedicineSelect) {
+    editHistoryMedicineSelect.addEventListener('change', handleSelectMedicineToEditHistory);
   }
 }
 
@@ -908,7 +904,9 @@ function closeHomologateModal() {
 }
 
 function handleConfirmHomologation() {
-  // Atualiza os saldos no catálogo de estoque com base na contagem física de cada item
+  const nowIso = new Date().toISOString();
+
+  // 1. Atualiza saldos do catálogo com as contagens físicas dos itens conferidos
   inventorySession.items.forEach(record => {
     if (record.conferred) {
       const catItem = currentCatalog.find(m => m.id === record.medId);
@@ -917,73 +915,338 @@ function handleConfirmHomologation() {
       }
     }
   });
+  FarmaStore.save(currentCatalog);
 
-  // Salva novo estoque homologado
-  localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(currentCatalog));
-
-  // Marca sessão como HOMOLOGADO
+  // 2. Marca sessão ativa como HOMOLOGADA
   inventorySession.status = 'HOMOLOGADO';
-  inventorySession.homologatedAt = new Date().toLocaleString('pt-BR');
+  inventorySession.homologatedAt = nowIso;
   saveInventorySession();
+
+  // 3. Constrói o snapshot de conformidade para o histórico oficial
+  const snapshotItems = currentCatalog.map(med => {
+    const record = inventorySession.items.find(i => i.medId === med.id);
+    const physical = record && record.conferred ? Number(record.physicalCount) : med.stock;
+    const divergence = record && record.conferred ? Number(record.divergence) : 0;
+    const reason = record?.reason || (divergence === 0 ? '' : 'Homologação administrativa');
+    const notes = record?.notes || '';
+
+    return {
+      medId: med.id,
+      name: med.name,
+      dosage: med.dosage,
+      form: med.form,
+      batch: med.batch,
+      expiry: med.expiry,
+      unit: med.unit,
+      system: med.stock,
+      physical: physical,
+      divergence: divergence,
+      reason: reason,
+      notes: notes
+    };
+  });
+
+  // 4. Adiciona ao histórico persistido (substitui caso já exista o ciclo 2026-10)
+  const history = FarmaStore.loadHistory();
+  const filtered = history.filter(h => h.cycleKey !== inventorySession.cycleKey);
+  filtered.unshift({
+    id: `hist_${inventorySession.cycleKey}`,
+    cycleKey: inventorySession.cycleKey,
+    cycle: inventorySession.cycle,
+    homologatedAt: nowIso,
+    pharmacist: inventorySession.pharmacist,
+    editedAt: null,
+    edits: [],
+    items: snapshotItems
+  });
+  FarmaStore.saveHistory(filtered);
 
   closeHomologateModal();
   renderAll();
 
-  showToast('Inventário Mensal homologado com sucesso! Saldos de estoque ajustados e auditados.', 'success');
+  showToast(`Ciclo de ${inventorySession.cycle} homologado com sucesso! Arquivado no Histórico de Inventários.`, 'success');
 }
 
-// Impressão da Ata Oficial
-function handlePrintAta() {
+// ==========================================================================
+// IMPRESSÃO DA ATA OFICIAL DE HOMOLOGAÇÃO
+// ==========================================================================
+function handlePrintAta(cycleId) {
   const printCycle = document.getElementById('printCycle');
   const printStatus = document.getElementById('printStatus');
   const printAccuracy = document.getElementById('printAccuracy');
   const printDateStamp = document.getElementById('printDateStamp');
   const printTableBody = document.getElementById('printTableBody');
 
-  const countedItems = inventorySession.items.filter(i => i.conferred);
-  const divergentItems = countedItems.filter(i => i.divergence !== 0);
+  let cycleTitle = inventorySession.cycle;
+  let cycleStatus = inventorySession.status === 'HOMOLOGADO' ? 'HOMOLOGADO' : 'PARCIAL / EM ANDAMENTO';
+  let dateStampText = `Emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+  let rowsToPrint = [];
 
-  let accuracy = 100;
-  if (countedItems.length > 0) {
-    accuracy = Math.round(((countedItems.length - divergentItems.length) / countedItems.length) * 100);
+  if (cycleId) {
+    // Impressão de ciclo arquivado no histórico
+    const history = FarmaStore.loadHistory();
+    const cycle = history.find(c => c.id === cycleId);
+    if (cycle) {
+      cycleTitle = cycle.cycle;
+      cycleStatus = 'HOMOLOGADO';
+      const d = cycle.homologatedAt ? cycle.homologatedAt.slice(0, 10) : '';
+      const t = cycle.homologatedAt && cycle.homologatedAt.length >= 16 ? cycle.homologatedAt.slice(11, 16) : '';
+      dateStampText = `Homologado em: ${FarmaStore.fmtDate(d)}${t ? ` às ${t}` : ''}`;
+      rowsToPrint = cycle.items.map(item => ({
+        name: `${item.name} ${item.dosage}`,
+        batch: item.batch,
+        expiry: item.expiry,
+        system: item.system,
+        physical: item.physical,
+        divergence: item.divergence > 0 ? `+${item.divergence}` : item.divergence,
+        reason: item.reason || (item.divergence === 0 ? 'Saldo Conforme' : 'Sem motivo')
+      }));
+    }
   }
 
-  if (printCycle) printCycle.textContent = inventorySession.cycle;
-  if (printStatus) printStatus.textContent = inventorySession.status === 'HOMOLOGADO' ? 'HOMOLOGADO' : 'PARCIAL / EM ANDAMENTO';
-  if (printAccuracy) printAccuracy.textContent = `${accuracy}%`;
-  if (printDateStamp) printDateStamp.textContent = `Emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
-
-  if (printTableBody) {
-    printTableBody.innerHTML = '';
-    currentCatalog.forEach(med => {
+  if (rowsToPrint.length === 0) {
+    // Impressão da sessão corrente
+    const countedItems = inventorySession.items.filter(i => i.conferred);
+    rowsToPrint = currentCatalog.map(med => {
       const record = inventorySession.items.find(i => i.medId === med.id);
       const isConferred = !!record?.conferred;
       const physical = isConferred ? record.physicalCount : 'Pendente';
       const divergence = isConferred ? (record.divergence > 0 ? `+${record.divergence}` : record.divergence) : '-';
       const reason = record?.reason || (isConferred ? 'Saldo Conforme' : 'Não auditado');
 
+      return {
+        name: `${med.name} ${med.dosage}`,
+        batch: med.batch,
+        expiry: med.expiry,
+        system: med.stock,
+        physical: physical,
+        divergence: divergence,
+        reason: reason
+      };
+    });
+  }
+
+  // Calcula acurácia
+  const validDivergences = rowsToPrint.filter(r => r.divergence !== '-' && r.divergence !== 0 && r.divergence !== '+0');
+  const accuracy = rowsToPrint.length > 0
+    ? Math.round(((rowsToPrint.length - validDivergences.length) / rowsToPrint.length) * 100)
+    : 100;
+
+  if (printCycle) printCycle.textContent = cycleTitle;
+  if (printStatus) printStatus.textContent = cycleStatus;
+  if (printAccuracy) printAccuracy.textContent = `${accuracy}%`;
+  if (printDateStamp) printDateStamp.textContent = dateStampText;
+
+  if (printTableBody) {
+    printTableBody.innerHTML = '';
+    rowsToPrint.forEach(item => {
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid #e5e7eb';
       tr.innerHTML = `
-        <td style="padding: 5px 8px;"><strong>${escapeHtml(med.name)} ${escapeHtml(med.dosage)}</strong></td>
-        <td style="padding: 5px 8px;">${escapeHtml(med.batch)}</td>
-        <td style="padding: 5px 8px; text-align: center;">${escapeHtml(med.expiry)}</td>
-        <td style="padding: 5px 8px; text-align: right;">${med.stock}</td>
-        <td style="padding: 5px 8px; text-align: right;">${physical}</td>
-        <td style="padding: 5px 8px; text-align: right; font-weight: bold;">${divergence}</td>
-        <td style="padding: 5px 8px;">${escapeHtml(reason)}</td>
+        <td style="padding: 5px 8px;"><strong>${escapeHtml(item.name)}</strong></td>
+        <td style="padding: 5px 8px;">${escapeHtml(item.batch)}</td>
+        <td style="padding: 5px 8px; text-align: center;">${escapeHtml(item.expiry)}</td>
+        <td style="padding: 5px 8px; text-align: right;">${item.system}</td>
+        <td style="padding: 5px 8px; text-align: right;">${item.physical}</td>
+        <td style="padding: 5px 8px; text-align: right; font-weight: bold;">${item.divergence}</td>
+        <td style="padding: 5px 8px;">${escapeHtml(item.reason)}</td>
       `;
       printTableBody.appendChild(tr);
     });
   }
 
-  // Aciona impressão
+  // Aciona visualização de impressão nativa
   const printArea = document.getElementById('printArea');
   if (printArea) {
     printArea.classList.remove('d-none');
     window.print();
     printArea.classList.add('d-none');
   }
+}
+
+// ==========================================================================
+// MODAL DE RETIFICAÇÃO DE INVENTÁRIO HOMOLOGADO (COM MOTIVO OBRIGATÓRIO)
+// ==========================================================================
+function openEditHistoryModal(cycleId) {
+  const modal = document.getElementById('editHistoryModal');
+  if (!modal) return;
+
+  const history = FarmaStore.loadHistory();
+  const cycle = history.find(c => c.id === cycleId);
+  if (!cycle) {
+    showToast('Ciclo de inventário não localizado.', 'danger');
+    return;
+  }
+
+  currentEditingHistoryCycle = cycle;
+
+  const cycleIdInput = document.getElementById('editHistoryCycleId');
+  const cycleLabelInput = document.getElementById('editHistoryCycleLabel');
+  const medSelect = document.getElementById('editHistoryMedicineSelect');
+  const currentDataBox = document.getElementById('editHistoryCurrentDataBox');
+  const newCountInput = document.getElementById('editHistoryNewCount');
+  const reasonSelect = document.getElementById('editHistoryReasonSelect');
+  const notesArea = document.getElementById('editHistoryNotes');
+
+  if (cycleIdInput) cycleIdInput.value = cycle.id;
+  if (cycleLabelInput) cycleLabelInput.value = `${cycle.cycle} (Homologado em ${FarmaStore.fmtDate(cycle.homologatedAt ? cycle.homologatedAt.slice(0, 10) : '')})`;
+
+  // Popula seletor de medicamentos com os itens deste inventário
+  if (medSelect) {
+    medSelect.innerHTML = '<option value="" selected disabled>Selecione o medicamento...</option>';
+    cycle.items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.medId;
+      opt.textContent = `${item.name} ${item.dosage} (Contagem: ${item.physical} | Saldo: ${item.system})`;
+      medSelect.appendChild(opt);
+    });
+  }
+
+  if (currentDataBox) currentDataBox.classList.add('d-none');
+  if (newCountInput) newCountInput.value = '';
+  if (reasonSelect) reasonSelect.value = '';
+  if (notesArea) notesArea.value = '';
+
+  modal.style.display = 'flex';
+}
+
+function closeEditHistoryModal() {
+  const modal = document.getElementById('editHistoryModal');
+  if (modal) modal.style.display = 'none';
+  currentEditingHistoryCycle = null;
+}
+
+function handleSelectMedicineToEditHistory() {
+  const medSelect = document.getElementById('editHistoryMedicineSelect');
+  const currentDataBox = document.getElementById('editHistoryCurrentDataBox');
+  const sysCountEl = document.getElementById('editHistorySysCount');
+  const oldCountEl = document.getElementById('editHistoryOldCount');
+  const oldDivEl = document.getElementById('editHistoryOldDiv');
+  const newCountInput = document.getElementById('editHistoryNewCount');
+
+  if (!currentEditingHistoryCycle || !medSelect || !medSelect.value) return;
+
+  const item = currentEditingHistoryCycle.items.find(i => i.medId === medSelect.value);
+  if (!item) return;
+
+  if (sysCountEl) sysCountEl.textContent = `${item.system} ${item.unit || 'unid.'}`;
+  if (oldCountEl) oldCountEl.textContent = `${item.physical} ${item.unit || 'unid.'}`;
+  if (oldDivEl) {
+    const sign = item.divergence > 0 ? `+${item.divergence}` : `${item.divergence}`;
+    oldDivEl.textContent = `${sign} ${item.reason ? `(${item.reason})` : ''}`;
+  }
+
+  if (newCountInput) {
+    newCountInput.value = item.physical;
+    newCountInput.focus();
+  }
+
+  if (currentDataBox) currentDataBox.classList.remove('d-none');
+}
+
+function handleSaveEditHistory() {
+  if (!currentEditingHistoryCycle) return;
+
+  const medSelect = document.getElementById('editHistoryMedicineSelect');
+  const newCountInput = document.getElementById('editHistoryNewCount');
+  const reasonSelect = document.getElementById('editHistoryReasonSelect');
+  const notesArea = document.getElementById('editHistoryNotes');
+
+  const medId = medSelect?.value;
+  if (!medId) {
+    showToast('Selecione o medicamento que deseja retificar.', 'warning');
+    medSelect?.focus();
+    return;
+  }
+
+  const rawCount = newCountInput?.value;
+  if (rawCount === '' || rawCount === undefined || Number(rawCount) < 0) {
+    showToast('Informe uma nova contagem física válida (maior ou igual a 0).', 'warning');
+    newCountInput?.focus();
+    return;
+  }
+
+  const newPhysical = Number(rawCount);
+  const reason = reasonSelect?.value || '';
+  const justification = notesArea?.value.trim() || '';
+
+  // Validação: Motivo e justificativa são estritamente obrigatórios
+  if (!reason) {
+    showToast('É obrigatório selecionar o motivo da alteração para atender à auditoria sanitária.', 'warning');
+    reasonSelect?.focus();
+    return;
+  }
+  if (!justification) {
+    showToast('É obrigatório redigir a justificativa técnica detalhada da alteração.', 'warning');
+    notesArea?.focus();
+    return;
+  }
+
+  const history = FarmaStore.loadHistory();
+  const cycleIndex = history.findIndex(c => c.id === currentEditingHistoryCycle.id);
+  if (cycleIndex === -1) {
+    showToast('Ciclo de histórico não encontrado na base de dados.', 'danger');
+    return;
+  }
+
+  const targetCycle = history[cycleIndex];
+  const itemIndex = targetCycle.items.findIndex(i => i.medId === medId);
+  if (itemIndex === -1) {
+    showToast('Medicamento não localizado no inventário deste ciclo.', 'danger');
+    return;
+  }
+
+  const targetItem = targetCycle.items[itemIndex];
+  const oldPhysical = targetItem.physical;
+  const newDivergence = newPhysical - Number(targetItem.system);
+  const nowIso = new Date().toISOString();
+
+  // Atualiza item no snapshot
+  targetItem.physical = newPhysical;
+  targetItem.divergence = newDivergence;
+  targetItem.reason = reason;
+  targetItem.notes = targetItem.notes
+    ? `${targetItem.notes} | Retificação: ${justification}`
+    : `Retificação: ${justification}`;
+
+  // Marca data da última edição e adiciona ao log auditável de retificações
+  targetCycle.editedAt = nowIso;
+  if (!targetCycle.edits) targetCycle.edits = [];
+  targetCycle.edits.push({
+    timestamp: nowIso,
+    medId: targetItem.medId,
+    medName: `${targetItem.name} ${targetItem.dosage}`,
+    oldPhysical: oldPhysical,
+    newPhysical: newPhysical,
+    reason: reason,
+    justification: justification,
+    pharmacist: targetCycle.pharmacist || 'Farmacêutico RT'
+  });
+
+  // Se o ciclo retificado for o mês corrente (Outubro), atualiza também o catálogo ativo
+  if (targetCycle.cycleKey === inventorySession.cycleKey) {
+    const catItem = currentCatalog.find(m => m.id === medId);
+    if (catItem) {
+      catItem.stock = newPhysical;
+      FarmaStore.save(currentCatalog);
+    }
+    const sessionItem = inventorySession.items.find(i => i.medId === medId);
+    if (sessionItem) {
+      sessionItem.physicalCount = newPhysical;
+      sessionItem.divergence = newDivergence;
+      sessionItem.reason = reason;
+      sessionItem.notes = targetItem.notes;
+      saveInventorySession();
+    }
+  }
+
+  // Persiste histórico atualizado
+  FarmaStore.saveHistory(history);
+
+  closeEditHistoryModal();
+  renderAll();
+
+  showToast(`Inventário de ${targetCycle.cycle} retificado com sucesso! Registro de auditoria arquivado.`, 'success');
 }
 
 // ==========================================================================

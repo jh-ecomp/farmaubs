@@ -8,21 +8,23 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --experimental-strip-types src/screens/login-form.check.ts",
+    "test": "node --experimental-strip-types src/screens/login-form.check.ts && node --experimental-strip-types src/services/session-gravada.check.ts && node --experimental-strip-types src/services/unidade-ativa.check.ts && node --experimental-strip-types src/screens/senha-forte.check.ts && node --experimental-strip-types src/services/logout.check.ts && node --experimental-strip-types src/services/conectividade.check.ts && node --experimental-strip-types src/services/alerta-sessao.check.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@babel/runtime": "7.29.7",
+    "@babel/runtime": "^7.26.0",
     "@farmaubs/shared": "workspace:*",
-    "expo": "~52.0.0",
-    "expo-secure-store": "~14.0.0",
-    "expo-status-bar": "~2.0.0",
-    "react": "18.3.1",
-    "react-native": "0.76.5"
+    "@react-native-community/netinfo": "12.0.1",
+    "expo": "~58.0.26",
+    "expo-notifications": "~58.1.9",
+    "expo-secure-store": "~58.0.3",
+    "expo-status-bar": "~58.0.5",
+    "react": "19.3.0",
+    "react-native": "0.88.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~18.3.12",
-    "typescript": "^5.3.3"
+    "@types/react": "~19.1.0",
+    "typescript": "^5.7.3"
   }
 }
