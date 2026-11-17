@@ -189,12 +189,35 @@ export default function App() {
       if (locais.length > 0) setUnidades(locais);
       if (!usuario.municipioId) return;
       try {
-        const res = await fetchApi(
-          `${API_BASE_URL}/api/v1/administracao/unidades-saude?municipioId=${encodeURIComponent(usuario.municipioId)}`,
+        let catalogoBruto: unknown[] = [];
+        const resMunicipios = await fetchApi(
+          `${API_BASE_URL}/api/v1/administracao/municipios`,
         );
-        if (!vivo || !res.ok) return;
+        if (resMunicipios.ok) {
+          const municipios = await resMunicipios.json();
+          if (Array.isArray(municipios)) {
+            const promessas = municipios.map((m: { id?: string }) =>
+              m.id
+                ? fetchApi(
+                    `${API_BASE_URL}/api/v1/administracao/unidades-saude?municipioId=${encodeURIComponent(m.id)}`,
+                  )
+                    .then((r) => (r.ok ? r.json() : []))
+                    .catch(() => [])
+                : Promise.resolve([]),
+            );
+            const resultados = await Promise.all(promessas);
+            catalogoBruto = resultados.flat();
+          }
+        }
+        if (catalogoBruto.length === 0) {
+          const res = await fetchApi(
+            `${API_BASE_URL}/api/v1/administracao/unidades-saude?municipioId=${encodeURIComponent(usuario.municipioId)}`,
+          );
+          if (res.ok) catalogoBruto = await res.json();
+        }
+        if (!vivo) return;
         const autorizadas = unidadesAutorizadas(
-          lerCatalogoUnidades(await res.json()),
+          lerCatalogoUnidades(catalogoBruto),
           usuario.unidadeIds,
         );
         if (!vivo || autorizadas.length === 0) return;
@@ -240,12 +263,17 @@ export default function App() {
   }
 
   async function prepararAlertas(expiresAt: string) {
-    expiraEmAlerta.current = expiresAt;
-    const permitido = await notificationService.pedirPermissao();
-    permissaoAlerta.current = permitido;
-    setAlertaIndisponivel(!permitido);
-    if (permitido) await notificationService.agendarAlertaSessao(expiresAt);
-    else await notificationService.cancelarAlertaSessao();
+    try {
+      expiraEmAlerta.current = expiresAt;
+      const permitido = await notificationService.pedirPermissao();
+      permissaoAlerta.current = permitido;
+      setAlertaIndisponivel(!permitido);
+      if (permitido) await notificationService.agendarAlertaSessao(expiresAt);
+      else await notificationService.cancelarAlertaSessao();
+    } catch {
+      permissaoAlerta.current = false;
+      setAlertaIndisponivel(true);
+    }
   }
 
   async function tratarToque(expiresAt: string, chave: string) {

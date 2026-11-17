@@ -92,6 +92,13 @@ const UNIDADES_SAUDE = [
     responsavel_tecnico: 'Dra. Maria das Graças',
     caf_lead_time_days: 10,
   },
+  {
+    municipio_ibge: '2207702',
+    nome: 'UBS Frei Higino',
+    endereco: 'Av. Dr. João Silva Filho, 1500 — Frei Higino, Parnaíba/PI',
+    responsavel_tecnico: 'Dr. Lucas Vasconcelos',
+    caf_lead_time_days: 10,
+  },
 ] as const;
 
 /**
@@ -105,7 +112,7 @@ const USUARIOS_PLAIN = [
     nome_completo: 'Admin Sistema',
     senha: 'Admin@123456',
     perfil_codigo: 'ADMINISTRADOR',
-    municipio_ibge: '3550308',
+    municipio_ibge: '2207702',
     ativo: true,
     deve_trocar_senha: false,
   },
@@ -158,7 +165,9 @@ const USUARIOS_PLAIN = [
 
 /** Vínculos usuário ↔ unidade — referenciados por (email, unidade_nome) */
 const USER_UNITS = [
-  // Admin: acesso a todas as UBS de SP
+  // Admin: acesso às UBSs de Parnaíba (município piloto) e São Paulo
+  { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Centro - Dr. João Silva Filho' },
+  { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Frei Higino' },
   { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Jardim Primavera' },
   { email: 'admin@farmaubs.dev', unidade_nome: 'UBS Vila Nova' },
   // Gerente: acesso às UBS do município
@@ -753,16 +762,18 @@ async function seedUsuarios(
       id = existing.rows[0].id;
       await client.query(
         `UPDATE users
-         SET nome_completo           = $1,
-             senha_hash              = $2,
-             perfil_id               = $3,
-             ativo                   = $4,
-             deve_trocar_senha       = $5,
+         SET municipio_id            = $1,
+             nome_completo           = $2,
+             senha_hash              = $3,
+             perfil_id               = $4,
+             ativo                   = $5,
+             deve_trocar_senha       = $6,
              tentativas_login_falhas = 0,
              bloqueado_ate           = NULL,
              updated_at              = now()
-         WHERE id = $6`,
+         WHERE id = $7`,
         [
+          municipio_id,
           u.nome_completo,
           senha_hash,
           perfil_id,

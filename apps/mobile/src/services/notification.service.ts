@@ -17,6 +17,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -26,13 +28,17 @@ Notifications.setNotificationHandler({
 export const notificationService = {
   async prepararCanal(): Promise<void> {
     if (Platform.OS !== "android") return;
-    await Notifications.setNotificationChannelAsync(CANAL_ALERTA_SESSAO, {
-      name: NOME_CANAL_ALERTA_SESSAO,
-      importance: Notifications.AndroidImportance.HIGH,
-      description: DESCRICAO_CANAL_ALERTA_SESSAO,
-      vibrationPattern: [0, 250, 250, 250],
-      enableVibrate: true,
-    });
+    try {
+      await Notifications.setNotificationChannelAsync(CANAL_ALERTA_SESSAO, {
+        name: NOME_CANAL_ALERTA_SESSAO,
+        importance: Notifications.AndroidImportance.HIGH,
+        description: DESCRICAO_CANAL_ALERTA_SESSAO,
+        vibrationPattern: [0, 250, 250, 250],
+        enableVibrate: true,
+      });
+    } catch {
+      // No Expo Go ou em ambientes sem suporte a canais nativos específicos, falhas são toleradas
+    }
   },
 
   /**
@@ -40,11 +46,21 @@ export const notificationService = {
    * @returns True quando o sistema pode mostrar o alerta.
    */
   async pedirPermissao(): Promise<boolean> {
-    await this.prepararCanal();
-    const atual = await Notifications.getPermissionsAsync();
-    if (atual.granted) return true;
-    const pedido = await Notifications.requestPermissionsAsync();
-    return pedido.granted;
+    try {
+      const atual = await Notifications.getPermissionsAsync();
+      if (atual.granted) {
+        await this.prepararCanal();
+        return true;
+      }
+      const pedido = await Notifications.requestPermissionsAsync();
+      if (pedido.granted) {
+        await this.prepararCanal();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   },
 
   /**
@@ -76,6 +92,7 @@ export const notificationService = {
           body: CORPO_ALERTA_SESSAO,
           data: { action: "renew_session", expiresAt },
           sound: true,
+          autoDismiss: true,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
