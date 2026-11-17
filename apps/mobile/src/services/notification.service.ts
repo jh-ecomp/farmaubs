@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
-import * as SecureStore from "expo-secure-store";
+import { sessionService } from "./session.service";
 import {
   CANAL_ALERTA_SESSAO,
   CORPO_ALERTA_SESSAO,
@@ -11,7 +11,6 @@ import {
 } from "./alerta-sessao";
 
 const ALERTA_ID = "farmaubs-session-warning";
-const TOQUE_TRATADO_KEY = "farmaubs_alerta_tratado";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -111,11 +110,11 @@ export async function ultimoToqueAlerta(): Promise<{ expiresAt: string; chave: s
 }
 
 export async function toqueJaTratado(chave: string): Promise<boolean> {
-  return (await SecureStore.getItemAsync(TOQUE_TRATADO_KEY)) === chave;
+  return sessionService.toqueJaTratado(chave);
 }
 
 export async function marcarToqueTratado(chave: string): Promise<void> {
-  await SecureStore.setItemAsync(TOQUE_TRATADO_KEY, chave);
+  await sessionService.marcarToqueTratado(chave);
 }
 
 function lerToque(resposta: Notifications.NotificationResponse): { expiresAt: string; chave: string } | null {

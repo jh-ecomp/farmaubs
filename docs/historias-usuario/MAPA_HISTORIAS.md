@@ -23,12 +23,12 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | AC-25 | Frontend | Encerrar sessão no cliente e expurgo de cache | ✅ Redigida | ✅ Concluída | AC-MOB-05 |
 | AC-30 | Frontend | Migração de sessão para cookie HttpOnly e expurgo localStorage | ✅ Redigida | ✅ Concluída | AC-MOB-02 |
 | AC-MOB-01 | Mobile | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado (RF002) | ✅ Redigida | ✅ Concluída | AC-16 |
-| AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AC-19 / AC-30 |
-| AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ⏳ Não iniciada | AC-19 |
-| AC-MOB-04 | Mobile | Fluxo de troca obrigatória de senha provisória no mobile (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-24 |
-| AC-MOB-05 | Mobile | Encerramento seguro de sessão (logout) no aplicativo móvel (RF004) | ✅ Redigida | ⏳ Não iniciada | AC-21 / AC-25 |
-| AC-MOB-06 | Mobile | Detecção de conectividade e aviso de modo offline no mobile (ADR-014) | ✅ Redigida | ⏳ Não iniciada | PWA Offline |
-| AC-MOB-07 | Mobile | Aviso de timeout de sessão via notificação nativa do SO Android (NF012, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AC-20 |
+| AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ✅ Concluída | AC-19 / AC-30 |
+| AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ✅ Concluída | AC-19 |
+| AC-MOB-04 | Mobile | Fluxo de troca obrigatória de senha provisória no mobile (RF002) | ✅ Redigida | ✅ Concluída | AC-24 |
+| AC-MOB-05 | Mobile | Encerramento seguro de sessão (logout) no aplicativo móvel (RF004) | ✅ Redigida | ✅ Concluída | AC-21 / AC-25 |
+| AC-MOB-06 | Mobile | Detecção de conectividade e aviso de modo offline no mobile (ADR-014) | ✅ Redigida | ✅ Concluída | PWA Offline |
+| AC-MOB-07 | Mobile | Aviso de timeout de sessão via notificação nativa do SO Android (NF012, ADR-034) | ✅ Redigida | ✅ Concluída | AC-20 |
 
 ---
 

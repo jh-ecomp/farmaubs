@@ -87,11 +87,11 @@ export interface SessionStorageContract {
 
 ## 4. Critérios de Aceite Detalhados
 
-- [ ] Implementação de `sessionService` utilizando `expo-secure-store` para gravação, leitura e deleção de credenciais.
-- [ ] Validação em runtime de integridade do JSON salvo em `farmaubs_auth_user`, tratando exceções de parsing de forma fail-safe (limpeza automática se corrompido).
-- [ ] Injeção automática do cabeçalho `Authorization: Bearer <token>` nas requisições HTTP da API.
-- [ ] Resposta 401 dispara expurgo completo das chaves locais do SecureStore e redireciona para a tela de Login.
-- [ ] Testes unitários do serviço cobrindo escrita, leitura, tratamento de exceções e limpeza segura.
+- [x] Implementação de `sessionService` utilizando `expo-secure-store` para gravação, leitura e deleção de credenciais.
+- [x] Validação em runtime de integridade do JSON salvo em `farmaubs_auth_user`, tratando exceções de parsing de forma fail-safe (limpeza automática se corrompido).
+- [x] Injeção automática do cabeçalho `Authorization: Bearer <token>` nas requisições HTTP da API.
+- [x] Resposta 401 dispara expurgo completo das chaves locais do SecureStore e redireciona para a tela de Login.
+- [x] Testes unitários do serviço cobrindo escrita, leitura, tratamento de exceções e limpeza segura.
 
 ---
 

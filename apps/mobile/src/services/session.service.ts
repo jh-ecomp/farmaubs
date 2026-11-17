@@ -7,6 +7,8 @@ const TOKEN_KEY = "farmaubs_auth_token";
 const USER_KEY = "farmaubs_auth_user";
 const UNIDADE_KEY = "farmaubs_unidade_ativa";
 const CATALOGO_KEY = "farmaubs_unidades_catalogo";
+const TOQUE_TRATADO_KEY = "farmaubs_alerta_tratado";
+const TTL_PADRAO_MS = 60 * 60 * 1000;
 
 export type SessaoRestaurada = {
   token: string;
@@ -27,7 +29,7 @@ export const sessionService = {
   async salvarSessao(
     token: string,
     usuario: UsuarioAutenticado,
-    expiraEm: string,
+    expiraEm: string = new Date(Date.now() + TTL_PADRAO_MS).toISOString(),
   ): Promise<void> {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
     await SecureStore.setItemAsync(USER_KEY, serializarSessao(usuario, expiraEm));
@@ -112,10 +114,19 @@ export const sessionService = {
     }
   },
 
+  async toqueJaTratado(chave: string): Promise<boolean> {
+    return (await SecureStore.getItemAsync(TOQUE_TRATADO_KEY)) === chave;
+  },
+
+  async marcarToqueTratado(chave: string): Promise<void> {
+    await SecureStore.setItemAsync(TOQUE_TRATADO_KEY, chave);
+  },
+
   async limparSessao(): Promise<void> {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(USER_KEY);
     await SecureStore.deleteItemAsync(UNIDADE_KEY);
     await SecureStore.deleteItemAsync(CATALOGO_KEY);
+    await SecureStore.deleteItemAsync(TOQUE_TRATADO_KEY);
   },
 };

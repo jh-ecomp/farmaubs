@@ -1,3 +1,5 @@
+import type { RenovarSessaoResponse } from "@farmaubs/shared";
+
 export const AVISO_ANTES_MS = 5 * 60 * 1000;
 export const CANAL_ALERTA_SESSAO = "farmaubs-session-alerts";
 export const NOME_CANAL_ALERTA_SESSAO = "Alertas de Sessão e Segurança";
@@ -57,7 +59,7 @@ export function lerExpiresAtHeader(valor: string | null): string | null {
  */
 export function lerRenovarSessao(data: unknown): string | null {
   if (!data || typeof data !== "object" || !("expiresAt" in data)) return null;
-  const expiresAt = (data as { expiresAt: unknown }).expiresAt;
+  const { expiresAt } = data as Partial<RenovarSessaoResponse>;
   if (typeof expiresAt !== "string" || Number.isNaN(Date.parse(expiresAt))) return null;
   return expiresAt;
 }
