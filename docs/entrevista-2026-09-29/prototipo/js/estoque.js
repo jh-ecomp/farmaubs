@@ -1,130 +1,10 @@
 // FarmaUBS - Lógica de Estoque Atual e Rastreabilidade Analítica (js/estoque.js)
-
-const CATALOG_STORAGE_KEY = 'farmaubs_catalogo_estoque';
-
-// Dados Padrão do Estoque da UBS
-const DEFAULT_CATALOG = [
-  {
-    id: 'inv_1',
-    name: 'Paracetamol',
-    dosage: '500 mg',
-    form: 'Comprimido',
-    category: 'Analgésico',
-    batch: 'LT-2026A1',
-    expiry: '30/11/2026',
-    expiryDate: '2026-11-30',
-    stock: 350,
-    minStock: 60,
-    unit: 'unid.',
-    manufacturer: 'EMS / Farmacêutica SUS',
-    location: 'Prateleira A1 - Armário Central'
-  },
-  {
-    id: 'inv_2',
-    name: 'Amoxicilina',
-    dosage: '500 mg',
-    form: 'Cápsula',
-    category: 'Antibiótico',
-    batch: 'LT-2025F4',
-    expiry: '15/04/2027',
-    expiryDate: '2027-04-15',
-    stock: 180,
-    minStock: 50,
-    unit: 'unid.',
-    manufacturer: 'Medley Genéricos',
-    location: 'Prateleira B3 - Antibióticos'
-  },
-  {
-    id: 'inv_3',
-    name: 'Losartana Potássica',
-    dosage: '50 mg',
-    form: 'Comprimido',
-    category: 'Anti-hipertensivo',
-    batch: 'LT-2026C9',
-    expiry: '31/12/2026',
-    expiryDate: '2026-12-31',
-    stock: 15,
-    minStock: 40,
-    unit: 'unid.',
-    manufacturer: 'Eurofarma',
-    location: 'Prateleira C2 - Hipertensão/Diabetes'
-  },
-  {
-    id: 'inv_4',
-    name: 'Dipirona Sódica',
-    dosage: '500 mg/ml',
-    form: 'Solução Oral / Gotas',
-    category: 'Analgésico',
-    batch: 'LT-2027B2',
-    expiry: '20/08/2027',
-    expiryDate: '2027-08-20',
-    stock: 85,
-    minStock: 30,
-    unit: 'frascos',
-    manufacturer: 'Neo Química',
-    location: 'Prateleira A2 - Líquidos/Soluções'
-  },
-  {
-    id: 'inv_5',
-    name: 'Ibuprofeno',
-    dosage: '600 mg',
-    form: 'Comprimido',
-    category: 'Anti-inflamatório',
-    batch: 'LT-2026M8',
-    expiry: '10/10/2026',
-    expiryDate: '2026-10-10',
-    stock: 120,
-    minStock: 40,
-    unit: 'unid.',
-    manufacturer: 'Aché Laboratórios',
-    location: 'Prateleira A3 - Anti-inflamatórios'
-  },
-  {
-    id: 'inv_6',
-    name: 'Glibenclamida',
-    dosage: '5 mg',
-    form: 'Comprimido',
-    category: 'Hipoglicemiante',
-    batch: 'LT-2027K3',
-    expiry: '25/03/2027',
-    expiryDate: '2027-03-25',
-    stock: 200,
-    minStock: 50,
-    unit: 'unid.',
-    manufacturer: 'Prati-Donaduzzi',
-    location: 'Prateleira C1 - Hipertensão/Diabetes'
-  },
-  {
-    id: 'inv_7',
-    name: 'Omeprazol',
-    dosage: '20 mg',
-    form: 'Cápsula',
-    category: 'Gástrico',
-    batch: 'LT-2026X1',
-    expiry: '18/09/2026',
-    expiryDate: '2026-09-18',
-    stock: 90,
-    minStock: 30,
-    unit: 'unid.',
-    manufacturer: 'Germed Farmacêutica',
-    location: 'Prateleira D1 - Gástricos'
-  },
-  {
-    id: 'inv_8',
-    name: 'Sinvastatina',
-    dosage: '20 mg',
-    form: 'Comprimido',
-    category: 'Anti-hipertensivo',
-    batch: 'LT-2027S4',
-    expiry: '05/06/2027',
-    expiryDate: '2027-06-05',
-    stock: 140,
-    minStock: 40,
-    unit: 'unid.',
-    manufacturer: 'Sandoz do Brasil',
-    location: 'Prateleira C3 - Hipertensão/Diabetes'
-  }
-];
+// Conforme especificações do SUS e orientações farmacêuticas:
+// - Lotes com validades dinâmicas (< 90 dias, < 180 dias e > 180 dias)
+// - Regra Sanitária Fundamental: quando um medicamento está dividido em múltiplos lotes,
+//   o alerta de "Estoque Baixo" ou "Crítico" avalia a SOMA de todos os lotes do medicamento,
+//   e não cada lote isoladamente.
+// - Nenhum estoque assume valores negativos.
 
 let stockList = [];
 
@@ -174,29 +54,45 @@ function initUserSession() {
  * Lê o estoque sincronizado do LocalStorage
  */
 function loadStockData() {
-  try {
-    const stored = localStorage.getItem(CATALOG_STORAGE_KEY);
-    if (stored) {
-      stockList = JSON.parse(stored);
-    } else {
-      stockList = [...DEFAULT_CATALOG];
-      saveStockStorage();
-    }
-  } catch (e) {
-    console.error('Erro ao ler estoque:', e);
-    stockList = [...DEFAULT_CATALOG];
-  }
-
+  stockList = FarmaStore.load();
   renderStockTable();
   updateStockStatistics();
 }
 
 function saveStockStorage() {
-  try {
-    localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(stockList));
-  } catch (e) {
-    console.error('Erro ao salvar estoque:', e);
+  FarmaStore.save(stockList);
+}
+
+/**
+ * Obtém o estoque total somado de todas as frações/lotes de um mesmo medicamento
+ */
+function getMedicineTotalStock(item, list = stockList) {
+  const baseId = (item.medId || item.id).replace(/_l\d+$/, '');
+  const medName = item.name;
+  return list
+    .filter(m => {
+      const otherBaseId = (m.medId || m.id).replace(/_l\d+$/, '');
+      return otherBaseId === baseId || m.name === medName;
+    })
+    .reduce((acc, m) => acc + (Number(m.stock) || 0), 0);
+}
+
+/**
+ * Dias até a validade a contar de hoje (23/10/2026)
+ */
+function getDaysUntil(dateStr) {
+  if (typeof FarmaStore !== 'undefined' && FarmaStore.daysUntilExpiry) {
+    return FarmaStore.daysUntilExpiry(dateStr);
   }
+  if (!dateStr) return 9999;
+  let iso = dateStr;
+  if (iso.includes('/')) {
+    const p = iso.split('/');
+    iso = `${p[2]}-${p[1]}-${p[0]}`;
+  }
+  const target = new Date(iso + 'T00:00:00');
+  const today = new Date('2026-10-23T00:00:00');
+  return Math.round((target - today) / (1000 * 60 * 60 * 24));
 }
 
 /**
@@ -225,14 +121,25 @@ function renderStockTable(highlightedId = null) {
     // Filtro por Categoria
     const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
 
+    // Regra Sanitária: Status avalia a SOMA de todos os lotes do medicamento
+    const medTotalStock = getMedicineTotalStock(item, stockList);
+    const minStock = item.minStock || 40;
+
+    let medStatus = 'NORMAL';
+    if (medTotalStock === 0) {
+      medStatus = 'CRITICO';
+    } else if (medTotalStock <= minStock) {
+      medStatus = 'BAIXO';
+    }
+
     // Filtro por Status
     let matchesStatus = true;
     if (selectedStatus === 'NORMAL') {
-      matchesStatus = item.stock > item.minStock;
+      matchesStatus = medStatus === 'NORMAL';
     } else if (selectedStatus === 'BAIXO') {
-      matchesStatus = item.stock > 0 && item.stock <= item.minStock;
+      matchesStatus = medStatus === 'BAIXO';
     } else if (selectedStatus === 'CRITICO') {
-      matchesStatus = item.stock === 0;
+      matchesStatus = medStatus === 'CRITICO';
     }
 
     return matchesSearch && matchesCategory && matchesStatus;
@@ -247,23 +154,53 @@ function renderStockTable(highlightedId = null) {
 
   if (emptyState) emptyState.classList.add('d-none');
   if (footerSummary) {
-    footerSummary.textContent = `Exibindo ${filteredList.length} de ${stockList.length} itens cadastrados no estoque da UBS.`;
+    const uniqueMeds = new Set(stockList.map(m => m.name)).size;
+    footerSummary.textContent = `Exibindo ${filteredList.length} lotes de ${uniqueMeds} medicamentos cadastrados no estoque da UBS.`;
   }
 
   tbody.innerHTML = filteredList.map(item => {
     const isRowNew = item.id === highlightedId ? 'row-flash' : '';
     const initial = item.name ? item.name.charAt(0).toUpperCase() : 'M';
-    
-    // Status do Estoque
+
+    // Regra Sanitária: Status avalia a SOMA de todos os lotes do medicamento
+    const medTotalStock = getMedicineTotalStock(item, stockList);
+    const minStock = item.minStock || 40;
+
     let statusBadge = '';
     let rowBorderClass = '';
-    if (item.stock === 0) {
+    if (medTotalStock === 0) {
       statusBadge = `<span class="badge-farma-rupture"><span class="material-symbols-outlined" style="font-size: 13px;">cancel</span> Esgotado</span>`;
       rowBorderClass = 'table-danger';
-    } else if (item.stock <= item.minStock) {
-      statusBadge = `<span class="badge-farma-warning"><span class="material-symbols-outlined" style="font-size: 13px;">warning</span> Baixo (${item.stock}/${item.minStock})</span>`;
+    } else if (medTotalStock <= minStock) {
+      statusBadge = `<span class="badge-farma-warning" title="Soma dos lotes: ${medTotalStock} / Mínimo: ${minStock}"><span class="material-symbols-outlined" style="font-size: 13px;">warning</span> Baixo (${medTotalStock}/${minStock})</span>`;
     } else {
-      statusBadge = `<span class="badge-farma-optimal"><span class="material-symbols-outlined" style="font-size: 13px;">check_circle</span> Normal</span>`;
+      statusBadge = `<span class="badge-farma-optimal" title="Soma total de lotes: ${medTotalStock} unid."><span class="material-symbols-outlined" style="font-size: 13px;">check_circle</span> Normal</span>`;
+    }
+
+    // Validade com realces conforme regras sanitárias (< 90d, < 180d, regular)
+    const days = getDaysUntil(item.expiryDate || item.expiry);
+    let expiryBadge = '';
+    if (days < 90) {
+      expiryBadge = `
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 11px;" title="Validade crítica: ${days} dias a contar de hoje (< 90 dias)">
+          <span class="material-symbols-outlined" style="font-size: 13px;">event_busy</span>
+          ${escapeHTML(item.expiry)} (&lt; 90d)
+        </span>
+      `;
+    } else if (days < 180) {
+      expiryBadge = `
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 11px;" title="Atenção sanitária: ${days} dias a contar de hoje (< 180 dias)">
+          <span class="material-symbols-outlined" style="font-size: 13px;">warning</span>
+          ${escapeHTML(item.expiry)} (&lt; 180d)
+        </span>
+      `;
+    } else {
+      expiryBadge = `
+        <span class="badge-expiry-safe" style="font-size: 11px;" title="Validade regular: ${days} dias">
+          <span class="material-symbols-outlined" style="font-size: 12px;">event_available</span>
+          ${escapeHTML(item.expiry)}
+        </span>
+      `;
     }
 
     return `
@@ -299,19 +236,16 @@ function renderStockTable(highlightedId = null) {
 
         <!-- Validade Sanitária -->
         <td>
-          <span class="badge-expiry-safe" style="font-size: 11px;">
-            <span class="material-symbols-outlined" style="font-size: 12px;">event_available</span>
-            ${escapeHTML(item.expiry)}
-          </span>
+          ${expiryBadge}
         </td>
 
-        <!-- Saldo em Estoque -->
+        <!-- Saldo deste Lote -->
         <td class="text-center">
           <strong class="d-block text-dark fs-6">${item.stock}</strong>
           <small class="text-muted" style="font-size: 11px;">${escapeHTML(item.unit)}</small>
         </td>
 
-        <!-- Status / Nível de Abastecimento -->
+        <!-- Status / Nível de Abastecimento da Droga -->
         <td class="text-center">
           ${statusBadge}
         </td>
@@ -319,8 +253,8 @@ function renderStockTable(highlightedId = null) {
         <!-- Ações: Ajuste Rápido & Ficha do Lote -->
         <td class="text-end">
           <div class="d-flex align-items-center justify-content-end gap-1">
-            <button class="btn btn-outline-secondary btn-xs py-0 px-1 btn-adjust-stock" data-id="${item.id}" data-delta="-10" title="Deduzir 10 unidades" style="font-size: 10px; border-radius: 4px;">-10</button>
-            <button class="btn btn-outline-secondary btn-xs py-0 px-1 btn-adjust-stock" data-id="${item.id}" data-delta="10" title="Adicionar 10 unidades" style="font-size: 10px; border-radius: 4px;">+10</button>
+            <button class="btn btn-outline-secondary btn-xs py-0 px-1 btn-adjust-stock" data-id="${item.id}" data-delta="-10" title="Deduzir 10 unidades deste lote" style="font-size: 10px; border-radius: 4px;">-10</button>
+            <button class="btn btn-outline-secondary btn-xs py-0 px-1 btn-adjust-stock" data-id="${item.id}" data-delta="10" title="Adicionar 10 unidades a este lote" style="font-size: 10px; border-radius: 4px;">+10</button>
             <button class="btn btn-sm text-primary p-1 btn-view-lot-detail" data-id="${item.id}" title="Ficha de Rastreabilidade">
               <span class="material-symbols-outlined" style="font-size: 18px;">info</span>
             </button>
@@ -340,12 +274,20 @@ function updateStockStatistics() {
   const statLowStock = document.getElementById('statLowStock');
   const statNearExpiry = document.getElementById('statNearExpiry');
 
-  const totalMedicines = stockList.length;
-  const totalUnits = stockList.reduce((acc, curr) => acc + (curr.stock || 0), 0);
-  const lowStockCount = stockList.filter(item => item.stock <= item.minStock).length;
-  
-  // Itens com validade próxima (ano 2026)
-  const nearExpiryCount = stockList.filter(item => item.expiry && item.expiry.includes('2026')).length;
+  const uniqueMedNames = new Set(stockList.map(m => m.name));
+  const totalMedicines = uniqueMedNames.size;
+  const totalUnits = stockList.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0);
+
+  // Alerta de estoque baixo considera a SOMA de todos os lotes de cada medicamento
+  const lowStockCount = Array.from(uniqueMedNames).filter(name => {
+    const items = stockList.filter(m => m.name === name);
+    const sum = items.reduce((acc, m) => acc + (Number(m.stock) || 0), 0);
+    const min = items[0]?.minStock || 40;
+    return sum <= min;
+  }).length;
+
+  // Lotes com validade próxima (< 90 dias a contar de hoje 23/10/2026)
+  const nearExpiryCount = stockList.filter(item => getDaysUntil(item.expiryDate || item.expiry) < 90).length;
 
   if (statTotalItems) statTotalItems.textContent = totalMedicines;
   if (statTotalUnits) statTotalUnits.textContent = totalUnits.toLocaleString('pt-BR');
@@ -407,13 +349,13 @@ function adjustStockAmount(id, delta) {
   const item = stockList.find(m => m.id === id);
   if (!item) return;
 
-  item.stock = Math.max(0, item.stock + delta);
+  item.stock = Math.max(0, (Number(item.stock) || 0) + delta);
   saveStockStorage();
   renderStockTable();
   updateStockStatistics();
 
   const changeText = delta > 0 ? `+${delta}` : `${delta}`;
-  showToast(`Estoque de "${item.name}" ajustado (${changeText} ${item.unit})`, 'info');
+  showToast(`Lote ${item.batch} (${item.name}) ajustado: ${changeText} ${item.unit}`, 'info');
 }
 
 /**
@@ -443,6 +385,7 @@ function openLotDetailModal(id) {
 
   const modal = document.getElementById('lotDetailModal');
   const content = document.getElementById('lotDetailContent');
+  const totalStockMed = getMedicineTotalStock(item);
 
   if (content) {
     content.innerHTML = `
@@ -465,18 +408,22 @@ function openLotDetailModal(id) {
           <span class="badge-expiry-safe" style="font-size: 12px;">${escapeHTML(item.expiry)}</span>
         </div>
         <div>
-          <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Saldo Físico Atual</strong>
+          <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Saldo Físico Deste Lote</strong>
           <span style="font-weight: 700; color: #047857; font-size: 14px;">${item.stock} ${escapeHTML(item.unit)}</span>
         </div>
         <div>
-          <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Estoque de Segurança (Mínimo)</strong>
+          <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Estoque Total do Medicamento</strong>
+          <span style="font-weight: 700; color: #001c6d; font-size: 14px;">${totalStockMed} ${escapeHTML(item.unit)}</span>
+        </div>
+        <div>
+          <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Estoque Mínimo de Segurança</strong>
           <span>${item.minStock} ${escapeHTML(item.unit)}</span>
         </div>
         <div>
           <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Laboratório Fabricante</strong>
           <span>${escapeHTML(item.manufacturer || 'Fornecedor SUS')}</span>
         </div>
-        <div>
+        <div style="grid-column: span 2;">
           <strong style="display: block; font-size: 11px; color: #64748B; text-transform: uppercase;">Localização na UBS</strong>
           <span>${escapeHTML(item.location || 'Farmácia Central')}</span>
         </div>
@@ -484,7 +431,7 @@ function openLotDetailModal(id) {
 
       <div style="background-color: #f1f5f9; padding: 10px; border-radius: 6px; font-size: 12px; color: #475569;">
         <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: text-bottom; color: #0b3099;">verified_user</span>
-        Lote em conformidade com as diretrizes da Anvisa e Rename/SUS.
+        Lote em conformidade com as diretrizes da Anvisa e Rename/SUS. Rastreabilidade PEPS / FEFO.
       </div>
     `;
   }
@@ -508,11 +455,9 @@ function setupGlobalActions() {
   if (btnReload) {
     btnReload.addEventListener('click', () => {
       if (confirm('Deseja restaurar as quantidades e lotes padrão do estoque da UBS?')) {
-        stockList = [...DEFAULT_CATALOG];
-        saveStockStorage();
-        renderStockTable();
-        updateStockStatistics();
-        showToast('Estoque padrão restaurado!', 'info');
+        FarmaStore.resetAll();
+        loadStockData();
+        showToast('Estoque padrão restaurado com sucesso!', 'info');
       }
     });
   }

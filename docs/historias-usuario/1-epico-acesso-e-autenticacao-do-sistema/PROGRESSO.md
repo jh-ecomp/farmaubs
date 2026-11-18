@@ -6,12 +6,12 @@
 
 | Métrica | Valor |
 | --- | --- |
-| **Total de Histórias Mapeadas** | 28 |
-| **Entregues** | 28 (100%) |
-| **Pendentes** | 0 (0%) |
+| **Total de Histórias Mapeadas** | 29 |
+| **Entregues** | 28 (97%) |
+| **Pendentes** | 1 (3%) |
 
 ```
-Progresso: [████████████████████] 100% (28/28 concluídas)
+Progresso: [███████████████████░] 97% (28/29 concluídas)
 ```
 
 ---
@@ -51,9 +51,11 @@ Progresso: [████████████████████] 100% (
 
 ---
 
-## Histórias Pendentes ⏳ (0)
+## Histórias Pendentes ⏳ (1)
 
-*Nenhuma história web/backend pendente. Todas as 28 histórias não-mobile foram 100% concluídas e validadas.*
+| Código | Camada | Título | Especificação | Status Redação | Status Implementação |
+| --- | --- | --- | --- | --- | --- |
+| **AC-31** | Frontend | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | [ac-31-frontend-migracao-testes-playwright-bdd-acesso.md](./ac-31-frontend-migracao-testes-playwright-bdd-acesso.md) | ✅ Redigida | ⏳ Não iniciada |
 
 ---
 
@@ -62,9 +64,9 @@ Progresso: [████████████████████] 100% (
 | Código | Título | Especificação | Status |
 | --- | --- | --- | --- |
 | **AC-MOB-01** | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado | [ac-mob-01-tela-de-login-mobile-com-validacao-e-feedback.md](./ac-mob-01-tela-de-login-mobile-com-validacao-e-feedback.md) | ✅ Concluída |
-| **AC-MOB-02** | Armazenamento Seguro de Sessão e Token via Hardware Keystore/Keychain | [ac-mob-02-armazenamento-seguro-sessao-keystore-keychain.md](./ac-mob-02-armazenamento-seguro-sessao-keystore-keychain.md) | ⏳ Especificada / Em andamento |
-| **AC-MOB-03** | Seleção e Alternância de UBS Ativa em Dispositivo Móvel | [ac-mob-03-selecao-alternancia-ubs-ativa-mobile.md](./ac-mob-03-selecao-alternancia-ubs-ativa-mobile.md) | ⏳ Especificada |
-| **AC-MOB-04** | Fluxo de Troca Obrigatória de Senha Provisória no Mobile | [ac-mob-04-troca-obrigatoria-de-senha-mobile.md](./ac-mob-04-troca-obrigatoria-de-senha-mobile.md) | ⏳ Especificada |
-| **AC-MOB-05** | Encerramento Seguro de Sessão (Logout) no Aplicativo Móvel | [ac-mob-05-logout-seguro-mobile.md](./ac-mob-05-logout-seguro-mobile.md) | ⏳ Especificada |
-| **AC-MOB-06** | Detecção de Conectividade e Aviso de Modo Offline no Mobile | [ac-mob-06-deteccao-conectividade-aviso-offline-mobile.md](./ac-mob-06-deteccao-conectividade-aviso-offline-mobile.md) | ⏳ Especificada |
-| **AC-MOB-07** | Aviso de Timeout de Sessão via Notificação Nativa do SO Android | [ac-mob-07-aviso-timeout-sessao-notificacao-so-android.md](./ac-mob-07-aviso-timeout-sessao-notificacao-so-android.md) | ⏳ Especificada |
+| **AC-MOB-02** | Armazenamento Seguro de Sessão e Token via Hardware Keystore/Keychain | [ac-mob-02-armazenamento-seguro-sessao-keystore-keychain.md](./ac-mob-02-armazenamento-seguro-sessao-keystore-keychain.md) | ✅ Concluída |
+| **AC-MOB-03** | Seleção e Alternância de UBS Ativa em Dispositivo Móvel | [ac-mob-03-selecao-alternancia-ubs-ativa-mobile.md](./ac-mob-03-selecao-alternancia-ubs-ativa-mobile.md) | ✅ Concluída |
+| **AC-MOB-04** | Fluxo de Troca Obrigatória de Senha Provisória no Mobile | [ac-mob-04-troca-obrigatoria-de-senha-mobile.md](./ac-mob-04-troca-obrigatoria-de-senha-mobile.md) | ✅ Concluída |
+| **AC-MOB-05** | Encerramento Seguro de Sessão (Logout) no Aplicativo Móvel | [ac-mob-05-logout-seguro-mobile.md](./ac-mob-05-logout-seguro-mobile.md) | ✅ Concluída |
+| **AC-MOB-06** | Detecção de Conectividade e Aviso de Modo Offline no Mobile | [ac-mob-06-deteccao-conectividade-aviso-offline-mobile.md](./ac-mob-06-deteccao-conectividade-aviso-offline-mobile.md) | ✅ Concluída |
+| **AC-MOB-07** | Aviso de Timeout de Sessão via Notificação Nativa do SO Android | [ac-mob-07-aviso-timeout-sessao-notificacao-so-android.md](./ac-mob-07-aviso-timeout-sessao-notificacao-so-android.md) | ✅ Concluída |

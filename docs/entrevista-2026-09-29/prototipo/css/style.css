@@ -419,11 +419,19 @@ input, button, select, textarea {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 0.75rem 1rem;
+  padding: 0.9rem 1.15rem;
   margin-bottom: 1rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .medicine-info-panel {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
 }
 
 .med-info-item {
@@ -431,43 +439,76 @@ input, button, select, textarea {
   flex-direction: column;
 }
 
+.med-batch-select {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 0.35rem 0.65rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.med-batch-select:focus {
+  border-color: #0b3099;
+  box-shadow: 0 0 0 3px rgba(11, 48, 153, 0.12);
+}
+
 .med-info-label {
   font-size: 11px;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .med-info-value {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
-/* Badge de Validade Sanitária */
+/* Badges Sanitárias de Validade: Verde (> 180d), Amarelo (90 a 180d), Vermelho (< 90d) */
 .badge-expiry-safe {
   background-color: #ecfdf5;
   color: #047857;
-  font-size: 11px;
+  border: 1px solid #a7f3d0;
+  font-size: 13px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  width: fit-content;
 }
 
 .badge-expiry-warning {
   background-color: #fffbeb;
   color: #b45309;
-  font-size: 11px;
+  border: 1px solid #fde68a;
+  font-size: 13px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  width: fit-content;
+}
+
+.badge-expiry-danger {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
 }
 
 /* Cesta / Lista de Itens da Receita Atual */

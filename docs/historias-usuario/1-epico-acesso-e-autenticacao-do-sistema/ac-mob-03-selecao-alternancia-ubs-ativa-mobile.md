@@ -68,11 +68,11 @@ export interface ContextoUnidadeAtiva {
 
 ## 4. Critérios de Aceite Detalhados
 
-- [ ] Identificação da UBS ativa presente de forma permanente no topo do layout autenticado do app mobile.
-- [ ] Usuários com apenas 1 UBS vinculada visualizam a unidade sem opção de troca.
-- [ ] Usuários multi-unidade acessam modal nativo para alternar a UBS em um toque.
-- [ ] Invalidação imediata do cache de dados e propagação do novo `unidadeId` no header HTTP.
-- [ ] Persistência da última UBS ativa selecionada no dispositivo para reaberturas futuras.
+- [x] Identificação da UBS ativa presente de forma permanente no topo do layout autenticado do app mobile.
+- [x] Usuários com apenas 1 UBS vinculada visualizam a unidade sem opção de troca.
+- [x] Usuários multi-unidade acessam modal nativo para alternar a UBS em um toque.
+- [x] Invalidação imediata do cache de dados e propagação do novo `unidadeId` no header HTTP.
+- [x] Persistência da última UBS ativa selecionada no dispositivo para reaberturas futuras.
 
 ---
 

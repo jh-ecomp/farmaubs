@@ -9,7 +9,6 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   ScrollView,
-  Platform,
 } from "react-native";
 import type { LoginRequest } from "@farmaubs/shared";
 import { theme } from "../theme/tokens";
@@ -20,21 +19,30 @@ import {
   validarCamposLogin,
   type LoginSucesso,
 } from "./login-form";
+import { fetchApi, SessaoExpirada } from "../services/api";
+import { MENSAGEM_ACAO_OFFLINE } from "../services/conectividade";
 
 interface LoginScreenProps {
   onLoginSuccess: (dados: LoginSucesso) => void | Promise<void>;
   apiBaseUrl: string;
+  avisoSessao?: string | null;
+  semConexao?: boolean;
 }
 
 // shortcut: 15s, quando a história definir o limite de timeout do login
 const TIMEOUT_LOGIN_MS = 15_000;
 
-export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
+export function LoginScreen({
+  onLoginSuccess,
+  apiBaseUrl,
+  avisoSessao,
+  semConexao = false,
+}: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(avisoSessao ?? null);
   const [bloqueioAte, setBloqueioAte] = useState<number | null>(null);
 
   const bloqueado = bloqueioAte != null && bloqueioAte > Date.now();
@@ -58,6 +66,10 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
       setErro(validacao);
       return;
     }
+    if (semConexao) {
+      setErro(MENSAGEM_ACAO_OFFLINE);
+      return;
+    }
 
     setErro(null);
     setCarregando(true);
@@ -69,12 +81,16 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
         senha,
       };
 
-      const res = await fetch(`${apiBaseUrl}/api/v1/acesso/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
+      const res = await fetchApi(
+        `${apiBaseUrl}/api/v1/acesso/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        },
+        { autenticada: false },
+      );
 
       let data: unknown;
       try {
@@ -103,7 +119,8 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
         return;
       }
       await onLoginSuccess(sucesso);
-    } catch {
+    } catch (erroLogin) {
+      if (erroLogin instanceof SessaoExpirada) return;
       setErro(MENSAGEM_REDE);
     } finally {
       clearTimeout(timer);
@@ -116,16 +133,19 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        // height no Android entra em loop quando a faixa de rede sai.
+        behavior="padding"
         style={styles.flex}
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.inner}
         >
+          <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>FarmaUBS Mobile</Text>
-            <Text style={styles.subtitle}>Gestão e Dispensação na Atenção Básica</Text>
+            <Text style={styles.marca}>FarmaUBS</Text>
+            <Text style={styles.title}>Acesso ao Sistema</Text>
+            <Text style={styles.subtitle}>Insira suas credenciais institucionais</Text>
           </View>
 
           <View style={styles.form}>
@@ -136,7 +156,10 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
               </View>
             )}
 
-            <Text style={styles.label}>E-mail institucional</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>E-mail institucional</Text>
+              <Text style={styles.selo}>CNES / SUS</Text>
+            </View>
             <TextInput
               style={styles.input}
               placeholder="nome@ubs.gov.br"
@@ -181,6 +204,8 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
                 <Text style={styles.buttonText}>Acessar Sistema</Text>
               )}
             </TouchableOpacity>
+            <Text style={styles.suporte}>Solicite cadastro junto à coordenação CAF</Text>
+          </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -191,7 +216,7 @@ export function LoginScreen({ onLoginSuccess, apiBaseUrl }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   flex: {
     flex: 1,
@@ -199,43 +224,75 @@ const styles = StyleSheet.create({
   inner: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.lg,
   },
+  card: {
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
+  },
   header: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
     alignItems: "center",
   },
+  marca: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: theme.colors.action,
+    marginBottom: theme.spacing.sm,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: theme.colors.primary.default,
+    fontSize: 24,
+    fontWeight: "700",
+    color: theme.colors.text.primary,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
+    color: "#64748B",
+    marginTop: theme.spacing.sm,
     textAlign: "center",
   },
   form: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    width: "100%",
+  },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+  },
+  selo: {
+    fontSize: 11,
+    color: "#001C6D",
+    backgroundColor: "#E6EEFF",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 2,
   },
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: theme.colors.text.primary,
+    fontWeight: "500",
+    color: "#334155",
     marginBottom: theme.spacing.xs,
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+    flexShrink: 1,
   },
   input: {
     height: 48,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.sm,
     paddingHorizontal: theme.spacing.md,
     fontSize: 16,
     color: theme.colors.text.primary,
@@ -246,7 +303,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.sm,
     backgroundColor: theme.colors.surface,
   },
   senhaInput: {
@@ -262,13 +319,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   olhoText: {
-    color: theme.colors.primary.default,
+    color: theme.colors.action,
     fontWeight: "600",
   },
   button: {
-    backgroundColor: theme.colors.primary.default,
+    backgroundColor: theme.colors.action,
     height: 48,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.sm,
     justifyContent: "center",
     alignItems: "center",
     marginTop: theme.spacing.lg,
@@ -307,5 +364,12 @@ const styles = StyleSheet.create({
     flex: 1,
     color: theme.colors.status.danger,
     fontSize: 13,
+  },
+  suporte: {
+    marginTop: theme.spacing.lg,
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#001C6D",
   },
 });

@@ -22,6 +22,7 @@ services:
       - node_modules_backend:/app/apps/backend/node_modules
       - node_modules_frontend:/app/apps/frontend/node_modules
       - node_modules_shared:/app/packages/shared/node_modules
+      - node_modules_mobile:/app/apps/mobile/node_modules
       - pnpm_store:/pnpm-store
     command: pnpm --filter @farmaubs/backend start:dev
 
@@ -42,6 +43,7 @@ services:
       - node_modules_backend:/app/apps/backend/node_modules
       - node_modules_frontend:/app/apps/frontend/node_modules
       - node_modules_shared:/app/packages/shared/node_modules
+      - node_modules_mobile:/app/apps/mobile/node_modules
       - pnpm_store:/pnpm-store
     command: pnpm --filter @farmaubs/frontend dev
 
@@ -50,4 +52,5 @@ volumes:
   node_modules_backend:
   node_modules_frontend:
   node_modules_shared:
+  node_modules_mobile:
   pnpm_store:

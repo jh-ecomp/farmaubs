@@ -61,11 +61,14 @@ import {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Componentes**:
   - `apps/frontend/src/features/estoque/components/ModalAjusteEstoque.tsx`;
   - `apps/frontend/src/features/estoque/components/ModalFichaRastreabilidade.tsx`.
 - **Hooks**: `useRegistrarAjusteEstoque()` e `useRastreabilidadeLote(loteId)`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/estoque-ajustes-rastreabilidade-sistema.feature` (`moon run frontend:test-bdd`): Teste de sistema dos modais de ajuste (+/-) e linha do tempo do lote com foco aprisionado (`Tab` / `Escape`).
+  - `apps/frontend/e2e/features/fullstack/estoque-fullstack.feature` (`moon run frontend:test-e2e`): Registro transacional de ajuste e atualização imediata na ficha de rastreabilidade.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-04 e ES-MOB-05)
 - **DTOs e Catálogos de Operação**: `RegistrarAjusteLoteInputDto`, `AjusteEstoqueResultadoDto`, `MOTIVOS_AJUSTE_ENTRADA`, `MOTIVOS_AJUSTE_SAIDA` e `RastreabilidadeLoteDto` centralizados em `@farmaubs/shared`.
@@ -107,4 +110,4 @@ Funcionalidade: Modais de Ajuste e Ficha de Rastreabilidade (Camada D)
 - [ ] Modais desenvolvidos com validação via React Hook Form + Zod.
 - [ ] Invalidação automática dos caches de `estoque/metricas` e `estoque/saldos` após mutação.
 - [ ] Linha do tempo de rastreabilidade com formatação limpa e clara das movimentações.
-- [ ] Testes de componentes (Camada D) validando bloqueio de saldo excedente, focus trap e feedback toast.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando bloqueio de saldo excedente, focus trap (`Tab`, `Escape`), auditoria WCAG 2.1 AA (`@axe-core/playwright`) e feedback toast.

@@ -159,7 +159,7 @@
             </span>
           </div>
           <p class="text-muted mb-0 mt-1" style="font-size: 13px;">
-            Ciclo: <strong class="text-dark" id="inventoryCycleText">Setembro / 2026</strong> &bull; Conferência física cega e conciliação de saldos.
+            Ciclo: <strong class="text-dark" id="inventoryCycleText">Outubro / 2026</strong> &bull; Conferência física cega e conciliação de saldos.
           </p>
         </div>
 
@@ -486,6 +486,49 @@
 
       </div>
 
+      <!-- SEÇÃO: HISTÓRICO DE INVENTÁRIOS ANTERIORES & HOMOLOGADOS -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="farma-card">
+            <div class="farma-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined text-primary" style="font-size: 22px;">history</span>
+                <div>
+                  <h5 class="fw-bold text-dark mb-0" style="font-size: 16px;">Histórico de Inventários Anteriores</h5>
+                  <p class="text-muted small mb-0">Ciclos encerrados e homologados sob responsabilidade técnica farmacêutica</p>
+                </div>
+              </div>
+              <span class="badge-cnes-sus" style="font-size: 11px;">Rastreabilidade SUS</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table-farmaubs mb-0" id="historyInventoryTable">
+                <thead>
+                  <tr>
+                    <th scope="col" style="min-width: 140px;">Ciclo</th>
+                    <th scope="col" style="min-width: 160px;">Data de Homologação</th>
+                    <th scope="col" class="text-center" style="min-width: 130px;">Situação</th>
+                    <th scope="col" style="min-width: 170px;">Última Edição</th>
+                    <th scope="col" class="text-end" style="min-width: 170px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="historyInventoryTableBody">
+                  <!-- Gerado dinamicamente via js/inventario.js -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between small text-muted" style="background-color: #ffffff; border-radius: 0 0 12px 12px; font-size: 12px;">
+              <span id="historyTableCountText">Carregando histórico de inventários...</span>
+              <span class="d-flex align-items-center gap-1 text-primary">
+                <span class="material-symbols-outlined" style="font-size: 15px;">verified_user</span>
+                RDC 430/2020 &bull; Conformidade Farmacêutica
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div> <!-- Fecha .farma-main-layout -->
 
@@ -518,7 +561,7 @@
       <div style="font-size: 13px; color: #334155; line-height: 1.6;">
         <div class="p-3 mb-3 rounded-2" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
           <strong class="d-block text-primary mb-1">Atenção Farmacêutica:</strong>
-          A homologação fecha o ciclo de inventário de <strong id="modalCycleName">Setembro/2026</strong> e ajusta formalmente o saldo do catálogo de estoque oficial com as quantidades contadas fisicamente.
+          A homologação fecha o ciclo de inventário de <strong id="modalCycleName">Outubro/2026</strong> e ajusta formalmente o saldo do catálogo de estoque oficial com as quantidades contadas fisicamente.
         </div>
 
         <div class="row g-2 mb-3">
@@ -553,6 +596,148 @@
         <button type="button" class="btn-farma-success py-1 px-3" id="btnConfirmHomologate">
           <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
           <span>Confirmar e Homologar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RETIFICAR INVENTÁRIO HOMOLOGADO (AUDITORIA SANITÁRIA) -->
+  <div
+    id="editHistoryModal"
+    class="farma-modal-backdrop"
+    style="display: none;"
+    role="presentation"
+  >
+    <div
+      class="farma-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-history-modal-title"
+      style="max-width: 540px;"
+    >
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="assets/iconefarmaubs.svg" alt="FarmaUBS" style="width: 26px; height: 26px;">
+          <h2 id="edit-history-modal-title" style="font-size: 16px; font-weight: 700; color: #001c6d; margin: 0;">
+            Retificar Inventário Homologado
+          </h2>
+        </div>
+        <button type="button" id="btnCloseEditHistoryModal" style="background: none; border: none; cursor: pointer; color: #64748B;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div style="font-size: 13px; color: #334155; line-height: 1.6; margin-top: 12px;">
+        <div class="p-3 mb-3 rounded-2" style="background-color: #fefce8; border: 1px solid #fef08a;">
+          <div class="d-flex align-items-start gap-2">
+            <span class="material-symbols-outlined text-warning" style="font-size: 20px; flex-shrink: 0; margin-top: 1px;">lock_clock</span>
+            <div style="font-size: 12px; color: #854d0e;">
+              <strong>Rastreabilidade Sanitária (RDC 430/2020):</strong>
+              Este ciclo encontra-se homologado. Qualquer retificação em contagens passadas exige justificativa detalhada e ficará registrada permanentemente na trilha de auditoria.
+            </div>
+          </div>
+        </div>
+
+        <form id="editHistoryForm" novalidate>
+          <input type="hidden" id="editHistoryCycleId">
+
+          <!-- Ciclo em edição -->
+          <div class="mb-3">
+            <label class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">Ciclo do Inventário</label>
+            <input type="text" class="form-control farma-input bg-light fw-bold" id="editHistoryCycleLabel" readonly>
+          </div>
+
+          <!-- Medicamento a retificar -->
+          <div class="mb-3">
+            <label for="editHistoryMedicineSelect" class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">
+              Medicamento a Retificar <span class="text-danger">*</span>
+            </label>
+            <select class="form-select farma-select" id="editHistoryMedicineSelect" required>
+              <option value="" selected disabled>Selecione o medicamento...</option>
+            </select>
+          </div>
+
+          <!-- Dados do item selecionado -->
+          <div id="editHistoryCurrentDataBox" class="p-2 mb-3 rounded border bg-light d-none" style="font-size: 12px;">
+            <div class="row g-2 text-center">
+              <div class="col-4">
+                <span class="text-muted d-block" style="font-size: 11px;">Saldo Sistema</span>
+                <strong id="editHistorySysCount" class="text-dark">-</strong>
+              </div>
+              <div class="col-4">
+                <span class="text-muted d-block" style="font-size: 11px;">Contagem na Ata</span>
+                <strong id="editHistoryOldCount" class="text-primary">-</strong>
+              </div>
+              <div class="col-4">
+                <span class="text-muted d-block" style="font-size: 11px;">Divergência Registrada</span>
+                <strong id="editHistoryOldDiv" class="text-dark">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nova contagem física -->
+          <div class="mb-3">
+            <label for="editHistoryNewCount" class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">
+              Nova Quantidade Física Apurada <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #cbd5e1;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">pin</span>
+              </span>
+              <input
+                type="number"
+                class="form-control farma-input border-start-0 fw-bold"
+                id="editHistoryNewCount"
+                min="0"
+                step="1"
+                placeholder="Ex: 180"
+                required
+              >
+            </div>
+            <small class="text-muted" style="font-size: 11px;">Nova quantidade física efetivamente conferida.</small>
+          </div>
+
+          <!-- Motivo padrão da retificação sanitária -->
+          <div class="mb-3">
+            <label for="editHistoryReasonSelect" class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">
+              Motivo da Alteração <span class="text-danger">*</span>
+            </label>
+            <select class="form-select farma-select" id="editHistoryReasonSelect" required>
+              <option value="" selected disabled>Selecione a justificativa...</option>
+              <option value="Recontagem física após localização de lote extraviado">Recontagem física após localização de lote extraviado</option>
+              <option value="Correção de digitação de contagem apurada em ficha de campo">Correção de digitação de contagem apurada em ficha de campo</option>
+              <option value="Ajuste por laudo de descarte sanitário extemporâneo">Ajuste por laudo de descarte sanitário extemporâneo</option>
+              <option value="Avaria identificada tardiamente em caixa fechada">Avaria identificada tardiamente em caixa fechada</option>
+              <option value="Retificação de conferência por determinação de auditoria">Retificação de conferência por determinação de auditoria</option>
+              <option value="Outro motivo justificado">Outro motivo sanitário justificado</option>
+            </select>
+          </div>
+
+          <!-- Justificativa técnica obrigatória -->
+          <div class="mb-3">
+            <label for="editHistoryNotes" class="form-label text-dark fw-bold mb-1" style="font-size: 13px;">
+              Justificativa Detalhada do Farmacêutico <span class="text-danger">*</span>
+            </label>
+            <textarea
+              class="form-control farma-input"
+              id="editHistoryNotes"
+              rows="2"
+              placeholder="Descreva circunstanciadamente o motivo da alteração (obrigatório para fins de auditoria)..."
+              required
+              style="font-size: 13px;"
+            ></textarea>
+            <small class="text-muted" style="font-size: 11px;">Obrigatório: Toda alteração deve ser formalmente acompanhada de um motivo.</small>
+          </div>
+        </form>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <button type="button" class="btn-farma-outline py-1 px-3" id="btnCancelEditHistory">
+          Cancelar
+        </button>
+        <button type="button" class="btn-farma-primary py-1 px-3" id="btnSaveEditHistory">
+          <span class="material-symbols-outlined" style="font-size: 16px;">save</span>
+          <span>Gravar Retificação</span>
         </button>
       </div>
     </div>
@@ -640,7 +825,9 @@
 
   <!-- Bootstrap 5 Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Script de Inventário Mensal -->
+  <!-- Scripts FarmaUBS -->
+  <script src="js/estoque-store.js"></script>
+  <script src="js/relatorio.js"></script>
   <script src="js/inventario.js"></script>
 </body>
 </html>

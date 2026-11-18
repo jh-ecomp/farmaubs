@@ -1,3 +1,4 @@
+/// <reference path="../types/node-assert.d.ts" />
 import assert from "node:assert/strict";
 import {
   classificarErroLogin,
@@ -16,9 +17,37 @@ assert.equal(classificarErroLogin(429, 15).tipo, "bloqueio");
 assert.equal(classificarErroLogin(423, 15).tipo, "bloqueio");
 assert.equal(classificarErroLogin(500, undefined).tipo, "rede");
 
-assert.equal(lerLoginSucesso({ token: "", usuario: { id: "1" } }), null);
+assert.equal(lerLoginSucesso({ token: "abc", usuario: { id: "1" } }), null);
 assert.equal(
-  lerLoginSucesso({ token: "abc", usuario: { id: "1", deveTrocarSenha: false } })?.token,
+  lerLoginSucesso({
+    token: "abc",
+    expiresAt: "nao-e-data",
+    usuario: {
+      id: "1",
+      nomeCompleto: "Ana",
+      email: "ana@farmaubs.dev",
+      perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+      municipioId: "m",
+      unidadeIds: [],
+      deveTrocarSenha: false,
+    },
+  }),
+  null,
+);
+assert.equal(
+  lerLoginSucesso({
+    token: "abc",
+    usuario: {
+      id: "1",
+      nomeCompleto: "Ana",
+      email: "ana@farmaubs.dev",
+      perfilCodigo: "FARMACEUTICO_RESPONSAVEL",
+      municipioId: "m",
+      unidadeIds: [],
+      deveTrocarSenha: false,
+    },
+    sessao: { expiresAt: "2099-01-01T00:00:00.000Z" },
+  })?.token,
   "abc",
 );
 

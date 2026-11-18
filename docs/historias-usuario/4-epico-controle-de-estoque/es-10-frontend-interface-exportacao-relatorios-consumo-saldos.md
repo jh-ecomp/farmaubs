@@ -51,10 +51,13 @@ export interface ExportarRelatorioEstoqueQueryDto {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd`).
 - **Componente**: `apps/frontend/src/features/estoque/components/ModalExportarRelatoriosEstoque.tsx`.
 - **Hook de Download**: `useExportarRelatorioEstoqueXlsx()`.
 - **Props**: `aberto: boolean`, `onFechar: () => void`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/estoque-relatorios-sistema.feature` (`moon run frontend:test-bdd`): Validação de período e interceptação nativa do download binário `.xlsx` com `page.waitForEvent('download')`.
+  - `apps/frontend/e2e/features/fullstack/estoque-fullstack.feature` (`moon run frontend:test-e2e`): Geração e download de planilha real de perdas/saldos.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile
 - **Contratos de Exportação**: `ExportarRelatorioEstoqueQueryDto` e enum `TipoRelatorioEstoque` centralizados em `@farmaubs/shared`.
@@ -93,4 +96,4 @@ Funcionalidade: Interface de Exportação de Relatórios de Estoque (Camada D)
 - [ ] Modal de exportação implementado com React 19, Tailwind CSS e foco aprisionado.
 - [ ] Integração com o endpoint backend de streaming de arquivo binário `.xlsx`.
 - [ ] Validações de data e tratamento de erros de rede com feedback visual acessível.
-- [ ] Testes de componentes (Camada D) validando alternância de tipos de relatório e disparo de download.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando alternância de tipos de relatório e captura real do download binário (`page.waitForEvent('download')`).

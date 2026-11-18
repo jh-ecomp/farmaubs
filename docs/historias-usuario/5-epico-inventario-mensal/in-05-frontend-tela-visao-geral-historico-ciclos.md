@@ -73,12 +73,15 @@ export interface InventarioHistoricoItemDTO {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes e Páginas React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Página / Componente Principal**: `apps/frontend/src/features/inventario/pages/InventarioVisaoGeralPage.tsx`.
 - **Hooks & Integrações**:
   - `useCicloAtivo()`: Consumo de `GET /api/v1/inventario/ciclos/ativo`;
   - `useHistoricoCiclos(pagina)`: Consumo de `GET /api/v1/inventario/ciclos`;
   - `useIniciarCiclo()` e `useCancelarCiclo()`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/inventario-visao-geral-sistema.feature` (`moon run frontend:test-bdd`): Teste de sistema com barra de progresso (`role="progressbar"`), início/cancelamento de ciclo e auditoria WCAG 2.1 AA.
+  - `apps/frontend/e2e/features/fullstack/inventario-fullstack.feature` (`moon run frontend:test-e2e`): Abertura real de ciclo mensal e listagem de histórico.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - IN-MOB-01)
 - **Contratos e DTOs Unificados**: Centralizados em `@farmaubs/shared/src/contracts/inventario/`.
@@ -114,4 +117,4 @@ Funcionalidade: Visão Geral e Histórico de Inventários (Camada D)
 
 - [ ] Página implementada com Tailwind CSS, skeletons de carregamento e estado vazio amigável.
 - [ ] Indicador de progresso com acessibilidade semântica (`role="progressbar"`, `aria-valuenow`, `aria-valuemin="0"`, `aria-valuemax="100"`).
-- [ ] Testes de componentes (Camada D) validando alternância de estados (com ciclo ativo vs. sem ciclo ativo) e acionamento de modais.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando alternância de estados (com ciclo ativo vs. sem ciclo ativo), acionamento de modais e conformidade `@axe-core/playwright`.

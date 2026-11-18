@@ -113,6 +113,7 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 | [RE-06](./re-06-frontend-busca-textual-medicamentos-fabricante-lote.md) | Busca de medicamentos, fabricante obrigatório, lote e avisos de validade | D | RE-02 | ✅ Redigida |
 | [RE-07](./re-07-frontend-confirmacao-entrada-sincronizacao-estoque.md) | Efetivação da entrada: envio da carga, mensagens em tela e sincronização de saldo | D | RE-03, RE-05, RE-06 | ✅ Redigida |
 | [RE-08](./re-08-frontend-tabela-ultimos-recebimentos-termo-estorno.md) | Painel de histórico: visualização ontem/hoje, intervalo customizado, XLSX, termo e estorno | D | RE-04, RE-07 | ✅ Redigida |
+| [RE-09](./re-09-frontend-migracao-testes-playwright-bdd-recebimento.md) | Migração da suíte de testes de Recebimento (Vitest -> Playwright BDD & E2E Full-Stack) | C, D | RE-05 a RE-08 | ✅ Redigida |
 
 ---
 

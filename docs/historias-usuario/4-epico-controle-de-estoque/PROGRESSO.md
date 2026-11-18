@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 | --- | --- |
-| **Total de Histórias Mapeadas** | 15 |
-| **Entregues** | 3 (20%) |
+| **Total de Histórias Mapeadas** | 16 |
+| **Entregues** | 4 (25%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 12 (80%) |
+| **Pendentes** | 12 (75%) |
 
 ```
-Progresso: [█████░░░░░░░░░░░░░░░] 27% (4/15 concluídas)
+Progresso: [█████░░░░░░░░░░░░░░░] 25% (4/16 concluídas)
 ```
 
 ---
@@ -31,6 +31,7 @@ Progresso: [█████░░░░░░░░░░░░░░░] 27% (4
 | **ES-08** | Frontend | Barra de Filtros Avançados: Busca livre, filtro de validade no mês corrente e categorias da REMUME (RF022, NF001) | [es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md](./es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-09** | Frontend | Modais Operacionais: Ficha de rastreabilidade do lote e diálogo de ajuste rápido (+/-) justificado (RF009, RF011, RF028) | [es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md](./es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-10** | Frontend | Interface de Relatórios: Seletor de período, filtros de exportação e download de planilha Excel (.xlsx) (RF020, RF028) | [es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md](./es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md) | ✅ Redigida | ⏳ Não iniciada |
+| **ES-11** | Frontend | Suíte Integrada Playwright BDD e E2E Full-Stack do Módulo de Controle de Estoque | [es-11-frontend-migracao-testes-playwright-bdd-estoque.md](./es-11-frontend-migracao-testes-playwright-bdd-estoque.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-MOB-01** | Mobile | Dashboard de Saldos e Indicadores de Criticidade no Celular | [es-mob-01-dashboard-saldos-criticidade-estoque-mobile.md](./es-mob-01-dashboard-saldos-criticidade-estoque-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-MOB-02** | Mobile | Consulta de Saldos por Medicamento e Expansão de Lotes no Celular | [es-mob-02-consulta-saldos-lotes-validade-mobile.md](./es-mob-02-consulta-saldos-lotes-validade-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-MOB-03** | Mobile | Filtros Rápidos, Busca e Bottom Sheet de Estoque no Celular | [es-mob-03-filtros-rapidos-consulta-estoque-mobile.md](./es-mob-03-filtros-rapidos-consulta-estoque-mobile.md) | ✅ Redigida | ⏳ Não iniciada |

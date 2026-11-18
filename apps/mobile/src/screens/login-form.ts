@@ -11,6 +11,7 @@ export const MENSAGEM_REDE =
 export type LoginSucesso = {
   token: string;
   usuario: UsuarioAutenticado;
+  expiraEm: string;
 };
 
 export type FalhaLogin =
@@ -55,7 +56,28 @@ export function classificarErroLogin(status: number, minutosRestantes: unknown):
  */
 export function lerLoginSucesso(data: unknown): LoginSucesso | null {
   if (!data || typeof data !== "object") return null;
-  const corpo = data as { token?: unknown; usuario?: UsuarioAutenticado };
-  if (typeof corpo.token !== "string" || !corpo.token || !corpo.usuario) return null;
-  return { token: corpo.token, usuario: corpo.usuario };
+  const corpo = data as {
+    token?: unknown;
+    usuario?: unknown;
+    expiresAt?: unknown;
+    sessao?: { expiresAt?: unknown };
+  };
+  const expiraEm = corpo.sessao?.expiresAt ?? corpo.expiresAt;
+  if (typeof corpo.token !== "string" || !corpo.token || typeof expiraEm !== "string") return null;
+  if (Number.isNaN(Date.parse(expiraEm))) return null;
+  if (!corpo.usuario || typeof corpo.usuario !== "object") return null;
+  const usuario = corpo.usuario as UsuarioAutenticado;
+  if (
+    typeof usuario.id !== "string" ||
+    !usuario.id ||
+    typeof usuario.nomeCompleto !== "string" ||
+    typeof usuario.email !== "string" ||
+    typeof usuario.perfilCodigo !== "string" ||
+    typeof usuario.municipioId !== "string" ||
+    !Array.isArray(usuario.unidadeIds) ||
+    typeof usuario.deveTrocarSenha !== "boolean"
+  ) {
+    return null;
+  }
+  return { token: corpo.token, usuario, expiraEm };
 }

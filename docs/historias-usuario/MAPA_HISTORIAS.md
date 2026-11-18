@@ -22,13 +22,14 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | AC-24 | Frontend | Tela de troca obrigatória de senha (RF002) | ✅ Redigida | ✅ Concluída | AC-MOB-04 |
 | AC-25 | Frontend | Encerrar sessão no cliente e expurgo de cache | ✅ Redigida | ✅ Concluída | AC-MOB-05 |
 | AC-30 | Frontend | Migração de sessão para cookie HttpOnly e expurgo localStorage | ✅ Redigida | ✅ Concluída | AC-MOB-02 |
+| AC-31 | Frontend | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ⏳ Não iniciada | — |
 | AC-MOB-01 | Mobile | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado (RF002) | ✅ Redigida | ✅ Concluída | AC-16 |
-| AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AC-19 / AC-30 |
-| AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ⏳ Não iniciada | AC-19 |
-| AC-MOB-04 | Mobile | Fluxo de troca obrigatória de senha provisória no mobile (RF002) | ✅ Redigida | ⏳ Não iniciada | AC-24 |
-| AC-MOB-05 | Mobile | Encerramento seguro de sessão (logout) no aplicativo móvel (RF004) | ✅ Redigida | ⏳ Não iniciada | AC-21 / AC-25 |
-| AC-MOB-06 | Mobile | Detecção de conectividade e aviso de modo offline no mobile (ADR-014) | ✅ Redigida | ⏳ Não iniciada | PWA Offline |
-| AC-MOB-07 | Mobile | Aviso de timeout de sessão via notificação nativa do SO Android (NF012, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AC-20 |
+| AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ✅ Concluída | AC-19 / AC-30 |
+| AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ✅ Concluída | AC-19 |
+| AC-MOB-04 | Mobile | Fluxo de troca obrigatória de senha provisória no mobile (RF002) | ✅ Redigida | ✅ Concluída | AC-24 |
+| AC-MOB-05 | Mobile | Encerramento seguro de sessão (logout) no aplicativo móvel (RF004) | ✅ Redigida | ✅ Concluída | AC-21 / AC-25 |
+| AC-MOB-06 | Mobile | Detecção de conectividade e aviso de modo offline no mobile (ADR-014) | ✅ Redigida | ✅ Concluída | PWA Offline |
+| AC-MOB-07 | Mobile | Aviso de timeout de sessão via notificação nativa do SO Android (NF012, ADR-034) | ✅ Redigida | ✅ Concluída | AC-20 |
 
 ---
 
@@ -45,6 +46,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | DI-08 | Frontend | Carrinho de dispensação: múltiplos itens, posologia e antimicrobianos | ✅ Redigida | ✅ Concluída | DI-MOB-03 |
 | DI-09 | Frontend | Tela principal integrando atendimento, métricas e baixa de estoque | ✅ Redigida | ✅ Concluída | DI-MOB-04 |
 | DI-10 | Frontend | Painel de histórico de dispensas com filtro ontem/hoje e XLSX | ✅ Redigida | ✅ Concluída | DI-MOB-05 |
+| DI-11 | Frontend | Migração e consolidação da suíte de testes de Dispensação (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | 🚧 Em andamento (PoC DI-09/10 pronta) | — |
 | DI-MOB-01 | Mobile | Identificação do paciente por Cartão SUS / CPF e consulta de histórico | ✅ Redigida | ⏳ Não iniciada | DI-06 |
 | DI-MOB-02 | Mobile | Busca de medicamentos e seletor tátil de lotes FEFO com alertas | ✅ Redigida | ⏳ Não iniciada | DI-07 |
 | DI-MOB-03 | Mobile | Carrinho de dispensação ágil e posologia por toque | ✅ Redigida | ⏳ Não iniciada | DI-08 |
@@ -64,6 +66,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | RE-06 | Frontend | Busca no catálogo, fabricante obrigatório, lote e avisos de validade | ✅ Redigida | ✅ Concluída | RE-MOB-02 |
 | RE-07 | Frontend | Efetivação da entrada: envio da carga e atualização de estoque | ✅ Redigida | ✅ Concluída | RE-MOB-03 |
 | RE-08 | Frontend | Painel de histórico: visualização ontem/hoje, XLSX, termo e estorno | ✅ Redigida | ✅ Concluída | RE-MOB-04 |
+| RE-09 | Frontend | Migração da suíte de testes de Recebimento (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ⏳ Não iniciada | — |
 | RE-MOB-01 | Mobile | Conferência rápida de guia de recebimento CAF na doca de entrega | ✅ Redigida | ⏳ Não iniciada | RE-05 |
 | RE-MOB-02 | Mobile | Conferência física de lotes e aviso de validade no celular | ✅ Redigida | ⏳ Não iniciada | RE-06 |
 | RE-MOB-03 | Mobile | Confirmação de entrada de estoque e recibo digital mobile | ✅ Redigida | ⏳ Não iniciada | RE-07 |
@@ -84,6 +87,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | ES-08 | Frontend | Barra de filtros avançados: busca, vencimento no mês e categorias | ✅ Redigida | ⏳ Não iniciada | ES-MOB-03 |
 | ES-09 | Frontend | Modais de ficha de movimentação do lote e ajuste rápido justificado | ✅ Redigida | ⏳ Não iniciada | ES-MOB-04 / ES-MOB-05 |
 | ES-10 | Frontend | Interface de relatórios com filtros por data e exportação em XLSX | ✅ Redigida | ⏳ Não iniciada | — |
+| ES-11 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Controle de Estoque (substituindo Vitest) | ✅ Redigida | ⏳ Não iniciada | — |
 | ES-MOB-01 | Mobile | Dashboard de saldos e indicadores de criticidade na palma da mão | ✅ Redigida | ⏳ Não iniciada | ES-06 |
 | ES-MOB-02 | Mobile | Consulta rápida de saldos, lotes e validade no celular | ✅ Redigida | ⏳ Não iniciada | ES-07 |
 | ES-MOB-03 | Mobile | Filtros rápidos de estoque (vencimento no mês, em falta) | ✅ Redigida | ⏳ Não iniciada | ES-08 |
@@ -103,7 +107,28 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | IN-06 | Frontend | Formulário de contagem física: digitação por lote e salvamento contínuo | ✅ Redigida | ⏳ Não iniciada | IN-MOB-02 |
 | IN-07 | Frontend | Mapa de conciliação: comparação em tempo real e seletor de motivos | ✅ Redigida | ⏳ Não iniciada | IN-MOB-03 |
 | IN-08 | Frontend | Modal de homologação: resumo das diferenças, impressão e XLSX | ✅ Redigida | ⏳ Não iniciada | IN-MOB-04 |
+| IN-09 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Inventário Mensal (substituindo Vitest) | ✅ Redigida | ⏳ Não iniciada | — |
 | IN-MOB-01 | Mobile | Visão geral dos ciclos de inventário e status no celular | ✅ Redigida | ⏳ Não iniciada | IN-05 |
 | IN-MOB-02 | Mobile | Contagem física nas prateleiras com digitação ágil e salvamento local | ✅ Redigida | ⏳ Não iniciada | IN-06 |
 | IN-MOB-03 | Mobile | Conferência rápida de divergências e justificativas no aparelho | ✅ Redigida | ⏳ Não iniciada | IN-07 |
 | IN-MOB-04 | Mobile | Acompanhamento de homologação e protocolo digital de inventário | ✅ Redigida | ⏳ Não iniciada | IN-08 |
+
+---
+
+## Épico 6: Alertas, Notificações e Parâmetros Operacionais (Novo Incremento 2)
+| ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
+| --- | --- | --- | --- | --- | --- |
+| AL-01 | Backend | Migrações do schema de alertas, parâmetros operacionais por UBS e fila `outbox_events` (RF022, RF023, RF027, ADR-004) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-02 | Backend | API de Parâmetros Operacionais da UBS: consulta, atualização validada, auditoria e recálculo imediato (RF026, RF027, RF028) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-03 | Backend | Motor de Avaliação e API de Alertas: detecção contínua de vencimento próximo e risco de ruptura por cobertura em dias (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-04 | Backend | Worker Outbox e Notificações por E-mail: processamento assíncrono idempotente de alertas críticos (RF022, RF023, ADR-004) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-05 | Frontend | Sino de Notificações no Cabeçalho e Drawer Rápido: contador de não lidos, pré-visualização e marcação de leitura (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-01 |
+| AL-06 | Frontend | Tela Central de Alertas: abas de Vencimento Próximo e Risco de Ruptura, filtros de criticidade e atalhos operacionais (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-01 |
+| AL-07 | Frontend | Configuração de Parâmetros Operacionais da UBS: limiar de vencimento, estoque de segurança e *lead time* CAF (RF027, NF009) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-03 |
+| AL-08 | Frontend | Widget de Alertas no Dashboard e Modal de Confirmação Obrigatória para Validade Curta (< 6 meses) (RF022, RF023, RF024) | ✅ Redigida | ⏳ Não iniciada | AL-MOB-04 |
+| AL-09 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Alertas e Parâmetros (substituindo Vitest) | ✅ Redigida | ⏳ Não iniciada | — |
+| AL-MOB-01 | Mobile | Central de Alertas no Celular: abas de vencimento próximo e risco de ruptura com marcação de leitura por toque (RF022, RF023) | ✅ Redigida | ⏳ Não iniciada | AL-05 / AL-06 |
+| AL-MOB-02 | Mobile | Notificações Locais/Push no Dispositivo Móvel para Novos Alertas Críticos de Ruptura e Vencimento na UBS Ativa (RF022, RF023, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-04 |
+| AL-MOB-03 | Mobile | Configuração Rápida de Parâmetros Operacionais da UBS no Celular (RF027, NF009, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-07 |
+| AL-MOB-04 | Mobile | Alerta Tátil Bloqueante de Confirmação no Recebimento de Lotes com Validade Curta (< 6 meses) no Celular (RF024, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-08 |
+

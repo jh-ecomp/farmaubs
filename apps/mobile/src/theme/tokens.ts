@@ -15,6 +15,8 @@ export const theme = {
       light: "#E6F4F3",
     },
     background: "#F8FAFC",
+    canvas: "#F0F0F0",
+    action: "#0B3099",
     surface: "#FFFFFF",
     text: {
       primary: "#0F172A",
