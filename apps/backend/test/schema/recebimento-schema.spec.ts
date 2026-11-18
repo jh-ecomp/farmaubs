@@ -222,6 +222,7 @@ describe("RE-01 — Integridade do Schema de Recebimento e Estoque (Camada B)", 
       );
       expect(mov.motivo).toBe("AVARIA_FISICA");
 
+      await qr.query(`SAVEPOINT sp_imutabilidade`);
       await expect(
         qr.query(
           `UPDATE movimentacoes_estoque SET quantidade = 1 WHERE id = $1`,
@@ -229,9 +230,22 @@ describe("RE-01 — Integridade do Schema de Recebimento e Estoque (Camada B)", 
         ),
       ).rejects.toThrow(/permission denied/i);
 
+      await qr.query(`ROLLBACK TO SAVEPOINT sp_imutabilidade`);
+
       await expect(
         qr.query(`DELETE FROM movimentacoes_estoque WHERE id = $1`, [mov.id]),
       ).rejects.toThrow(/permission denied/i);
+
+      await qr.query(`ROLLBACK TO SAVEPOINT sp_imutabilidade`);
+
+      await expect(
+        qr.query(
+          `INSERT INTO movimentacoes_estoque
+             (municipio_id, ubs_id, lote_id, tipo_movimentacao, quantidade, saldo_anterior, saldo_posterior, usuario_id)
+           VALUES ($1, $2, $3, 'TIPO_INVALIDO', 1, 18, 19, $4)`,
+          [municipioParnaibaId, ubsCentroId, lote.id, usuarioId],
+        ),
+      ).rejects.toThrow(/chk_movimentacoes_estoque_tipo_movimentacao/i);
     } finally {
       await qr.rollbackTransaction().catch(() => undefined);
       await qr.release();
