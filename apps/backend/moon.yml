@@ -24,6 +24,13 @@ tasks:
     deps:
       - 'shared:build'
 
+  lint:
+    command: 'pnpm exec eslint "{src,test}/**/*.ts"'
+    inputs:
+      - 'src/**/*'
+      - 'test/**/*'
+      - 'eslint.config.mjs'
+
   test:
     command: 'pnpm exec jest'
     inputs:
