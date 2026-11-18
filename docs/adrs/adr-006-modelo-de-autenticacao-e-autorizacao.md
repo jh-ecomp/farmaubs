@@ -1,7 +1,7 @@
 ## ADR-006 - Modelo de autenticação e autorização
 
 ### Status
-🟢 Decidido e documentado — última atualização: 24/07/2026
+🟢 Decidido e documentado — última atualização: 18/11/2026 (atualizado para refletir escopo entregue no Incremento I)
 
 ### Contexto
 
@@ -37,9 +37,12 @@ Desvantagens: a revogação imediata exigida por RF002 e NF012 obriga, na práti
 Adotar **sessão server-side, armazenada no PostgreSQL**, como mecanismo de gerenciamento de autenticação, com as seguintes definições de design:
 
 1. **Escopo de tenant na sessão**: a sessão carrega `usuario_id`, perfil(is) de acesso e a lista de `municipio_id`/`unidade_id` associados ao usuário. O Guard de autorização do NestJS lê esse escopo diretamente da sessão, sem recalculá-lo a cada requisição, alimentando o controle de acesso definido no ADR-002 (RLS) e no ADR-003 (aplicação do escopo de tenant na camada de aplicação).
-2. **2FA (TOTP)**: opt-in por usuário, conforme NF011. O segredo TOTP é armazenado criptografado em repouso, seguindo o mesmo padrão de proteção exigido para dados sensíveis pelo NF010. Implementação via biblioteca padrão do ecossistema Node (ex.: `otplib`), sem dependência de serviço externo.
-3. **Timeout com aviso**: a sessão possui expiração deslizante, renovada a cada requisição, acompanhada de um timestamp de expiração absoluta enviado ao frontend. O frontend utiliza esse timestamp para disparar o aviso 5 minutos antes do encerramento, conforme NF012 — o contrato de dados necessário para essa funcionalidade nasce nesta decisão, ainda que sua exibição seja responsabilidade do módulo de frontend.
-4. **Ponto de extensão para autenticação institucional futura**: o mecanismo de autenticação é isolado atrás de uma porta (`AuthProvider`), seguindo a arquitetura hexagonal do ADR-003. O adaptador inicial implementa e-mail/senha local com sessão server-side; a estrutura permite substituição futura por um adaptador de autenticação institucional (ex.: integração gov.br via OAuth2), relevante dado o roadmap comercial B2G identificado no ADR-001, sem exigir reescrita da lógica de autorização/RBAC.
+2. **Transporte de sessão seguro:** No frontend Web, o identificador de sessão é trafegado exclusivamente via **cookie `HttpOnly`, `Secure` e `SameSite`**, eliminando armazenamento de tokens no `localStorage` (AC-29/AC-30). No aplicativo Mobile (`apps/mobile`), a sessão é persistida via **Hardware Keystore/Keychain** (`expo-secure-store`, AC-MOB-02).
+3. **2FA (TOTP) e Recuperação de Senha por E-mail — Escopo Postergado / Substituído:**
+   - **2FA (TOTP):** Embora o schema da tabela `sessions` mantenha a coluna `totp_verificado_em` como ponto de preparação, o fluxo de 2FA TOTP foi **adiado/abandonado no escopo inicial** para simplificar a entrada em operação nas UBSs.
+   - **Recuperação de senha (`RF003`):** O fluxo de autoatendimento por link via e-mail foi **substituído pela redefinição administrativa com senha provisória e troca obrigatória no próximo login** (AC-23/AC-24), eliminando a dependência crítica de servidor SMTP/e-mail transacional para desbloqueio de usuários no piloto.
+4. **Timeout com aviso**: a sessão possui expiração deslizante, renovada a cada requisição, acompanhada de um timestamp de expiração absoluta enviado ao cliente. O frontend Web e o Mobile utilizam esse timestamp para disparar o aviso 5 minutos antes do encerramento, conforme NF012.
+5. **Ponto de extensão para autenticação institucional futura**: o mecanismo de autenticação é isolado atrás de uma porta (`AuthProvider`), seguindo a arquitetura hexagonal do ADR-003. O adaptador inicial implementa e-mail/senha local com sessão server-side; a estrutura permite substituição futura por um adaptador de autenticação institucional (ex.: integração gov.br via OAuth2), relevante dado o roadmap comercial B2G identificado no ADR-001, sem exigir reescrita da lógica de autorização/RBAC.
 
 ### Consequências
 

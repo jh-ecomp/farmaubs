@@ -1,7 +1,7 @@
 ## ADR-035 - Governança de Monorepo, Fronteiras de Dependência e Orquestração de Tarefas
 
 ### Status
-🟢 Decidido e documentado — 03/10/2026
+🟢 Decidido e documentado — última atualização: 18/11/2026
 
 ### Contexto
 
@@ -10,7 +10,7 @@ Com a expansão da topologia do FarmaUBS para 3 aplicações (`apps/backend`, `a
 2. Rompimento de fronteiras arquiteturais (ex: um app cliente importar diretamente código privado de infraestrutura do backend em vez de usar `@farmaubs/shared`).
 3. Ausência de pipeline paralelo e cache de tarefas locais e remotas.
 
-Inspirado nas práticas de ferramentas modernas de orquestração de monorepos (como `moonrepo/moon` e Turborepo), torna-se necessário formalizar a governança de dependências e orquestração de tarefas do monorepo.
+Para viabilizar execução paralela, cache de tarefas e detecção automática de projetos afetados via Git, adota-se formalmente o **`moon` (`@moonrepo/cli`)** como orquestrador de tarefas do monorepo sobre os `pnpm` workspaces.
 
 ### Decisão
 
@@ -25,7 +25,7 @@ Inspirado nas práticas de ferramentas modernas de orquestração de monorepos (
      - `test`: execução de testes unitários.
      - `test:bdd` ou `test:e2e`: testes de comportamento/integração.
      - `lint`: checagem estática de código.
-   - Utilizar filtro de workspace do PNPM (`pnpm --filter <app> <command>`) e orquestração com suporte a detecção de arquivos alterados (Git change detection / affected tasks) nos fluxos locais e de CI.
+   - Utilizar **`moon` (`@moonrepo/cli`)** como orquestrador principal (configurado em `.moon/workspace.yml`, `.moon/toolchain.yml` e `moon.yml` por projeto: `backend`, `frontend`, `mobile`, `shared`), combinado com `pnpm` workspaces, utilizando detecção de arquivos alterados (`moon run :task --affected`) nos fluxos locais e de CI (`ADR-024`).
 3. **Isolamento de Configurações:**
    - Cada aplicação mantém seu próprio `tsconfig.json` ajustado para o seu ambiente alvo (Node 20+ no backend, DOM/ESNext no frontend, React Native/Hermes no mobile).
 
