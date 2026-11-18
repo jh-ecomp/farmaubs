@@ -122,6 +122,7 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 | [AL-06](./al-06-frontend-central-alertas-abas-vencimento-ruptura.md) | Tela Central de Alertas: abas de Vencimento Próximo e Risco de Ruptura, filtros de severidade e ações rápidas | D | AL-03, AL-05 | ✅ Redigida |
 | [AL-07](./al-07-frontend-modal-pagina-configuracao-parametros-ubs.md) | Tela/Modal de Parâmetros Operacionais da UBS: configuração de limiares, *lead time* CAF e estoque de segurança | D | AL-02, AL-06 | ✅ Redigida |
 | [AL-08](./al-08-frontend-widget-alertas-ativos-dashboard-confirmacao-validade-curta.md) | Widget de Alertas Críticos no Dashboard e Modal de Confirmação de Validade Curta (< 6 meses) no Recebimento | D | AL-03, RE-06 | ✅ Redigida |
+| [AL-09](./al-09-frontend-migracao-testes-playwright-bdd-alertas.md) | Suíte integrada Playwright BDD & E2E Full-Stack do Módulo de Alertas e Parâmetros | C, D | AL-05 a AL-08 | ✅ Redigida |
 
 ### Mobile (`apps/mobile`)
 

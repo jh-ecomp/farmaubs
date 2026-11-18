@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 | --- | --- |
-| **Total de Histórias Mapeadas** | 12 |
+| **Total de Histórias Mapeadas** | 13 |
 | **Entregues** | 0 (0%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 12 (100%) |
+| **Pendentes** | 13 (100%) |
 
 ```
-Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/12 concluídas)
+Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/13 concluídas)
 ```
 
 ---
@@ -29,6 +29,7 @@ Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/
 | **AL-06** | Frontend | Tela Central de Alertas: abas de Vencimento Próximo e Risco de Ruptura, filtros de criticidade e atalhos (RF022, RF023) | [al-06-frontend-central-alertas-abas-vencimento-ruptura.md](./al-06-frontend-central-alertas-abas-vencimento-ruptura.md) | ✅ Redigida | ⏳ Não iniciada |
 | **AL-07** | Frontend | Configuração de Parâmetros Operacionais da UBS: limiar de vencimento, estoque de segurança e *lead time* CAF (RF027, NF009) | [al-07-frontend-modal-pagina-configuracao-parametros-ubs.md](./al-07-frontend-modal-pagina-configuracao-parametros-ubs.md) | ✅ Redigida | ⏳ Não iniciada |
 | **AL-08** | Frontend | Widget de Alertas no Dashboard e Modal de Confirmação Obrigatória para Validade Curta (< 6 meses) (RF022, RF023, RF024) | [al-08-frontend-widget-alertas-ativos-dashboard-confirmacao-validade-curta.md](./al-08-frontend-widget-alertas-ativos-dashboard-confirmacao-validade-curta.md) | ✅ Redigida | ⏳ Não iniciada |
+| **AL-09** | Frontend | Suíte Integrada Playwright BDD e E2E Full-Stack do Módulo de Alertas, Notificações e Parâmetros | [al-09-frontend-migracao-testes-playwright-bdd-alertas.md](./al-09-frontend-migracao-testes-playwright-bdd-alertas.md) | ✅ Redigida | ⏳ Não iniciada |
 | **AL-MOB-01** | Mobile | Central de Alertas no Celular: abas de vencimento próximo e risco de ruptura com leitura por toque (RF022, RF023, ADR-034) | [al-mob-01-central-alertas-vencimento-ruptura-mobile.md](./al-mob-01-central-alertas-vencimento-ruptura-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **AL-MOB-02** | Mobile | Notificações Locais/Push no Dispositivo Móvel para Novos Alertas Críticos de Ruptura e Vencimento (RF022, RF023, ADR-034) | [al-mob-02-notificacoes-push-locais-alertas-criticos-mobile.md](./al-mob-02-notificacoes-push-locais-alertas-criticos-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **AL-MOB-03** | Mobile | Configuração Rápida de Parâmetros Operacionais da UBS no Celular (RF027, NF009, ADR-034) | [al-mob-03-configuracao-parametros-operacionais-ubs-mobile.md](./al-mob-03-configuracao-parametros-operacionais-ubs-mobile.md) | ✅ Redigida | ⏳ Não iniciada |

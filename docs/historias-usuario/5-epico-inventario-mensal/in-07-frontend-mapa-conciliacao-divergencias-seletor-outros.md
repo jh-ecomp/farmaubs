@@ -81,11 +81,14 @@ export type JustificarDivergenciaFormData = z.infer<typeof justificarDivergencia
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Componente Principal**: `apps/frontend/src/features/inventario/components/MapaConciliacaoTabela.tsx`.
 - **Props**:
   - `cicloId: string`;
   - `onDivergenciasSaneadasChange?: (todasSaneadas: boolean) => void`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/inventario-mapa-conciliacao-sistema.feature` (`moon run frontend:test-bdd`): Teste de sistema validando motivos sanitários, exigência de 15 caracteres para "Outros", contador bloqueante e auditoria `@axe-core/playwright`.
+  - `apps/frontend/e2e/features/fullstack/inventario-fullstack.feature` (`moon run frontend:test-e2e`): Conciliação completa de divergências antes da homologação.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - IN-MOB-03)
 - **Contratos e Schemas de Justificativa**: Tipos `InventarioDivergenciaItemDTO`, enum `MotivoDivergenciaInventario` e schema Zod `justificarDivergenciaSchema` em `@farmaubs/shared`.
@@ -121,5 +124,5 @@ Funcionalidade: Mapa de Conciliação e Justificativa de Divergências (Camada D
 
 - [ ] Tabela de conciliação implementada com semântica de cores de alto contraste (WCAG 2.1 AA).
 - [ ] Validação estrita do motivo "Outros" com contagem dinâmica de caracteres e mensagens acessíveis via `aria-live`.
-- [ ] Testes de componentes (Camada D) validando cálculo visual de divergência, comportamento do seletor "Outros" e filtros rápidos.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando cálculo visual de divergência, comportamento do seletor "Outros", filtros rápidos e acessibilidade WCAG 2.1 AA (`@axe-core/playwright`).
 - [ ] Schema Zod compartilhado consumido de `@farmaubs/shared`.

@@ -77,6 +77,7 @@
 | AC-19 | Contexto de autenticação: usuário atual, perfil e escopo (ADR-013) | D | AC-06, AC-10, AC-11, AC-16 | ✅ Concluída |
 | AC-20 | Aviso de timeout e encerramento de sessão (NF012) | D | AC-10, AC-19 | ✅ Concluída |
 | AC-21 | Proteção de rotas por perfil e logout (NF009) | D | AC-13, AC-19 | ✅ Concluída |
+| [AC-31](./ac-31-frontend-migracao-testes-playwright-bdd-acesso.md) | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | C, D | AC-16 a AC-30 | ✅ Redigida |
 
 ### Mobile — aplicativo móvel do operador
 

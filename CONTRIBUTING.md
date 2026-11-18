@@ -241,7 +241,9 @@ Tarefas atômicas por escopo:
 - **Testes de schema e migrações (Camada B):** `moon run backend:test-schema` (executa em banco efêmero porta **5435**). Para derrubar o banco de teste: `moon run backend:test-schema-down`.
 - **Testes de integração do backend (Camada B):** `moon run backend:test-integration`.
 - **Testes E2E do backend (Camada C):** `moon run backend:test-e2e`.
-- **Testes de componentes web (Camada D):** `moon run frontend:test`.
+- **Testes de componentes web (Camada D - Vitest legado):** `moon run frontend:test`.
+- **Especificação viva BDD de sistema frontend (Camada D - Playwright BDD):** `moon run frontend:test-bdd`.
+- **Testes E2E Full-Stack web (Camadas C e D - Playwright BDD):** `moon run frontend:test-e2e`.
 - **Checagem de tipos mobile:** `moon run mobile:typecheck`.
 - **Povoamento de banco local:** `moon run backend:db-seed`.
 

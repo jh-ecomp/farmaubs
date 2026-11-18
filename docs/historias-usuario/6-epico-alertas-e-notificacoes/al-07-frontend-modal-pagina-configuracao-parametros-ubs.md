@@ -42,9 +42,13 @@ Consome `ParametrosOperacionaisUbsDto`, `AtualizarParametrosOperacionaisComando`
 
 ## 4. Escopo Técnico da implementação
 
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd`).
 - **Componente (`apps/frontend/src/pages/Alertas/components/ParametrosOperacionaisModal.tsx`)**:
   - Acionável a partir da Central de Alertas (`/alertas`) e da página de Administração.
   - Validação de formulário utilizando as constantes de limites de `@farmaubs/shared` (`LIMIAR_VENCIMENTO_MIN = 15`, `LIMIAR_VENCIMENTO_MAX = 365`, etc.).
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/alertas-parametros-ubs-sistema.feature` (`moon run frontend:test-bdd`): Simulador dinâmico de cobertura, salvamento por `FARMACEUTICO_RESPONSAVEL` e modo somente leitura para `FARMACEUTICO_RESIDENTE`.
+  - `apps/frontend/e2e/features/fullstack/alertas-fullstack.feature` (`moon run frontend:test-e2e`): Alteração de parâmetros da UBS e recálculo imediato dos alertas ativos.
 - **Contra-parte Mobile**: `AL-MOB-03`.
 
 ---
@@ -76,4 +80,4 @@ Funcionalidade: Configuração de Parâmetros Operacionais da UBS na Web (RF027)
 - [ ] Formulário com validação instantânea de faixas numéricas e mensagens claras em pt-BR.
 - [ ] Card explicativo demonstrando a soma `Lead Time CAF + Estoque de Segurança` em tempo real.
 - [ ] Bloqueio RBAC no cliente alinhado à regra do backend.
-- [ ] Testes de componente na Camada D validando edição por Admin/RT e bloqueio para Residente/Gerente.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando edição por Admin/RT e bloqueio para Residente/Gerente.

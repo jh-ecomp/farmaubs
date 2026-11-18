@@ -88,6 +88,7 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 | [DI-08](./di-08-frontend-carrinho-receita-posologia-antimicrobianos.md) | Carrinho de dispensação: múltiplos itens, posologia e checagem de receita | D | DI-03, DI-07 | ✅ Concluída |
 | [DI-09](./di-09-frontend-tela-principal-dispensacao-fechamento-atendimento.md) | Tela principal integrando identificação, produtos e baixa de estoque | D | DI-04, DI-06, DI-08 | ✅ Concluída |
 | [DI-10](./di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md) | Painel de histórico: visualização ontem/hoje, busca e exportação em XLSX | D | DI-05, DI-09 | ✅ Concluída |
+| [DI-11](./di-11-frontend-migracao-testes-playwright-bdd-dispensacao.md) | Migração e consolidação da suíte de testes de Dispensação (Vitest -> Playwright BDD & E2E Full-Stack) | C, D | DI-06 a DI-10 | 🚧 Em andamento (PoC DI-09/10 pronta) |
 
 ---
 

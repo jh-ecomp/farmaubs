@@ -113,6 +113,7 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 | [ES-08](./es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md) | Barra de filtros: busca por texto, filtro de vencimento no mês e categorias | D | ES-07 | ✅ Redigida |
 | [ES-09](./es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md) | Modais: ficha de movimentações do lote e diálogo de ajuste manual justificado | D | ES-03, ES-04, ES-07 | ✅ Redigida |
 | [ES-10](./es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md) | Tela de exportação: filtros por data e download da planilha em XLSX | D | ES-05, ES-08 | ✅ Redigida |
+| [ES-11](./es-11-frontend-migracao-testes-playwright-bdd-estoque.md) | Suíte integrada Playwright BDD & E2E Full-Stack do Módulo de Controle de Estoque | C, D | ES-06 a ES-10 | ✅ Redigida |
 
 ---
 
