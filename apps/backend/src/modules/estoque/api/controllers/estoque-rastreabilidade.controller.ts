@@ -56,9 +56,8 @@ export class EstoqueRastreabilidadeController {
     @Param("loteId", new ParseUUIDPipe()) loteId: string,
     @CurrentUser() user?: AuthenticatedUserPayload,
   ): Promise<RastreabilidadeLoteDto> {
-    const sessao = user as unknown as { unidadeIds?: string[] } | undefined;
     try {
-      return await this.useCase.execute(loteId, sessao?.unidadeIds ?? []);
+      return await this.useCase.execute(loteId, user?.unidadeIds ?? []);
     } catch (error) {
       if (error instanceof LoteNaoEncontradoException) {
         throw new NotFoundException(error.message);

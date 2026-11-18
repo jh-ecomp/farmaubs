@@ -1,4 +1,3 @@
-import { Logger } from "@nestjs/common";
 import { LoteNaoEncontradoException } from "../../domain/errors/ajuste-estoque.errors";
 import type {
   MovimentacaoLoteBruta,
@@ -141,7 +140,8 @@ describe("ConsultarRastreabilidadeLoteUseCase", () => {
     const repo: RepositorioEstoqueRastreabilidadePort = {
       buscarLinhaDoTempoLote: jest.fn().mockResolvedValue(retorno),
     };
-    return { repo, useCase: new ConsultarRastreabilidadeLoteUseCase(repo) };
+    const logger = { warn: jest.fn() };
+    return { repo, logger, useCase: new ConsultarRastreabilidadeLoteUseCase(repo, logger) };
   };
 
   afterEach(() => jest.restoreAllMocks());
@@ -183,9 +183,8 @@ describe("ConsultarRastreabilidadeLoteUseCase", () => {
   });
 
   it("emite warn (sem falhar) quando a cadeia é inconsistente", async () => {
-    const warn = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
-    const { useCase } = criar(bruta(eventos, 999));
+    const { useCase, logger } = criar(bruta(eventos, 999));
     await expect(useCase.execute(LOTE_ID, [UBS_ID])).resolves.toBeDefined();
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining(LOTE_ID));
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(LOTE_ID));
   });
 });

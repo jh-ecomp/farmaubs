@@ -1,5 +1,4 @@
-import { After, Before, DataTable, Given, Then, When } from "@cucumber/cucumber";
-import { Logger } from "@nestjs/common";
+import { Before, DataTable, Given, Then, When } from "@cucumber/cucumber";
 import { expect } from "chai";
 import type { RastreabilidadeLoteDto } from "@farmaubs/shared";
 import { LoteNaoEncontradoException } from "../../../src/modules/estoque/domain/errors/ajuste-estoque.errors";
@@ -54,8 +53,6 @@ let lotes = new Map<string, LoteArmazenado>();
 let resultado: RastreabilidadeLoteDto | undefined;
 let erroCapturado: unknown;
 let warnsCapturados: string[] = [];
-let warnSpy: ((message: string) => void) | undefined;
-let warnOriginal: typeof Logger.prototype.warn;
 
 function obterLote(loteId: string): LoteArmazenado {
   let lote = lotes.get(loteId);
@@ -76,17 +73,6 @@ Before(() => {
   resultado = undefined;
   erroCapturado = undefined;
   warnsCapturados = [];
-
-  warnOriginal = Logger.prototype.warn;
-  Logger.prototype.warn = function (message: unknown, ...optionalParams: unknown[]) {
-    warnsCapturados.push(String(message));
-  };
-});
-
-After(() => {
-  if (warnOriginal) {
-    Logger.prototype.warn = warnOriginal;
-  }
 });
 
 Given(
@@ -155,7 +141,9 @@ When(
   async (loteId: string, listaUbs: string) => {
     const ubsIds = listaUbs.split(",").map((s) => s.trim());
     const repo = new RepositorioEstoqueRastreabilidadeFake(lotes);
-    const useCase = new ConsultarRastreabilidadeLoteUseCase(repo);
+    const useCase = new ConsultarRastreabilidadeLoteUseCase(repo, {
+      warn: (message: string) => warnsCapturados.push(message),
+    });
     try {
       resultado = await useCase.execute(loteId, ubsIds);
     } catch (err) {

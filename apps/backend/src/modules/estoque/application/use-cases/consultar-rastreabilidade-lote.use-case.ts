@@ -1,4 +1,3 @@
-import { Logger } from "@nestjs/common";
 import type {
   MovimentacaoLoteItemDto,
   RastreabilidadeLoteDto,
@@ -75,10 +74,20 @@ export function ordenarPorCadeia(movs: MovimentacaoLoteBruta[]): MovimentacaoLot
   return resultado;
 }
 
-export class ConsultarRastreabilidadeLoteUseCase {
-  private readonly logger = new Logger(ConsultarRastreabilidadeLoteUseCase.name);
+export interface RastreabilidadeLoggerPort {
+  warn(message: string): void;
+}
 
-  constructor(private readonly repo: RepositorioEstoqueRastreabilidadePort) {}
+const DEFAULT_LOGGER: RastreabilidadeLoggerPort = {
+  warn: (message: string) =>
+    console.warn(`[ConsultarRastreabilidadeLoteUseCase] ${message}`),
+};
+
+export class ConsultarRastreabilidadeLoteUseCase {
+  constructor(
+    private readonly repo: RepositorioEstoqueRastreabilidadePort,
+    private readonly logger: RastreabilidadeLoggerPort = DEFAULT_LOGGER,
+  ) {}
 
   /**
    * [RF028 / NF009]: Monta a rastreabilidade do lote (metadados, medicamento e linha do tempo com saldos).

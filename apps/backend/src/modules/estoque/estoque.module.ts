@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Logger, Module } from "@nestjs/common";
 import { EstoqueAjustesController } from "./api/controllers/estoque-ajustes.controller";
 import { EstoqueAnaliticaController } from "./api/controllers/estoque-analitica.controller";
 import { EstoqueRastreabilidadeController } from "./api/controllers/estoque-rastreabilidade.controller";
@@ -81,7 +81,10 @@ import { EstoqueSaldosPgRepository } from "./infrastructure/adapters/estoque-sal
     {
       provide: ConsultarRastreabilidadeLoteUseCase,
       useFactory: (repo: RepositorioEstoqueRastreabilidadePort) =>
-        new ConsultarRastreabilidadeLoteUseCase(repo),
+        new ConsultarRastreabilidadeLoteUseCase(
+          repo,
+          new Logger(ConsultarRastreabilidadeLoteUseCase.name),
+        ),
       inject: [REPOSITORIO_ESTOQUE_RASTREABILIDADE],
     },
   ],
