@@ -55,10 +55,13 @@ export interface FiltroCardsEstoque {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Componente**: `apps/frontend/src/features/estoque/components/EstoqueCardsMetricas.tsx`.
 - **Hook de Dados**: `useEstoqueMetricas()` consumindo `GET /api/v1/estoque/metricas` via TanStack Query.
 - **Props**: `onFiltrarPorCard?: (filtro: FiltroCardsEstoque) => void`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/estoque-metricas-sistema.feature` (`moon run frontend:test-bdd`): Teste de sistema de frontend interceptando `/api/v1/estoque/metricas` via `page.route()` e auditando contraste WCAG 2.1 AA com `@axe-core/playwright`.
+  - `apps/frontend/e2e/features/fullstack/estoque-fullstack.feature` (`moon run frontend:test-e2e`): Jornada E2E Full-Stack contra a API real verificando totalizadores e atalhos de filtragem.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-01)
 - **Contratos e DTOs Unificados**: DTO `EstoqueMetricasDTO` definido em `@farmaubs/shared/src/contracts/estoque/`.
@@ -92,4 +95,4 @@ Funcionalidade: Cartões de Métricas de Estoque (Camada D)
 
 - [ ] Componente implementado com Tailwind CSS e grid responsivo (1 col mobile, 2 col tablet, 4 col desktop).
 - [ ] Cartão de validade estilizado com a cor laranja acordada e suporte a clique de atalho.
-- [ ] Testes de componentes (Camada D) validando skeleton de carregamento, clique de filtro e conformidade com `axe-core` (zero violações WCAG 2.1 AA).
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` para Teste de Sistema de Frontend e `moon run frontend:test-e2e` para E2E Full-Stack) validando skeleton de carregamento, clique de filtro e conformidade com `@axe-core/playwright` (zero violações WCAG 2.1 AA).

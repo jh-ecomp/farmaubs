@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 | --- | --- |
-| **Total de Histórias Mapeadas** | 15 |
-| **Entregues** | 10 (67%) |
-| **Em Andamento** | 0 (0%) |
-| **Pendentes** | 5 (33%) |
+| **Total de Histórias Mapeadas** | 16 |
+| **Entregues** | 10 (63%) |
+| **Em Andamento** | 1 (6%) |
+| **Pendentes** | 5 (31%) |
 
 ```
-Progresso: [█████████████░░░░░░░] 67% (10/15 concluídas)
+Progresso: [████████████░░░░░░░░] 63% (10/16 concluídas)
 ```
 
 ---
@@ -31,6 +31,7 @@ Progresso: [█████████████░░░░░░░] 67% (1
 | **DI-08** | Frontend | Carrinho de Dispensação: Múltiplos itens, campos de posologia e validação de receita de antimicrobianos | [di-08-frontend-carrinho-receita-posologia-antimicrobianos.md](./di-08-frontend-carrinho-receita-posologia-antimicrobianos.md) | ✅ Redigida | ✅ Concluída |
 | **DI-09** | Frontend | Tela Principal de Dispensação: Integração do atendimento, métricas e confirmação de baixa | [di-09-frontend-tela-principal-dispensacao-fechamento-atendimento.md](./di-09-frontend-tela-principal-dispensacao-fechamento-atendimento.md) | ✅ Redigida | ✅ Concluída |
 | **DI-10** | Frontend | Painel de Histórico de Dispensas: Visualização ontem/hoje, seletor de range, filtros e exportação .xlsx | [di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md](./di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md) | ✅ Redigida | ✅ Concluída |
+| **DI-11** | Frontend | Migração e Consolidação da Suíte de Testes de Dispensação (Vitest -> Playwright BDD e E2E Full-Stack) | [di-11-frontend-migracao-testes-playwright-bdd-dispensacao.md](./di-11-frontend-migracao-testes-playwright-bdd-dispensacao.md) | ✅ Redigida | 🚧 Em andamento (PoC DI-09/10 pronta) |
 | **DI-MOB-01** | Mobile | Identificação do Paciente por Cartão SUS / CPF no App Mobile | [di-mob-01-identificacao-paciente-cartao-sus-mobile.md](./di-mob-01-identificacao-paciente-cartao-sus-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **DI-MOB-02** | Mobile | Busca Rápida de Medicamentos e Seletor de Lotes FEFO Mobile | [di-mob-02-busca-medicamentos-seletor-lotes-fefo-mobile.md](./di-mob-02-busca-medicamentos-seletor-lotes-fefo-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **DI-MOB-03** | Mobile | Carrinho de Dispensação, Posologia e Validação de Antimicrobianos Mobile | [di-mob-03-carrinho-dispensacao-posologia-mobile.md](./di-mob-03-carrinho-dispensacao-posologia-mobile.md) | ✅ Redigida | ⏳ Não iniciada |

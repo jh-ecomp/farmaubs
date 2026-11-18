@@ -19,7 +19,8 @@ Este documento define o cronograma de sprints para implementar os épicos do **I
 | Organização backend | Cada desenvolvedor backend assume um épico em paralelo |
 | Organização frontend / mobile | Consomem as APIs REST prontas e compartilham contratos via `@farmaubs/shared` |
 | Ritmo estimado | 2 a 3 histórias por desenvolvedor a cada sprint |
-| Volume total mapeado | **48 histórias Web/Backend** (22 Backend e 22 Frontend nos Épicos 2 a 6) + **trilha Mobile** em 7 sprints |
+| Volume total mapeado | **50 histórias Web/Backend** nos Épicos 2 a 6 (20 Backend + 27 Frontend + `AC-31` do Épico 1) + **trilha Mobile** em 7 sprints |
+| Especificação viva Frontend | **Playwright + `playwright-bdd` + `@axe-core/playwright`** (Testes de Sistema BDD `frontend:test-bdd` e E2E Full-Stack `frontend:test-e2e`) |
 
 ---
 
@@ -140,9 +141,12 @@ flowchart LR
   - Verificação de Row-Level Security para impedir vazamento entre unidades.
 
 #### Frontend
-- Dev FE: Histórico de dispensação e saldos
-  - [`DI-10`](./historias-usuario/2-epico-dispensacao-de-medicamentos/di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md): Painel de histórico de dispensas com filtro ontem/hoje, busca e exportação em XLSX.  
+- Dev FE: Histórico de dispensação, saldos e migração Playwright BDD (Épicos 1 a 3)
+  - [`DI-10`](./historias-usuario/2-epico-dispensacao-de-medicamentos/di-10-frontend-painel-historico-dispensas-filtros-exportacao-xlsx.md): Painel de histórico de dispensas com filtro ontem/hoje, busca e exportação em XLSX.
+  - [`DI-11`](./historias-usuario/2-epico-dispensacao-de-medicamentos/di-11-frontend-migracao-testes-playwright-bdd-dispensacao.md): Migração e consolidação da suíte de testes de Dispensação (Vitest -> Playwright BDD & E2E Full-Stack).  
     *Épico 2 (Dispensação) concluído no backend e no frontend.*
+  - [`AC-31`](./historias-usuario/1-epico-acesso-e-autenticacao-do-sistema/ac-31-frontend-migracao-testes-playwright-bdd-acesso.md): Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack).
+  - [`RE-09`](./historias-usuario/3-epico-recebimento-de-medicamentos/re-09-frontend-migracao-testes-playwright-bdd-recebimento.md): Migração da suíte de testes de Recebimento (Vitest -> Playwright BDD & E2E Full-Stack com `@media print` A4 e `.xlsx`).
   - [`ES-06`](./historias-usuario/4-epico-controle-de-estoque/es-06-frontend-dashboard-cards-metricas-criticidade.md): Cartões superiores de métricas (totalizadores, baixo estoque e vencimento próximo).
   - [`ES-07`](./historias-usuario/4-epico-controle-de-estoque/es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md): Tabela de saldos por medicamento, expansão de lotes e destaque visual laranja.
 
@@ -159,10 +163,11 @@ flowchart LR
 - Dev BE 2 e Dev BE 3: Apoio na integração com o frontend de Estoque e contratos `@farmaubs/shared` de Alertas.
 
 #### Frontend
-- Dev FE: Fechamento de estoque
+- Dev FE: Fechamento de estoque e suíte Playwright BDD do Épico 4
   - [`ES-08`](./historias-usuario/4-epico-controle-de-estoque/es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md): Barra de filtros com busca textual, vencimento no mês corrente e categorias REMUME.
   - [`ES-09`](./historias-usuario/4-epico-controle-de-estoque/es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md): Ficha de rastreabilidade do lote e modal de ajuste rápido justificado.
-  - [`ES-10`](./historias-usuario/4-epico-controle-de-estoque/es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md): Seleção de período, filtros e download da planilha XLSX.  
+  - [`ES-10`](./historias-usuario/4-epico-controle-de-estoque/es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md): Seleção de período, filtros e download da planilha XLSX.
+  - [`ES-11`](./historias-usuario/4-epico-controle-de-estoque/es-11-frontend-migracao-testes-playwright-bdd-estoque.md): Suíte integrada Playwright BDD e E2E Full-Stack do Módulo de Controle de Estoque (`frontend:test-bdd` e `frontend:test-e2e`).  
   *Épico 4 (Controle de Estoque) concluído no backend e no frontend.*
 
 ---
@@ -179,11 +184,12 @@ flowchart LR
   *Backend do Épico 6 (Novo Incremento 2) concluído.*
 
 #### Frontend
-- Dev FE: Módulo de inventário
+- Dev FE: Módulo de inventário e suíte Playwright BDD do Épico 5
   - [`IN-05`](./historias-usuario/5-epico-inventario-mensal/in-05-frontend-tela-visao-geral-historico-ciclos.md): Visão geral dos ciclos realizados, status do ciclo ativo e botão de início.
   - [`IN-06`](./historias-usuario/5-epico-inventario-mensal/in-06-frontend-formulario-contagem-fisica-busca-autosave.md): Formulário de contagem física por lote com busca e salvamento automático.
   - [`IN-07`](./historias-usuario/5-epico-inventario-mensal/in-07-frontend-mapa-conciliacao-divergencias-seletor-outros.md): Mapa de conciliação com divergências em tempo real, seleção de motivos e justificativa para Outros.
-  - [`IN-08`](./historias-usuario/5-epico-inventario-mensal/in-08-frontend-modal-homologacao-ata-impressao-exportacao-xlsx.md): Modal de homologação, impressão da Ata Oficial com estilo de impressão e exportação em XLSX.  
+  - [`IN-08`](./historias-usuario/5-epico-inventario-mensal/in-08-frontend-modal-homologacao-ata-impressao-exportacao-xlsx.md): Modal de homologação, impressão da Ata Oficial com estilo de impressão e exportação em XLSX.
+  - [`IN-09`](./historias-usuario/5-epico-inventario-mensal/in-09-frontend-migracao-testes-playwright-bdd-inventario.md): Suíte integrada Playwright BDD e E2E Full-Stack do Módulo de Inventário Mensal (`page.clock`, `setOffline`, `@media print` A4 e `.xlsx`).  
   *Épico 5 (Inventário Mensal) e totalidade do Incremento 1 concluídos.*
 
 ---
@@ -198,11 +204,12 @@ flowchart LR
   - Seed de lotes em faixa de atenção/crítico e medicamentos em risco de ruptura na UBS de Parnaíba para demonstração.
 
 #### Frontend Web
-- Dev FE: Central de Alertas e Parâmetros Operacionais
+- Dev FE: Central de Alertas, Parâmetros Operacionais e Suíte Playwright BDD do Épico 6
   - [`AL-05`](./historias-usuario/6-epico-alertas-e-notificacoes/al-05-frontend-sino-notificacoes-header-drawer-resumo.md): Sino de notificações no cabeçalho com badge de não lidos e gaveta rápida.
   - [`AL-06`](./historias-usuario/6-epico-alertas-e-notificacoes/al-06-frontend-central-alertas-abas-vencimento-ruptura.md): Tela Central de Alertas em duas abas ("Próximos ao Vencimento" e "Risco de Ruptura") e atalhos operacionais.
   - [`AL-07`](./historias-usuario/6-epico-alertas-e-notificacoes/al-07-frontend-modal-pagina-configuracao-parametros-ubs.md): Modal/Tela de configuração de parâmetros operacionais da UBS (`RF027`) com simulador de ponto de pedido.
   - [`AL-08`](./historias-usuario/6-epico-alertas-e-notificacoes/al-08-frontend-widget-alertas-ativos-dashboard-confirmacao-validade-curta.md): Widget de alertas no Dashboard e confirmação bloqueante para recebimento de lotes com validade curta (`< 6 meses`, `RF024`).
+  - [`AL-09`](./historias-usuario/6-epico-alertas-e-notificacoes/al-09-frontend-migracao-testes-playwright-bdd-alertas.md): Suíte integrada Playwright BDD e E2E Full-Stack do Módulo de Alertas, Notificações e Parâmetros (`frontend:test-bdd` e `frontend:test-e2e`).
 
 #### Mobile (`apps/mobile`)
 - Dev MOB: Alertas e Notificações Nativas no Celular
@@ -221,11 +228,11 @@ flowchart LR
 | **Sprint 1** (12/10 a 23/10) | DI-01, DI-02, DI-03 | RE-01, RE-02 | ES-01, ES-02 | RE-05, DI-06 | Fundação Expo | 9 histórias |
 | **Sprint 2** (26/10 a 06/11) | DI-04, DI-05 | RE-03, RE-04 | ES-03, ES-04 | DI-07, RE-06, RE-07 | AC-MOB-01..03 | 9 histórias |
 | **Sprint 3** (09/11 a 20/11) | IN-01, IN-02 | ES-05 e testes RE | Concorrência e RLS | DI-08, DI-09, RE-08 | AC-MOB-04..07 | 6 histórias |
-| **Sprint 4** (23/11 a 04/12) | IN-03, IN-04 | Testes E2E Inc. 1 | Testes concorrência | DI-10, ES-06, ES-07 | DI-MOB / RE-MOB | 5 histórias |
-| **Sprint 5** (07/12 a 18/12) | **AL-01, AL-02** | Apoio UI Estoque | Contratos Shared AL | ES-08, ES-09, ES-10 | ES-MOB | 5 histórias |
-| **Sprint 6** (21/12 a 08/01) | Revisão e Seeds | **AL-03** | **AL-04** | IN-05, IN-06, IN-07, IN-08 | IN-MOB | 6 histórias |
-| **Sprint 7** (11/01 a 22/01) | Testes E2E Alertas | Otimização Outbox | Homologação Geral | **AL-05, AL-06, AL-07, AL-08** | **AL-MOB-01..04** | 4 histórias (+4 MOB) |
-| **Totais** | **9 histórias BE** | **6 histórias BE** | **5 histórias BE** | **22 histórias FE** | **Épicos Mobile** | **44 histórias BE/FE** |
+| **Sprint 4** (23/11 a 04/12) | IN-03, IN-04 | Testes E2E Inc. 1 | Testes concorrência | DI-10, **DI-11, AC-31, RE-09**, ES-06, ES-07 | DI-MOB / RE-MOB | 8 histórias |
+| **Sprint 5** (07/12 a 18/12) | **AL-01, AL-02** | Apoio UI Estoque | Contratos Shared AL | ES-08, ES-09, ES-10, **ES-11** | ES-MOB | 6 histórias |
+| **Sprint 6** (21/12 a 08/01) | Revisão e Seeds | **AL-03** | **AL-04** | IN-05, IN-06, IN-07, IN-08, **IN-09** | IN-MOB | 7 histórias |
+| **Sprint 7** (11/01 a 22/01) | Testes E2E Alertas | Otimização Outbox | Homologação Geral | **AL-05, AL-06, AL-07, AL-08, AL-09** | **AL-MOB-01..04** | 5 histórias (+4 MOB) |
+| **Totais** | **9 histórias BE** | **6 histórias BE** | **5 histórias BE** | **28 histórias FE** | **Épicos Mobile** | **50 histórias BE/FE** |
 
 ---
 

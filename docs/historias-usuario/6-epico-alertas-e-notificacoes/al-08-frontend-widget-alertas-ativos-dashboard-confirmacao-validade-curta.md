@@ -49,10 +49,14 @@ export function lotePossuiValidadeCurtaNoRecebimento(
 
 ## 4. Escopo Técnico da implementação
 
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Componentes**:
   - `apps/frontend/src/pages/Dashboard/components/DashboardAlertasWidget.tsx`
   - `apps/frontend/src/pages/Recebimento/components/ConfirmarValidadeCurtaModal.tsx`
 - **Função Compartilhada**: `lotePossuiValidadeCurtaNoRecebimento` em `@farmaubs/shared` reutilizada tanto pelo Frontend Web quanto pelo App Mobile (**AL-MOB-04**).
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/alertas-dashboard-validade-curta-sistema.feature` (`moon run frontend:test-bdd`): Widget do Dashboard e modal bloqueante de validade curta (`< 180 dias`, `RF024`) no recebimento.
+  - `apps/frontend/e2e/features/fullstack/alertas-fullstack.feature` (`moon run frontend:test-e2e`): Entrada de lote com validade curta gerando alerta imediato no painel.
 
 ---
 
@@ -84,4 +88,4 @@ Funcionalidade: Painel de Alertas no Dashboard e Confirmação de Validade Curta
 - [ ] Função pura `lotePossuiValidadeCurtaNoRecebimento` implementada e testada em `@farmaubs/shared`.
 - [ ] Modal bloqueante de validade curta (< 180 dias) integrado ao fluxo de Recebimento (`RF024`).
 - [ ] Widget de alertas ativos integrado ao Dashboard principal (`RF022`, `RF023`).
-- [ ] Testes automatizados de componentes (Camada D) aprovados.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) aprovados.

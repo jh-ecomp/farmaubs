@@ -28,9 +28,11 @@ Escopo: verificação de que o adaptador de repositório aplica corretamente o e
 
 Escopo: os fluxos críticos de ponta a ponta descritos no NF001 (registro de entrada, registro de dispensa, geração de pedido, consulta de dashboard), executados chamando a API NestJS real contra um banco de dados de teste, sem mock. Cobertura seletiva, não exaustiva — os requisitos funcionais classificados como Essencial no documento de requisitos original são os candidatos primários; requisitos classificados como Importante ou Desejável não exigem cobertura e2e obrigatória nesta fase.
 
-**D - Testes de frontend**
+**D - Testes de frontend e E2E de Interface (Playwright BDD)**
 
-Escopo enxuto, compatível com uma equipe de um único desenvolvedor de frontend sem par: testes de componente para lógica de formulário crítica (ex.: validação de quantidade dispensada, seleção de lote sugerido por FEFO), utilizando Testing Library. Testes end-to-end de interface (ex.: Playwright, Cypress) não são adotados nesta fase — o custo de manutenção de e2e de UI para uma equipe de frontend de uma única pessoa tende a superar o benefício no estágio atual do produto; a cobertura de fluxo crítico de ponta a ponta já é obtida pela camada C, testando via API.
+Escopo: os cenários em Gherkin (pt-BR) especificados nas histórias de usuário de frontend são executados diretamente em navegador Chromium real via **Playwright (`@playwright/test`) + `playwright-bdd` + `@axe-core/playwright`**, substituindo progressivamente os mocks de componente em JSDOM/Vitest nas páginas e fluxos operacionais:
+1. **Modalidade 1 — Teste de Sistema de Frontend (`moon run frontend:test-bdd`)**: Executa os arquivos `.feature` da Camada D interceptando as rotas HTTP via `page.route()` com contratos tipados de `@farmaubs/shared`, validando download binário real (`.xlsx`), emulação de folha de impressão A4 (`page.emulateMedia({ media: 'print' })`), controle de relógio (`page.clock`) e auditoria de contraste/acessibilidade WCAG 2.1 AA com `@axe-core/playwright`.
+2. **Modalidade 2 — Teste E2E Full-Stack (`moon run frontend:test-e2e`)**: Executa a jornada de ponta a ponta (Camadas C e D combinadas) integrando Frontend React/Vite, sessão com cookie `HttpOnly` e API de Backend real.
 
 #### Meta de cobertura
 

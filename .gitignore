@@ -34,9 +34,15 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Cobertura de testes (ADR-030 — Jest)
+# Cobertura de testes (ADR-030 — Jest / Playwright)
 coverage/
 **/coverage/
+.features-gen/
+**/.features-gen/
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
 
 # Estado incremental do TypeScript (recompilação do nest start --watch)
 *.tsbuildinfo

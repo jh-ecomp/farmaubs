@@ -51,7 +51,7 @@ Reutiliza integralmente os contratos definidos em `@farmaubs/shared/src/alertas/
 
 ## 4. Escopo Técnico da implementação
 
-- **Camada**: D (Testes de Componentes React com Testing Library e Vitest).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Componentes (`apps/frontend/src/features/alertas/components/`)**:
   - `HeaderAlertasBell.tsx`
   - `AlertasQuickDrawer.tsx`
@@ -59,6 +59,9 @@ Reutiliza integralmente os contratos definidos em `@farmaubs/shared/src/alertas/
   - `useResumoAlertas(ubsId)`
   - `useMarcarAlertaLido()`
   - `useMarcarTodosAlertasLidos()`
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/alertas-sino-drawer-sistema.feature` (`moon run frontend:test-bdd`): Teste de sistema do contador no cabeçalho, abertura da gaveta por teclado (`Escape`), marcação de leitura e auditoria WCAG 2.1 AA (`@axe-core/playwright`).
+  - `apps/frontend/e2e/features/fullstack/alertas-fullstack.feature` (`moon run frontend:test-e2e`): Integração real do sino com o motor de alertas da UBS.
 - **Contra-parte Mobile**: `AL-MOB-01` (compartilha os mesmos contratos e helpers de formatação de rótulos de severidade em `@farmaubs/shared`).
 
 ---
@@ -89,4 +92,4 @@ Funcionalidade: Sino de Notificações e Gaveta Rápida de Alertas no Cabeçalho
 - [ ] Componente `HeaderAlertasBell` integrado ao layout autenticado (`AppLayout`).
 - [ ] Acessibilidade teclado (`Escape` fecha a gaveta, `aria-expanded`, `aria-haspopup="dialog"`, região `aria-live="polite"` para o contador).
 - [ ] Invalidação automática de cache ao trocar de UBS ou concluir movimentações de estoque.
-- [ ] Testes de componente na Camada D aprovados.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) e `@axe-core/playwright` aprovados.

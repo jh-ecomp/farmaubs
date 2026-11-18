@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 | --- | --- |
-| **Total de Histórias Mapeadas** | 12 |
+| **Total de Histórias Mapeadas** | 13 |
 | **Entregues** | 0 (0%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 12 (100%) |
+| **Pendentes** | 13 (100%) |
 
 ```
-Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/12 concluídas)
+Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/13 concluídas)
 ```
 
 ---
@@ -29,6 +29,7 @@ Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/
 | **IN-06** | Frontend | Formulário de Contagem Física: Lançamento por lote com busca inteligente e salvamento automático em rascunho (RF013, NF005) | [in-06-frontend-formulario-contagem-fisica-busca-autosave.md](./in-06-frontend-formulario-contagem-fisica-busca-autosave.md) | ✅ Redigida | ⏳ Não iniciada |
 | **IN-07** | Frontend | Mapa de Conciliação e Divergências: Comparativo em tempo real, seletor de justificativas e campo livre para "Outros" (RF013, NF001) | [in-07-frontend-mapa-conciliacao-divergencias-seletor-outros.md](./in-07-frontend-mapa-conciliacao-divergencias-seletor-outros.md) | ✅ Redigida | ⏳ Não iniciada |
 | **IN-08** | Frontend | Modal de Homologação e Ata Oficial: Resumo de conciliação, impressão da Ata com CSS print e exportação .xlsx (RF013, RF021, RF028) | [in-08-frontend-modal-homologacao-ata-impressao-exportacao-xlsx.md](./in-08-frontend-modal-homologacao-ata-impressao-exportacao-xlsx.md) | ✅ Redigida | ⏳ Não iniciada |
+| **IN-09** | Frontend | Suíte Integrada Playwright BDD e E2E Full-Stack do Módulo de Inventário Mensal | [in-09-frontend-migracao-testes-playwright-bdd-inventario.md](./in-09-frontend-migracao-testes-playwright-bdd-inventario.md) | ✅ Redigida | ⏳ Não iniciada |
 | **IN-MOB-01** | Mobile | Visão Geral de Ciclos e Acompanhamento de Inventário no Celular | [in-mob-01-visao-geral-ciclos-inventario-mobile.md](./in-mob-01-visao-geral-ciclos-inventario-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **IN-MOB-02** | Mobile | Contagem Física de Inventário nas Prateleiras no Celular | [in-mob-02-contagem-fisica-cega-mobile.md](./in-mob-02-contagem-fisica-cega-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **IN-MOB-03** | Mobile | Conferência de Divergências e Justificativas de Inventário no Celular | [in-mob-03-conferencia-divergencias-justificativas-mobile.md](./in-mob-03-conferencia-divergencias-justificativas-mobile.md) | ✅ Redigida | ⏳ Não iniciada |

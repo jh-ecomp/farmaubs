@@ -107,6 +107,7 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 | [IN-06](./in-06-frontend-formulario-contagem-fisica-busca-autosave.md) | Formulário de contagem física: digitação por lote com busca textual e salvamento contínuo | D | IN-02, IN-03 | ✅ Redigida |
 | [IN-07](./in-07-frontend-mapa-conciliacao-divergencias-seletor-outros.md) | Mapa de conciliação: comparação em tempo real, seleção de motivos e justificativa para Outros | D | IN-03, IN-06 | ✅ Redigida |
 | [IN-08](./in-08-frontend-modal-homologacao-ata-impressao-exportacao-xlsx.md) | Modal de homologação: resumo das diferenças, impressão da Ata Oficial e exportação em XLSX | D | IN-04, IN-07 | ✅ Redigida |
+| [IN-09](./in-09-frontend-migracao-testes-playwright-bdd-inventario.md) | Suíte integrada Playwright BDD & E2E Full-Stack do Módulo de Inventário Mensal | C, D | IN-05 a IN-08 | ✅ Redigida |
 
 ---
 

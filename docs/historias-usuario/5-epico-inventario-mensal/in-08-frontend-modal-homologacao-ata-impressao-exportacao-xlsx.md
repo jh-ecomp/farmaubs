@@ -96,11 +96,14 @@ export interface InventarioAtaOficialDTO {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd`).
 - **Componentes**:
   - `apps/frontend/src/features/inventario/components/ModalHomologacaoInventario.tsx`;
   - `apps/frontend/src/features/inventario/components/AtaInventarioImpressaoModal.tsx`.
 - **Hooks**: `useHomologarInventario()`, `useAtaInventario(cicloId)` e `useExportarInventarioXlsx(cicloId)`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/inventario-homologacao-ata-sistema.feature` (`moon run frontend:test-bdd`): Teste de sistema validando bloqueio pré-homologação, **emulação nativa de impressão A4 com `page.emulateMedia({ media: 'print' })`** para `#ataOficialPrintArea` e **download nativo de `.xlsx` com `page.waitForEvent('download')`**.
+  - `apps/frontend/e2e/features/fullstack/inventario-fullstack.feature` (`moon run frontend:test-e2e`): Homologação transacional completa e emissão da Ata Oficial.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - IN-MOB-04)
 - **Contratos e DTOs da Ata Oficial**: `InventarioAtaOficialDTO` e `homologarInventarioSchema` unificados em `@farmaubs/shared`.
@@ -136,6 +139,6 @@ Funcionalidade: Homologação, Impressão da Ata e Exportação XLSX (Camada D)
 ## 6. Checklist de DoD e aceitação
 
 - [ ] Modais desenvolvidos com foco aprisionado, tecla `Escape` e total acessibilidade WCAG 2.1 AA.
-- [ ] Folha de estilo de impressão testada com formatação oficial e campos de assinatura do SUS.
+- [ ] Folha de estilo de impressão testada com formatação oficial e campos de assinatura do SUS via `page.emulateMedia({ media: 'print' })` no Playwright.
 - [ ] Botão de exportação `.xlsx` integrado ao backend para download de arquivo binário sem redirecionamento.
-- [ ] Testes de componentes (Camada D) validando bloqueios pré-homologação, acionamento do `window.print()` e download da planilha.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando bloqueios pré-homologação, emulação de `@media print` e download nativo da planilha (`page.waitForEvent('download')`).

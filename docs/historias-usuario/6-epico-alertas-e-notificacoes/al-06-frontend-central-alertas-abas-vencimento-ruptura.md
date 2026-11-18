@@ -50,11 +50,15 @@ Utiliza os contratos compartilhados de `@farmaubs/shared`:
 
 ## 4. Escopo Técnico da implementação
 
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Página Principal**: `apps/frontend/src/pages/Alertas/index.tsx` (rota `/alertas` adicionada ao menu lateral de navegação).
 - **Subcomponentes**:
   - `AbaAlertasVencimento.tsx`
   - `AbaAlertasRuptura.tsx`
   - `CardsResumoAlertas.tsx`
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/alertas-central-sistema.feature` (`moon run frontend:test-bdd`): Alternância entre as abas Vencimento e Ruptura, acionamento de atalhos operacionais e auditoria de contraste WCAG 2.1 AA (`@axe-core/playwright`).
+  - `apps/frontend/e2e/features/fullstack/alertas-fullstack.feature` (`moon run frontend:test-e2e`): Consulta completa na Central de Alertas e reavaliação sob demanda.
 - **Contra-parte Mobile**: `AL-MOB-01`.
 
 ---
@@ -84,5 +88,5 @@ Funcionalidade: Tela Central de Alertas em Duas Abas (RF022, RF023)
 
 - [ ] Rota `/alertas` registrada e acessível no menu lateral da aplicação Web.
 - [ ] Abas implementadas com semântica ARIA (`role="tablist"`, `role="tab"`, `role="tabpanel"`).
-- [ ] Semáforo de cores e ícones distinguindo claramente alertas de `ATENCAO` (laranja/âmbar) e `CRITICO` (vermelho), sem depender exclusivamente de cor (WCAG 2.1 AA).
-- [ ] Testes de interface na Camada D cobrindo renderização das abas, filtros e ações.
+- [ ] Semáforo de cores e ícones distinguindo claramente alertas de `ATENCAO` (laranja/âmbar) e `CRITICO` (vermelho), sem depender exclusivamente de cor (WCAG 2.1 AA auditado com `@axe-core/playwright`).
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) cobrindo renderização das abas, filtros e ações.

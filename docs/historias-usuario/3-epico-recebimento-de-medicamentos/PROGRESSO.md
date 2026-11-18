@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 | --- | --- |
-| **Total de Histórias Mapeadas** | 12 |
-| **Entregues** | 8 (67%) |
+| **Total de Histórias Mapeadas** | 13 |
+| **Entregues** | 8 (62%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 4 (33%) |
+| **Pendentes** | 5 (38%) |
 
 ```
-Progresso: [█████████████░░░░░░░] 67% (8/12 concluídas)
+Progresso: [████████████░░░░░░░░] 62% (8/13 concluídas)
 ```
 
 ---
@@ -29,6 +29,7 @@ Progresso: [█████████████░░░░░░░] 67% (8
 | **RE-06** | Frontend | Busca Textual no Catálogo, Fabricante Obrigatório, Lote e Validade com Alertas (RF008, RF024) | [re-06-frontend-busca-textual-medicamentos-fabricante-lote.md](./re-06-frontend-busca-textual-medicamentos-fabricante-lote.md) | ✅ Redigida | ✅ Concluída |
 | **RE-07** | Frontend | Efetivação da Entrada: Submissão transacional, feedback visual e atualização dos saldos (RF008, RF024) | [re-07-frontend-confirmacao-entrada-sincronizacao-estoque.md](./re-07-frontend-confirmacao-entrada-sincronizacao-estoque.md) | ✅ Redigida | ✅ Concluída |
 | **RE-08** | Frontend | Painel de Histórico de Recebimentos: Visualização ontem/hoje, seletor de range, busca, exportação .xlsx, termo de carga e estorno (RF008, RF028) | [re-08-frontend-tabela-ultimos-recebimentos-termo-estorno.md](./re-08-frontend-tabela-ultimos-recebimentos-termo-estorno.md) | ✅ Redigida | ✅ Concluída |
+| **RE-09** | Frontend | Migração da Suíte de Testes de Recebimento (Vitest -> Playwright BDD e E2E Full-Stack) | [re-09-frontend-migracao-testes-playwright-bdd-recebimento.md](./re-09-frontend-migracao-testes-playwright-bdd-recebimento.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RE-MOB-01** | Mobile | Abertura e Conferência de Guia de Remessa no Celular | [re-mob-01-conferencia-guia-recebimento-mobile.md](./re-mob-01-conferencia-guia-recebimento-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RE-MOB-02** | Mobile | Conferência Física de Medicamentos, Fabricante, Lotes e Validades no Celular | [re-mob-02-conferencia-fisica-lotes-validade-mobile.md](./re-mob-02-conferencia-fisica-lotes-validade-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RE-MOB-03** | Mobile | Confirmação e Efetivação de Entrada de Estoque no Celular | [re-mob-03-confirmacao-entrada-estoque-mobile.md](./re-mob-03-confirmacao-entrada-estoque-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
