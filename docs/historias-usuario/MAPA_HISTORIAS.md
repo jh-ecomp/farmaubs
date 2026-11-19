@@ -132,3 +132,17 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | AL-MOB-03 | Mobile | Configuração Rápida de Parâmetros Operacionais da UBS no Celular (RF027, NF009, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-07 |
 | AL-MOB-04 | Mobile | Alerta Tátil Bloqueante de Confirmação no Recebimento de Lotes com Validade Curta (< 6 meses) no Celular (RF024, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-08 |
 
+---
+
+## Épico 7: Release 1 — Prontidão para Produção, CI/CD e Infraestrutura
+| ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
+| --- | --- | --- | --- | --- | --- |
+| RL-01 | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-02 | Backend | Migrations de runtime em `dist/`, script idempotente de Bootstrap de Produção e fuso horário `America/Sao_Paulo` | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-03 | Backend | Adaptador real de e-mail transacional (SMTP/Resend com timeout) e limpeza periódica de sessões expiradas e relatórios antigos | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-04 | Backend | Observabilidade enxuta: logs JSON sanitizados com `nestjs-pino`, Sentry opcional e `/api/v1/health` enriquecido (ADR-026) | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-05 | Infra | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` e Proxy Reverso de borda (ADR-021/023) | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-06 | CI/CD | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) para HML e PROD (ADR-024) | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-07 | Frontend | Acabamento de produção: `lang="pt-BR"`, títulos dinâmicos, `robots.txt`, Sidebar responsiva/dinâmica, Feature Flags e `/privacidade` + `/termos` | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-08 | QA / Infra | Suíte de Smoke Tests pós-deploy, teste de carga `k6` (50+ usuários) e scripts de backup/restore off-site (`pg_dump` → R2) | ✅ Redigida | ⏳ Não iniciada | — |
+
