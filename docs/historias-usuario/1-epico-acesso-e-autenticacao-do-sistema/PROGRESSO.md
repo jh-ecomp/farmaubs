@@ -7,11 +7,11 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 29 |
-| **Entregues** | 28 (97%) |
-| **Pendentes** | 1 (3%) |
+| **Entregues** | 29 (100%) |
+| **Pendentes** | 0 (0%) |
 
 ```
-Progresso: [███████████████████░] 97% (28/29 concluídas)
+Progresso: [████████████████████] 100% (29/29 concluídas)
 ```
 
 ---
@@ -55,7 +55,7 @@ Progresso: [███████████████████░] 97% (2
 
 | Código | Camada | Título | Especificação | Status Redação | Status Implementação |
 | --- | --- | --- | --- | --- | --- |
-| **AC-31** | Frontend | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | [ac-31-frontend-migracao-testes-playwright-bdd-acesso.md](./ac-31-frontend-migracao-testes-playwright-bdd-acesso.md) | ✅ Redigida | ⏳ Não iniciada |
+| **AC-31** | Frontend | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | [ac-31-frontend-migracao-testes-playwright-bdd-acesso.md](./ac-31-frontend-migracao-testes-playwright-bdd-acesso.md) | ✅ Redigida | ✅ Concluída |
 
 ---
 

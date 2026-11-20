@@ -78,6 +78,15 @@ Given(
             antimicrobiano: false,
             saldoTotalUbs: 120,
           },
+          {
+            id: "01950000-0000-7000-8000-000000000102",
+            principioAtivo: "Amoxicilina",
+            nomeComercial: "Amoxicilina",
+            apresentacao: "500mg Cápsula",
+            categoria: "ANTIBIOTICO",
+            antimicrobiano: true,
+            saldoTotalUbs: 90,
+          },
         ]),
       });
     });
@@ -85,6 +94,48 @@ Given(
     await page.route(
       "**/api/v1/dispensacao/medicamentos/*/lotes-fefo*",
       async (route) => {
+        const reqUrl = route.request().url();
+        const isAmoxicilina = reqUrl.includes("000000000102");
+        if (isAmoxicilina) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              medicamento: {
+                id: "01950000-0000-7000-8000-000000000102",
+                principioAtivo: "Amoxicilina",
+                apresentacao: "500mg Cápsula",
+                categoria: "ANTIBIOTICO",
+                antimicrobiano: true,
+                saldoTotalUbs: 90,
+              },
+              loteSugerido: {
+                id: "01950000-0000-7000-8000-000000000205",
+                numeroLote: "LOT-AMX-2027",
+                dataValidade: "2027-06-15",
+                saldoDisponivel: 90,
+                sugeridoFefo: true,
+                diasParaVencimento: 180,
+                alertaValidadeCurta: false,
+                vencido: false,
+              },
+              lotesDisponiveis: [
+                {
+                  id: "01950000-0000-7000-8000-000000000205",
+                  numeroLote: "LOT-AMX-2027",
+                  dataValidade: "2027-06-15",
+                  saldoDisponivel: 90,
+                  sugeridoFefo: true,
+                  diasParaVencimento: 180,
+                  alertaValidadeCurta: false,
+                  vencido: false,
+                },
+              ],
+            }),
+          });
+          return;
+        }
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -499,3 +550,50 @@ Then(
     await expect(tabela).toContainText(statusEsperado);
   },
 );
+
+When(
+  "ele adiciona o antimicrobiano {string} ao carrinho",
+  async ({ page }, rotuloMed: string) => {
+    const combobox = page.getByRole("combobox");
+    await combobox.fill("amoxicilina");
+
+    const opcao = page.getByRole("option", {
+      name: new RegExp(rotuloMed.split(" - ")[0], "i"),
+    });
+    await expect(opcao).toBeVisible();
+    await opcao.click();
+
+    const botaoAdicionar = page.getByRole("button", {
+      name: /Adicionar ao Atendimento/i,
+    });
+    await expect(botaoAdicionar).toBeEnabled();
+    await botaoAdicionar.click();
+  },
+);
+
+When(
+  "informa uma data de emissão da receita médica anterior a 10 dias",
+  async ({ page }) => {
+    const d = new Date();
+    d.setDate(d.getDate() - 15);
+    const isoVencida = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    await page.locator("#data-emissao-receita-input").fill(isoVencida);
+  },
+);
+
+Then(
+  "deve ser exibido o alerta de receita de antimicrobiano fora da validade legal",
+  async ({ page }) => {
+    await expect(page.getByTestId("erro-receita-expirada")).toBeVisible();
+  },
+);
+
+Then(
+  "o botão {string} deve permanecer desabilitado",
+  async ({ page }, nomeBotao: string) => {
+    await expect(
+      page.getByRole("button", { name: new RegExp(nomeBotao, "i") }),
+    ).toBeDisabled();
+  },
+);
+

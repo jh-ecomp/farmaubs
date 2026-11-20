@@ -8,13 +8,18 @@ import * as crypto from "node:crypto";
 import {
   PerfilCodigo,
   selecionarLoteSugeridoFEFO,
+  type CriarEntradaEstoqueRequest,
+  type DetalhesRecebimentoCompleto,
   type DispensacaoItemListaDto,
   type EfetivarDispensacaoRequest,
+  type FabricanteResponseDto,
+  type ItemResumoHistoricoRecebimento,
   type LoteDisponivelDto,
   type MedicamentoBuscaDto,
   type MedicamentoSaldoItemDto,
   type MovimentacaoLoteItemDto,
   type PacienteDto,
+  type ProdutoCatalogoResponseDto,
   type RegistrarAjusteLoteInputDto,
 } from "@farmaubs/shared";
 
@@ -42,6 +47,10 @@ let pacientesCadastrados: PacienteDto[] = [];
 let historicoDispensacoes: DispensacaoItemListaDto[] = [];
 let saldosEstoqueInMem: MedicamentoSaldoItemDto[] = [];
 let movimentacoesPorLote: Record<string, MovimentacaoLoteItemDto[]> = {};
+let produtosCatalogoRecebimento: ProdutoCatalogoResponseDto[] = [];
+let fabricantesRecebimento: FabricanteResponseDto[] = [];
+let historicoRecebimentosInMem: ItemResumoHistoricoRecebimento[] = [];
+let detalhesRecebimentosInMem: Record<string, DetalhesRecebimentoCompleto> = {};
 let contadorAtendimentos = 100;
 
 let sessaoAutenticadaAtiva = false;
@@ -193,6 +202,94 @@ function resetarEstadoInicial(): void {
       },
     ],
   };
+
+  produtosCatalogoRecebimento = [
+    {
+      id: "01950000-0000-7000-8000-000000000105",
+      nomeGenerico: "Dipirona Sódica",
+      denominacaoGenerica: "Dipirona Sódica",
+      principioAtivo: "Dipirona Sódica",
+      concentracao: "500mg",
+      formaFarmaceutica: "Comprimido",
+      unidadeMedida: "Comprimido",
+      codigoCatmat: "BR0267203",
+      ativo: true,
+    },
+    {
+      id: "01950000-0000-7000-8000-000000000101",
+      nomeGenerico: "Losartana Potássica",
+      denominacaoGenerica: "Losartana Potássica",
+      principioAtivo: "Losartana Potássica",
+      concentracao: "50mg",
+      formaFarmaceutica: "Comprimido",
+      unidadeMedida: "Comprimido",
+      codigoCatmat: "BR0268856",
+      ativo: true,
+    },
+  ];
+
+  fabricantesRecebimento = [
+    {
+      id: "01950000-0000-7000-8000-000000000401",
+      razaoSocial: "Instituto de Tecnologia em Fármacos — Farmanguinhos",
+      nomeFantasia: "Farmanguinhos",
+      cnpj: "33781055000135",
+      ativo: true,
+    },
+    {
+      id: "01950000-0000-7000-8000-000000000402",
+      razaoSocial: "EMS S/A",
+      nomeFantasia: "EMS",
+      cnpj: "57507378000365",
+      ativo: true,
+    },
+  ];
+
+  const entradaInicialId = "01950000-0000-7000-8000-000000000501";
+  historicoRecebimentosInMem = [
+    {
+      id: entradaInicialId,
+      numeroDocumento: "GUIA-CAF-2026/089",
+      tipoDocumento: "GUIA_CAF",
+      fornecedorOrigem: "CAF Central - SMS Parnaíba",
+      dataRecebimento: hojeIso,
+      totalItens: 1,
+      totalUnidades: 200,
+      usuarioRecebedorNome: USUARIO_FARMACEUTICO.nomeCompleto,
+      status: "CONCLUIDO",
+      podeEstornar: true,
+    },
+  ];
+
+  detalhesRecebimentosInMem = {
+    [entradaInicialId]: {
+      id: entradaInicialId,
+      numeroDocumento: "GUIA-CAF-2026/089",
+      tipoDocumento: "GUIA_CAF",
+      fornecedorOrigem: "CAF Central - SMS Parnaíba",
+      dataRecebimento: hojeIso,
+      ubsNome: "UBS Centro — Parnaíba/PI",
+      usuarioRecebedorNome: USUARIO_FARMACEUTICO.nomeCompleto,
+      status: "CONCLUIDO",
+      totalItens: 1,
+      totalUnidades: 200,
+      itens: [
+        {
+          id: "item-rec-1",
+          produtoId: "01950000-0000-7000-8000-000000000105",
+          produtoNome: "Dipirona Sódica",
+          concentracao: "500mg",
+          formaFarmaceutica: "Comprimido",
+          fabricanteId: "01950000-0000-7000-8000-000000000401",
+          fabricanteNome: "Farmanguinhos",
+          loteId: "lote-dip-99",
+          numeroLote: "LT-DIP-99",
+          dataValidade: "2027-03-20",
+          quantidadeRecebida: 200,
+        },
+      ],
+    },
+  };
 }
 
 resetarEstadoInicial();
@@ -301,6 +398,25 @@ const server = http.createServer(async (req, res) => {
   if (method === "POST" && pathname === "/api/v1/acesso/logout") {
     sessaoAutenticadaAtiva = false;
     responderJson(res, 200, { ok: true });
+    return;
+  }
+
+  // 3b. POST /api/v1/acesso/renovar (AC-20 / AC-31)
+  if (method === "POST" && pathname === "/api/v1/acesso/renovar") {
+    const expiresAt = new Date(Date.now() + 60 * 60_000).toISOString();
+    responderJson(res, 200, {
+      expiresAt,
+      ttlSeconds: 3600,
+      warningSeconds: 300,
+    });
+    return;
+  }
+
+  // 3c. POST /api/v1/acesso/trocar-senha (AC-24 / AC-31)
+  if (method === "POST" && pathname === "/api/v1/acesso/trocar-senha") {
+    responderJson(res, 200, {
+      mensagem: "Senha definitiva cadastrada com sucesso.",
+    });
     return;
   }
 
@@ -729,6 +845,203 @@ const server = http.createServer(async (req, res) => {
       "Content-Disposition": `attachment; filename="${nomeArquivo}"`,
     });
     res.end(bufferXlsx);
+    return;
+  }
+
+  // 16. GET /api/v1/catalogo/produtos/busca (RE-02 / RE-06 / RE-09)
+  if (method === "GET" && pathname === "/api/v1/catalogo/produtos/busca") {
+    const termo = (url.searchParams.get("termo") ?? "").toLowerCase();
+    const filtrados = produtosCatalogoRecebimento.filter(
+      (p) =>
+        !termo ||
+        p.nomeGenerico.toLowerCase().includes(termo) ||
+        p.concentracao.toLowerCase().includes(termo),
+    );
+    responderJson(res, 200, filtrados);
+    return;
+  }
+
+  // 17. GET /api/v1/catalogo/fabricantes (RE-02 / RE-06 / RE-09)
+  if (method === "GET" && pathname === "/api/v1/catalogo/fabricantes") {
+    responderJson(res, 200, fabricantesRecebimento);
+    return;
+  }
+
+  // 18. POST /api/v1/catalogo/fabricantes
+  if (method === "POST" && pathname === "/api/v1/catalogo/fabricantes") {
+    const body = await lerJsonBody<{
+      razaoSocial: string;
+      nomeFantasia?: string;
+      cnpj?: string;
+    }>(req);
+    const novoFab: FabricanteResponseDto = {
+      id: crypto.randomUUID(),
+      razaoSocial: body.razaoSocial,
+      nomeFantasia: body.nomeFantasia ?? body.razaoSocial,
+      cnpj: body.cnpj ?? null,
+      ativo: true,
+    };
+    fabricantesRecebimento.push(novoFab);
+    responderJson(res, 201, novoFab);
+    return;
+  }
+
+  // 19. POST /api/v1/recebimento/entradas (RE-03 / RE-07 / RE-09)
+  if (method === "POST" && pathname === "/api/v1/recebimento/entradas") {
+    const body = await lerJsonBody<CriarEntradaEstoqueRequest>(req);
+    const entradaId = crypto.randomUUID();
+    const agoraIso = new Date().toISOString();
+    const totalUnidades = body.itens.reduce(
+      (s, i) => s + i.quantidadeRecebida,
+      0,
+    );
+
+    const resumo: ItemResumoHistoricoRecebimento = {
+      id: entradaId,
+      numeroDocumento: body.numeroDocumento,
+      tipoDocumento: body.tipoDocumento,
+      fornecedorOrigem: body.fornecedorOrigem,
+      dataRecebimento: body.dataRecebimento || agoraIso,
+      totalItens: body.itens.length,
+      totalUnidades,
+      usuarioRecebedorNome: USUARIO_FARMACEUTICO.nomeCompleto,
+      status: "CONCLUIDO",
+      podeEstornar: true,
+    };
+    historicoRecebimentosInMem.unshift(resumo);
+
+    detalhesRecebimentosInMem[entradaId] = {
+      id: entradaId,
+      numeroDocumento: body.numeroDocumento,
+      tipoDocumento: body.tipoDocumento,
+      fornecedorOrigem: body.fornecedorOrigem,
+      dataRecebimento: body.dataRecebimento || agoraIso,
+      ubsNome: "UBS Centro — Parnaíba/PI",
+      usuarioRecebedorNome: USUARIO_FARMACEUTICO.nomeCompleto,
+      status: "CONCLUIDO",
+      totalItens: body.itens.length,
+      totalUnidades,
+      itens: body.itens.map((it, idx) => {
+        const prod =
+          produtosCatalogoRecebimento.find((p) => p.id === it.produtoId) ??
+          produtosCatalogoRecebimento[0];
+        const fab =
+          fabricantesRecebimento.find((f) => f.id === it.fabricanteId) ??
+          fabricantesRecebimento[0];
+        return {
+          id: `item-rec-${idx + 1}`,
+          produtoId: prod.id,
+          produtoNome: prod.nomeGenerico,
+          concentracao: prod.concentracao,
+          formaFarmaceutica: prod.formaFarmaceutica,
+          fabricanteId: fab.id,
+          fabricanteNome: fab.nomeFantasia ?? fab.razaoSocial,
+          loteId: `lote-${idx + 1}`,
+          numeroLote: it.numeroLote,
+          dataValidade: it.dataValidade,
+          quantidadeRecebida: it.quantidadeRecebida,
+        };
+      }),
+    };
+
+    responderJson(res, 201, {
+      entradaId,
+      numeroDocumento: body.numeroDocumento,
+      tipoDocumento: body.tipoDocumento,
+      fornecedorOrigem: body.fornecedorOrigem,
+      dataRecebimento: body.dataRecebimento || agoraIso,
+      totalItensProcessados: body.itens.length,
+      totalUnidadesAbastecidas: totalUnidades,
+      lotesAtualizados: [],
+      avisosValidadeCurta: [],
+    });
+    return;
+  }
+
+  // 20. GET /api/v1/recebimento/historico (RE-04 / RE-08 / RE-09)
+  if (method === "GET" && pathname === "/api/v1/recebimento/historico") {
+    const termo = (url.searchParams.get("termoBusca") ?? "").toLowerCase();
+    const status = url.searchParams.get("status") ?? "";
+    const filtrados = historicoRecebimentosInMem.filter((item) => {
+      if (status && status !== "TODOS" && item.status !== status) return false;
+      if (
+        termo &&
+        !item.numeroDocumento.toLowerCase().includes(termo) &&
+        !item.fornecedorOrigem.toLowerCase().includes(termo)
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    responderJson(res, 200, {
+      itens: filtrados,
+      total: filtrados.length,
+      pagina: 1,
+      limite: 20,
+      totalPaginas: 1,
+    });
+    return;
+  }
+
+  // 21. GET /api/v1/recebimento/historico/exportar-xlsx
+  if (
+    method === "GET" &&
+    pathname === "/api/v1/recebimento/historico/exportar-xlsx"
+  ) {
+    const bufferXlsx = Buffer.from("504b0304140000000800", "hex");
+    res.writeHead(200, {
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition":
+        'attachment; filename="recebimentos_ubs_parnaiba.xlsx"',
+    });
+    res.end(bufferXlsx);
+    return;
+  }
+
+  // 22. GET /api/v1/recebimento/entradas/:id
+  const matchDetalheRec = pathname.match(
+    /^\/api\/v1\/recebimento\/entradas\/([^/]+)$/,
+  );
+  if (method === "GET" && matchDetalheRec) {
+    const recId = matchDetalheRec[1];
+    const det =
+      detalhesRecebimentosInMem[recId] ??
+      Object.values(detalhesRecebimentosInMem)[0];
+    if (!det) {
+      responderJson(res, 404, { message: "Recebimento não encontrado." });
+      return;
+    }
+    responderJson(res, 200, det);
+    return;
+  }
+
+  // 23. POST /api/v1/recebimento/entradas/:id/estorno
+  const matchEstornoRec = pathname.match(
+    /^\/api\/v1\/recebimento\/entradas\/([^/]+)\/estorno$/,
+  );
+  if (method === "POST" && matchEstornoRec) {
+    const recId = matchEstornoRec[1];
+    const body = await lerJsonBody<{ motivo?: string }>(req);
+    const item = historicoRecebimentosInMem.find((r) => r.id === recId);
+    if (!item) {
+      responderJson(res, 404, { message: "Guia não encontrada." });
+      return;
+    }
+    item.status = "ESTORNADO";
+    item.podeEstornar = false;
+    if (detalhesRecebimentosInMem[recId]) {
+      detalhesRecebimentosInMem[recId].status = "ESTORNADO";
+    }
+    responderJson(res, 200, {
+      id: recId,
+      numeroDocumento: item.numeroDocumento,
+      status: "ESTORNADO",
+      motivoEstorno: body.motivo ?? "",
+      dataEstorno: new Date().toISOString(),
+      unidadesRevertidas: item.totalUnidades,
+    });
     return;
   }
 

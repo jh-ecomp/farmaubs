@@ -70,5 +70,5 @@ Funcionalidade: Suíte Completa BDD de Dispensação de Medicamentos (DI-06 a DI
 ## 5. Checklist de DoD e aceitação
 
 - [x] PoC base de `DI-09` e `DI-10` implementada e aprovada em `moon run frontend:test-bdd` e `moon run frontend:test-e2e`.
-- [ ] Cenários complementares de `DI-06` (autocompletar paciente e histórico de 90 dias), `DI-07` (troca manual de lote FEFO) e `DI-08` (validação de receita de antimicrobiano <= 10 dias) migrados para `.feature`.
-- [ ] Auditoria `@axe-core/playwright` cobrindo todos os estados da bancada de dispensação.
+- [x] Cenários complementares de `DI-06` (autocompletar paciente e histórico de 90 dias), `DI-07` (troca manual de lote FEFO) e `DI-08` (validação de receita de antimicrobiano <= 10 dias) migrados para `.feature`.
+- [x] Auditoria `@axe-core/playwright` cobrindo todos os estados da bancada de dispensação.
