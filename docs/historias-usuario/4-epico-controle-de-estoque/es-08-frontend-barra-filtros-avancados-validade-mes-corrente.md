@@ -53,12 +53,15 @@ export interface ConsultarSaldosQueryDto {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd`).
 - **Componente**: `apps/frontend/src/features/estoque/components/EstoqueFiltrosBar.tsx`.
 - **Props**:
   - `valores: ConsultarSaldosQueryDto`;
   - `onChange: (novosFiltros: Partial<ConsultarSaldosQueryDto>) => void`;
   - `onLimpar: () => void`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/estoque-filtros-sistema.feature` (`moon run frontend:test-bdd`): Validação de busca com debounce (`page.clock`), filtro de validade no mês corrente e categorias da REMUME.
+  - `apps/frontend/e2e/features/fullstack/estoque-fullstack.feature` (`moon run frontend:test-e2e`): Filtragem combinada fim a fim contra a API de saldos.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-03)
 - **DTO de Consulta Compartilhado**: `ConsultarSaldosQueryDto` e schema Zod `consultarSaldosQuerySchema` centralizados em `@farmaubs/shared`.
@@ -91,5 +94,5 @@ Funcionalidade: Barra de Filtros de Estoque (Camada D)
 
 - [ ] Componente implementado com debounce funcional via hook customizado `useDebounce`.
 - [ ] Seletor de validade contendo opção explícita de "Vencendo no Mês Corrente".
-- [ ] Testes de componentes (Camada D) validando atraso do debounce e acionamento dos filtros com acessibilidade por teclado (`Tab`, `Enter`).
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando atraso do debounce (`page.clock`), acionamento dos filtros e acessibilidade por teclado (`Tab`, `Enter`).
 - [ ] Schema Zod consumido de `@farmaubs/shared`.

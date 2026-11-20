@@ -1,7 +1,7 @@
 ## ADR-030 - Estratégia de testes
 
 ### Status
-🟢 Decidido e documentado — última atualização: 24/07/2026
+🟢 Decidido e documentado — última atualização: 18/11/2026
 
 ### Contexto
 
@@ -14,9 +14,9 @@ A arquitetura hexagonal definida no ADR-003 isola o domínio (regras de negócio
 
 #### Camadas de teste avaliadas e adotadas
 
-**A - Testes unitários de domínio (casos de uso e regras de negócio)**
+**A - Testes unitários e BDD de domínio no backend (casos de uso e regras de negócio)**
 
-Escopo: lógica pura contida nas portas da arquitetura hexagonal — cálculo de FEFO (RF010), sugestão de pedido mensal e regras de ponto de pedido/estoque de segurança (RF015), cálculo de curva ABC (RF019), entre outras regras de negócio relevantes. Executados com mock das portas de infraestrutura (repositório, e-mail, geração de arquivo), sem banco de dados real nem framework web em execução. A facilidade de escrever esses testes é, em si, um indicador da integridade da fronteira hexagonal definida no ADR-003 — dificuldade em isolar uma regra de negócio para teste unitário é sinal de vazamento dessa fronteira. Ferramenta: Jest, já integrado ao boilerplate padrão do NestJS (ADR-005).
+Escopo: lógica pura contida nas portas da arquitetura hexagonal — cálculo de FEFO (RF010), sugestão de pedido mensal e regras de ponto de pedido/estoque de segurança (RF015), cálculo de curva ABC (RF019), gestão de acesso, entre outras regras de negócio relevantes. Executados com mock das portas de infraestrutura (repositório, e-mail, geração de arquivo), sem banco de dados real nem framework web em execução. A facilidade de escrever esses testes é, em si, um indicador da integridade da fronteira hexagonal definida no ADR-003 — dificuldade em isolar uma regra de negócio para teste unitário é sinal de vazamento dessa fronteira. **Ferramentas:** **Jest** (testes unitários `*.spec.ts`) e **`@cucumber/cucumber`** (`*.feature` + `*.steps.ts` via `test:bdd`) para especificação executável em Gherkin (pt-BR) dos casos de uso do backend.
 
 **B - Testes de integração de adaptadores (contra banco de dados real)**
 
@@ -28,9 +28,11 @@ Escopo: verificação de que o adaptador de repositório aplica corretamente o e
 
 Escopo: os fluxos críticos de ponta a ponta descritos no NF001 (registro de entrada, registro de dispensa, geração de pedido, consulta de dashboard), executados chamando a API NestJS real contra um banco de dados de teste, sem mock. Cobertura seletiva, não exaustiva — os requisitos funcionais classificados como Essencial no documento de requisitos original são os candidatos primários; requisitos classificados como Importante ou Desejável não exigem cobertura e2e obrigatória nesta fase.
 
-**D - Testes de frontend**
+**D - Testes de frontend e E2E de Interface (Playwright BDD)**
 
-Escopo enxuto, compatível com uma equipe de um único desenvolvedor de frontend sem par: testes de componente para lógica de formulário crítica (ex.: validação de quantidade dispensada, seleção de lote sugerido por FEFO), utilizando Testing Library. Testes end-to-end de interface (ex.: Playwright, Cypress) não são adotados nesta fase — o custo de manutenção de e2e de UI para uma equipe de frontend de uma única pessoa tende a superar o benefício no estágio atual do produto; a cobertura de fluxo crítico de ponta a ponta já é obtida pela camada C, testando via API.
+Escopo: os cenários em Gherkin (pt-BR) especificados nas histórias de usuário de frontend são executados diretamente em navegador Chromium real via **Playwright (`@playwright/test`) + `playwright-bdd` + `@axe-core/playwright`**, substituindo progressivamente os mocks de componente em JSDOM/Vitest nas páginas e fluxos operacionais:
+1. **Modalidade 1 — Teste de Sistema de Frontend (`moon run frontend:test-bdd`)**: Executa os arquivos `.feature` da Camada D interceptando as rotas HTTP via `page.route()` com contratos tipados de `@farmaubs/shared`, validando download binário real (`.xlsx`), emulação de folha de impressão A4 (`page.emulateMedia({ media: 'print' })`), controle de relógio (`page.clock`) e auditoria de contraste/acessibilidade WCAG 2.1 AA com `@axe-core/playwright`.
+2. **Modalidade 2 — Teste E2E Full-Stack (`moon run frontend:test-e2e`)**: Executa a jornada de ponta a ponta (Camadas C e D combinadas) integrando Frontend React/Vite, sessão com cookie `HttpOnly` e API de Backend real.
 
 #### Meta de cobertura
 
@@ -38,25 +40,24 @@ Foi deliberadamente rejeitada uma meta percentual genérica de cobertura de cód
 
 ### Decisão
 
-Adotar as quatro camadas de teste descritas acima (unitário de domínio, integração de adaptadores, e2e via API, componente de frontend), com a seguinte regra de obrigatoriedade por tipo de mudança, aplicada em revisão de código:
+Adotar as quatro camadas de teste descritas acima (unitário/BDD de domínio com Jest + Cucumber, integração de adaptadores com PostgreSQL real, e2e via API, e testes de sistema/E2E de interface com **Playwright + `playwright-bdd` + `@axe-core/playwright`** substituindo Vitest/JSDOM nas jornadas de UI), com a seguinte regra de obrigatoriedade por tipo de mudança:
 
-1. Todo caso de uso novo no domínio (ADR-003) exige teste unitário correspondente antes do merge.
+1. Todo caso de uso novo no domínio (ADR-003) exige teste unitário (Jest) ou cenário BDD (Cucumber) correspondente antes do merge.
 2. Toda mudança em política de Row-Level Security ou em lógica de bloqueio de concorrência de estoque (ADR-008) exige teste de integração correspondente antes do merge, sem exceção, dado o risco de segurança e de integridade de dados associado.
-3. Todo requisito funcional classificado como Essencial no documento de requisitos original deve ter pelo menos um teste e2e cobrindo o caminho feliz, antes de ser disponibilizado no primeiro piloto real com as UBSs parceiras.
+3. Todo requisito funcional classificado como Essencial no documento de requisitos original deve ter cobertura E2E/BDD (API e/ou Playwright) antes de ser disponibilizado em produção.
 
-**Onde os testes são executados**: localmente, pelo desenvolvedor, antes de cada push — sem gate automático de execução obrigatória nesta fase, já que o pipeline de CI/CD (ADR-024) ainda não foi priorizado no primeiro backlog. Testes de integração e e2e sobem o banco de dados de teste via Docker Compose (ADR-023), reaproveitando o mesmo modelo mental já usado no ambiente de desenvolvimento local. O gate de qualidade, nesta fase, é a revisão de código humana, com verificação explícita da regra de obrigatoriedade acima por parte do revisor.
+**Onde os testes são executados**: localmente pelo desenvolvedor antes do push e **automaticamente como gate obrigatório de Pull Request no GitHub Actions (`ADR-024`)**, orquestrados pelo `moon` (`ADR-035`) com PostgreSQL real em *Service Container* e Chromium headless para Playwright.
 
 ### Consequências
 
 **Positivas**
-- Estratégia de testes objetiva e de fácil verificação em revisão de código, adequada ao perfil majoritariamente júnior da equipe.
-- Cobertura obrigatória concentrada exatamente nos pontos de maior risco já identificados pelos ADRs anteriores (RLS, concorrência de estoque, fluxos essenciais), em vez de dispersa por uma meta percentual genérica.
-- A dificuldade de escrever testes unitários de domínio funciona como um sinal precoce de degradação da fronteira hexagonal definida no ADR-003.
+- Estratégia de testes objetiva e de fácil verificação em revisão de código e CI, adequada ao perfil majoritariamente júnior da equipe.
+- Cobertura obrigatória concentrada exatamente nos pontos de maior risco já identificados pelos ADRs anteriores (RLS, concorrência de estoque, fluxos essenciais).
+- Especificação viva em Gherkin (pt-BR) compartilhada entre backend (`@cucumber/cucumber`) e frontend (`playwright-bdd`), além de auditoria automática de acessibilidade WCAG 2.1 AA (`@axe-core/playwright`).
 
 **Negativas / trade-offs assumidos**
-- Sem gate automático de CI nesta fase, a aplicação da regra de obrigatoriedade depende de disciplina de revisão de código humana — risco de inconsistência que deve ser reforçado explicitamente pelo desenvolvedor sênior até que o ADR-024 seja tratado.
-- Ausência de testes e2e de interface (UI) significa que regressões visuais ou de interação de frontend não detectadas pelos testes de componente só serão percebidas manualmente — aceito dado o tamanho da equipe de frontend nesta fase.
-- Requisitos funcionais não classificados como Essencial não têm cobertura e2e obrigatória, ficando expostos a um risco maior de regressão não detectada automaticamente.
+- Execução de Playwright E2E full-stack e testes de integração com Postgres exige maior tempo de pipeline no CI (mitigado por execução seletiva de tarefas afetadas via `moon`).
+- Coexistência temporária de testes legados em Vitest/JSDOM enquanto a migração para Playwright BDD é concluída (ex.: história AC-31).
 
 ### Revisão
 

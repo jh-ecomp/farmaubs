@@ -55,12 +55,15 @@ export type SalvarContagemItemInputDTO = z.infer<typeof salvarContagemItemSchema
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes e Fluxos React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd`).
 - **Componente Principal**: `apps/frontend/src/features/inventario/components/InventarioContagemForm.tsx`.
 - **Hooks & Integrações**:
   - `useItensContagem(cicloId, filtros)`: TanStack Query;
   - `useSalvarContagemItem()`: Mutação com atualização otimista (optimistic update);
   - `useAutosaveInventario()`: Hook personalizado para controle de status e fila de sincronização.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/inventario-contagem-autosave-sistema.feature` (`moon run frontend:test-bdd`): Validação de autosave com `page.clock`, simulação de queda temporária de rede com `context.setOffline(true)` e filtro de pendentes.
+  - `apps/frontend/e2e/features/fullstack/inventario-fullstack.feature` (`moon run frontend:test-e2e`): Lançamento real de quantidades físicas e persistência em rascunho.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - IN-MOB-02)
 - **Contratos e DTOs de Contagem**: `SalvarContagemItemInputDTO` e `salvarContagemItemSchema` centralizados em `@farmaubs/shared`.
@@ -95,5 +98,5 @@ Funcionalidade: Formulário de Contagem Física e Autosave (Camada D)
 
 - [ ] Formulário de contagem implementado com inputs numéricos acessíveis e foco ordenado por teclado.
 - [ ] Mecanismo de autosave com debounce e tratamento de erros de conexão com retenção em estado local.
-- [ ] Testes de componentes (Camada D) validando cálculo de divergência na UI, disparo de requisição e persistência de dados.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando cálculo de divergência na UI, disparo de autosave (`page.clock`) e resiliência a falhas de rede (`context.setOffline(true)`).
 - [ ] Schemas e helpers de validação consumidos de `@farmaubs/shared`.

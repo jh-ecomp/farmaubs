@@ -73,13 +73,16 @@ export interface MedicamentoSaldoItemDto {
 
 ## 4. Escopo Técnico da implementação (Clean Architecture — ADR-034)
 
-- **Camada**: D (Testes de Componentes React).
+- **Camada**: D (Testes de Sistema BDD e E2E Full-Stack em Gherkin com Playwright + `playwright-bdd` e `@axe-core/playwright`).
 - **Componente**: `apps/frontend/src/features/estoque/components/TabelaSaldosEstoque.tsx`.
 - **Props**:
   - `medicamentos: MedicamentoSaldoItemDto[]`;
   - `carregando: boolean`;
   - `onAbrirAjuste: (lote: LoteEstoqueDto, medicamento: MedicamentoSaldoItemDto) => void`;
   - `onAbrirRastreabilidade: (lote: LoteEstoqueDto, medicamento: MedicamentoSaldoItemDto) => void`.
+- **Testes da Camada D (Playwright BDD)**:
+  - `apps/frontend/e2e/features/sistema/estoque-saldos-sistema.feature` (`moon run frontend:test-bdd`): Validação de expansão de lotes, ordenação FEFO, badge laranja de vencimento no mês corrente e contraste real via `@axe-core/playwright`.
+  - `apps/frontend/e2e/features/fullstack/estoque-fullstack.feature` (`moon run frontend:test-e2e`): Consulta paginada real integrada ao backend.
 
 ### Compartilhamento Arquitetural com `@farmaubs/shared` e App Mobile (`apps/mobile` - ES-MOB-02)
 - **Modelos e DTOs Unificados**: Centralizados em `@farmaubs/shared/src/contracts/estoque/`.
@@ -113,5 +116,5 @@ Funcionalidade: Tabela de Saldos e Detalhamento de Lotes (Camada D)
 ## 6. Checklist de DoD e aceitação
 
 - [ ] Tabela implementada em React 19 com suporte a expansão e colapso de linhas.
-- [ ] Badges de validade implementados com a cor laranja acordada e contraste WCAG 2.1 AA (> 4.5:1).
-- [ ] Testes de componentes (Camada D) validando comportamento do accordion, renderização condicional de badges e eventos de clique.
+- [ ] Badges de validade implementados com a cor laranja acordada e contraste WCAG 2.1 AA (> 4.5:1) verificado no navegador real com `@axe-core/playwright`.
+- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando comportamento do accordion, renderização condicional de badges e eventos de clique.
