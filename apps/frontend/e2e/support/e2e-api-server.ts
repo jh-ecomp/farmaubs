@@ -12,7 +12,10 @@ import {
   type EfetivarDispensacaoRequest,
   type LoteDisponivelDto,
   type MedicamentoBuscaDto,
+  type MedicamentoSaldoItemDto,
+  type MovimentacaoLoteItemDto,
   type PacienteDto,
+  type RegistrarAjusteLoteInputDto,
 } from "@farmaubs/shared";
 
 interface LoteEmEstoque extends LoteDisponivelDto {
@@ -37,6 +40,8 @@ let catalogoMedicamentos: MedicamentoBuscaDto[] = [];
 let lotesEstoque: LoteEmEstoque[] = [];
 let pacientesCadastrados: PacienteDto[] = [];
 let historicoDispensacoes: DispensacaoItemListaDto[] = [];
+let saldosEstoqueInMem: MedicamentoSaldoItemDto[] = [];
+let movimentacoesPorLote: Record<string, MovimentacaoLoteItemDto[]> = {};
 let contadorAtendimentos = 100;
 
 let sessaoAutenticadaAtiva = false;
@@ -98,6 +103,8 @@ function resetarEstadoInicial(): void {
   contadorAtendimentos = 100;
 
   const hojeIso = new Date().toISOString();
+  const mesCorrentePrefix = hojeIso.slice(0, 7);
+
   historicoDispensacoes = [
     {
       id: "01950000-0000-7000-8000-000000000301",
@@ -112,6 +119,80 @@ function resetarEstadoInicial(): void {
       medicamentosResumo: "Losartana Potássica - 50mg Comprimido (30)",
     },
   ];
+
+  saldosEstoqueInMem = [
+    {
+      produtoId: "01950000-0000-7000-8000-000000000101",
+      nome: "Losartana Potássica 50mg",
+      principioAtivo: "Losartana Potássica",
+      formaFarmaceutica: "Comprimido",
+      concentracao: "50mg",
+      unidadeMedida: "comp",
+      categoria: "ANTI-HIPERTENSIVO",
+      saldoTotal: 150,
+      statusEstoque: "REGULAR",
+      lotes: [
+        {
+          id: "01950000-0000-7000-8000-000000000201",
+          numeroLote: "LT-LOS-01",
+          fabricanteId: "fab-1",
+          fabricanteNome: "Farmanguinhos / Fiocruz",
+          dataValidade: `${mesCorrentePrefix}-28`,
+          saldoAtual: 50,
+          statusValidade: "MES_CORRENTE",
+        },
+        {
+          id: "01950000-0000-7000-8000-000000000202",
+          numeroLote: "LT-LOS-02",
+          fabricanteId: "fab-2",
+          fabricanteNome: "EMS",
+          dataValidade: "2027-10-20",
+          saldoAtual: 100,
+          statusValidade: "REGULAR",
+        },
+      ],
+    },
+    {
+      produtoId: "01950000-0000-7000-8000-000000000102",
+      nome: "Amoxicilina 500mg",
+      principioAtivo: "Amoxicilina",
+      formaFarmaceutica: "Cápsula",
+      concentracao: "500mg",
+      unidadeMedida: "caps",
+      categoria: "ANTIBIOTICO",
+      saldoTotal: 15,
+      statusEstoque: "BAIXO_ESTOQUE",
+      lotes: [
+        {
+          id: "01950000-0000-7000-8000-000000000203",
+          numeroLote: "LT-AMX-01",
+          fabricanteId: "fab-3",
+          fabricanteNome: "Medley",
+          dataValidade: "2027-06-15",
+          saldoAtual: 15,
+          statusValidade: "REGULAR",
+        },
+      ],
+    },
+  ];
+
+  movimentacoesPorLote = {
+    "01950000-0000-7000-8000-000000000201": [
+      {
+        id: "mov-init-1",
+        dataHora: hojeIso,
+        tipoMovimentacao: "ENTRADA_RECEBIMENTO",
+        operacao: "+",
+        quantidade: 50,
+        saldoResultante: 50,
+        documentoReferencia: "CAF-2026-0901",
+        usuarioResponsavel: {
+          id: USUARIO_FARMACEUTICO.id,
+          nome: USUARIO_FARMACEUTICO.nomeCompleto,
+        },
+      },
+    ],
+  };
 }
 
 resetarEstadoInicial();
@@ -423,6 +504,231 @@ const server = http.createServer(async (req, res) => {
       dataInicioEfetiva: url.searchParams.get("dataInicio") ?? hojeIso,
       dataFimEfetiva: url.searchParams.get("dataFim") ?? hojeIso,
     });
+    return;
+  }
+
+  // 11. GET /api/v1/estoque/metricas (ES-01 / ES-06)
+  if (method === "GET" && pathname === "/api/v1/estoque/metricas") {
+    const todosLotes = saldosEstoqueInMem.flatMap((m) => m.lotes);
+    const totalUnidades = todosLotes.reduce((acc, l) => acc + l.saldoAtual, 0);
+    const riscoRuptura = saldosEstoqueInMem.filter(
+      (m) => m.statusEstoque === "BAIXO_ESTOQUE" || m.statusEstoque === "ZERADO",
+    ).length;
+    const lotesMes = todosLotes.filter(
+      (l) => l.statusValidade === "MES_CORRENTE",
+    ).length;
+    const lotes90d = todosLotes.filter(
+      (l) =>
+        l.statusValidade === "MES_CORRENTE" || l.statusValidade === "CURTA_90D",
+    ).length;
+
+    responderJson(res, 200, {
+      totalMedicamentosAtivos: saldosEstoqueInMem.length,
+      totalUnidadesFisicas: totalUnidades,
+      itensRiscoRuptura: riscoRuptura,
+      lotesValidadeMesAtual: lotesMes,
+      lotesValidadeCurta90d: lotes90d,
+      lotesVencidos: 0,
+      calculadoEm: new Date().toISOString(),
+    });
+    return;
+  }
+
+  // 12. GET /api/v1/estoque/saldos (ES-02 / ES-07 / ES-08)
+  if (method === "GET" && pathname === "/api/v1/estoque/saldos") {
+    const termo = (url.searchParams.get("termo") ?? "").toLowerCase();
+    const categoria = (url.searchParams.get("categoria") ?? "").toUpperCase();
+    const filtroValidade = url.searchParams.get("filtroValidade") ?? "TODOS";
+    const statusEstoque = url.searchParams.get("statusEstoque") ?? "TODOS";
+
+    const filtrados = saldosEstoqueInMem.filter((m) => {
+      if (termo) {
+        const matchNome = m.nome.toLowerCase().includes(termo);
+        const matchPa = m.principioAtivo.toLowerCase().includes(termo);
+        const matchLote = m.lotes.some((l) =>
+          l.numeroLote.toLowerCase().includes(termo),
+        );
+        if (!matchNome && !matchPa && !matchLote) return false;
+      }
+      if (categoria && m.categoria.toUpperCase() !== categoria) {
+        return false;
+      }
+      if (statusEstoque !== "TODOS" && m.statusEstoque !== statusEstoque) {
+        return false;
+      }
+      if (filtroValidade === "MES_CORRENTE") {
+        if (!m.lotes.some((l) => l.statusValidade === "MES_CORRENTE")) {
+          return false;
+        }
+      } else if (filtroValidade === "VALIDADE_90D") {
+        if (
+          !m.lotes.some(
+            (l) =>
+              l.statusValidade === "MES_CORRENTE" ||
+              l.statusValidade === "CURTA_90D",
+          )
+        ) {
+          return false;
+        }
+      } else if (filtroValidade === "VENCIDOS") {
+        if (!m.lotes.some((l) => l.statusValidade === "VENCIDO")) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    responderJson(res, 200, {
+      itens: filtrados,
+      total: filtrados.length,
+      pagina: Number(url.searchParams.get("pagina") ?? 1),
+      itensPorPagina: Number(url.searchParams.get("itensPorPagina") ?? 15),
+      totalPaginas: 1,
+    });
+    return;
+  }
+
+  // 13. POST /api/v1/estoque/lotes/:loteId/ajustes (ES-03 / ES-09)
+  const matchAjuste = pathname.match(
+    /^\/api\/v1\/estoque\/lotes\/([^/]+)\/ajustes$/,
+  );
+  if (method === "POST" && matchAjuste) {
+    const loteId = matchAjuste[1];
+    const body = await lerJsonBody<RegistrarAjusteLoteInputDto>(req);
+
+    let loteAlvo = null;
+    let medAlvo = null;
+    for (const med of saldosEstoqueInMem) {
+      const encontrado = med.lotes.find((l) => l.id === loteId);
+      if (encontrado) {
+        loteAlvo = encontrado;
+        medAlvo = med;
+        break;
+      }
+    }
+
+    if (!loteAlvo || !medAlvo) {
+      responderJson(res, 404, { message: "Lote não encontrado na UBS." });
+      return;
+    }
+
+    if (body.tipoOperacao === "SAIDA" && body.quantidade > loteAlvo.saldoAtual) {
+      responderJson(res, 422, { message: "Saldo insuficiente no lote." });
+      return;
+    }
+
+    const saldoAnterior = loteAlvo.saldoAtual;
+    const saldoAtualizado =
+      body.tipoOperacao === "ENTRADA"
+        ? saldoAnterior + body.quantidade
+        : saldoAnterior - body.quantidade;
+
+    loteAlvo.saldoAtual = saldoAtualizado;
+    medAlvo.saldoTotal = medAlvo.lotes.reduce((s, l) => s + l.saldoAtual, 0);
+
+    const movId = crypto.randomUUID();
+    const dataHora = new Date().toISOString();
+
+    if (!movimentacoesPorLote[loteId]) {
+      movimentacoesPorLote[loteId] = [];
+    }
+    movimentacoesPorLote[loteId].unshift({
+      id: movId,
+      dataHora,
+      tipoMovimentacao:
+        body.tipoOperacao === "ENTRADA" ? "AJUSTE_ENTRADA" : "AJUSTE_SAIDA",
+      operacao: body.tipoOperacao === "ENTRADA" ? "+" : "-",
+      quantidade: body.quantidade,
+      saldoResultante: saldoAtualizado,
+      motivo: body.motivo,
+      justificativa: body.justificativa,
+      usuarioResponsavel: {
+        id: USUARIO_FARMACEUTICO.id,
+        nome: USUARIO_FARMACEUTICO.nomeCompleto,
+      },
+    });
+
+    responderJson(res, 201, {
+      movimentacaoId: movId,
+      loteId,
+      tipoOperacao: body.tipoOperacao,
+      quantidadeAjustada: body.quantidade,
+      saldoAnterior,
+      saldoAtualizado,
+      motivo: body.motivo,
+      justificativa: body.justificativa,
+      realizadoPor: {
+        id: USUARIO_FARMACEUTICO.id,
+        nome: USUARIO_FARMACEUTICO.nomeCompleto,
+      },
+      dataHora,
+    });
+    return;
+  }
+
+  // 14. GET /api/v1/estoque/lotes/:loteId/rastreabilidade (ES-04 / ES-09)
+  const matchRastreabilidade = pathname.match(
+    /^\/api\/v1\/estoque\/lotes\/([^/]+)\/rastreabilidade$/,
+  );
+  if (method === "GET" && matchRastreabilidade) {
+    const loteId = matchRastreabilidade[1];
+    let loteAlvo = null;
+    let medAlvo = null;
+    for (const med of saldosEstoqueInMem) {
+      const encontrado = med.lotes.find((l) => l.id === loteId);
+      if (encontrado) {
+        loteAlvo = encontrado;
+        medAlvo = med;
+        break;
+      }
+    }
+
+    if (!loteAlvo || !medAlvo) {
+      responderJson(res, 404, { message: "Lote não encontrado." });
+      return;
+    }
+
+    responderJson(res, 200, {
+      lote: {
+        id: loteAlvo.id,
+        numeroLote: loteAlvo.numeroLote,
+        dataValidade: loteAlvo.dataValidade,
+        dataCadastro: "2026-09-01T10:00:00.000Z",
+        saldoAtual: loteAlvo.saldoAtual,
+        saldoInicial: 50,
+        fabricanteNome: loteAlvo.fabricanteNome,
+      },
+      medicamento: {
+        id: medAlvo.produtoId,
+        nome: medAlvo.nome,
+        principioAtivo: medAlvo.principioAtivo,
+        apresentacao: `${medAlvo.concentracao} ${medAlvo.formaFarmaceutica}`,
+        formaFarmaceutica: medAlvo.formaFarmaceutica,
+        concentracao: medAlvo.concentracao,
+      },
+      movimentacoes: movimentacoesPorLote[loteId] ?? [],
+    });
+    return;
+  }
+
+  // 15. GET /api/v1/estoque/relatorios/exportar-xlsx (ES-05 / ES-10)
+  if (
+    method === "GET" &&
+    pathname === "/api/v1/estoque/relatorios/exportar-xlsx"
+  ) {
+    const tipoRelatorio =
+      url.searchParams.get("tipoRelatorio") ?? "SALDOS_ATUAIS";
+    const dataInicio = url.searchParams.get("dataInicio") ?? "2026-10-01";
+    const dataFim = url.searchParams.get("dataFim") ?? "2026-10-31";
+    const nomeArquivo = `relatorio_estoque_${tipoRelatorio}_${dataInicio}_${dataFim}.xlsx`;
+    const bufferXlsx = Buffer.from("504b0304140000000800", "hex");
+
+    res.writeHead(200, {
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${nomeArquivo}"`,
+    });
+    res.end(bufferXlsx);
     return;
   }
 

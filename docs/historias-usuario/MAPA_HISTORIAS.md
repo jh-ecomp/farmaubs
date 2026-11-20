@@ -82,12 +82,12 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | ES-03 | Backend | API de Ajustes: ajuste manual transacional com motivo e auditoria | ✅ Redigida | ✅ Concluída | — |
 | ES-04 | Backend | API de Rastreabilidade: linha do tempo de movimentações por lote | ✅ Redigida | ✅ Concluída | — |
 | ES-05 | Backend | API de Relatórios: geração de planilha XLSX por período e perdas | ✅ Redigida | ⏳ Não iniciada | — |
-| ES-06 | Frontend | Painel superior: cartões com indicadores em tempo real (RF018, RF022) | ✅ Redigida | ⏳ Não iniciada | ES-MOB-01 |
-| ES-07 | Frontend | Tabela de saldos por produto, expansão de lotes e destaque laranja | ✅ Redigida | ⏳ Não iniciada | ES-MOB-02 |
-| ES-08 | Frontend | Barra de filtros avançados: busca, vencimento no mês e categorias | ✅ Redigida | ⏳ Não iniciada | ES-MOB-03 |
-| ES-09 | Frontend | Modais de ficha de movimentação do lote e ajuste rápido justificado | ✅ Redigida | ⏳ Não iniciada | ES-MOB-04 / ES-MOB-05 |
-| ES-10 | Frontend | Interface de relatórios com filtros por data e exportação em XLSX | ✅ Redigida | ⏳ Não iniciada | — |
-| ES-11 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Controle de Estoque (substituindo Vitest) | ✅ Redigida | ⏳ Não iniciada | — |
+| ES-06 | Frontend | Painel superior: cartões com indicadores em tempo real (RF018, RF022) | ✅ Redigida | ✅ Concluída | ES-MOB-01 |
+| ES-07 | Frontend | Tabela de saldos por produto, expansão de lotes e destaque laranja | ✅ Redigida | ✅ Concluída | ES-MOB-02 |
+| ES-08 | Frontend | Barra de filtros avançados: busca, vencimento no mês e categorias | ✅ Redigida | ✅ Concluída | ES-MOB-03 |
+| ES-09 | Frontend | Modais de ficha de movimentação do lote e ajuste rápido justificado | ✅ Redigida | ✅ Concluída | ES-MOB-04 / ES-MOB-05 |
+| ES-10 | Frontend | Interface de relatórios com filtros por data e exportação em XLSX | ✅ Redigida | ✅ Concluída | — |
+| ES-11 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Controle de Estoque (substituindo Vitest) | ✅ Redigida | ✅ Concluída | — |
 | ES-MOB-01 | Mobile | Dashboard de saldos e indicadores de criticidade na palma da mão | ✅ Redigida | ⏳ Não iniciada | ES-06 |
 | ES-MOB-02 | Mobile | Consulta rápida de saldos, lotes e validade no celular | ✅ Redigida | ⏳ Não iniciada | ES-07 |
 | ES-MOB-03 | Mobile | Filtros rápidos de estoque (vencimento no mês, em falta) | ✅ Redigida | ⏳ Não iniciada | ES-08 |

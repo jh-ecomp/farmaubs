@@ -93,6 +93,6 @@ Funcionalidade: Cartões de Métricas de Estoque (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Componente implementado com Tailwind CSS e grid responsivo (1 col mobile, 2 col tablet, 4 col desktop).
-- [ ] Cartão de validade estilizado com a cor laranja acordada e suporte a clique de atalho.
-- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` para Teste de Sistema de Frontend e `moon run frontend:test-e2e` para E2E Full-Stack) validando skeleton de carregamento, clique de filtro e conformidade com `@axe-core/playwright` (zero violações WCAG 2.1 AA).
+- [x] Componente implementado com Tailwind CSS e grid responsivo (1 col mobile, 2 col tablet, 4 col desktop).
+- [x] Cartão de validade estilizado com a cor laranja acordada e suporte a clique de atalho.
+- [x] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` para Teste de Sistema de Frontend e `moon run frontend:test-e2e` para E2E Full-Stack) validando skeleton de carregamento, clique de filtro e conformidade com `@axe-core/playwright` (zero violações WCAG 2.1 AA).

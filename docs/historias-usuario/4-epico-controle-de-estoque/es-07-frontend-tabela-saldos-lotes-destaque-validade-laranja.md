@@ -115,6 +115,6 @@ Funcionalidade: Tabela de Saldos e Detalhamento de Lotes (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Tabela implementada em React 19 com suporte a expansão e colapso de linhas.
-- [ ] Badges de validade implementados com a cor laranja acordada e contraste WCAG 2.1 AA (> 4.5:1) verificado no navegador real com `@axe-core/playwright`.
-- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando comportamento do accordion, renderização condicional de badges e eventos de clique.
+- [x] Tabela implementada em React 19 com suporte a expansão e colapso de linhas.
+- [x] Badges de validade implementados com a cor laranja acordada e contraste WCAG 2.1 AA (> 4.5:1) verificado no navegador real com `@axe-core/playwright`.
+- [x] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando comportamento do accordion, renderização condicional de badges e eventos de clique.
