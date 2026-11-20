@@ -22,6 +22,13 @@ const MENU_ITEMS: MenuItem[] = [
   },
   {
     label: "Recebimento",
+    path: "/recebimento",
+    icon: "move_to_inbox",
+    allowedRoles: MATRIZ_PERMISSOES_ROTAS["/recebimento"],
+    grupo: "operacional",
+  },
+  {
+    label: "Estoque",
     path: "/estoque",
     icon: "inventory_2",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/estoque"],
@@ -145,8 +152,8 @@ export function Sidebar() {
                   {itemsDoGrupo.map((item) => {
                     const isActive =
                       location.pathname === item.path ||
-                      (item.path === "/estoque" &&
-                        location.pathname === "/recebimento");
+                      (item.path === "/dispensas" &&
+                        location.pathname === "/dispensacao");
 
                     return (
                       <Link
@@ -180,7 +187,7 @@ export function Sidebar() {
 
       {/* Rodapé Institucional SUS */}
       <div className="p-space-xs border-t border-border-crisp bg-surface-subtle shrink-0">
-        <div className="flex items-center gap-space-xs text-text-tertiary font-caption-micro text-caption-micro leading-snug">
+        <div className="flex items-center gap-space-xs text-text-secondary font-caption-micro text-caption-micro leading-snug">
           <span
             className="material-symbols-outlined text-[16px] text-text-tertiary"
             aria-hidden="true"

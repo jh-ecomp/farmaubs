@@ -77,7 +77,7 @@ Funcionalidade: Autenticação, Sessão HttpOnly, Timeout de Inatividade e RBAC 
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] Arquivos `.feature` em português criados para Sistema Frontend e E2E Full-Stack cobrindo Login, Troca de Senha, Timeout (`page.clock`), RBAC e Gestão de Usuários.
-- [ ] Validação explícita de que `@FarmaUBS:token` não existe no `localStorage` (`AC-30`).
-- [ ] Auditoria `@axe-core/playwright` executada sem violações WCAG 2.1 AA nas telas do Épico 1.
-- [ ] Tarefas `moon run frontend:test-bdd` e `moon run frontend:test-e2e` passando sem erros.
+- [x] Arquivos `.feature` em português criados para Sistema Frontend e E2E Full-Stack cobrindo Login, Troca de Senha, Timeout (`page.clock`), RBAC e Gestão de Usuários.
+- [x] Validação explícita de que `@FarmaUBS:token` não existe no `localStorage` (`AC-30`).
+- [x] Auditoria `@axe-core/playwright` executada sem violações WCAG 2.1 AA nas telas do Épico 1.
+- [x] Tarefas `moon run frontend:test-bdd` e `moon run frontend:test-e2e` passando sem erros.

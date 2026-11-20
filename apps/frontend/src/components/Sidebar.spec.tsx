@@ -37,6 +37,7 @@ describe("Sidebar — Renderização Dinâmica de Menu por Perfil RBAC (NF009 / 
     // Rotas autorizadas presentes
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /recebimento/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^estoque$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /dispensas/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /indicadores/i })).toBeInTheDocument();
 
@@ -82,6 +83,7 @@ describe("Sidebar — Renderização Dinâmica de Menu por Perfil RBAC (NF009 / 
 
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /recebimento/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^estoque$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /dispensas/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /indicadores/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /relatórios/i })).toBeInTheDocument();
@@ -96,10 +98,12 @@ describe("Sidebar — Renderização Dinâmica de Menu por Perfil RBAC (NF009 / 
 
     renderWithProviders(<Sidebar />, { initialEntries: ["/estoque"] });
 
-    const linkEstoque = screen.getByRole("link", { name: /recebimento/i });
+    const linkEstoque = screen.getByRole("link", { name: /^estoque$/i });
+    const linkRecebimento = screen.getByRole("link", { name: /recebimento/i });
     const linkDashboard = screen.getByRole("link", { name: /dashboard/i });
 
     expect(linkEstoque).toHaveAttribute("aria-current", "page");
+    expect(linkRecebimento).not.toHaveAttribute("aria-current");
     expect(linkDashboard).not.toHaveAttribute("aria-current");
   });
 });

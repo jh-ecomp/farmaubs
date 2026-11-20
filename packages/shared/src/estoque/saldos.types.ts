@@ -53,3 +53,15 @@ export interface ConsultarSaldosPaginadosResponseDto {
   itensPorPagina: number;
   totalPaginas: number;
 }
+
+/** Parâmetros de consulta filtrada e paginada de saldos de estoque (ES-02 / ES-08). */
+export interface ConsultarSaldosQueryDto {
+  unidadeId?: string;
+  termo?: string;
+  categoria?: string;
+  filtroValidade?: FiltroValidadeSaldos;
+  statusEstoque?: FiltroStatusEstoque;
+  pagina?: number;
+  itensPorPagina?: number;
+}
+

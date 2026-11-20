@@ -24,3 +24,11 @@ Funcionalidade: Fluxo Completo da Tela Principal de Dispensação (Camada D)
     Quando o farmacêutico clica em "Confirmar Baixa de Estoque" e a API responde com 201 Created
     Então uma mensagem de sucesso do atendimento deve ser exibida
     E os campos de paciente e o carrinho da receita devem ser resetados para novo atendimento
+
+  Cenário: Bloqueio de finalização para medicamento antimicrobiano com receita vencida (> 10 dias)
+    Dado que o farmacêutico preenche os 4 dados obrigatórios do paciente
+    Quando ele adiciona o antimicrobiano "Amoxicilina - 500mg Cápsula" ao carrinho
+    E informa uma data de emissão da receita médica anterior a 10 dias
+    Então deve ser exibido o alerta de receita de antimicrobiano fora da validade legal
+    E o botão "Finalizar Atendimento" deve permanecer desabilitado
+
