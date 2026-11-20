@@ -18,3 +18,13 @@ export interface EstoqueMetricasResponseDto {
   /** Instante do cálculo, ISO 8601 UTC. */
   calculadoEm: string;
 }
+
+/** Alias canônico para o DTO de métricas do dashboard de estoque (ES-06). */
+export type EstoqueMetricasDTO = EstoqueMetricasResponseDto;
+
+/** Filtro disparado ao clicar nos cartões interativos de métricas (ES-06). */
+export interface FiltroCardsEstoque {
+  statusEstoque?: "BAIXO_ESTOQUE" | "ZERADO" | "TODOS";
+  filtroValidade?: "MES_CORRENTE" | "VALIDADE_90D" | "VENCIDOS" | "TODOS";
+}
+

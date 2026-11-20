@@ -107,7 +107,7 @@ Funcionalidade: Modais de Ajuste e Ficha de Rastreabilidade (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Modais desenvolvidos com validação via React Hook Form + Zod.
-- [ ] Invalidação automática dos caches de `estoque/metricas` e `estoque/saldos` após mutação.
-- [ ] Linha do tempo de rastreabilidade com formatação limpa e clara das movimentações.
-- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando bloqueio de saldo excedente, focus trap (`Tab`, `Escape`), auditoria WCAG 2.1 AA (`@axe-core/playwright`) e feedback toast.
+- [x] Modais desenvolvidos com validação via React Hook Form + Zod.
+- [x] Invalidação automática dos caches de `estoque/metricas` e `estoque/saldos` após mutação.
+- [x] Linha do tempo de rastreabilidade com formatação limpa e clara das movimentações.
+- [x] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando bloqueio de saldo excedente, focus trap (`Tab`, `Escape`), auditoria WCAG 2.1 AA (`@axe-core/playwright`) e feedback toast.
