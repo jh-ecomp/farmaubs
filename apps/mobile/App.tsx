@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { StatusBar } from "expo-status-bar";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { BannerConexao } from "./src/screens/BannerConexao";
 import { SeletorUbs } from "./src/screens/SeletorUbs";
 import { TrocaSenhaScreen } from "./src/screens/TrocaSenhaScreen";
+import { IdentificacaoPacienteScreen } from "./src/screens/IdentificacaoPacienteScreen";
+import { BuscaMedicamentoScreen } from "./src/screens/BuscaMedicamentoScreen";
+import { CarrinhoScreen } from "./src/screens/CarrinhoScreen";
+import { incluirNoCarrinho, type ItemCarrinho } from "./src/screens/carrinho";
 import { MENSAGEM_SENHA_ALTERADA } from "./src/screens/senha-forte";
 import { sessionService } from "./src/services/session.service";
 import { encerrarSessao, MENSAGEM_CONFIRMAR_SAIDA } from "./src/services/logout";
@@ -45,10 +49,14 @@ import { theme } from "./src/theme/tokens";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
-type Destino = "login" | "trocar-senha" | "dashboard";
+type Destino = "login" | "trocar-senha" | "dashboard" | "dispensar";
+type EtapaDispensa = "paciente" | "medicamento" | "carrinho";
 
 export default function App() {
   const [destino, setDestino] = useState<Destino>("login");
+  const [etapaDispensa, setEtapaDispensa] = useState<EtapaDispensa>("paciente");
+  const [itensCarrinho, setItensCarrinho] = useState<ItemCarrinho[]>([]);
+  const [dataReceita, setDataReceita] = useState("");
   const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(null);
   const [avisoSessao, setAvisoSessao] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
@@ -252,6 +260,9 @@ export default function App() {
     if (!unidade) return;
     await sessionService.salvarUnidadeAtiva(unidade.id);
     setUnidadeAtivaId(unidade.id);
+    setEtapaDispensa("paciente");
+    setItensCarrinho([]);
+    setDataReceita("");
     setAvisoUnidade(mensagemUnidadeAlterada(unidade.nome));
   }
 
@@ -416,15 +427,78 @@ export default function App() {
             contentContainerStyle={styles.destino}
             keyboardShouldPersistTaps="handled"
           >
-            <Dashboard nome={usuario.nomeCompleto} alertaIndisponivel={alertaIndisponivel} />
+            <Dashboard
+              nome={usuario.nomeCompleto}
+              alertaIndisponivel={alertaIndisponivel}
+              onDispensar={() => {
+                setItensCarrinho([]);
+                setDataReceita("");
+                setEtapaDispensa("paciente");
+                setDestino("dispensar");
+              }}
+            />
           </ScrollView>
+        </SafeAreaView>
+      )}
+      {autenticado && destino === "dispensar" && (
+        <SafeAreaView style={styles.autenticado}>
+          <SeletorUbs
+            unidades={unidades}
+            ativaId={unidadeAtivaId}
+            aviso={avisoUnidade}
+            onAlternar={alternarUnidade}
+            onSair={pedirSaida}
+            reservaTopo={!bannerAberto}
+          />
+          <View style={styles.miolo}>
+            {etapaDispensa === "paciente" ? (
+              <IdentificacaoPacienteScreen
+                key={unidadeAtivaId ?? "sem-unidade"}
+                apiBaseUrl={API_BASE_URL}
+                semConexao={semConexao}
+                onVoltar={() => {
+                  setItensCarrinho([]);
+                  setDataReceita("");
+                  setDestino("dashboard");
+                }}
+                onAvancar={() => setEtapaDispensa("medicamento")}
+              />
+            ) : etapaDispensa === "medicamento" ? (
+              <BuscaMedicamentoScreen
+                key={unidadeAtivaId ?? "sem-unidade"}
+                apiBaseUrl={API_BASE_URL}
+                ubsId={unidadeAtivaId}
+                semConexao={semConexao}
+                totalItens={itensCarrinho.length}
+                onVoltar={() => setEtapaDispensa("paciente")}
+                onIncluir={(item) => setItensCarrinho((atuais) => incluirNoCarrinho(atuais, item))}
+                onAbrirCarrinho={() => setEtapaDispensa("carrinho")}
+              />
+            ) : (
+              <CarrinhoScreen
+                itens={itensCarrinho}
+                dataReceita={dataReceita}
+                onMudarItens={setItensCarrinho}
+                onMudarData={setDataReceita}
+                onVoltar={() => setEtapaDispensa("medicamento")}
+              />
+            )}
+          </View>
         </SafeAreaView>
       )}
     </View>
   );
 }
 
-function Dashboard({ nome, alertaIndisponivel }: { nome?: string; alertaIndisponivel?: boolean }) {
+function Dashboard({
+  nome,
+  alertaIndisponivel,
+  onDispensar,
+}: {
+  nome?: string;
+  alertaIndisponivel?: boolean;
+  onDispensar: () => void;
+}) {
   return (
     <View style={styles.gradeAviso}>
       {alertaIndisponivel ? <AvisoInatividade /> : null}
@@ -436,7 +510,11 @@ function Dashboard({ nome, alertaIndisponivel }: { nome?: string; alertaIndispon
       </View>
       <View style={styles.grade}>
         <Atalho titulo="Estoque" texto="Controle de lotes, validades e entradas de medicamentos." />
-        <Atalho titulo="Dispensas" texto="Registro e consulta de dispensações a pacientes do SUS." />
+        <Atalho
+          titulo="Dispensas"
+          texto="Registro e consulta de dispensações a pacientes do SUS."
+          onPress={onDispensar}
+        />
         <Atalho titulo="Indicadores" texto="Métricas de consumo, curva ABC e cobertura da UBS." />
       </View>
     </View>
@@ -455,12 +533,20 @@ function AvisoInatividade() {
   );
 }
 
-function Atalho({ titulo, texto }: { titulo: string; texto: string }) {
+function Atalho({ titulo, texto, onPress }: { titulo: string; texto: string; onPress?: () => void }) {
+  if (!onPress) {
+    return (
+      <View style={styles.atalho} accessibilityRole="text">
+        <Text style={styles.atalhoTitulo}>{titulo}</Text>
+        <Text style={styles.atalhoTexto}>{texto}</Text>
+      </View>
+    );
+  }
   return (
-    <View style={styles.atalho} accessibilityRole="text">
+    <Pressable onPress={onPress} accessibilityRole="button" style={styles.atalho}>
       <Text style={styles.atalhoTitulo}>{titulo}</Text>
       <Text style={styles.atalhoTexto}>{texto}</Text>
-    </View>
+    </Pressable>
   );
 }
 
