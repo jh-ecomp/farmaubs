@@ -33,14 +33,14 @@ type CarrinhoScreenProps = {
   onMudarItens: (itens: ItemCarrinho[]) => void;
   onMudarData: (iso: string) => void;
   onVoltar: () => void;
+  onRevisar: () => void;
 };
 
 /**
  * [DI-MOB-03]: Lista do atendimento, posologia e bloqueio da receita de antimicrobiano.
  */
-export function CarrinhoScreen({ itens, dataReceita, onMudarItens, onMudarData, onVoltar }: CarrinhoScreenProps) {
+export function CarrinhoScreen({ itens, dataReceita, onMudarItens, onMudarData, onVoltar, onRevisar }: CarrinhoScreenProps) {
   const [calendarioAberto, setCalendarioAberto] = useState(false);
-  const [pronto, setPronto] = useState(false);
   const antibiotico = contemAntimicrobiano(itens);
   const validacao = validarReceitaDoCarrinho(itens, dataReceita);
   const totais = totaisDoCarrinho(itens);
@@ -51,7 +51,6 @@ export function CarrinhoScreen({ itens, dataReceita, onMudarItens, onMudarData, 
     setCalendarioAberto(false);
     if (evento.type !== "set" || !data) return;
     onMudarData(isoDaDataLocal(data));
-    setPronto(false);
   }
 
   function pedirRemocao(item: ItemCarrinho) {
@@ -63,7 +62,6 @@ export function CarrinhoScreen({ itens, dataReceita, onMudarItens, onMudarData, 
         style: "destructive",
         onPress: () => {
           onMudarItens(removerItem(itens, item.medicamento.id, item.lote.id));
-          setPronto(false);
         },
       },
     ]);
@@ -168,9 +166,8 @@ export function CarrinhoScreen({ itens, dataReceita, onMudarItens, onMudarData, 
       <View style={styles.rodape}>
         <Text style={styles.total}>{totais.totalItens} {totais.totalItens === 1 ? "item" : "itens"}</Text>
         <Text style={styles.total}>{totais.totalUnidades} unidades</Text>
-        {pronto ? <Text style={styles.pronto}>Atendimento pronto para revisão.</Text> : null}
         <Pressable
-          onPress={() => setPronto(true)}
+          onPress={onRevisar}
           disabled={!pode}
           accessibilityRole="button"
           accessibilityState={{ disabled: !pode }}
@@ -290,7 +287,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
-  pronto: { color: "#065F46", fontWeight: "700" },
   rodape: {
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",

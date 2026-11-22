@@ -22,6 +22,7 @@ import {
   formatarMascaraDataBr,
   limparNaoNumericos,
   normalizarDataParaIso,
+  type PacienteDispensacaoRequest,
 } from "@farmaubs/shared";
 import { theme } from "../theme/tokens";
 import { MENSAGEM_REDE } from "./login-form";
@@ -46,7 +47,7 @@ type IdentificacaoPacienteScreenProps = {
   apiBaseUrl: string;
   semConexao?: boolean;
   onVoltar: () => void;
-  onAvancar: (pacienteId: string) => void;
+  onAvancar: (paciente: PacienteDispensacaoRequest) => void;
 };
 
 /**
@@ -195,7 +196,13 @@ export function IdentificacaoPacienteScreen({
       return;
     }
     if (pacienteId) {
-      onAvancar(pacienteId);
+      onAvancar({
+        id: pacienteId,
+        cns: limparNaoNumericos(cns),
+        cpf: limparNaoNumericos(cpf),
+        nomeCompleto: nome.trim(),
+        dataNascimento: normalizarDataParaIso(nascimento),
+      });
       return;
     }
     setEnviando(true);
