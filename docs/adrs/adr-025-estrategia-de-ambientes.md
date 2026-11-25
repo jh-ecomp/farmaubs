@@ -1,7 +1,7 @@
 ## ADR-025 - Estratégia de ambientes
 
 ### Status
-🟢 Decidido e documentado — última atualização: 24/07/2026
+🟢 Decidido e documentado — última atualização: 24/11/2026 (promoção automatizada via GitHub Actions com gate manual em `production` conforme `ADR-024`)
 
 ### Contexto
 
@@ -38,7 +38,7 @@ Adotar a seguinte estratégia de ambientes:
 1. **Desenvolvimento local**: já resolvido pelo ADR-023, individual por desenvolvedor, via `docker-compose.dev.yml`.
 2. **Homologação**: stack Docker Compose isolada (`farmaubs-hml`), rodando na mesma VPS de produção definida no ADR-021, com banco de dados, API e frontend próprios, isolados por rede Docker da stack de produção. O ambiente de homologação utiliza exclusivamente **dados sintéticos ou anonimizados** — nunca dados reais de pacientes (CNS/CPF), reforçando a exigência do NF010.
 3. **Produção**: stack Docker Compose isolada (`farmaubs-prod`), na mesma VPS, operando sobre dados reais das UBSs parceiras.
-4. **Promoção entre ambientes**: a promoção de uma mudança de homologação para produção é **manual** nesta fase — uma pessoa da equipe valida o comportamento em homologação e decide explicitamente promover para produção. A automação desse fluxo é deliberadamente adiada para o ADR-024 (pipeline de CI/CD), ainda não priorizado no primeiro backlog.
+4. **Promoção entre ambientes (atualizado pelo `ADR-024`)**: o deploy em `farmaubs-hml` ocorre automaticamente no corte de release (`release/vX.Y.Z`) seguido de *Smoke Tests*, testes de carga e estresse (`k6`) sobre dados sintéticos (`seed-qa.js`). A promoção para `farmaubs-prod` mantém **decisão humana obrigatória** via *GitHub Environment Protection Rule* (`production`), promovendo o mesmo digest de imagem já validado em homologação.
 
 ### Consequências
 

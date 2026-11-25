@@ -107,6 +107,7 @@ O Moonrepo gerencia o build, execução de tarefas e cache inteligente:
 
 - `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`: ambiente de desenvolvimento com PostgreSQL (porta **5434**) e API.
 - `infra/docker-compose.test.yml`: banco PostgreSQL efêmero na porta **5435** para testes automatizados de migrações e schema.
+- `infra/docker-compose.prod.yml` e `infra/proxy/Caddyfile`: composição das stacks isoladas `farmaubs-hml` e `farmaubs-prod` na VPS (StayCloud + Cloudflare) consumindo imagens imutáveis do `ghcr.io` (`ADR-023`, `ADR-024`, `ADR-025`).
 
 ---
 
@@ -276,6 +277,19 @@ Execute estas etapas nesta ordem antes de enviar alterações:
    - Marque os critérios concluídos com `[x]` no arquivo markdown da história (`docs/historias-usuario/.../<historia>.md`).
    - Atualize o status para `✅ Concluída` no arquivo `PROGRESSO.md` do épico.
    - Atualize a linha correspondente no mapa consolidado geral (`docs/historias-usuario/MAPA_HISTORIAS.md`).
+
+---
+
+### 4.1 Promoção de releases (`develop` → `release/*` HML → `main` PROD) e rotação de segredos (`ADR-024`, `ADR-027`)
+
+Quando a esteira de entrega contínua estiver ativa (Épico 7 — Release 1):
+
+1. **Integração diária (`feature/*` → `develop`):** PRs passam obrigatoriamente pelo workflow `.github/workflows/ci.yml` (`lint`, `typecheck`, `build`, unitários/BDD, schema/integração RLS em Postgres 18 e Playwright).
+2. **Corte para Homologação (`develop` → `release/vX.Y.Z`):** publica imagem candidata única (`vX.Y.Z-rc`) no `ghcr.io`, atualiza `farmaubs-hml` com massa exclusivamente sintética (`seed-qa.js`) e executa *Smoke Tests* automáticos, habilitando a bateria `k6` de *Load* (50 VUs) e *Stress* (até 200 VUs).
+3. **Promoção para Produção (`release/vX.Y.Z` → `main` + tag `vX.Y.Z`):** exige aprovação manual no GitHub Environment `production`, re-tagueia o **mesmo digest** validado em HML (sem novo `docker build`), executa backup pré-deploy no Cloudflare R2, aplica `migration:run:prod` e verifica `/api/v1/health` em modo somente leitura.
+4. **Rotação manual de segredos em caso de incidente (`ADR-027`):**
+   - Conecte via SSH na VPS (`deploy@<VPS_HOST>`), gere novo valor aleatório (`openssl rand -hex 32`) e atualize `/opt/farmaubs/prod/.env` (mantendo `chmod 600`).
+   - Se a rotação envolver `DB_PASSWORD` / `FARMAUBS_APP_DB_PASSWORD`, altere primeiro a senha da role no PostgreSQL (`ALTER ROLE farmaubs_app WITH PASSWORD '...'`) e em seguida recrie apenas o container da API (`docker compose -p farmaubs-prod -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d --force-recreate api`), validando `GET /api/v1/health`.
 
 ---
 

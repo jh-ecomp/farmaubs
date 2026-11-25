@@ -29,8 +29,8 @@
    - Inicializar `@sentry/nestjs` apenas se `SENTRY_DSN` estiver preenchida (se vazia, sistema roda normalmente sem erro — facilitando dev/CI).
    - Configurar `environment` (`NODE_ENV` / `APP_ENV`) e hook `beforeSend` removendo `cookies`, headers `Authorization` e campos de PII (`cpf`, `cns`, `senha`) antes de enviar eventos ao Sentry.
 3. **Healthcheck Enriquecido (`GET /api/v1/health`)**:
-   - Manter compatibilidade com o healthcheck atual do `docker-compose.yml` (`status: 'ok'`).
-   - Validar conectividade real com o PostgreSQL (`SELECT 1`), retornando `503 Service Unavailable` caso o banco esteja inacessível, além de incluir `uptime` e `timestamp` (sem expor versões internas sensíveis ou stack traces).
+   - Preservar integralmente o contrato existente de `HealthController` / `HealthService` (`status: 'ok' | 'degraded'`, `checks.database: 'up' | 'down'` com `SELECT 1` e timeout de 2s via `TypeOrmDatabaseHealthAdapter`, retornando `503 Service Unavailable` quando `degraded`) para não quebrar o `docker-compose.yml` nem `health.e2e-spec.ts`.
+   - Enriquecer a resposta com `uptime` (em segundos) junto ao `timestamp` existente (sem expor versões internas sensíveis ou stack traces).
 
 ---
 
@@ -39,7 +39,7 @@
 - `apps/backend/package.json` (`nestjs-pino`, `pino-http`, `@sentry/nestjs`)
 - `apps/backend/src/app.module.ts` (`LoggerModule.forRootAsync`)
 - `apps/backend/src/main.ts` (`bufferLogs: true`, `app.useLogger(app.get(Logger))`)
-- `apps/backend/src/health/health.controller.ts` (verificação real de DB + resposta `503` em falha)
+- `apps/backend/src/health/health.service.ts` e `apps/backend/src/health/health.controller.ts` (inclusão de `uptime` mantendo contrato `ok`/`degraded` + `503`)
 - `.env.example` (`LOG_LEVEL`, `SENTRY_DSN`, `APP_ENV`)
 
 ---
@@ -58,12 +58,12 @@ Funcionalidade: Observabilidade Estruturada e Proteção de Dados Sensíveis em 
   Cenário: Endpoint de health retorna 200 quando PostgreSQL está acessível
     Dado que o banco de dados PostgreSQL está saudável
     Quando uma requisição GET for enviada para "/api/v1/health"
-    Então a resposta deve retornar status HTTP 200 com o campo "status" igual a "ok"
+    Então a resposta deve retornar status HTTP 200 com o campo "status" igual a "ok" e "uptime" numérico
 
   Cenário: Endpoint de health retorna 503 quando o banco está indisponível
     Dado que a conexão com o banco de dados falhou
     Quando uma requisição GET for enviada para "/api/v1/health"
-    Então a resposta deve retornar status HTTP 503 com o campo "status" igual a "error"
+    Então a resposta deve retornar status HTTP 503 com o campo "status" igual a "degraded"
 ```
 
 ---

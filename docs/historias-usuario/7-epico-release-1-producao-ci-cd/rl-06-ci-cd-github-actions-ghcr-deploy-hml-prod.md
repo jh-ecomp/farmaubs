@@ -18,20 +18,24 @@
 
 ## 2. Regras de negócio e requisitos técnicos
 
-1. **Workflow de Integração Contínua (`.github/workflows/ci.yml`)**:
+1. **Padronização das Tasks do Moonrepo e Branch Base (`.moon/` e `moon.yml`)**:
+   - Adicionar a task `typecheck` em `apps/backend/moon.yml` (`tsc --noEmit`), `apps/frontend/moon.yml` (`tsc -b --noEmit`) e `packages/shared/moon.yml` (`tsc --noEmit`), alinhando com `apps/mobile/moon.yml`.
+   - Configurar `.moon/workspace.yml` e o checkout com `fetch-depth: 0` no CI para que `moon run :<task> --affected` compare corretamente contra a branch alvo do PR (`develop` ou `main`).
+2. **Workflow de Integração Contínua (`.github/workflows/ci.yml`)**:
    - Disparado em `pull_request` para `develop` e `main`, e em `push` para `develop`.
-   - **Job 1 — Qualidade Estática & Unitários:** Instala `pnpm` + cache, executa via `moon` (`--affected` em PRs) `lint`, `typecheck`, `build` (`shared`, `backend`, `frontend`) e testes unitários (`backend:test`, `frontend:test`).
-   - **Job 2 — Integração, Schema e BDD Backend:** Sobe *Service Container* `postgres:18-alpine`, executa `01-create-role-farmaubs-app.sh`, aplica migrations e executa `test:schema`, `test:integration` (incluindo o **teste obrigatório de RLS** e bloqueio `SELECT ... FOR UPDATE`) e `test:bdd` (Cucumber).
-   - **Job 3 — Sistema de Frontend e E2E Full-Stack (Playwright):** Instala Chromium headless (`playwright install --with-deps chromium`), executa `frontend:test-bdd` e, quando houver alteração relevante, sobe `postgres` + `api` + `frontend` com seed sintético para rodar `frontend:test-e2e`, fazendo upload de `playwright-report/` e traces como *artifacts* em caso de falha.
-2. **Workflow de Entrega Contínua (`.github/workflows/cd.yml`)**:
-   - **Estágio 1 — Cut para QA/HML (`push` em branch `release/*` ou disparo manual `workflow_dispatch`):**
-     - Faz build multi-stage das imagens `ghcr.io/<owner>/farmaubs-api:<tag>` e `ghcr.io/<owner>/farmaubs-frontend:<tag>` (tagueadas com o SHA/versão, ex.: `v1.0.0-rc.1`).
-     - Conecta via SSH na VPS (`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` em GitHub Secrets), faz `docker compose -p farmaubs-hml pull`, aplica `migration:run:prod` no banco de HML e sobe a stack `farmaubs-hml`.
-     - Executa o script de *Smoke Tests* (`RL-08`) contra `https://hml.<dominio>`.
-   - **Estágio 2 — Promoção para Produção (`push` de tag `v*.*.*` na `main` ou `workflow_dispatch` com tag já validada):**
+   - **Job 1 — Qualidade Estática & Unitários:** Instala Node 22 + `pnpm` + cache, executa via `moon` (`--affected` em PRs, completo em `push`) `lint`, `typecheck`, `build` (`shared`, `backend`, `frontend`) e testes unitários/BDD sem banco (`backend:test`, `backend:test-bdd` Cucumber de domínio, `frontend:test`).
+   - **Job 2 — Schema, Integração RLS e E2E de API Backend:** Sobe *Service Container* `postgres:18-alpine`, executa `infra/db/init/01-create-role-farmaubs-app.sh` (criando a role não-dona `farmaubs_app`), roda `jest --config test/schema/jest-schema.json --runInBand` diretamente contra o Postgres do job (sem invocar `docker compose`), seguido de `test:integration` (incluindo obrigatoriamente `rls-tenant-isolation` e `autorizacao-tenant-rls` + bloqueio pessimista `SELECT ... FOR UPDATE`) e `test:e2e` (`jest-e2e.json` contra NestJS + Postgres real).
+   - **Job 3 — Sistema de Frontend e Contrato E2E UI (Playwright):** Instala Chromium headless (`playwright install --with-deps chromium`) e executa `frontend:test-bdd` (`sistema-frontend`) e `frontend:test-e2e` (`e2e-fullstack` com `e2e-api-server.ts` e auditoria WCAG `@axe-core/playwright`), salvando `playwright-report/` e `test-results/` como *artifacts* em caso de falha (`if: failure()`). *(A validação fim a fim contra a stack Docker real completa ocorre no Estágio 1 do CD em HML via `smoke-test.mjs`).*
+3. **Workflow de Entrega Contínua e Promoção Imutável (`.github/workflows/cd.yml`)**:
+   - **Estágio 1 — Cut para QA/HML (`push` em branch `release/v*` ou `workflow_dispatch`):**
+     - Extrai a versão da branch (ex.: `release/v1.0.0` → tag candidata `v1.0.0-rc` + tag imutável `v1.0.0-rc.<run_number>` + `sha-<short>`), faz build multi-stage único das imagens `ghcr.io/<owner>/farmaubs-api` e `ghcr.io/<owner>/farmaubs-frontend` e publica no `ghcr.io`.
+     - Sincroniza via SCP/SSH os arquivos de infraestrutura (`infra/docker-compose.yml`, `infra/docker-compose.prod.yml`, `infra/db/init/01-create-role-farmaubs-app.sh` e `infra/scripts/`) para `/opt/farmaubs/` na VPS StayCloud (`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_PORT`).
+     - Autentica no `ghcr.io` na VPS (`GITHUB_TOKEN` / `GHCR_READ_TOKEN`), faz `docker compose -p farmaubs-hml pull`, executa `node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js` no banco de HML, garante o seed sintético (`node dist/database/seed-qa.js` com `ALLOW_QA_SEED=true` e `APP_ENV=hml`) e atualiza `farmaubs-hml`.
+     - Executa automaticamente `node infra/scripts/smoke-test.mjs` (`RL-08`) contra `HML_URL` (`https://hml.<dominio>`), falhando o workflow se qualquer checagem falhar.
+   - **Estágio 2 — Promoção para Produção (`push` de tag `v*.*.*` na `main` ou `workflow_dispatch` informando a tag validada, ex.: `v1.0.0-rc`):**
      - Vinculado ao **GitHub Environment `production`** com regra de **aprovação manual obrigatória** (*Required Reviewers*).
-     - **Não recompila o código:** reutiliza a exata imagem imutável já validada em QA (re-tagueando ou referenciando o mesmo digest/tag).
-     - Conecta via SSH na VPS, executa backup pré-deploy rápido, roda `migration:run:prod` no banco de produção, atualiza a stack `farmaubs-prod` e valida `GET /api/v1/health` (com instrução/rotina simples de rollback para a tag anterior em caso de falha).
+     - **Promoção sem rebuild (resolve mudança de SHA no merge PR):** localiza no `ghcr.io` a imagem candidata já aprovada em HML (`<versao>-rc` ou tag informada) e publica a tag final `<versao>` (ex.: `v1.0.0` e `prod-latest`) apontando para o **mesmo digest SHA256** (`docker buildx imagetools create`), sem jamais rodar `docker build` novamente.
+     - Conecta via SSH na VPS, sincroniza `infra/`, executa backup pré-deploy (`backup-postgres-r2.sh`), aplica migrations (`node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js`) em `farmaubs-prod`, sobe a stack com a imagem `v1.0.0` e executa verificação pós-deploy **somente leitura** (`GET ${PROD_URL}/api/v1/health` e `GET ${PROD_URL}/`) — mantendo a tag anterior registrada para rollback imediato.
 
 ---
 
@@ -39,7 +43,7 @@
 
 - `.github/workflows/ci.yml` (novo)
 - `.github/workflows/cd.yml` (novo)
-- `.moon/workspace.yml` / `moon.yml` (garantir aderência dos nomes de tasks chamadas pelo CI, se necessário)
+- `.moon/workspace.yml`, `apps/backend/moon.yml`, `apps/frontend/moon.yml`, `packages/shared/moon.yml` (`typecheck` padronizado e suporte ao CI)
 
 ---
 
@@ -69,4 +73,4 @@ Funcionalidade: Esteira de CI/CD Automatizada no GitHub Actions
 - [ ] `.github/workflows/ci.yml` validado em um Pull Request real com todos os jobs verdes (Unit, Integração/RLS/Cucumber e Playwright).
 - [ ] Upload automático de artifacts do Playwright configurado em caso de falha (`if: failure()`).
 - [ ] `.github/workflows/cd.yml` gera e publica imagens no `ghcr.io`, realiza deploy em `farmaubs-hml` e exige aprovação manual para `farmaubs-prod`.
-- [ ] Lista de Secrets necessários no GitHub documentada no cabeçalho do workflow (`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `HML_URL`, `PROD_URL`).
+- [ ] Lista de Secrets necessários no GitHub documentada no cabeçalho do workflow (`VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_READ_TOKEN`, `HML_URL`, `PROD_URL`, `QA_SMOKE_EMAIL`, `QA_SMOKE_PASSWORD`).
