@@ -2,24 +2,28 @@
  * [RF024]: Utilitários puros para validação de datas de validade de lotes de medicamentos.
  */
 
+import { formatarDataCivilBrasil } from "../dispensacao/data-helpers";
+
 export type StatusValidadeRecebimento = "VENCIDO" | "VALIDADE_CURTA" | "NORMAL";
 
 /**
- * Calcula a quantidade de dias corridos entre a data de referência e a validade do lote.
+ * Calcula a quantidade de dias corridos entre a data de referência e a validade do lote no fuso America/Sao_Paulo.
  * @param dataValidade - Data de expiração (string YYYY-MM-DD ou Date).
- * @param dataReferencia - Data atual base para cálculo (padrão: hoje UTC).
+ * @param dataReferencia - Data atual base para cálculo (padrão: hoje no fuso brasileiro).
  * @returns Quantidade de dias (inteiro, negativo se já expirado).
  */
 export function calcularDiasAteValidade(
   dataValidade: string | Date,
   dataReferencia: Date = new Date(),
 ): number {
-  const dVal = typeof dataValidade === "string" ? new Date(dataValidade) : new Date(dataValidade);
-  const dRef = new Date(dataReferencia);
+  const validadeIso =
+    typeof dataValidade === "string" && /^\d{4}-\d{2}-\d{2}/.test(dataValidade)
+      ? dataValidade.slice(0, 10)
+      : formatarDataCivilBrasil(new Date(dataValidade));
+  const referenciaIso = formatarDataCivilBrasil(dataReferencia);
 
-  // Normaliza horas para comparar apenas dia civil
-  dVal.setUTCHours(0, 0, 0, 0);
-  dRef.setUTCHours(0, 0, 0, 0);
+  const dVal = new Date(`${validadeIso}T00:00:00Z`);
+  const dRef = new Date(`${referenciaIso}T00:00:00Z`);
 
   const diffMs = dVal.getTime() - dRef.getTime();
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));

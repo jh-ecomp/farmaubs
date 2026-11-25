@@ -7,12 +7,12 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 8 |
-| **Entregues** | 1 (12,5%) |
+| **Entregues** | 2 (25%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 7 (87,5%) |
+| **Pendentes** | 6 (75%) |
 
 ```
-Progresso: [██▌░░░░░░░░░░░░░░░░░] 12,5% (1/8 concluídas)
+Progresso: [█████░░░░░░░░░░░░░░░] 25% (2/8 concluídas)
 ```
 
 ---
@@ -22,7 +22,7 @@ Progresso: [██▌░░░░░░░░░░░░░░░░░] 12,5% 
 | Código | Camada | Título | Especificação | Status Redação | Status Implementação |
 | --- | --- | --- | --- | --- | --- |
 | **RL-01** | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | [rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md](./rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md) | ✅ Redigida | ✅ Concluída |
-| **RL-02** | Backend | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | [rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md](./rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md) | ✅ Redigida | ⏳ Não iniciada |
+| **RL-02** | Backend | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | [rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md](./rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md) | ✅ Redigida | ✅ Concluída |
 | **RL-03** | Backend | Adaptador real de e-mail transacional (SMTP/Resend com timeout) e limpeza periódica de sessões expiradas e relatórios antigos | [rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RL-04** | Backend | Observabilidade enxuta: logs JSON sanitizados com `nestjs-pino`, Sentry opcional e `/api/v1/health` enriquecido | [rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md](./rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RL-05** | Infra | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` e Proxy Reverso de borda | [rl-05-infra-dockerfiles-producao-compose-prod-proxy-borda.md](./rl-05-infra-dockerfiles-producao-compose-prod-proxy-borda.md) | ✅ Redigida | ⏳ Não iniciada |
