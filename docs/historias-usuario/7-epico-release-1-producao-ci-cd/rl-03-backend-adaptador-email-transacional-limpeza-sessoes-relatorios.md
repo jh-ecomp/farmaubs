@@ -20,12 +20,12 @@
 ## 2. Regras de negócio e requisitos técnicos
 
 1. **Adaptador Real de E-mail Transacional (Ports & Adapters)**:
-   - Manter `ConsoleEmailServiceAdapter` para desenvolvimento local e testes automatizados (`EMAIL_PROVIDER=console`, padrão em `dev`/`test`).
-   - Implementar adaptador real configurável por `EMAIL_PROVIDER=smtp` (usando `nodemailer` com `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_SECURE`) ou `EMAIL_PROVIDER=resend` (API HTTP do Resend com `RESEND_API_KEY` e `SMTP_FROM`).
+   - Manter `ConsoleEmailServiceAdapter` como padrão seguro (`EMAIL_PROVIDER=console` quando ausente, em `dev`/`test` ou em pilotos acadêmicos sem domínio de e-mail configurado), garantindo que o deploy funcione imediatamente sem bloquear cadastro de usuários (`RF001`).
+   - Implementar adaptador real configurável por `EMAIL_PROVIDER=smtp` (usando `nodemailer` com `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_SECURE`) ou `EMAIL_PROVIDER=resend` (API HTTP nativa via `fetch` com `RESEND_API_KEY` e `SMTP_FROM`).
    - Aplicar **timeout explícito** de conexão/resposta (ex.: `8000 ms`) em todas as chamadas de envio, garantindo que instabilidade do provedor de e-mail nunca trave requisições HTTP ou o worker do Outbox (`AL-04`).
    - Caso ocorra erro no envio de boas-vindas do cadastro (`RF001`), registrar log estruturado sem expor credenciais SMTP.
 2. **Rotina de Limpeza de Sessões Expiradas (`sessions`)**:
-   - Criar job agendado (executado 1x por dia na madrugada ou a cada 6 horas, desabilitável em testes via `MAINTENANCE_JOBS_ENABLED=false`) que remove registros da tabela `sessions` com `expira_em < NOW() - INTERVAL '24 hours'` ou revogados há mais de 7 dias.
+   - Criar job agendado (executado 1x por dia na madrugada ou a cada 6 horas, desabilitável em testes via `MAINTENANCE_JOBS_ENABLED=false`) que invoca a função SQL canônica `auth_limpar_sessoes_expiradas()` já provisionada pelas migrations (`1791416441871CreateAuthLimparSessoesExpiradas.ts`), preservando a governança do banco sem `DELETE` ad-hoc na camada de aplicação.
 3. **Rotina de Expurgo de Relatórios Temporários (`ADR-009`)**:
    - No mesmo serviço de manutenção periódica, varrer o diretório configurado em `REPORTS_DIR` (`./storage/reports`) e remover arquivos com idade superior a `REPORTS_RETENTION_HOURS` (padrão `48` horas), evitando esgotamento de disco na VPS única (`ADR-021`).
 
