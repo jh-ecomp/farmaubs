@@ -19,7 +19,7 @@
 3. [Política de retenção de dados (soft delete)](#3-política-de-retenção-de-dados-soft-delete)
 4. [Fluxo sequencial de trabalho](#4-fluxo-sequencial-de-trabalho)
    - [Passo 0: Leitura de atualizações](#passo-0-leitura-de-atualizações)
-   - [Passo 1: Atualizar a branch main](#passo-1-atualizar-a-branch-main)
+   - [Passo 1: Atualizar a branch develop](#passo-1-atualizar-a-branch-develop)
    - [Passo 2: Sincronizar variáveis de ambiente (.env)](#passo-2-sincronizar-variáveis-de-ambiente-env)
    - [Passo 3: Criar a branch de trabalho](#passo-3-criar-a-branch-de-trabalho)
    - [Passo 4: Desenvolvimento e Docker Compose](#passo-4-desenvolvimento-e-docker-compose)
@@ -167,14 +167,14 @@ Consultas operacionais filtram registros inativos por padrão, preservando os da
 Siga rigorosamente as etapas abaixo ao desenvolver:
 
 ### Passo 0: Leitura de atualizações
-Verifique se houve alterações recentes nas diretrizes do `CONTRIBUTING.md` na branch **main**.
+Verifique se houve alterações recentes nas diretrizes do `CONTRIBUTING.md` na branch **develop**.
 
-### Passo 1: Atualizar a branch main
-Sincronize o repositório local antes de iniciar qualquer atividade:
+### Passo 1: Atualizar a branch develop
+Sincronize o repositório local antes de iniciar qualquer atividade (`main` é reservada exclusivamente para releases em produção — veja a seção 4.1):
 
 ```bash
-git checkout main
-git pull origin main
+git checkout develop
+git pull origin develop
 ```
 
 ### Passo 2: Sincronizar variáveis de ambiente (.env)
@@ -260,8 +260,8 @@ A validação manual é obrigatória antes de submeter o PR:
 
 Execute estas etapas nesta ordem antes de enviar alterações:
 
-1. **Sincronizar com a main:** Execute `git fetch origin main` e integre a versão atualizada da **main** com merge ou rebase.
-2. **Resolver conflitos:** Priorize o código já estabelecido e aprovado na **main**.
+1. **Sincronizar com a develop:** Execute `git fetch origin develop` e integre a versão atualizada da **develop** com merge ou rebase.
+2. **Resolver conflitos:** Priorize o código já estabelecido e aprovado na **develop**.
 3. **Executar testes afetados e build:**
    ```bash
    moon run :test --affected
@@ -271,7 +271,7 @@ Execute estas etapas nesta ordem antes de enviar alterações:
    ```bash
    moon run backend:test-bdd
    ```
-4. **Auditar o diff:** Verifique `git diff origin/main` para garantir que nenhuma regra foi relaxada, nenhum teste foi desativado com `.skip` e não há uso indevido de `any`.
+4. **Auditar o diff:** Verifique `git diff origin/develop` para garantir que nenhuma regra foi relaxada, nenhum teste foi desativado com `.skip` e não há uso indevido de `any`.
 5. **Conferir critérios de aceite:** Certifique-se de cobrir todos os cenários da história de usuário.
 6. **Atualizar o progresso das histórias de usuário:**
    - Marque os critérios concluídos com `[x]` no arquivo markdown da história (`docs/historias-usuario/.../<historia>.md`).
@@ -322,7 +322,7 @@ Closes #78
 ### 6.1 Requisitos para aprovação
 
 1. Título do PR no formato Conventional Commits.
-2. Branch sincronizada com a **main** e conflitos resolvidos.
+2. Branch sincronizada com a **develop** e conflitos resolvidos.
 3. Testes automatizados passando no Moonrepo com prints anexados na descrição.
 4. Validação manual relatada.
 5. Progresso das histórias de usuário atualizado nos arquivos correspondentes.
@@ -364,7 +364,7 @@ Closes #78
 - [ ] Passo 0 a 7 do CONTRIBUTING.md seguidos rigorosamente
 - [ ] Isolamento de escopo respeitado (backend e frontend não misturados)
 - [ ] Validações pré-push executadas com Moonrepo (`moon run :test --affected` e `moon run :build`)
-- [ ] Branch sincronizada com a main mais recente
+- [ ] Branch sincronizada com a develop mais recente
 - [ ] Nenhuma regra de negócio ou teste foi relaxado ou enfraquecido
 - [ ] Todos os critérios de aceite da história de usuário foram cobertos
 - [ ] Progresso das histórias de usuário atualizado (arquivos individuais, PROGRESSO.md e MAPA_HISTORIAS.md)
