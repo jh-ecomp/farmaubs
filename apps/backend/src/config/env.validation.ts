@@ -48,6 +48,12 @@ const envValidationSchema = z
       .enum(["true", "false"])
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    LOG_LEVEL: z
+      .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    SENTRY_DSN: z.string().optional(),
+    APP_ENV: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.EMAIL_PROVIDER === "resend") {

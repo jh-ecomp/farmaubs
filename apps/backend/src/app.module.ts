@@ -3,9 +3,11 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { LoggerModule } from "nestjs-pino";
 import * as path from "node:path";
 import { extractClientIp } from "./app.setup";
 import { isThrottlerEnabled, validateEnv } from "./config/env.validation";
+import { buildLoggerModuleParams } from "./config/observability.config";
 import { CommonModule } from "./common/common.module";
 import { MaintenanceCleanupService } from "./common/maintenance/maintenance-cleanup.service";
 import { HealthModule } from "./health/health.module";
@@ -45,6 +47,10 @@ import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/pers
       ignoreEnvFile: process.env.NODE_ENV === "production",
       envFilePath: path.resolve(process.cwd(), "../../.env"),
       validate: validateEnv,
+    }),
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => buildLoggerModuleParams(config),
     }),
     ThrottlerModule.forRoot({
       throttlers: [{ name: "default", ttl: 60_000, limit: 120 }],
