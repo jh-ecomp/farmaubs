@@ -137,7 +137,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 ## Épico 7: Release 1 — Prontidão para Produção, CI/CD e Infraestrutura
 | ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
 | --- | --- | --- | --- | --- | --- |
-| RL-01 | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-01 | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | ✅ Redigida | ✅ Concluída | — |
 | RL-02 | Backend | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | ✅ Redigida | ⏳ Não iniciada | — |
 | RL-03 | Backend | Adaptador real de e-mail transacional (SMTP/Resend com timeout) e limpeza periódica de sessões expiradas e relatórios antigos | ✅ Redigida | ⏳ Não iniciada | — |
 | RL-04 | Backend | Observabilidade enxuta: logs JSON sanitizados com `nestjs-pino`, Sentry opcional e `/api/v1/health` enriquecido (ADR-026) | ✅ Redigida | ⏳ Não iniciada | — |

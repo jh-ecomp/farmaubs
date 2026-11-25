@@ -1,18 +1,18 @@
 # Progresso — Épico 7: Release 1 (Prontidão para Produção, CI/CD e Infraestrutura)
 
-Última atualização: 19/11/2026
+Última atualização: 24/11/2026
 
 ## Resumo Executivo
 
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 8 |
-| **Entregues** | 0 (0%) |
+| **Entregues** | 1 (12,5%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 8 (100%) |
+| **Pendentes** | 7 (87,5%) |
 
 ```
-Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/8 concluídas)
+Progresso: [██▌░░░░░░░░░░░░░░░░░] 12,5% (1/8 concluídas)
 ```
 
 ---
@@ -21,7 +21,7 @@ Progresso: [░░░░░░░░░░░░░░░░░░░░] 0% (0/
 
 | Código | Camada | Título | Especificação | Status Redação | Status Implementação |
 | --- | --- | --- | --- | --- | --- |
-| **RL-01** | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | [rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md](./rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md) | ✅ Redigida | ⏳ Não iniciada |
+| **RL-01** | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | [rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md](./rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md) | ✅ Redigida | ✅ Concluída |
 | **RL-02** | Backend | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | [rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md](./rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RL-03** | Backend | Adaptador real de e-mail transacional (SMTP/Resend com timeout) e limpeza periódica de sessões expiradas e relatórios antigos | [rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RL-04** | Backend | Observabilidade enxuta: logs JSON sanitizados com `nestjs-pino`, Sentry opcional e `/api/v1/health` enriquecido | [rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md](./rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md) | ✅ Redigida | ⏳ Não iniciada |
