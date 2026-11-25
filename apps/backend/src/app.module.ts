@@ -7,6 +7,7 @@ import * as path from "node:path";
 import { extractClientIp } from "./app.setup";
 import { isThrottlerEnabled, validateEnv } from "./config/env.validation";
 import { CommonModule } from "./common/common.module";
+import { MaintenanceCleanupService } from "./common/maintenance/maintenance-cleanup.service";
 import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
 import { AdministracaoModule } from "./modules/administracao/administracao.module";
@@ -97,6 +98,7 @@ import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/pers
     EstoqueModule,
   ],
   providers: [
+    MaintenanceCleanupService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: SessionAuthGuard },
     { provide: APP_GUARD, useClass: MustChangePasswordGuard },

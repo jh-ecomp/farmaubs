@@ -22,13 +22,14 @@ import { TypeOrmProfileRepository } from "./infrastructure/adapters/typeorm-prof
 import { TypeOrmHealthUnitRepository } from "./infrastructure/adapters/typeorm-health-unit.repository";
 import { BcryptPasswordHasherAdapter } from "./infrastructure/adapters/bcrypt-password-hasher.adapter";
 import { ConsoleEmailServiceAdapter } from "./infrastructure/adapters/console-email-service.adapter";
+import { ResendEmailServiceAdapter } from "./infrastructure/adapters/resend-email-service.adapter";
 import { AcessoPgRepository } from "./infrastructure/adapters/acesso-pg.repository";
 import { SessionPgRepository } from "./infrastructure/adapters/session-pg.repository";
 import { REPOSITORIO_USUARIO_PORT } from "./domain/ports/user.repository.port";
 import { REPOSITORIO_PERFIL_PORT } from "./domain/ports/profile.repository.port";
 import { REPOSITORIO_UNIDADE_SAUDE_PORT } from "./domain/ports/health-unit.repository.port";
 import { GERADOR_HASH_SENHA_PORT } from "./domain/ports/password-hasher.port";
-import { SERVICO_EMAIL_PORT } from "./domain/ports/email-service.port";
+import { SERVICO_EMAIL_PORT, type ServicoEmailPort } from "./domain/ports/email-service.port";
 import { ACESSO_REPOSITORY, type IAcessoRepository } from "./domain/ports/acesso.repository.port";
 import { SESSION_REPOSITORY, type ISessionRepository } from "./domain/ports/session.repository.port";
 import { AUDIT_REPOSITORY_PORT } from "./domain/ports/audit.repository.port";
@@ -55,6 +56,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     TypeOrmAuditRepository,
     BcryptPasswordHasherAdapter,
     ConsoleEmailServiceAdapter,
+    ResendEmailServiceAdapter,
     {
       provide: REPOSITORIO_USUARIO_PORT,
       useExisting: TypeOrmUserRepository,
@@ -77,7 +79,25 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
     },
     {
       provide: SERVICO_EMAIL_PORT,
-      useExisting: ConsoleEmailServiceAdapter,
+      useFactory: (
+        config: ConfigService,
+        consoleAdapter: ConsoleEmailServiceAdapter,
+        resendAdapter: ResendEmailServiceAdapter,
+      ): ServicoEmailPort => {
+        const provider = config
+          .get<string>("EMAIL_PROVIDER", "console")
+          .trim()
+          .toLowerCase();
+        if (provider === "resend") {
+          return resendAdapter;
+        }
+        return consoleAdapter;
+      },
+      inject: [
+        ConfigService,
+        ConsoleEmailServiceAdapter,
+        ResendEmailServiceAdapter,
+      ],
     },
     {
       provide: LoginUseCase,
@@ -201,7 +221,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
         profileRepo: TypeOrmProfileRepository,
         passwordHasher: BcryptPasswordHasherAdapter,
         healthUnitRepo: TypeOrmHealthUnitRepository,
-        emailService: ConsoleEmailServiceAdapter,
+        emailService: ServicoEmailPort,
       ) => {
         return new CadastrarUsuarioUseCase(
           userRepo,
@@ -216,7 +236,7 @@ import { TypeOrmAuditRepository } from "./infrastructure/adapters/typeorm-audit.
         TypeOrmProfileRepository,
         BcryptPasswordHasherAdapter,
         TypeOrmHealthUnitRepository,
-        ConsoleEmailServiceAdapter,
+        SERVICO_EMAIL_PORT,
       ],
     },
   ],

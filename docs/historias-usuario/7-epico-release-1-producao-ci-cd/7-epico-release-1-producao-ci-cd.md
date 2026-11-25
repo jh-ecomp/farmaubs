@@ -65,7 +65,7 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 | --- | --- | --- | --- | --- |
 | [RL-01](./rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md) | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | Backend (A, C) | AC-05 | ✅ Concluída |
 | [RL-02](./rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md) | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | Backend (B) | AC-01, DI-01, RE-01 | ✅ Concluída |
-| [RL-03](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | Adaptador real de e-mail transacional (SMTP/Resend opcional com fallback `console`) e limpeza periódica de sessões e relatórios | Backend (A, B) | AC-04 | ✅ Redigida |
+| [RL-03](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | Adaptador real de e-mail transacional (SMTP/Resend opcional com fallback `console`) e limpeza periódica de sessões e relatórios | Backend (A, B) | AC-04 | ✅ Concluída |
 | [RL-04](./rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md) | Observabilidade enxuta: logs JSON estruturados com `nestjs-pino` (redação de PII/segredos), Sentry opcional e `/api/v1/health` enriquecido | Backend (A, C) | RL-01 | ✅ Redigida |
 
 ### Infraestrutura, CI/CD, Frontend e Qualidade

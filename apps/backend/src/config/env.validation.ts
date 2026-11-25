@@ -38,8 +38,29 @@ const envValidationSchema = z
       .enum(["true", "false"])
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    EMAIL_PROVIDER: z
+      .enum(["console", "resend"])
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    RESEND_API_KEY: z.string().optional(),
+    SMTP_FROM: z.string().optional(),
+    MAINTENANCE_JOBS_ENABLED: z
+      .enum(["true", "false"])
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
   })
   .superRefine((data, ctx) => {
+    if (data.EMAIL_PROVIDER === "resend") {
+      if (!data.RESEND_API_KEY || data.RESEND_API_KEY.trim().length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["RESEND_API_KEY"],
+          message:
+            "RESEND_API_KEY é obrigatória quando EMAIL_PROVIDER=resend",
+        });
+      }
+    }
+
     if (data.NODE_ENV !== "production") return;
 
     for (const key of PRODUCTION_REQUIRED_KEYS) {
