@@ -1,0 +1,52 @@
+# ==============================================================================
+# FarmaUBS — Proxy Reverso de Borda Único na VPS (Caddy + Cloudflare Origin SSL)
+# ADRs: ADR-021, ADR-023, ADR-025 | História: RL-05
+# ==============================================================================
+# Instalação na VPS Ubuntu 24.04 (/etc/caddy/Caddyfile):
+#   1. Gere um Origin Certificate na Cloudflare (SSL/TLS -> Origin Server, modo Full Strict)
+#      cobrindo "*.<DOMINIO>" e "<DOMINIO>".
+#   2. Salve em /etc/caddy/certs/origin.pem e /etc/caddy/certs/origin.key com leitura para o grupo caddy:
+#        sudo mkdir -p /etc/caddy/certs
+#        sudo chown -R root:caddy /etc/caddy/certs
+#        sudo chmod 750 /etc/caddy/certs
+#        sudo chmod 644 /etc/caddy/certs/origin.pem
+#        sudo chmod 640 /etc/caddy/certs/origin.key
+#   3. Substitua <DOMINIO> abaixo pelo domínio real (ex.: farmaubs.com.br), copie para
+#      /etc/caddy/Caddyfile e valide antes de recarregar:
+#        sudo caddy validate --config /etc/caddy/Caddyfile
+#        sudo systemctl reload caddy
+# ==============================================================================
+
+hml.<DOMINIO> {
+	tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Robots-Tag "noindex, nofollow"
+	}
+
+	reverse_proxy 127.0.0.1:8081 {
+		header_up X-Forwarded-Proto https
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+app.<DOMINIO> {
+	tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Robots-Tag "noindex, nofollow"
+	}
+
+	reverse_proxy 127.0.0.1:8080 {
+		header_up X-Forwarded-Proto https
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}

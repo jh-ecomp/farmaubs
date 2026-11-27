@@ -5,6 +5,9 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "pnpm --filter @farmaubs/shared build",
     "build": "nest build",
@@ -48,6 +51,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
     "helmet": "^8.3.0",
     "nestjs-pino": "^5.3.2",
     "otplib": "^13.4.1",
@@ -74,7 +78,6 @@
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.0.0",
     "chai": "^6.3.0",
-    "dotenv": "^17.4.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

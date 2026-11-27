@@ -80,8 +80,8 @@ Funcionalidade: Containers de Produção Endurecidos e Isolamento de Stacks
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] `docker build -f apps/backend/Dockerfile .` e `docker build -f apps/frontend/Dockerfile .` concluem com sucesso localmente.
-- [ ] Container da API roda sob `USER node`, sobe saudável (`/api/v1/health`) e executa `node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js` com sucesso sem depender de `pnpm`.
-- [ ] `docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml config` valida sem erros.
-- [ ] `infra/nginx/frontend.conf` entrega gzip, cache imutável em `/assets/` e headers de segurança.
-- [ ] Template do Proxy Reverso de borda (`infra/proxy/`) documentado e pronto para uso na VPS.
+- [x] `docker build -f apps/backend/Dockerfile .` e `docker build -f apps/frontend/Dockerfile .` concluem com sucesso localmente.
+- [x] Container da API roda sob `USER node`, sobe saudável (`/api/v1/health`) e executa `node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js` com sucesso sem depender de `pnpm`.
+- [x] `docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml config` valida sem erros.
+- [x] `infra/nginx/frontend.conf` entrega gzip, cache imutável em `/assets/` e headers de segurança.
+- [x] Template do Proxy Reverso de borda (`infra/proxy/`) documentado e pronto para uso na VPS.

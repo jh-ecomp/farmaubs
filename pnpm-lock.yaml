@@ -252,6 +252,9 @@ importers:
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       helmet:
         specifier: ^8.3.0
         version: 8.3.0
@@ -325,9 +328,6 @@ importers:
       chai:
         specifier: ^6.3.0
         version: 6.3.0
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
       eslint:
         specifier: ^9.18.0
         version: 9.39.5(jiti@2.7.0)(supports-color@11.0.0)
