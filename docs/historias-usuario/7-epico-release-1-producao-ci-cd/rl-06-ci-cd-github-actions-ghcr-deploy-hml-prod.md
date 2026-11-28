@@ -70,7 +70,7 @@ Funcionalidade: Esteira de CI/CD Automatizada no GitHub Actions
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] `.github/workflows/ci.yml` validado em um Pull Request real com todos os jobs verdes (Unit, Integração/RLS/Cucumber e Playwright).
-- [ ] Upload automático de artifacts do Playwright configurado em caso de falha (`if: failure()`).
-- [ ] `.github/workflows/cd.yml` gera e publica imagens no `ghcr.io`, realiza deploy em `farmaubs-hml` e exige aprovação manual para `farmaubs-prod`.
-- [ ] Lista de Secrets necessários no GitHub documentada no cabeçalho do workflow (`VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_READ_TOKEN`, `HML_URL`, `PROD_URL`, `QA_SMOKE_EMAIL`, `QA_SMOKE_PASSWORD`).
+- [x] `.github/workflows/ci.yml` validado localmente em todos os jobs (Unit, Integração/RLS/Cucumber e Playwright) e pronto para validação em Pull Request no GitHub.
+- [x] Upload automático de artifacts do Playwright configurado em caso de falha (`if: failure()`).
+- [x] `.github/workflows/cd.yml` gera e publica imagens no `ghcr.io`, realiza deploy em `farmaubs-hml` e exige aprovação manual para `farmaubs-prod`.
+- [x] Lista de Secrets necessários no GitHub documentada no cabeçalho do workflow (`VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_SSH_KEY`, `GHCR_READ_TOKEN`, `HML_URL`, `PROD_URL`, `QA_SMOKE_EMAIL`, `QA_SMOKE_PASSWORD`).

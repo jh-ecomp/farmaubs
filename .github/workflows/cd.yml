@@ -1,0 +1,368 @@
+# ==============================================================================
+# FarmaUBS — Entrega Contínua (CD) — Build Único GHCR, Cut HML e Promoção PROD
+# ADRs: ADR-020 (Backup pré-deploy), ADR-024 (Opção A — SSH + GHCR), ADR-025 (HML/PROD)
+# História: RL-06 | Requisitos: NF004 (Rollback rápido), NF006, NF010
+# ==============================================================================
+# Secrets obrigatórios configurados no repositório GitHub (Settings -> Secrets -> Actions):
+#   - VPS_HOST          : IPv4 público ou hostname administrativo da VPS StayCloud
+#   - VPS_PORT          : Porta SSH da VPS (ex.: 22)
+#   - VPS_USER          : Usuário não-root de deploy na VPS (ex.: deploy, no grupo docker)
+#   - VPS_SSH_KEY       : Chave privada Ed25519 dedicada ao GitHub Actions
+#   - GHCR_READ_TOKEN   : PAT (read:packages) para docker pull na VPS sem expor credenciais de escrita
+#   - HML_URL           : URL pública HTTPS de homologação (ex.: https://hml.farmaubs.com.br)
+#   - PROD_URL          : URL pública HTTPS de produção (ex.: https://app.farmaubs.com.br)
+#   - QA_SMOKE_EMAIL    : E-mail da conta sintética de QA em farmaubs-hml
+#   - QA_SMOKE_PASSWORD : Senha da conta sintética de QA em farmaubs-hml
+#
+# Environment obrigatório no GitHub (Settings -> Environments):
+#   - Nome exato: "production" com "Required reviewers" ativado (aprovação manual obrigatória).
+# ==============================================================================
+
+name: CD
+
+on:
+  push:
+    branches:
+      - "release/v*"
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Estágio de entrega a executar (hml ou prod)"
+        required: true
+        default: "hml"
+        type: choice
+        options:
+          - hml
+          - prod
+      version:
+        description: "Versão semântica alvo (ex.: v1.0.0)"
+        required: true
+        type: string
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  TZ: America/Sao_Paulo
+
+jobs:
+  # ============================================================================
+  # ESTÁGIO 1 — Build Único Imutável no GHCR + Deploy em Homologação (farmaubs-hml) + Smoke
+  # ============================================================================
+  deploy-hml:
+    name: Build GHCR + Deploy HML & Smoke Test
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/v')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.stage == 'hml')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Resolver metadados e tags da release candidata
+        id: meta
+        run: |
+          OWNER_LC="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            RAW_VER="${{ inputs.version }}"
+          else
+            RAW_VER="${GITHUB_REF_NAME#release/}"
+          fi
+          VERSION="v${RAW_VER#v}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          RC_FLOATING="${VERSION}-rc"
+          RC_IMMUTABLE="${VERSION}-rc.${GITHUB_RUN_NUMBER}"
+
+          echo "owner_lc=${OWNER_LC}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "rc_floating=${RC_FLOATING}" >> "$GITHUB_OUTPUT"
+          echo "rc_immutable=${RC_IMMUTABLE}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "api_repo=ghcr.io/${OWNER_LC}/farmaubs-api" >> "$GITHUB_OUTPUT"
+          echo "frontend_repo=ghcr.io/${OWNER_LC}/farmaubs-frontend" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Autenticar no GitHub Container Registry (ghcr.io)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build e Push da imagem imutável farmaubs-api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          target: runtime
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.api_repo }}:${{ steps.meta.outputs.rc_floating }}
+            ${{ steps.meta.outputs.api_repo }}:${{ steps.meta.outputs.rc_immutable }}
+            ${{ steps.meta.outputs.api_repo }}:${{ steps.meta.outputs.sha_tag }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build e Push da imagem imutável farmaubs-frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          target: runtime
+          push: true
+          build-args: |
+            VITE_API_URL=/api/v1
+            VITE_SHOW_FUTURE_MODULES=false
+          tags: |
+            ${{ steps.meta.outputs.frontend_repo }}:${{ steps.meta.outputs.rc_floating }}
+            ${{ steps.meta.outputs.frontend_repo }}:${{ steps.meta.outputs.rc_immutable }}
+            ${{ steps.meta.outputs.frontend_repo }}:${{ steps.meta.outputs.sha_tag }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Configurar chave SSH para acesso à VPS StayCloud
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sincronizar arquivos de infraestrutura para /opt/farmaubs/infra na VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          PORT="${VPS_PORT:-22}"
+          ssh -p "$PORT" "${VPS_USER}@${VPS_HOST}" "mkdir -p /opt/farmaubs/infra/db/init /opt/farmaubs/infra/scripts /opt/farmaubs/infra/proxy"
+          scp -P "$PORT" infra/docker-compose.yml infra/docker-compose.prod.yml "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/"
+          scp -P "$PORT" infra/db/init/01-create-role-farmaubs-app.sh "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/db/init/"
+          scp -P "$PORT" infra/scripts/smoke-test.mjs infra/scripts/backup-postgres-r2.sh infra/scripts/restore-postgres-r2.sh "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/scripts/"
+          scp -P "$PORT" infra/proxy/Caddyfile "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/proxy/"
+          ssh -p "$PORT" "${VPS_USER}@${VPS_HOST}" "chmod +x /opt/farmaubs/infra/db/init/*.sh /opt/farmaubs/infra/scripts/*.sh /opt/farmaubs/infra/scripts/*.mjs"
+
+      - name: Atualizar stack farmaubs-hml, aplicar migrations e seed sintético de QA
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GHCR_USER: ${{ steps.meta.outputs.owner_lc }}
+          API_IMAGE: ${{ steps.meta.outputs.api_repo }}:${{ steps.meta.outputs.rc_immutable }}
+          FRONTEND_IMAGE: ${{ steps.meta.outputs.frontend_repo }}:${{ steps.meta.outputs.rc_immutable }}
+        run: |
+          PORT="${VPS_PORT:-22}"
+          ssh -p "$PORT" "${VPS_USER}@${VPS_HOST}" \
+            "export GHCR_USER='${GHCR_USER}' GHCR_READ_TOKEN='${GHCR_READ_TOKEN}' API_IMAGE='${API_IMAGE}' FRONTEND_IMAGE='${FRONTEND_IMAGE}'; exec bash -s" <<'EOF'
+          set -euo pipefail
+          echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          export ENV_FILE="/opt/farmaubs/hml/.env"
+          export FRONTEND_HOST_PORT="8081"
+          COMPOSE_ARGS=(-p farmaubs-hml -f /opt/farmaubs/infra/docker-compose.yml -f /opt/farmaubs/infra/docker-compose.prod.yml)
+
+          if [[ -f /opt/farmaubs/hml/.current-release ]]; then
+            cp /opt/farmaubs/hml/.current-release /opt/farmaubs/hml/.previous-release
+          fi
+
+          docker compose "${COMPOSE_ARGS[@]}" pull api frontend
+          docker compose "${COMPOSE_ARGS[@]}" up -d --wait
+
+          docker compose "${COMPOSE_ARGS[@]}" exec -T api \
+            node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js
+
+          docker compose "${COMPOSE_ARGS[@]}" exec -T \
+            -e APP_ENV=hml \
+            -e ALLOW_QA_SEED=true \
+            api node dist/database/seed-qa.js
+
+          printf 'API_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$API_IMAGE" "$FRONTEND_IMAGE" > /opt/farmaubs/hml/.current-release
+          EOF
+
+      - name: Configurar Node.js 22 para Smoke Test externo
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Executar Smoke Tests automatizados contra HML_URL (modo full)
+        env:
+          TARGET_URL: ${{ secrets.HML_URL }}
+          SMOKE_MODE: full
+          QA_SMOKE_EMAIL: ${{ secrets.QA_SMOKE_EMAIL }}
+          QA_SMOKE_PASSWORD: ${{ secrets.QA_SMOKE_PASSWORD }}
+        run: node infra/scripts/smoke-test.mjs
+
+  # ============================================================================
+  # ESTÁGIO 2 — Promoção Imutável sem Rebuild para Produção (farmaubs-prod)
+  # Exige aprovação manual no GitHub Environment "production"
+  # ============================================================================
+  promote-prod:
+    name: Promoção Imutável & Deploy Produção (farmaubs-prod)
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.stage == 'prod')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: ${{ secrets.PROD_URL }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Resolver versão final e tag candidata validada em HML
+        id: meta
+        run: |
+          OWNER_LC="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            RAW_INPUT="${{ inputs.version }}"
+          else
+            RAW_INPUT="${GITHUB_REF_NAME}"
+          fi
+
+          # Aceita tanto "v1.0.0" (promove de v1.0.0-rc) quanto "v1.0.0-rc.3" explícita
+          CLEAN_INPUT="v${RAW_INPUT#v}"
+          if [[ "$CLEAN_INPUT" == *-rc* ]]; then
+            SOURCE_TAG="$CLEAN_INPUT"
+            FINAL_VERSION="${CLEAN_INPUT%%-rc*}"
+          else
+            FINAL_VERSION="$CLEAN_INPUT"
+            SOURCE_TAG="${FINAL_VERSION}-rc"
+          fi
+
+          echo "owner_lc=${OWNER_LC}" >> "$GITHUB_OUTPUT"
+          echo "source_tag=${SOURCE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "final_version=${FINAL_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "api_repo=ghcr.io/${OWNER_LC}/farmaubs-api" >> "$GITHUB_OUTPUT"
+          echo "frontend_repo=ghcr.io/${OWNER_LC}/farmaubs-frontend" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Autenticar no GitHub Container Registry (ghcr.io)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promover imagens candidatas para tag final de Produção sem rebuild (mesmo digest SHA256)
+        run: |
+          API_REPO="${{ steps.meta.outputs.api_repo }}"
+          FE_REPO="${{ steps.meta.outputs.frontend_repo }}"
+          SRC_TAG="${{ steps.meta.outputs.source_tag }}"
+          FINAL_VER="${{ steps.meta.outputs.final_version }}"
+
+          echo "Promovendo ${API_REPO}:${SRC_TAG} -> ${FINAL_VER} (sem docker build)..."
+          docker buildx imagetools create \
+            -t "${API_REPO}:${FINAL_VER}" \
+            -t "${API_REPO}:prod-latest" \
+            "${API_REPO}:${SRC_TAG}"
+
+          echo "Promovendo ${FE_REPO}:${SRC_TAG} -> ${FINAL_VER} (sem docker build)..."
+          docker buildx imagetools create \
+            -t "${FE_REPO}:${FINAL_VER}" \
+            -t "${FE_REPO}:prod-latest" \
+            "${FE_REPO}:${SRC_TAG}"
+
+          docker buildx imagetools inspect "${API_REPO}:${FINAL_VER}" | head -n 10
+          docker buildx imagetools inspect "${FE_REPO}:${FINAL_VER}" | head -n 10
+
+      - name: Configurar chave SSH para acesso à VPS StayCloud
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sincronizar arquivos de infraestrutura para /opt/farmaubs/infra na VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          PORT="${VPS_PORT:-22}"
+          ssh -p "$PORT" "${VPS_USER}@${VPS_HOST}" "mkdir -p /opt/farmaubs/infra/db/init /opt/farmaubs/infra/scripts /opt/farmaubs/infra/proxy"
+          scp -P "$PORT" infra/docker-compose.yml infra/docker-compose.prod.yml "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/"
+          scp -P "$PORT" infra/db/init/01-create-role-farmaubs-app.sh "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/db/init/"
+          scp -P "$PORT" infra/scripts/smoke-test.mjs infra/scripts/backup-postgres-r2.sh infra/scripts/restore-postgres-r2.sh "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/scripts/"
+          scp -P "$PORT" infra/proxy/Caddyfile "${VPS_USER}@${VPS_HOST}:/opt/farmaubs/infra/proxy/"
+          ssh -p "$PORT" "${VPS_USER}@${VPS_HOST}" "chmod +x /opt/farmaubs/infra/db/init/*.sh /opt/farmaubs/infra/scripts/*.sh /opt/farmaubs/infra/scripts/*.mjs"
+
+      - name: Executar backup pré-deploy, aplicar migrations e atualizar farmaubs-prod
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GHCR_USER: ${{ steps.meta.outputs.owner_lc }}
+          API_IMAGE: ${{ steps.meta.outputs.api_repo }}:${{ steps.meta.outputs.final_version }}
+          FRONTEND_IMAGE: ${{ steps.meta.outputs.frontend_repo }}:${{ steps.meta.outputs.final_version }}
+        run: |
+          PORT="${VPS_PORT:-22}"
+          ssh -p "$PORT" "${VPS_USER}@${VPS_HOST}" \
+            "export GHCR_USER='${GHCR_USER}' GHCR_READ_TOKEN='${GHCR_READ_TOKEN}' API_IMAGE='${API_IMAGE}' FRONTEND_IMAGE='${FRONTEND_IMAGE}'; exec bash -s" <<'EOF'
+          set -euo pipefail
+          echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          export ENV_FILE="/opt/farmaubs/prod/.env"
+          export FRONTEND_HOST_PORT="8080"
+          COMPOSE_ARGS=(-p farmaubs-prod -f /opt/farmaubs/infra/docker-compose.yml -f /opt/farmaubs/infra/docker-compose.prod.yml)
+
+          # Backup pré-deploy automático quando o banco de produção já existe em execução (ADR-020)
+          if docker compose "${COMPOSE_ARGS[@]}" ps --status running --services 2>/dev/null | grep -qx "postgres"; then
+            echo "Executando backup pré-deploy de farmaubs-prod para Cloudflare R2..."
+            /opt/farmaubs/infra/scripts/backup-postgres-r2.sh
+          else
+            echo "Primeiro deploy de farmaubs-prod detectado (container postgres ainda não iniciado) — pulando backup prévio."
+          fi
+
+          # Registra versão anterior para rollback imediato em 1 comando (NF004)
+          if [[ -f /opt/farmaubs/prod/.current-release ]]; then
+            cp /opt/farmaubs/prod/.current-release /opt/farmaubs/prod/.previous-release
+          fi
+
+          docker compose "${COMPOSE_ARGS[@]}" pull api frontend
+          docker compose "${COMPOSE_ARGS[@]}" up -d --wait
+
+          docker compose "${COMPOSE_ARGS[@]}" exec -T api \
+            node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js
+
+          printf 'API_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$API_IMAGE" "$FRONTEND_IMAGE" > /opt/farmaubs/prod/.current-release
+          EOF
+
+      - name: Configurar Node.js 22 para verificação pós-deploy
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Executar verificação pós-deploy somente leitura contra PROD_URL
+        env:
+          TARGET_URL: ${{ secrets.PROD_URL }}
+          SMOKE_MODE: readonly
+        run: node infra/scripts/smoke-test.mjs

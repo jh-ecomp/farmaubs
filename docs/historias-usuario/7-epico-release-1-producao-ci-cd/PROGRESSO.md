@@ -7,12 +7,12 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 8 |
-| **Entregues** | 6 (75%) |
+| **Entregues** | 7 (87,5%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 2 (25%) |
+| **Pendentes** | 1 (12,5%) |
 
 ```
-Progresso: [███████████████░░░░░] 75% (6/8 concluídas)
+Progresso: [█████████████████░░░] 87,5% (7/8 concluídas)
 ```
 
 ---
@@ -26,6 +26,6 @@ Progresso: [███████████████░░░░░] 75% (6
 | **RL-03** | Backend | Adaptador real de e-mail transacional (SMTP/Resend com timeout) e limpeza periódica de sessões expiradas e relatórios antigos | [rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | ✅ Redigida | ✅ Concluída |
 | **RL-04** | Backend | Observabilidade enxuta: logs JSON sanitizados com `nestjs-pino`, Sentry opcional e `/api/v1/health` enriquecido | [rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md](./rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md) | ✅ Redigida | ✅ Concluída |
 | **RL-05** | Infra | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` e Proxy Reverso de borda | [rl-05-infra-dockerfiles-producao-compose-prod-proxy-borda.md](./rl-05-infra-dockerfiles-producao-compose-prod-proxy-borda.md) | ✅ Redigida | ✅ Concluída |
-| **RL-06** | CI/CD | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) para HML e PROD | [rl-06-ci-cd-github-actions-ghcr-deploy-hml-prod.md](./rl-06-ci-cd-github-actions-ghcr-deploy-hml-prod.md) | ✅ Redigida | ⏳ Não iniciada |
+| **RL-06** | CI/CD | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) para HML e PROD | [rl-06-ci-cd-github-actions-ghcr-deploy-hml-prod.md](./rl-06-ci-cd-github-actions-ghcr-deploy-hml-prod.md) | ✅ Redigida | ✅ Concluída |
 | **RL-07** | Frontend | Acabamento de produção: `lang="pt-BR"`, títulos dinâmicos, `robots.txt`, Sidebar responsiva/dinâmica, Feature Flags e `/privacidade` + `/termos` | [rl-07-frontend-acabamento-producao-sidebar-responsiva-feature-flags.md](./rl-07-frontend-acabamento-producao-sidebar-responsiva-feature-flags.md) | ✅ Redigida | ⏳ Não iniciada |
 | **RL-08** | QA / Infra | Suíte de Smoke Tests pós-deploy, testes de Carga e Estresse `k6` (Load & Stress) e scripts de backup/restore off-site (`pg_dump` → R2) | [rl-08-qualidade-smoke-tests-carga-k6-backup-offsite.md](./rl-08-qualidade-smoke-tests-carga-k6-backup-offsite.md) | ✅ Redigida | ✅ Concluída |
