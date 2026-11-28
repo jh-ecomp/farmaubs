@@ -108,6 +108,8 @@ jobs:
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configurar pnpm
         uses: pnpm/action-setup@v4
@@ -157,6 +159,8 @@ jobs:
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configurar pnpm
         uses: pnpm/action-setup@v4
