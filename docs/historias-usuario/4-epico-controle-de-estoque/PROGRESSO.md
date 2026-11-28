@@ -1,18 +1,18 @@
 # Progresso — Épico 4: Controle de Estoque
 
-Última atualização: 05/11/2026
+Última atualização: 28/11/2026
 
 ## Resumo Executivo
 
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 16 |
-| **Entregues** | 4 (25%) |
+| **Entregues** | 5 (31%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 12 (75%) |
+| **Pendentes** | 11 (69%) |
 
 ```
-Progresso: [█████░░░░░░░░░░░░░░░] 25% (4/16 concluídas)
+Progresso: [██████░░░░░░░░░░░░░░] 31% (5/16 concluídas)
 ```
 
 ---
