@@ -235,6 +235,13 @@ describe("EstoqueRelatoriosPgRepository - integração (farmaubs_app, RLS)", () 
       });
     });
 
+    it("devolve null para UBS de outro município (unidades_saude não tem RLS)", async () => {
+      const cab = await executarNoTenant(MUN_A, () =>
+        repo.obterCabecalhoUbs(UBS_B1),
+      );
+      expect(cab).toBeNull();
+    });
+
     it("devolve null para UBS inexistente", async () => {
       const cab = await executarNoTenant(MUN_A, () =>
         repo.obterCabecalhoUbs(uid("ff")),
@@ -259,15 +266,22 @@ describe("EstoqueRelatoriosPgRepository - integração (farmaubs_app, RLS)", () 
       });
     });
 
-    it("filtra por princípio ativo (ILIKE) e produtoId", async () => {
-      const porPrincipio = await executarNoTenant(MUN_A, () =>
-        repo.consultarSaldosAtuais({ ubsId: UBS_A1, principioAtivo: "dipirona" }),
+    it("filtra por princípio ativo sem acentos (escapando curingas %), categoria sem case e produtoId", async () => {
+      const porPrincipioSemAcento = await executarNoTenant(MUN_A, () =>
+        repo.consultarSaldosAtuais({
+          ubsId: UBS_A1,
+          principioAtivo: "dipirona sodica",
+        }),
       );
-      expect(porPrincipio).toHaveLength(1);
-      const semResultado = await executarNoTenant(MUN_A, () =>
-        repo.consultarSaldosAtuais({ ubsId: UBS_A1, principioAtivo: "amoxicilina" }),
+      expect(porPrincipioSemAcento).toHaveLength(1);
+      const curingaLiteral = await executarNoTenant(MUN_A, () =>
+        repo.consultarSaldosAtuais({ ubsId: UBS_A1, principioAtivo: "100%" }),
       );
-      expect(semResultado).toHaveLength(0);
+      expect(curingaLiteral).toHaveLength(0);
+      const porCategoriaMinuscula = await executarNoTenant(MUN_A, () =>
+        repo.consultarSaldosAtuais({ ubsId: UBS_A1, categoria: "geral" }),
+      );
+      expect(porCategoriaMinuscula).toHaveLength(1);
       const porProduto = await executarNoTenant(MUN_A, () =>
         repo.consultarSaldosAtuais({ ubsId: UBS_A1, produtoId: PRODUTO }),
       );
@@ -287,7 +301,7 @@ describe("EstoqueRelatoriosPgRepository - integração (farmaubs_app, RLS)", () 
   });
 
   describe("consultarPerdasVencimento", () => {
-    it("só VENCIMENTO e AVARIA_FISICA, mais recentes primeiro, data no fuso da UBS", async () => {
+    it("lista todos os motivos de perda (EXTRAVIO, AVARIA_FISICA, VENCIMENTO), mais recentes primeiro, data no fuso da UBS", async () => {
       const linhas = await executarNoTenant(MUN_A, () =>
         repo.consultarPerdasVencimento({
           ubsId: UBS_A1,
@@ -295,10 +309,18 @@ describe("EstoqueRelatoriosPgRepository - integração (farmaubs_app, RLS)", () 
           dataFim: "2026-01-31",
         }),
       );
-      expect(linhas.map((l) => l.motivo)).toEqual(["AVARIA_FISICA", "VENCIMENTO"]);
-      expect(linhas.map((l) => l.quantidade)).toEqual([5, 10]);
+      expect(linhas.map((l) => l.motivo)).toEqual([
+        "EXTRAVIO",
+        "AVARIA_FISICA",
+        "VENCIMENTO",
+      ]);
+      expect(linhas.map((l) => l.quantidade)).toEqual([3, 5, 10]);
       // m2 foi gravada em 02/01 UTC, mas em Fortaleza ainda é 01/01.
-      expect(linhas.map((l) => l.data)).toEqual(["2026-01-15", "2026-01-01"]);
+      expect(linhas.map((l) => l.data)).toEqual([
+        "2026-01-16",
+        "2026-01-15",
+        "2026-01-01",
+      ]);
     });
 
     it("fuso: perda de 01/01 23:30 (Fortaleza) fica fora de um período que começa em 02/01", async () => {
@@ -309,7 +331,10 @@ describe("EstoqueRelatoriosPgRepository - integração (farmaubs_app, RLS)", () 
           dataFim: "2026-01-31",
         }),
       );
-      expect(linhas.map((l) => l.motivo)).toEqual(["AVARIA_FISICA"]);
+      expect(linhas.map((l) => l.motivo)).toEqual([
+        "EXTRAVIO",
+        "AVARIA_FISICA",
+      ]);
     });
 
     it("dataFim é inclusiva (dia inteiro)", async () => {

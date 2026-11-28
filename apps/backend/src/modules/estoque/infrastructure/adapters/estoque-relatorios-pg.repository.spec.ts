@@ -1,4 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { MOTIVOS_PERDA_RELATORIO } from "@farmaubs/shared";
 import { EstoqueRelatoriosPgRepository } from "./estoque-relatorios-pg.repository";
 import { TransactionContext } from "../../../../common/transaction/transaction-context.service";
 
@@ -53,9 +54,11 @@ describe("EstoqueRelatoriosPgRepository", () => {
       expect(mockQuery).toHaveBeenCalledTimes(1);
       const [sql, params] = mockQuery.mock.calls[0];
       expect(sql).toContain("FROM public.unidades_saude u");
-      // A coluna cnes não existe em unidades_saude (débito registrado no PR).
       expect(sql.toLowerCase()).not.toContain("cnes");
-      expect(sql).toContain("JOIN public.municipios m ON m.id = u.municipio_id");
+      expect(sql).toContain("current_setting('app.municipio_id', true)");
+      expect(sql).toContain(
+        "JOIN public.municipios m ON m.id = u.municipio_id",
+      );
       expect(params).toEqual(["11111111-1111-1111-1111-111111111111"]);
     });
 
@@ -108,31 +111,31 @@ describe("EstoqueRelatoriosPgRepository", () => {
       expect(params).toEqual(["11111111-1111-1111-1111-111111111111"]);
     });
 
-    it("deve incluir filtros opcionais de princípio ativo, produto e categoria", async () => {
+    it("deve normalizar acentos, escapar curingas LIKE (%, _, !) em principioAtivo e comparar categoria sem case", async () => {
       mockQuery.mockResolvedValueOnce([]);
 
       await repository.consultarSaldosAtuais({
         ubsId: "11111111-1111-1111-1111-111111111111",
-        principioAtivo: "Dipirona",
+        principioAtivo: "Sódica 50%_!",
         produtoId: "22222222-2222-2222-2222-222222222222",
-        categoria: "ANALGESICO",
+        categoria: "Analgesico",
       });
 
       const [sql, params] = mockQuery.mock.calls[0];
-      expect(sql).toContain("p.principio_ativo ILIKE $2");
+      expect(sql).toContain("LIKE $2 ESCAPE '!'");
       expect(sql).toContain("p.id = $3::uuid");
-      expect(sql).toContain("p.categoria = $4");
+      expect(sql).toContain("lower(p.categoria) = lower($4::text)");
       expect(params).toEqual([
         "11111111-1111-1111-1111-111111111111",
-        "%Dipirona%",
+        "%sodica 50!%!_!!%",
         "22222222-2222-2222-2222-222222222222",
-        "ANALGESICO",
+        "Analgesico",
       ]);
     });
   });
 
   describe("consultarPerdasVencimento", () => {
-    it("deve consultar perdas com intervalo e regra de dataFim inclusiva (+ 1 day)", async () => {
+    it("deve consultar perdas usando MOTIVOS_PERDA_RELATORIO e regra de dataFim inclusiva (+ 1 day)", async () => {
       mockQuery.mockResolvedValueOnce([
         {
           data: "2026-10-15",
@@ -161,11 +164,16 @@ describe("EstoqueRelatoriosPgRepository", () => {
 
       const [sql, params] = mockQuery.mock.calls[0];
       expect(sql).toContain("m.tipo_movimentacao = 'AJUSTE_SAIDA'");
-      expect(sql).toContain("m.motivo IN ('VENCIMENTO', 'AVARIA_FISICA')");
-      expect(sql).toContain("m.created_at >= ($2::date)::timestamp AT TIME ZONE 'America/Fortaleza'");
-      expect(sql).toContain("m.created_at < (($3::date) + interval '1 day')::timestamp AT TIME ZONE 'America/Fortaleza'");
+      expect(sql).toContain("m.motivo = ANY($2::text[])");
+      expect(sql).toContain(
+        "m.created_at >= ($3::date)::timestamp AT TIME ZONE 'America/Fortaleza'",
+      );
+      expect(sql).toContain(
+        "m.created_at < (($4::date) + interval '1 day')::timestamp AT TIME ZONE 'America/Fortaleza'",
+      );
       expect(params).toEqual([
         "11111111-1111-1111-1111-111111111111",
+        [...MOTIVOS_PERDA_RELATORIO],
         "2026-10-01",
         "2026-10-31",
       ]);

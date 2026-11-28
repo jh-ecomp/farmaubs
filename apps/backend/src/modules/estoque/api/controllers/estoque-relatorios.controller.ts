@@ -17,20 +17,15 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiProduces,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import {
-  PerfilCodigo,
-  type AuthenticatedUserPayload,
-} from "@farmaubs/shared";
-import { CurrentUser, Roles } from "../../../../common/decorators";
+import { PerfilCodigo } from "@farmaubs/shared";
+import { Roles } from "../../../../common/decorators";
 import { TenantScoped } from "../../../../common/decorators/tenant-scoped.decorator";
 import { GerarRelatorioEstoqueXlsxUseCase } from "../../application/use-cases/gerar-relatorio-estoque-xlsx.use-case";
-import {
-  ExportarRelatorioEstoqueQueryDto,
-  validarEObterUbsIdRelatorio,
-} from "../dto/exportar-relatorio-estoque-query.dto";
+import { ExportarRelatorioEstoqueQueryDto } from "../dto/exportar-relatorio-estoque-query.dto";
 import {
   IntervaloDatasRelatorioInvalidoException,
   UbsNaoEncontradaRelatorioException,
@@ -45,7 +40,11 @@ export class EstoqueRelatoriosController {
 
   /**
    * [RF020 / RF028 / NF007 / NF015]: Exporta dados de estoque e extratos para planilha XLSX via ExcelJS.
-   * Valida unidadeId do escopo do usuário via RLS e restringe acesso a farmacêuticos, gerentes e administradores.
+   * @param query - Filtros validados contendo `unidadeId`, `tipoRelatorio`, período e filtros opcionais.
+   * @param res - Objeto Response do Express para definição dos cabeçalhos HTTP de download binário.
+   * @returns `StreamableFile` contendo o binário `.xlsx` gerado.
+   * @throws {BadRequestException} Quando parâmetros ou intervalo de datas forem inválidos (400).
+   * @throws {NotFoundException} Quando a UBS não existir no município ativo do tenant (404).
    */
   @Get("relatorios/exportar-xlsx")
   @Roles(
@@ -57,10 +56,13 @@ export class EstoqueRelatoriosController {
   @TenantScoped({ checkUbs: true })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth("access-token")
+  @ApiProduces(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  )
   @ApiOperation({
     summary: "Exporta relatório de estoque em formato XLSX",
     description:
-      "Gera e descarrega planilha formatada em Excel (.xlsx) para saldos atuais, perdas por vencimento/avaria ou extrato cronológico de movimentações.",
+      "Gera e descarrega planilha formatada em Excel (.xlsx) para saldos atuais, perdas (vencimento, avaria, extravio e recolhimento sanitário) ou extrato cronológico de movimentações.",
   })
   @ApiOkResponse({
     description: "Arquivo XLSX gerado com sucesso.",
@@ -69,27 +71,28 @@ export class EstoqueRelatoriosController {
       format: "binary",
     },
   })
-  @ApiBadRequestResponse({ description: "Parâmetros inválidos ou intervalo de datas inconsistente." })
+  @ApiBadRequestResponse({
+    description: "Parâmetros inválidos ou intervalo de datas inconsistente.",
+  })
   @ApiUnauthorizedResponse({ description: "Usuário não autenticado." })
-  @ApiForbiddenResponse({ description: "Usuário sem perfil necessário ou fora da unidade solicitada." })
+  @ApiForbiddenResponse({
+    description: "Usuário sem perfil necessário ou fora da unidade solicitada.",
+  })
   @ApiNotFoundResponse({ description: "Unidade de saúde não encontrada." })
   async exportarXlsx(
     @Query() query: ExportarRelatorioEstoqueQueryDto,
-    @CurrentUser() user: AuthenticatedUserPayload | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    const ubsId = validarEObterUbsIdRelatorio(user, query.unidadeId);
-
     try {
       const { buffer, nomeArquivo, contentType } =
         await this.gerarRelatorioUseCase.execute({
           tipoRelatorio: query.tipoRelatorio,
-          ubsId,
+          ubsId: query.unidadeId,
           dataInicio: query.dataInicio,
           dataFim: query.dataFim,
-          principioAtivo: query.principioAtivo,
+          principioAtivo: query.principioAtivo?.trim() || undefined,
           produtoId: query.produtoId,
-          categoria: query.categoria,
+          categoria: query.categoria?.trim() || undefined,
         });
 
       res.set({

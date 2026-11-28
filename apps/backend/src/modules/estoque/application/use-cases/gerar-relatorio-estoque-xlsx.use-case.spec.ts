@@ -48,7 +48,9 @@ describe("GerarRelatorioEstoqueXlsxUseCase", () => {
     await expect(useCase.execute(entrada)).rejects.toThrow(
       UbsNaoEncontradaRelatorioException,
     );
-    expect(mockRepositorio.obterCabecalhoUbs).toHaveBeenCalledWith("ubs-inexistente");
+    expect(mockRepositorio.obterCabecalhoUbs).toHaveBeenCalledWith(
+      "ubs-inexistente",
+    );
   });
 
   it("deve lançar IntervaloDatasRelatorioInvalidoException se dataFim for menor que dataInicio", async () => {
@@ -87,62 +89,71 @@ describe("GerarRelatorioEstoqueXlsxUseCase", () => {
     );
   });
 
-  it("deve gerar relatório de SALDOS_ATUAIS com sucesso", async () => {
-    mockRepositorio.obterCabecalhoUbs.mockResolvedValueOnce({
-      nomeUbs: "UBS São Vicente",
-      cnes: "1234567",
-      municipio: "Parnaíba",
-    });
+  it("deve gerar relatório de SALDOS_ATUAIS calculando o status real de validade dos lotes", async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-11-15T12:00:00Z"));
 
-    const fakeLinhas = [
-      {
-        medicamento: "Dipirona 500mg",
-        lote: "L01",
-        validade: "2027-01-01",
-        saldo: 100,
-        status: "ATIVO",
-      },
-    ];
-    mockRepositorio.consultarDadosParaRelatorio.mockResolvedValueOnce(fakeLinhas);
+    try {
+      mockRepositorio.obterCabecalhoUbs.mockResolvedValueOnce({
+        nomeUbs: "UBS São Vicente",
+        cnes: "1234567",
+        municipio: "Parnaíba",
+      });
 
-    const fakeBuffer = Buffer.from("excel-binary");
-    mockGerador.gerar.mockResolvedValueOnce(fakeBuffer);
+      const fakeLinhas = [
+        {
+          medicamento: "Dipirona 500mg",
+          lote: "L01",
+          validade: "2027-06-01",
+          saldo: 100,
+          status: "ATIVO",
+        },
+        {
+          medicamento: "Losartana 50mg",
+          lote: "L02",
+          validade: "2026-05-01",
+          saldo: 25,
+          status: "ATIVO",
+        },
+      ];
+      mockRepositorio.consultarDadosParaRelatorio.mockResolvedValueOnce(
+        fakeLinhas,
+      );
 
-    const resultado = await useCase.execute({
-      tipoRelatorio: "SALDOS_ATUAIS",
-      ubsId: "ubs-1",
-    });
+      const fakeBuffer = Buffer.from("excel-binary");
+      mockGerador.gerar.mockResolvedValueOnce(fakeBuffer);
 
-    expect(resultado.buffer).toEqual(fakeBuffer);
-    expect(resultado.contentType).toBe(
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    );
-    expect(resultado.nomeArquivo).toMatch(/^relatorio_estoque_SALDOS_ATUAIS_ubs-1_\d{4}-\d{2}-\d{2}\.xlsx$/);
-
-    expect(mockRepositorio.consultarDadosParaRelatorio).toHaveBeenCalledWith(
-      "SALDOS_ATUAIS",
-      {
-        ubsId: "ubs-1",
-        dataInicio: undefined,
-        dataFim: undefined,
-        principioAtivo: undefined,
-        produtoId: undefined,
-        categoria: undefined,
-      },
-    );
-
-    expect(mockGerador.gerar).toHaveBeenCalledWith(
-      expect.objectContaining({
+      const resultado = await useCase.execute({
         tipoRelatorio: "SALDOS_ATUAIS",
-        cabecalho: expect.objectContaining({
-          nomeUbs: "UBS São Vicente",
-          cnes: "1234567",
-          municipio: "Parnaíba",
+        ubsId: "ubs-1",
+      });
+
+      expect(resultado.buffer).toEqual(fakeBuffer);
+      expect(resultado.contentType).toBe(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+      expect(resultado.nomeArquivo).toBe(
+        "relatorio_estoque_SALDOS_ATUAIS_ubs-1_2026-11-15.xlsx",
+      );
+
+      expect(mockGerador.gerar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tipoRelatorio: "SALDOS_ATUAIS",
+          cabecalho: expect.objectContaining({
+            nomeUbs: "UBS São Vicente",
+            cnes: "1234567",
+            municipio: "Parnaíba",
+          }),
+          periodo: undefined,
+          linhas: [
+            expect.objectContaining({ lote: "L01", status: "REGULAR" }),
+            expect.objectContaining({ lote: "L02", status: "VENCIDO" }),
+          ],
         }),
-        periodo: undefined,
-        linhas: fakeLinhas,
-      }),
-    );
+      );
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("deve gerar relatório de MOVIMENTACOES_PERIODO com período padrão de 30 dias se omitido", async () => {
@@ -160,13 +171,16 @@ describe("GerarRelatorioEstoqueXlsxUseCase", () => {
     });
 
     expect(resultado.buffer).toBeDefined();
-    expect(resultado.nomeArquivo).toMatch(/^relatorio_estoque_MOVIMENTACOES_PERIODO_ubs-1_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.xlsx$/);
+    expect(resultado.nomeArquivo).toMatch(
+      /^relatorio_estoque_MOVIMENTACOES_PERIODO_ubs-1_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.xlsx$/,
+    );
     expect(mockRepositorio.consultarDadosParaRelatorio).toHaveBeenCalledTimes(1);
     const callArgs = mockRepositorio.consultarDadosParaRelatorio.mock.calls[0];
     expect(callArgs[0]).toBe("MOVIMENTACOES_PERIODO");
     expect(callArgs[1].dataInicio).toBeDefined();
     expect(callArgs[1].dataFim).toBeDefined();
   });
+
   it("deve lançar IntervaloDatasRelatorioInvalidoException para data inexistente (2026-02-31)", async () => {
     mockRepositorio.obterCabecalhoUbs.mockResolvedValueOnce({
       nomeUbs: "UBS Centro",
@@ -187,7 +201,6 @@ describe("GerarRelatorioEstoqueXlsxUseCase", () => {
   describe("fuso horário da UBS (America/Fortaleza)", () => {
     beforeEach(() => {
       jest.useFakeTimers();
-      // 30/10/2026 às 23h30 em Fortaleza = 31/10/2026 às 02h30 em UTC
       jest.setSystemTime(new Date("2026-10-31T02:30:00Z"));
     });
 
@@ -226,7 +239,8 @@ describe("GerarRelatorioEstoqueXlsxUseCase", () => {
         ubsId: "ubs-1",
       });
 
-      const filtros = mockRepositorio.consultarDadosParaRelatorio.mock.calls[0][1];
+      const filtros =
+        mockRepositorio.consultarDadosParaRelatorio.mock.calls[0][1];
       expect(filtros.dataFim).toBe("2026-10-30");
       expect(filtros.dataInicio).toBe("2026-09-30");
     });

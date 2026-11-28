@@ -11,6 +11,7 @@ import type {
 } from "../../domain/ports/gerador-planilha-estoque.port";
 
 const FUSO_UBS = "America/Fortaleza";
+const REGEX_FORMULA_INJECTION = /^[=+\-@\t\r]/;
 
 const FORMATADOR_DATA_HORA_UBS = new Intl.DateTimeFormat("en-US", {
   timeZone: FUSO_UBS,
@@ -24,11 +25,21 @@ const FORMATADOR_DATA_HORA_UBS = new Intl.DateTimeFormat("en-US", {
 });
 
 /**
- * Adaptador de infraestrutura com ExcelJS para geração de planilhas de estoque em formato .xlsx.
- * Atende ao RF028 (exportação de dados de estoque e extratos de auditoria) e ao NF003 (padrão nacional de datas dd/MM/yyyy e numFmt brasileiro).
+ * [RF020 / RF028 / NF003]: Adaptador de infraestrutura com ExcelJS para geração de planilhas de estoque (.xlsx).
+ * Inclui formatação nacional (dd/mm/yyyy, #,##0) e blindagem contra Formula Injection (CWE-1236).
  */
 @Injectable()
-export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEstoquePort {
+export class ExcelJsGeradorPlanilhaEstoqueAdapter
+  implements GeradorPlanilhaEstoquePort
+{
+  private static readonly ROTULOS_STATUS_LOTE: Record<string, string> = {
+    REGULAR: "Regular",
+    CURTA_90D: "Validade curta (90 dias)",
+    MES_CORRENTE: "Vence no mês",
+    VENCIDO: "Vencido",
+    ATIVO: "Ativo",
+  };
+
   private static readonly ROTULOS_MOTIVOS_PERDA: Record<string, string> = {
     VENCIMENTO: "Vencimento",
     AVARIA_FISICA: "Avaria física",
@@ -60,11 +71,9 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
   };
 
   /**
-   * Gera uma planilha Excel (.xlsx) estruturada em memória de acordo com o tipo de relatório solicitado.
-   * Conforma com RF028 e NF003.
-   *
-   * @param entrada Dados do relatório contendo tipoRelatorio, cabecalho institucional, periodo e linhas de dados.
-   * @returns Buffer binário pronto para download ou streaming HTTP.
+   * [RF020 / RF028 / NF003]: Gera uma planilha Excel (.xlsx) estruturada em memória conforme o tipo solicitado.
+   * @param entrada - Dados do relatório contendo `tipoRelatorio`, `cabecalho` institucional, `periodo` e `linhas`.
+   * @returns Buffer binário pronto para download HTTP.
    */
   async gerar(entrada: EntradaGeradorPlanilhaEstoque): Promise<Buffer> {
     const workbook = new Workbook();
@@ -77,7 +86,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
       views: [{ showGridLines: true }],
     });
 
-    // 1. Cabeçalho institucional nas primeiras linhas (sem fallback de município)
     const municipio = entrada.cabecalho.municipio;
     const linha1 = worksheet.addRow([
       `Município de ${municipio} - Secretaria Municipal de Saúde`,
@@ -102,9 +110,8 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     const linha3 = worksheet.addRow([infoEmissao]);
     linha3.font = { italic: true, size: 9 };
 
-    worksheet.addRow([]); // Linha 4 em branco para separação visual
+    worksheet.addRow([]);
 
-    // 2. Colunas e linhas de dados específicas do relatório
     const cabecalhoLinhaIndex = worksheet.rowCount + 1;
 
     switch (entrada.tipoRelatorio) {
@@ -128,11 +135,10 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
         break;
       default:
         throw new Error(
-          `Tipo de relatório não suportado: ${entrada.tipoRelatorio}`,
+          `Tipo de relatório não suportado: ${String(entrada.tipoRelatorio)}`,
         );
     }
 
-    // 3. Estilização do cabeçalho da tabela (negrito com fundo colorido)
     const headerRow = worksheet.getRow(cabecalhoLinhaIndex);
     headerRow.height = 24;
     headerRow.eachCell((cell) => {
@@ -145,12 +151,10 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
       cell.alignment = { vertical: "middle", horizontal: "center" };
     });
 
-    // 4. Congelar primeira linha da tabela
     worksheet.views = [
       { state: "frozen", xSplit: 0, ySplit: cabecalhoLinhaIndex },
     ];
 
-    // 5. Ajustar largura das colunas considerando apenas as linhas da tabela (a partir do cabeçalho)
     worksheet.columns.forEach((column) => {
       let maxLen = 12;
       if (column.eachCell) {
@@ -170,10 +174,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     return Buffer.from(buffer);
   }
 
-  /**
-   * [RF028]: Obtém o nome da aba da planilha com no máximo 31 caracteres (limite do Excel).
-   * @param tipo - Filtro/tipo do relatório.
-   */
   private obterNomeAba(tipo: FiltroTipoRelatorioEstoque): string {
     switch (tipo) {
       case "SALDOS_ATUAIS":
@@ -187,11 +187,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     }
   }
 
-  /**
-   * [RF028]: Monta a tabela de saldos atuais de todos os lotes com saldo positivo.
-   * @param worksheet - Aba onde a tabela é escrita.
-   * @param linhas - Linhas com medicamento, princípio ativo, lote, validade, saldo e status.
-   */
   private montarRelatorioSaldos(
     worksheet: Worksheet,
     linhas: LinhaRelatorioSaldosAtuais[],
@@ -209,34 +204,28 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     for (const item of linhas) {
       const dataValidade = this.converterDataPuraUtc(item.validade);
       const saldoNumerico = Number(item.saldo ?? 0);
+      const rotuloStatus = this.formatarStatusLote(item.status ?? "");
 
       const row = worksheet.addRow([
-        item.medicamento ?? "",
-        item.principioAtivo ?? "",
-        item.fabricante ?? "",
-        item.lote ?? "",
+        this.sanitizarTextoPlanilha(item.medicamento),
+        this.sanitizarTextoPlanilha(item.principioAtivo),
+        this.sanitizarTextoPlanilha(item.fabricante),
+        this.sanitizarTextoPlanilha(item.lote),
         dataValidade,
         saldoNumerico,
-        item.status ?? "",
+        this.sanitizarTextoPlanilha(rotuloStatus),
       ]);
 
-      // Validade: dd/MM/yyyy
       const cellValidade = row.getCell(5);
       cellValidade.numFmt = "dd/mm/yyyy";
       cellValidade.alignment = { horizontal: "center" };
 
-      // Saldo: número padrão brasileiro
       const cellSaldo = row.getCell(6);
       cellSaldo.numFmt = "#,##0";
       cellSaldo.alignment = { horizontal: "right" };
     }
   }
 
-  /**
-   * [RF020]: Monta a tabela de perdas com subtotais por motivo e, por último, o total geral.
-   * @param worksheet - Aba onde a tabela é escrita (cabeçalho da tabela inclusive).
-   * @param linhas - Perdas do período, já filtradas por motivo na consulta.
-   */
   private montarRelatorioPerdas(
     worksheet: Worksheet,
     linhas: LinhaRelatorioPerdasVencimento[],
@@ -261,10 +250,10 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
 
       const row = worksheet.addRow([
         dataPerda,
-        item.medicamento ?? "",
-        item.lote ?? "",
+        this.sanitizarTextoPlanilha(item.medicamento),
+        this.sanitizarTextoPlanilha(item.lote),
         qtdNumerica,
-        rotuloMotivo,
+        this.sanitizarTextoPlanilha(rotuloMotivo),
       ]);
 
       const cellData = row.getCell(1);
@@ -292,7 +281,7 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
       const subtotalQtd = subtotaisPorMotivo.get(motivo) ?? 0;
       const rotulo = this.formatarMotivo(motivo);
       const linhaSubtotal = worksheet.addRow([
-        `Subtotal - ${rotulo}`,
+        this.sanitizarTextoPlanilha(`Subtotal - ${rotulo}`),
         "",
         "",
         subtotalQtd,
@@ -317,11 +306,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     cellTotalQtd.alignment = { horizontal: "right" };
   }
 
-  /**
-   * [RF028]: Monta o extrato cronológico de movimentações no período.
-   * @param worksheet - Aba onde a tabela é escrita.
-   * @param linhas - Movimentações ordenadas cronologicamente com tipo legível e responsável.
-   */
   private montarRelatorioMovimentacoes(
     worksheet: Worksheet,
     linhas: LinhaRelatorioMovimentacoesPeriodo[],
@@ -344,25 +328,22 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
 
       const row = worksheet.addRow([
         dataHora,
-        rotuloTipo,
-        item.medicamento ?? "",
-        item.lote ?? "",
+        this.sanitizarTextoPlanilha(rotuloTipo),
+        this.sanitizarTextoPlanilha(item.medicamento),
+        this.sanitizarTextoPlanilha(item.lote),
         qtdNumerica,
         saldoResultante,
-        item.responsavel ?? "",
+        this.sanitizarTextoPlanilha(item.responsavel),
       ]);
 
-      // Data/Hora em Brasília: dd/mm/yyyy hh:mm
       const cellDataHora = row.getCell(1);
       cellDataHora.numFmt = "dd/mm/yyyy hh:mm";
       cellDataHora.alignment = { horizontal: "center" };
 
-      // Quantidade: numFmt '#,##0'
       const cellQtd = row.getCell(5);
       cellQtd.numFmt = "#,##0";
       cellQtd.alignment = { horizontal: "right" };
 
-      // Saldo Resultante: numFmt '#,##0'
       const cellSaldoResult = row.getCell(6);
       cellSaldoResult.numFmt = "#,##0";
       cellSaldoResult.alignment = { horizontal: "right" };
@@ -370,8 +351,19 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
   }
 
   /**
-   * Converte o código de motivo de perda em um rótulo legível em português.
+   * [OWASP / CWE-1236]: Escapa células textuais iniciadas por =, +, -, @, TAB ou CR para impedir execução de fórmulas.
    */
+  private sanitizarTextoPlanilha(valor: string | undefined | null): string {
+    const texto = valor ?? "";
+    return REGEX_FORMULA_INJECTION.test(texto) ? `'${texto}` : texto;
+  }
+
+  private formatarStatusLote(status: string): string {
+    return (
+      ExcelJsGeradorPlanilhaEstoqueAdapter.ROTULOS_STATUS_LOTE[status] ?? status
+    );
+  }
+
   private formatarMotivo(motivo: string): string {
     return (
       ExcelJsGeradorPlanilhaEstoqueAdapter.ROTULOS_MOTIVOS_PERDA[motivo] ??
@@ -379,9 +371,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     );
   }
 
-  /**
-   * Converte o código do tipo de movimentação em um rótulo legível em português.
-   */
   private formatarTipoMovimentacao(tipo: string): string {
     return (
       ExcelJsGeradorPlanilhaEstoqueAdapter.ROTULOS_TIPO_MOVIMENTACAO[tipo] ??
@@ -389,9 +378,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     );
   }
 
-  /**
-   * Converte uma data pura YYYY-MM-DD em Date UTC sem conversão de fuso horário.
-   */
   private converterDataPuraUtc(
     valor: string | Date | undefined | null,
   ): Date | null {
@@ -407,7 +393,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
         const [, d, m, y] = dmy;
         return new Date(Date.UTC(Number(y), Number(m) - 1, Number(d), 0, 0, 0));
       }
-      // Se for ISO com horário, repassa para conversão de Brasília
       return this.converterDataHoraBrasilia(valor);
     }
     if (valor instanceof Date) {
@@ -425,10 +410,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     return null;
   }
 
-  /**
-   * Converte um instante UTC para o horário local da UBS (America/Fortaleza, UTC-3).
-   * Gravado como Date em UTC correspondente ao horário civil de Brasília para exibição no Excel.
-   */
   private converterDataHoraBrasilia(
     valor: string | Date | undefined | null,
   ): Date | null {
@@ -470,11 +451,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     return new Date(Date.UTC(ano, mes - 1, dia, hora, minuto, segundo));
   }
 
-  /**
-   * Formata datas para o padrão brasileiro dd/MM/yyyy.
-   * Datas com instante ISO completo são convertidas para o fuso da UBS (America/Fortaleza).
-   * Datas puras YYYY-MM-DD não sofrem conversão de fuso.
-   */
   private formatarDataBr(valor: string | Date | undefined | null): string {
     if (!valor) return "";
     if (typeof valor === "string") {
@@ -505,9 +481,6 @@ export class ExcelJsGeradorPlanilhaEstoqueAdapter implements GeradorPlanilhaEsto
     return `${dia}/${mes}/${ano}`;
   }
 
-  /**
-   * Calcula a largura estimada em caracteres para formatação de colunas do Excel.
-   */
   private calcularLarguraTexto(val: CellValue): number {
     if (val === null || val === undefined) {
       return 0;

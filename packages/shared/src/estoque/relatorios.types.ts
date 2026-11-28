@@ -1,6 +1,12 @@
-import { MOTIVOS_AJUSTE_SAIDA } from "./ajustes.types";
+/** Motivos de saída contabilizados no relatório de perdas de estoque (RF011 / RF020). */
+export const MOTIVOS_PERDA_RELATORIO = [
+  "VENCIMENTO",
+  "AVARIA_FISICA",
+  "EXTRAVIO",
+  "RECOLHIMENTO_SANITARIO",
+] as const;
 
-export const MOTIVOS_PERDA_RELATORIO = MOTIVOS_AJUSTE_SAIDA;
+export type MotivoPerdaRelatorio = (typeof MOTIVOS_PERDA_RELATORIO)[number];
 
 /** Tipos de relatório de estoque exportáveis em planilha (RF020 / RF028). */
 export const FILTROS_TIPO_RELATORIO_ESTOQUE = [
@@ -17,4 +23,13 @@ export const PERIODO_PADRAO_RELATORIO_DIAS = 30;
 /** Intervalo máximo permitido entre dataInicio e dataFim (dias). */
 export const PERIODO_MAXIMO_RELATORIO_DIAS = 365;
 
-export type MotivoPerdaRelatorio = (typeof MOTIVOS_PERDA_RELATORIO)[number];
+/** Contrato de parâmetros de consulta para exportação de relatórios de estoque em XLSX (ES-05 / ES-10). */
+export interface ExportarRelatorioEstoqueQueryDto {
+  unidadeId: string;
+  tipoRelatorio: TipoRelatorioEstoque;
+  dataInicio?: string;
+  dataFim?: string;
+  principioAtivo?: string;
+  produtoId?: string;
+  categoria?: string;
+}

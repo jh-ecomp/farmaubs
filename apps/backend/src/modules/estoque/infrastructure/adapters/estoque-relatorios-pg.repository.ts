@@ -1,5 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import type { TipoRelatorioEstoque } from "@farmaubs/shared";
+import {
+  MOTIVOS_PERDA_RELATORIO,
+  type TipoRelatorioEstoque,
+} from "@farmaubs/shared";
 import { TransactionContext } from "../../../../common/transaction/transaction-context.service";
 import type {
   CabecalhoUbsRelatorio,
@@ -12,6 +15,24 @@ import type {
   LinhaRelatorioPerdasVencimento,
   LinhaRelatorioSaldosAtuais,
 } from "../../domain/ports/gerador-planilha-estoque.port";
+
+const ACENTOS = "áàâãäéèêëíìîïóòôõöúùûüç";
+const SEM_ACENTOS = "aaaaaeeeeiiiiooooouuuuc";
+const CARACTER_ESCAPE = "!";
+
+/** Normaliza uma coluna SQL para comparação case-insensitive e sem acentos. */
+const normalizarColuna = (coluna: string): string =>
+  `translate(lower(COALESCE(${coluna}, '')), '${ACENTOS}', '${SEM_ACENTOS}')`;
+
+/** Normaliza o termo digitado e monta o padrão LIKE escapando !, % e _. */
+function montarPadraoBusca(termo: string): string {
+  const normalizado = termo
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[!%_]/g, (c) => `${CARACTER_ESCAPE}${c}`);
+  return `%${normalizado}%`;
+}
 
 interface SaldoAtualRow {
   medicamento: string;
@@ -48,17 +69,24 @@ interface CabecalhoUbsRow {
 
 /**
  * [RF020 / RF028 / NF007 / NF015]: Adaptador PostgreSQL para geração de relatórios de estoque.
- * Executa as consultas na mesma conexão em que o RLS foi configurado via TransactionContext (app.municipio_id),
- * mantendo o filtro explícito por ubs_id em todas as consultas.
+ * Executa as consultas na mesma conexão transacional em que o RLS foi aplicado via TransactionContext (`app.municipio_id`),
+ * combinando isolamento municipal por RLS e filtro explícito por `ubs_id`.
  */
 @Injectable()
-export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatoriosPort {
+export class EstoqueRelatoriosPgRepository
+  implements RepositorioEstoqueRelatoriosPort
+{
   constructor(private readonly transactionContext: TransactionContext) {}
 
   /**
-   * Obtém nome, CNES e município da UBS para o cabeçalho institucional do relatório.
+   * [RF028 / NF015]: Obtém nome da UBS e município para o cabeçalho institucional do relatório.
+   * @param ubsId - UUID da UBS consultada.
+   * `unidades_saude` é tabela global (sem RLS), então o município ativo (`app.municipio_id`) é filtrado explicitamente.
+   * @returns Dados institucionais da UBS ou `null` quando inexistente ou fora do município ativo.
    */
-  async obterCabecalhoUbs(ubsId: string): Promise<CabecalhoUbsRelatorio | null> {
+  async obterCabecalhoUbs(
+    ubsId: string,
+  ): Promise<CabecalhoUbsRelatorio | null> {
     const manager = this.transactionContext.getManager();
     const sql = `
       SELECT
@@ -67,6 +95,7 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
       FROM public.unidades_saude u
       JOIN public.municipios m ON m.id = u.municipio_id
       WHERE u.id = $1::uuid
+        AND u.municipio_id = NULLIF(current_setting('app.municipio_id', true), '')::uuid
       LIMIT 1
     `;
     const rows: CabecalhoUbsRow[] = await manager.query(sql, [ubsId]);
@@ -81,8 +110,9 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
   }
 
   /**
-   * [RF028]: Consulta saldos atuais de todos os lotes com saldo positivo da UBS.
-   * Filtros opcionais por princípio ativo (ILIKE), produtoId ou categoria.
+   * [RF028]: Consulta saldos atuais de todos os lotes ativos com saldo positivo da UBS.
+   * @param filtros - `ubsId` e filtros opcionais por princípio ativo, `produtoId` e categoria.
+   * @returns Lista de lotes com saldo positivo ordenada por princípio ativo e validade (FEFO).
    */
   async consultarSaldosAtuais(
     filtros: FiltrosConsultaRelatorioEstoque,
@@ -95,20 +125,7 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
       "l.saldo_atual > 0",
     ];
 
-    if (filtros.principioAtivo) {
-      params.push(`%${filtros.principioAtivo}%`);
-      whereClauses.push(`p.principio_ativo ILIKE $${params.length}`);
-    }
-
-    if (filtros.produtoId) {
-      params.push(filtros.produtoId);
-      whereClauses.push(`p.id = $${params.length}::uuid`);
-    }
-
-    if (filtros.categoria) {
-      params.push(filtros.categoria);
-      whereClauses.push(`p.categoria = $${params.length}`);
-    }
+    this.aplicarFiltrosProduto(filtros, params, whereClauses);
 
     const sql = `
       SELECT
@@ -139,49 +156,23 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
   }
 
   /**
-   * [RF020 / RF028]: Consulta perdas por vencimento e avaria física no período informado.
-   * Considera baixas de ajuste de saída com motivo VENCIMENTO ou AVARIA_FISICA.
-   * Regra de dataFim inclusiva: created_at < dataFim + 1 dia.
+   * [RF020 / RF028]: Consulta perdas de estoque (`MOTIVOS_PERDA_RELATORIO`) no período informado.
+   * @param filtros - `ubsId`, janela temporal (`dataInicio`, `dataFim` inclusiva) e filtros de produto.
+   * @returns Baixas por motivo de perda ordenadas da mais recente para a mais antiga.
    */
   async consultarPerdasVencimento(
     filtros: FiltrosConsultaRelatorioEstoque,
   ): Promise<LinhaRelatorioPerdasVencimento[]> {
     const manager = this.transactionContext.getManager();
-    const params: unknown[] = [filtros.ubsId];
+    const params: unknown[] = [filtros.ubsId, [...MOTIVOS_PERDA_RELATORIO]];
     const whereClauses: string[] = [
       "m.ubs_id = $1::uuid",
       "m.tipo_movimentacao = 'AJUSTE_SAIDA'",
-      "m.motivo IN ('VENCIMENTO', 'AVARIA_FISICA')",
+      "m.motivo = ANY($2::text[])",
     ];
 
-    if (filtros.dataInicio) {
-      params.push(filtros.dataInicio);
-      whereClauses.push(
-        `m.created_at >= ($${params.length}::date)::timestamp AT TIME ZONE 'America/Fortaleza'`,
-      );
-    }
-
-    if (filtros.dataFim) {
-      params.push(filtros.dataFim);
-      whereClauses.push(
-        `m.created_at < (($${params.length}::date) + interval '1 day')::timestamp AT TIME ZONE 'America/Fortaleza'`,
-      );
-    }
-
-    if (filtros.principioAtivo) {
-      params.push(`%${filtros.principioAtivo}%`);
-      whereClauses.push(`p.principio_ativo ILIKE $${params.length}`);
-    }
-
-    if (filtros.produtoId) {
-      params.push(filtros.produtoId);
-      whereClauses.push(`p.id = $${params.length}::uuid`);
-    }
-
-    if (filtros.categoria) {
-      params.push(filtros.categoria);
-      whereClauses.push(`p.categoria = $${params.length}`);
-    }
+    this.aplicarFiltroPeriodo(filtros, params, whereClauses);
+    this.aplicarFiltrosProduto(filtros, params, whereClauses);
 
     const sql = `
       SELECT
@@ -209,7 +200,8 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
 
   /**
    * [RF028]: Extrato cronológico de todas as movimentações da UBS no período informado.
-   * Regra de dataFim inclusiva: created_at < dataFim + 1 dia.
+   * @param filtros - `ubsId`, janela temporal (`dataInicio`, `dataFim` inclusiva) e filtros de produto.
+   * @returns Movimentações em ordem cronológica ascendente com saldo resultante e responsável.
    */
   async consultarMovimentacoesPeriodo(
     filtros: FiltrosConsultaRelatorioEstoque,
@@ -218,34 +210,8 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
     const params: unknown[] = [filtros.ubsId];
     const whereClauses: string[] = ["m.ubs_id = $1::uuid"];
 
-    if (filtros.dataInicio) {
-      params.push(filtros.dataInicio);
-      whereClauses.push(
-        `m.created_at >= ($${params.length}::date)::timestamp AT TIME ZONE 'America/Fortaleza'`,
-      );
-    }
-
-    if (filtros.dataFim) {
-      params.push(filtros.dataFim);
-      whereClauses.push(
-        `m.created_at < (($${params.length}::date) + interval '1 day')::timestamp AT TIME ZONE 'America/Fortaleza'`,
-      );
-    }
-
-    if (filtros.principioAtivo) {
-      params.push(`%${filtros.principioAtivo}%`);
-      whereClauses.push(`p.principio_ativo ILIKE $${params.length}`);
-    }
-
-    if (filtros.produtoId) {
-      params.push(filtros.produtoId);
-      whereClauses.push(`p.id = $${params.length}::uuid`);
-    }
-
-    if (filtros.categoria) {
-      params.push(filtros.categoria);
-      whereClauses.push(`p.categoria = $${params.length}`);
-    }
+    this.aplicarFiltroPeriodo(filtros, params, whereClauses);
+    this.aplicarFiltrosProduto(filtros, params, whereClauses);
 
     const sql = `
       SELECT
@@ -281,6 +247,9 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
 
   /**
    * [RF028]: Ponto de entrada polimórfico que despacha para a consulta do tipo informado.
+   * @param tipo - Tipo de relatório (`SALDOS_ATUAIS`, `PERDAS_VENCIMENTO` ou `MOVIMENTACOES_PERIODO`).
+   * @param filtros - Critérios de filtragem da consulta.
+   * @returns Linhas correspondentes ao tipo de relatório solicitado.
    */
   async consultarDadosParaRelatorio(
     tipo: TipoRelatorioEstoque,
@@ -294,7 +263,50 @@ export class EstoqueRelatoriosPgRepository implements RepositorioEstoqueRelatori
       case "MOVIMENTACOES_PERIODO":
         return this.consultarMovimentacoesPeriodo(filtros);
       default:
-        throw new Error(`Tipo de relatório não suportado: ${tipo}`);
+        throw new Error(`Tipo de relatório não suportado: ${String(tipo)}`);
+    }
+  }
+
+  private aplicarFiltroPeriodo(
+    filtros: FiltrosConsultaRelatorioEstoque,
+    params: unknown[],
+    whereClauses: string[],
+  ): void {
+    if (filtros.dataInicio) {
+      params.push(filtros.dataInicio);
+      whereClauses.push(
+        `m.created_at >= ($${params.length}::date)::timestamp AT TIME ZONE 'America/Fortaleza'`,
+      );
+    }
+
+    if (filtros.dataFim) {
+      params.push(filtros.dataFim);
+      whereClauses.push(
+        `m.created_at < (($${params.length}::date) + interval '1 day')::timestamp AT TIME ZONE 'America/Fortaleza'`,
+      );
+    }
+  }
+
+  private aplicarFiltrosProduto(
+    filtros: FiltrosConsultaRelatorioEstoque,
+    params: unknown[],
+    whereClauses: string[],
+  ): void {
+    if (filtros.principioAtivo) {
+      params.push(montarPadraoBusca(filtros.principioAtivo));
+      whereClauses.push(
+        `${normalizarColuna("p.principio_ativo")} LIKE $${params.length} ESCAPE '${CARACTER_ESCAPE}'`,
+      );
+    }
+
+    if (filtros.produtoId) {
+      params.push(filtros.produtoId);
+      whereClauses.push(`p.id = $${params.length}::uuid`);
+    }
+
+    if (filtros.categoria) {
+      params.push(filtros.categoria);
+      whereClauses.push(`lower(p.categoria) = lower($${params.length}::text)`);
     }
   }
 }

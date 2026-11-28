@@ -5,7 +5,6 @@ import {
 } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
-import { PerfilCodigo, type AuthenticatedUserPayload } from "@farmaubs/shared";
 import { EstoqueRelatoriosController } from "./estoque-relatorios.controller";
 import { GerarRelatorioEstoqueXlsxUseCase } from "../../application/use-cases/gerar-relatorio-estoque-xlsx.use-case";
 import {
@@ -41,7 +40,7 @@ describe("EstoqueRelatoriosController", () => {
     jest.clearAllMocks();
   });
 
-  it("deve exportar XLSX com headers adequados e enviar o buffer no response", async () => {
+  it("deve exportar XLSX com headers adequados, higienizar filtros textuais e devolver StreamableFile", async () => {
     const fakeBuffer = Buffer.from("conteudo-planilha-excel");
     mockUseCase.execute.mockResolvedValueOnce({
       buffer: fakeBuffer,
@@ -53,25 +52,25 @@ describe("EstoqueRelatoriosController", () => {
     const setMock = jest.fn();
     const resMock = { set: setMock } as unknown as Response;
 
-    const user: AuthenticatedUserPayload = {
-      id: "user-1",
-      email: "user@farmaubs.gov.br",
-      nomeCompleto: "Farmaceutico Responsavel Teste",
-      perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
-      municipioId: "22222222-2222-2222-2222-222222222222",
-      unidadeIds: ["11111111-1111-1111-1111-111111111111"],
-      deveTrocarSenha: false,
-    };
-
     const resultado = await controller.exportarXlsx(
       {
         tipoRelatorio: "SALDOS_ATUAIS",
         unidadeId: "11111111-1111-1111-1111-111111111111",
+        principioAtivo: "  Dipirona  ",
+        categoria: "   ",
       },
-      user,
       resMock,
     );
 
+    expect(mockUseCase.execute).toHaveBeenCalledWith({
+      tipoRelatorio: "SALDOS_ATUAIS",
+      ubsId: "11111111-1111-1111-1111-111111111111",
+      dataInicio: undefined,
+      dataFim: undefined,
+      principioAtivo: "Dipirona",
+      produtoId: undefined,
+      categoria: undefined,
+    });
     expect(setMock).toHaveBeenCalledWith({
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -87,20 +86,7 @@ describe("EstoqueRelatoriosController", () => {
       new IntervaloDatasRelatorioInvalidoException("Intervalo inválido"),
     );
 
-    const resMock = {
-      setHeader: jest.fn(),
-      end: jest.fn(),
-    } as unknown as Response;
-
-    const user: AuthenticatedUserPayload = {
-      id: "user-1",
-      email: "user@farmaubs.gov.br",
-      nomeCompleto: "Farmaceutico Responsavel Teste",
-      perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
-      municipioId: "22222222-2222-2222-2222-222222222222",
-      unidadeIds: ["11111111-1111-1111-1111-111111111111"],
-      deveTrocarSenha: false,
-    };
+    const resMock = { set: jest.fn() } as unknown as Response;
 
     await expect(
       controller.exportarXlsx(
@@ -110,7 +96,6 @@ describe("EstoqueRelatoriosController", () => {
           dataInicio: "2026-11-20",
           dataFim: "2026-11-10",
         },
-        user,
         resMock,
       ),
     ).rejects.toThrow(BadRequestException);
@@ -118,23 +103,12 @@ describe("EstoqueRelatoriosController", () => {
 
   it("deve traduzir UbsNaoEncontradaRelatorioException para NotFoundException (404)", async () => {
     mockUseCase.execute.mockRejectedValueOnce(
-      new UbsNaoEncontradaRelatorioException("11111111-1111-1111-1111-111111111111"),
+      new UbsNaoEncontradaRelatorioException(
+        "11111111-1111-1111-1111-111111111111",
+      ),
     );
 
-    const resMock = {
-      setHeader: jest.fn(),
-      end: jest.fn(),
-    } as unknown as Response;
-
-    const user: AuthenticatedUserPayload = {
-      id: "user-1",
-      email: "user@farmaubs.gov.br",
-      nomeCompleto: "Administrador Teste",
-      perfilCodigo: PerfilCodigo.ADMINISTRADOR,
-      municipioId: "22222222-2222-2222-2222-222222222222",
-      unidadeIds: [],
-      deveTrocarSenha: false,
-    };
+    const resMock = { set: jest.fn() } as unknown as Response;
 
     await expect(
       controller.exportarXlsx(
@@ -142,7 +116,6 @@ describe("EstoqueRelatoriosController", () => {
           tipoRelatorio: "SALDOS_ATUAIS",
           unidadeId: "11111111-1111-1111-1111-111111111111",
         },
-        user,
         resMock,
       ),
     ).rejects.toThrow(NotFoundException);

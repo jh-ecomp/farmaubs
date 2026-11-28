@@ -1,10 +1,19 @@
-import type { TipoRelatorioEstoque } from "@farmaubs/shared";
+import {
+  PERIODO_MAXIMO_RELATORIO_DIAS,
+  PERIODO_PADRAO_RELATORIO_DIAS,
+  calcularStatusValidade,
+  type TipoRelatorioEstoque,
+} from "@farmaubs/shared";
 import {
   IntervaloDatasRelatorioInvalidoException,
   UbsNaoEncontradaRelatorioException,
 } from "../../domain/errors/estoque-relatorios.errors";
 import type { RepositorioEstoqueRelatoriosPort } from "../../domain/ports/estoque-relatorios.repository.port";
-import type { GeradorPlanilhaEstoquePort } from "../../domain/ports/gerador-planilha-estoque.port";
+import type {
+  GeradorPlanilhaEstoquePort,
+  LinhaRelatorioEstoque,
+  LinhaRelatorioSaldosAtuais,
+} from "../../domain/ports/gerador-planilha-estoque.port";
 
 export interface EntradaGerarRelatorioEstoqueXlsx {
   tipoRelatorio: TipoRelatorioEstoque;
@@ -23,6 +32,7 @@ export interface SaidaGerarRelatorioEstoqueXlsx {
 }
 
 const FUSO_UBS = "America/Fortaleza";
+const REGEX_DATA_YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 const FORMATADOR_YMD_UBS = new Intl.DateTimeFormat("en-CA", {
   timeZone: FUSO_UBS,
@@ -38,7 +48,7 @@ function ymdNoFusoUbs(instante: Date): string {
 
 /** True se a string YYYY-MM-DD representa uma data real (rejeita 2026-02-31). */
 function dataYmdValida(valor: string): boolean {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  const m = REGEX_DATA_YMD.exec(valor);
   if (!m) return false;
   const [, y, mo, d] = m;
   const dt = new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d)));
@@ -50,7 +60,7 @@ function dataYmdValida(valor: string): boolean {
 }
 
 /**
- * [RF020 / RF028]: Caso de uso para geração e exportação de relatórios de estoque em formato XLSX.
+ * [RF020 / RF028]: Caso de uso puro para geração e exportação de relatórios de estoque em formato XLSX.
  */
 export class GerarRelatorioEstoqueXlsxUseCase {
   constructor(
@@ -58,6 +68,13 @@ export class GerarRelatorioEstoqueXlsxUseCase {
     private readonly geradorPlanilha: GeradorPlanilhaEstoquePort,
   ) {}
 
+  /**
+   * [RF020 / RF028 / NF003]: Consulta os dados da UBS conforme o tipo de relatório e gera o buffer XLSX.
+   * @param entrada - Tipo de relatório, `ubsId`, intervalo opcional de datas e filtros de medicamento.
+   * @returns Buffer binário `.xlsx`, nome padronizado do arquivo e `contentType`.
+   * @throws {UbsNaoEncontradaRelatorioException} Se a UBS não existir no município do tenant.
+   * @throws {IntervaloDatasRelatorioInvalidoException} Se as datas forem inválidas, invertidas ou > 365 dias.
+   */
   async execute(
     entrada: EntradaGerarRelatorioEstoqueXlsx,
   ): Promise<SaidaGerarRelatorioEstoqueXlsx> {
@@ -74,20 +91,33 @@ export class GerarRelatorioEstoqueXlsxUseCase {
       entrada.dataFim,
     );
 
-    const linhas = await this.repositorio.consultarDadosParaRelatorio(
+    const linhasBrutas = await this.repositorio.consultarDadosParaRelatorio(
       tipoRelatorio,
       {
         ubsId,
         dataInicio,
         dataFim,
-        principioAtivo: entrada.principioAtivo,
+        principioAtivo: entrada.principioAtivo?.trim() || undefined,
         produtoId: entrada.produtoId,
-        categoria: entrada.categoria,
+        categoria: entrada.categoria?.trim() || undefined,
       },
     );
 
-    const hojeIso = new Date().toISOString();
-    const dataEmissaoYmd = ymdNoFusoUbs(new Date(hojeIso));
+    const agora = new Date();
+    const hojeIso = agora.toISOString();
+    const dataEmissaoYmd = ymdNoFusoUbs(agora);
+
+    const linhas: LinhaRelatorioEstoque[] =
+      tipoRelatorio === "SALDOS_ATUAIS"
+        ? (linhasBrutas as LinhaRelatorioSaldosAtuais[]).map((linha) => ({
+            ...linha,
+            status:
+              typeof linha.validade === "string" &&
+              REGEX_DATA_YMD.test(linha.validade)
+                ? calcularStatusValidade(linha.validade, dataEmissaoYmd)
+                : linha.status,
+          }))
+        : linhasBrutas;
 
     const buffer = await this.geradorPlanilha.gerar({
       tipoRelatorio,
@@ -97,10 +127,7 @@ export class GerarRelatorioEstoqueXlsxUseCase {
         municipio: cabecalhoUbs.municipio,
         dataEmissao: hojeIso,
       },
-      periodo:
-        dataInicio && dataFim
-          ? { dataInicio, dataFim }
-          : undefined,
+      periodo: dataInicio && dataFim ? { dataInicio, dataFim } : undefined,
       linhas,
     });
 
@@ -128,9 +155,11 @@ export class GerarRelatorioEstoqueXlsxUseCase {
     }
 
     const hoje = new Date();
-    const trintaDiasAtras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const inicioPadrao = new Date(
+      hoje.getTime() - PERIODO_PADRAO_RELATORIO_DIAS * 24 * 60 * 60 * 1000,
+    );
 
-    const dtInicioStr = dataInicio || ymdNoFusoUbs(trintaDiasAtras);
+    const dtInicioStr = dataInicio || ymdNoFusoUbs(inicioPadrao);
     const dtFimStr = dataFim || ymdNoFusoUbs(hoje);
 
     if (!dataYmdValida(dtInicioStr) || !dataYmdValida(dtFimStr)) {
@@ -151,9 +180,9 @@ export class GerarRelatorioEstoqueXlsxUseCase {
     const diferencaDias = Math.floor(
       (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24),
     );
-    if (diferencaDias > 365) {
+    if (diferencaDias > PERIODO_MAXIMO_RELATORIO_DIAS) {
       throw new IntervaloDatasRelatorioInvalidoException(
-        "O intervalo selecionado não pode ser superior a 365 dias.",
+        `O intervalo selecionado não pode ser superior a ${PERIODO_MAXIMO_RELATORIO_DIAS} dias.`,
       );
     }
 

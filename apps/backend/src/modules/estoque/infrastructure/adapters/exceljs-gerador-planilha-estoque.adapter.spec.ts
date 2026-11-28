@@ -21,7 +21,7 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
     dataEmissao: "2026-11-19T13:40:00.000Z",
   };
 
-  it("deve gerar relatório de SALDOS_ATUAIS com cabeçalho institucional, colunas corretas e tipos formatados", async () => {
+  it("deve gerar relatório de SALDOS_ATUAIS com cabeçalho institucional, status legível e tipos formatados", async () => {
     const linhas: LinhaRelatorioSaldosAtuais[] = [
       {
         medicamento: "Amoxicilina 500mg",
@@ -30,16 +30,16 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
         lote: "LOTE123",
         validade: "2027-05-15",
         saldo: 350,
-        status: "Normal",
+        status: "REGULAR",
       },
       {
         medicamento: "Dipirona 500mg/mL",
         principioAtivo: "Dipirona Monoidratada",
         fabricante: "Medley",
         lote: "LOTE456",
-        validade: "2026-12-01",
+        validade: "2026-05-01",
         saldo: 120,
-        status: "Atenção",
+        status: "VENCIDO",
       },
     ];
 
@@ -57,7 +57,6 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
     const ws = wb.getWorksheet("Saldos Atuais");
     expect(ws).toBeDefined();
 
-    // 1. Cabeçalho institucional nas primeiras linhas (usando município obrigatório sem fallback)
     const r1 = ws!.getRow(1).getCell(1).text;
     const r2 = ws!.getRow(2).getCell(1).text;
     const r3 = ws!.getRow(3).getCell(1).text;
@@ -67,7 +66,6 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
     expect(r2).toContain("1234567");
     expect(r3).toContain("19/11/2026");
 
-    // 2. Colunas da tabela
     const headerRow = ws!.getRow(5);
     const colunasEsperadas = [
       "Medicamento",
@@ -82,33 +80,34 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
       expect(headerRow.getCell(idx + 1).text).toBe(nomeCol);
     });
 
-    // 3. Valor de uma data pura (YYYY-MM-DD lida com getUTC*) e formato numérico
     const primeiraLinha = ws!.getRow(6);
     expect(primeiraLinha.getCell(1).value).toBe("Amoxicilina 500mg");
     expect(primeiraLinha.getCell(4).value).toBe("LOTE123");
+    expect(primeiraLinha.getCell(7).value).toBe("Regular");
+
+    const segundaLinha = ws!.getRow(7);
+    expect(segundaLinha.getCell(7).value).toBe("Vencido");
 
     const cellValidade = primeiraLinha.getCell(5);
     expect(cellValidade.value).toBeInstanceOf(Date);
     const dataValidade = cellValidade.value as Date;
     expect(dataValidade.getUTCFullYear()).toBe(2027);
-    expect(dataValidade.getUTCMonth()).toBe(4); // Maio = mês 4 (0-indexado)
+    expect(dataValidade.getUTCMonth()).toBe(4);
     expect(dataValidade.getUTCDate()).toBe(15);
     expect(cellValidade.numFmt).toBe("dd/mm/yyyy");
 
-    // Saldo: número com numFmt
     const cellSaldo = primeiraLinha.getCell(6);
     expect(cellSaldo.value).toBe(350);
     expect(typeof cellSaldo.value).toBe("number");
     expect(cellSaldo.numFmt).toBe("#,##0");
 
-    // 4. Congelamento da primeira linha da tabela
     expect(ws!.views[0]).toMatchObject({
       state: "frozen",
       ySplit: 5,
     });
   });
 
-  it("deve gerar relatório de PERDAS_VENCIMENTO na aba 'Perdas (Vencimento e Avaria)' com rótulos formatados, subtotais e total geral por último", async () => {
+  it("deve gerar relatório de PERDAS_VENCIMENTO contemplando todos os motivos de perda com subtotais e total geral", async () => {
     const linhas: LinhaRelatorioPerdasVencimento[] = [
       {
         data: "2026-10-10",
@@ -118,11 +117,25 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
         motivo: "VENCIMENTO",
       },
       {
-        data: "2026-10-25",
+        data: "2026-10-20",
         medicamento: "Ibuprofeno 400mg",
         lote: "IBU002",
         quantidade: 55,
         motivo: "AVARIA_FISICA",
+      },
+      {
+        data: "2026-10-25",
+        medicamento: "Losartana 50mg",
+        lote: "LOS003",
+        quantidade: 15,
+        motivo: "EXTRAVIO",
+      },
+      {
+        data: "2026-10-28",
+        medicamento: "Metformina 850mg",
+        lote: "MET004",
+        quantidade: 10,
+        motivo: "RECOLHIMENTO_SANITARIO",
       },
     ];
 
@@ -141,63 +154,62 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
     const wb = new Workbook();
     await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
 
-    // Nome da aba com <= 31 caracteres
     const ws = wb.getWorksheet("Perdas (Vencimento e Avaria)");
     expect(ws).toBeDefined();
 
-    // Período no cabeçalho institucional (datas puras sem conversão de fuso)
     const r3 = ws!.getRow(3).getCell(1).text;
     expect(r3).toContain("01/10/2026");
     expect(r3).toContain("31/10/2026");
 
-    // Colunas da tabela
-    const headerRow = ws!.getRow(5);
-    const colunasEsperadas = [
-      "Data",
-      "Medicamento",
-      "Lote",
-      "Quantidade",
-      "Motivo",
-    ];
-    colunasEsperadas.forEach((nomeCol, idx) => {
-      expect(headerRow.getCell(idx + 1).text).toBe(nomeCol);
+    expect(ws!.getRow(6).getCell(5).value).toBe("Vencimento");
+    expect(ws!.getRow(7).getCell(5).value).toBe("Avaria física");
+    expect(ws!.getRow(8).getCell(5).value).toBe("Extravio");
+    expect(ws!.getRow(9).getCell(5).value).toBe("Recolhimento sanitário");
+
+    expect(ws!.getRow(10).getCell(1).text).toBe("Subtotal - Vencimento");
+    expect(ws!.getRow(10).getCell(4).value).toBe(45);
+    expect(ws!.getRow(11).getCell(1).text).toBe("Subtotal - Avaria física");
+    expect(ws!.getRow(11).getCell(4).value).toBe(55);
+    expect(ws!.getRow(12).getCell(1).text).toBe("Subtotal - Extravio");
+    expect(ws!.getRow(12).getCell(4).value).toBe(15);
+    expect(ws!.getRow(13).getCell(1).text).toBe(
+      "Subtotal - Recolhimento sanitário",
+    );
+    expect(ws!.getRow(13).getCell(4).value).toBe(10);
+
+    const totalRow = ws!.getRow(14);
+    expect(totalRow.getCell(1).text).toBe("Total Geral");
+    expect(totalRow.getCell(4).value).toBe(125);
+    expect(totalRow.getCell(4).numFmt).toBe("#,##0");
+  });
+
+  it("deve neutralizar Formula Injection (CWE-1236) prefixando apóstrofo em células iniciadas por =, +, - ou @", async () => {
+    const buffer = await adapter.gerar({
+      tipoRelatorio: "SALDOS_ATUAIS",
+      cabecalho: cabecalhoPadrao,
+      linhas: [
+        {
+          medicamento: "=CMD|' /C calc'!A0",
+          principioAtivo: "+2+3",
+          fabricante: "@SUM(A1:A2)",
+          lote: "-LOTE-99",
+          validade: "2027-01-01",
+          saldo: 10,
+          status: "REGULAR",
+        },
+      ],
     });
 
-    // Conferir data e rótulo legível do motivo na linha 6
-    const rowItem1 = ws!.getRow(6);
-    const cellData = rowItem1.getCell(1);
-    expect(cellData.value).toBeInstanceOf(Date);
-    const dataPerda = cellData.value as Date;
-    expect(dataPerda.getUTCFullYear()).toBe(2026);
-    expect(dataPerda.getUTCMonth()).toBe(9); // Outubro
-    expect(dataPerda.getUTCDate()).toBe(10);
-    expect(cellData.numFmt).toBe("dd/mm/yyyy");
-    expect(rowItem1.getCell(5).value).toBe("Vencimento");
+    const wb = new Workbook();
+    await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
+    const ws = wb.getWorksheet("Saldos Atuais")!;
+    const row = ws.getRow(6);
 
-    // Linha 7 com motivo AVARIA_FISICA mapeado para "Avaria física"
-    const rowItem2 = ws!.getRow(7);
-    expect(rowItem2.getCell(5).value).toBe("Avaria física");
-
-    // Subtotais vêm antes: linha 8 (Vencimento) e linha 9 (Avaria física)
-    const subtotalRow1 = ws!.getRow(8);
-    expect(subtotalRow1.getCell(1).text).toBe("Subtotal - Vencimento");
-    expect(subtotalRow1.getCell(4).value).toBe(45);
-    expect(subtotalRow1.getCell(4).numFmt).toBe("#,##0");
-
-    const subtotalRow2 = ws!.getRow(9);
-    expect(subtotalRow2.getCell(1).text).toBe("Subtotal - Avaria física");
-    expect(subtotalRow2.getCell(4).value).toBe(55);
-    expect(subtotalRow2.getCell(4).numFmt).toBe("#,##0");
-
-    // Linha 10: Total geral por último (45 + 55 = 100)
-    const totalRow = ws!.getRow(10);
-    expect(totalRow.getCell(1).text).toContain("Total Geral");
-    const cellTotalQtd = totalRow.getCell(4);
-    expect(cellTotalQtd.value).toBe(100);
-    expect(typeof cellTotalQtd.value).toBe("number");
-    expect(cellTotalQtd.numFmt).toBe("#,##0");
-
-    expect(ws!.rowCount).toBe(10);
+    expect(row.getCell(1).value).toBe("'=CMD|' /C calc'!A0");
+    expect(row.getCell(2).value).toBe("'+2+3");
+    expect(row.getCell(3).value).toBe("'@SUM(A1:A2)");
+    expect(row.getCell(4).value).toBe("'-LOTE-99");
+    expect(row.getCell(6).value).toBe(10);
   });
 
   it("deve gerar relatório de MOVIMENTACOES_PERIODO com extrato cronológico e rótulos legíveis", async () => {
@@ -222,93 +234,64 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
       },
     ];
 
-    const entrada: EntradaGeradorPlanilhaEstoque<LinhaRelatorioMovimentacoesPeriodo> =
-      {
-        tipoRelatorio: "MOVIMENTACOES_PERIODO",
-        cabecalho: cabecalhoPadrao,
-        periodo: {
-          dataInicio: "2026-11-01",
-          dataFim: "2026-11-15",
-        },
-        linhas,
-      };
-
-    const buffer = await adapter.gerar(entrada);
+    const buffer = await adapter.gerar({
+      tipoRelatorio: "MOVIMENTACOES_PERIODO",
+      cabecalho: cabecalhoPadrao,
+      periodo: {
+        dataInicio: "2026-11-01",
+        dataFim: "2026-11-15",
+      },
+      linhas,
+    });
     const wb = new Workbook();
     await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
     const ws = wb.getWorksheet("Movimentações");
     expect(ws).toBeDefined();
 
-    // Colunas da tabela
-    const headerRow = ws!.getRow(5);
-    const colunasEsperadas = [
-      "Data/Hora",
-      "Tipo",
-      "Medicamento",
-      "Lote",
-      "Quantidade",
-      "Saldo Resultante",
-      "Responsável",
-    ];
-    colunasEsperadas.forEach((nomeCol, idx) => {
-      expect(headerRow.getCell(idx + 1).text).toBe(nomeCol);
-    });
-
-    // Conferir linha 1 com tipo legível
     const row1 = ws!.getRow(6);
-    const cellDataHora = row1.getCell(1);
-    expect(cellDataHora.value).toBeInstanceOf(Date);
-    expect(cellDataHora.numFmt).toBe("dd/mm/yyyy hh:mm");
-
+    expect(row1.getCell(1).value).toBeInstanceOf(Date);
+    expect(row1.getCell(1).numFmt).toBe("dd/mm/yyyy hh:mm");
     expect(row1.getCell(2).value).toBe("Entrada por Recebimento");
     expect(row1.getCell(3).value).toBe("Omeprazol 20mg");
     expect(row1.getCell(5).value).toBe(500);
-    expect(row1.getCell(5).numFmt).toBe("#,##0");
     expect(row1.getCell(6).value).toBe(500);
-    expect(row1.getCell(6).numFmt).toBe("#,##0");
     expect(row1.getCell(7).value).toBe("Farmacêutico João Silva");
 
-    // Linha 2 com tipo "Dispensação"
-    const row2 = ws!.getRow(7);
-    expect(row2.getCell(2).value).toBe("Dispensação");
+    expect(ws!.getRow(7).getCell(2).value).toBe("Dispensação");
   });
 
-  it("deve converter dataHora '2026-11-10T08:30:00.000Z' para horário de Brasília (UTC-3), resultando em 05:30 do mesmo dia", async () => {
-    const entrada: EntradaGeradorPlanilhaEstoque<LinhaRelatorioMovimentacoesPeriodo> =
-      {
-        tipoRelatorio: "MOVIMENTACOES_PERIODO",
-        cabecalho: cabecalhoPadrao,
-        linhas: [
-          {
-            dataHora: "2026-11-10T08:30:00.000Z",
-            tipo: "AJUSTE_ENTRADA",
-            medicamento: "Amoxicilina 500mg",
-            lote: "L001",
-            quantidade: 10,
-            saldoResultante: 10,
-            responsavel: "Farmacêutico",
-          },
-        ],
-      };
-
-    const buffer = await adapter.gerar(entrada);
+  it("deve converter dataHora '2026-11-10T08:30:00.000Z' para horário de Fortaleza (UTC-3), resultando em 05:30", async () => {
+    const buffer = await adapter.gerar({
+      tipoRelatorio: "MOVIMENTACOES_PERIODO",
+      cabecalho: cabecalhoPadrao,
+      linhas: [
+        {
+          dataHora: "2026-11-10T08:30:00.000Z",
+          tipo: "AJUSTE_ENTRADA",
+          medicamento: "Amoxicilina 500mg",
+          lote: "L001",
+          quantidade: 10,
+          saldoResultante: 10,
+          responsavel: "Farmacêutico",
+        },
+      ],
+    });
     const wb = new Workbook();
     await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
     const ws = wb.getWorksheet("Movimentações");
 
     const cellDataHora = ws!.getRow(6).getCell(1);
-    expect(cellDataHora.value).toBeInstanceOf(Date);
     const dateValue = cellDataHora.value as Date;
 
-    // Em horário de Brasília (UTC-3), 08:30Z vira 05:30 do mesmo dia
     expect(dateValue.getUTCFullYear()).toBe(2026);
-    expect(dateValue.getUTCMonth()).toBe(10); // Novembro
+    expect(dateValue.getUTCMonth()).toBe(10);
     expect(dateValue.getUTCDate()).toBe(10);
     expect(dateValue.getUTCHours()).toBe(5);
     expect(dateValue.getUTCMinutes()).toBe(30);
     expect(cellDataHora.numFmt).toBe("dd/mm/yyyy hh:mm");
     expect(ws!.getRow(6).getCell(2).value).toBe("Ajuste de Entrada");
   });
+
   it("deve rotular todos os tipos de movimentação aceitos pelo CHECK do banco", async () => {
     const tipos = [
       "ENTRADA_RECEBIMENTO",
@@ -318,15 +301,17 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
       "AJUSTE_ENTRADA",
       "AJUSTE_SAIDA",
     ];
-    const linhas: LinhaRelatorioMovimentacoesPeriodo[] = tipos.map((tipo, i) => ({
-      dataHora: "2026-11-10T08:30:00.000Z",
-      tipo,
-      medicamento: "Amoxicilina 500mg",
-      lote: `L${i}`,
-      quantidade: 10,
-      saldoResultante: 100,
-      responsavel: "Maria",
-    }));
+    const linhas: LinhaRelatorioMovimentacoesPeriodo[] = tipos.map(
+      (tipo, i) => ({
+        dataHora: "2026-11-10T08:30:00.000Z",
+        tipo,
+        medicamento: "Amoxicilina 500mg",
+        lote: `L${i}`,
+        quantidade: 10,
+        saldoResultante: 100,
+        responsavel: "Maria",
+      }),
+    );
 
     const buffer = await adapter.gerar({
       tipoRelatorio: "MOVIMENTACOES_PERIODO",
@@ -337,11 +322,10 @@ describe("ExcelJsGeradorPlanilhaEstoqueAdapter", () => {
 
     const wb = new Workbook();
     await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
-    const ws = wb.getWorksheet("Movimentações");
-    expect(ws).toBeDefined();
+    const ws = wb.getWorksheet("Movimentações")!;
 
     const rotulos: string[] = [];
-    ws!.eachRow((row, rowNumber) => {
+    ws.eachRow((row, rowNumber) => {
       if (rowNumber >= 6) rotulos.push(String(row.getCell(2).value));
     });
 

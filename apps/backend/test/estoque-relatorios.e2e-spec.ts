@@ -346,6 +346,7 @@ describe("GET /api/v1/estoque/relatorios/exportar-xlsx (E2E - camada C)", () => 
     tokenFarma = await login(EMAIL_FARMA, SENHA);
     tokenAdmin = await login(EMAIL_ADMIN, SENHA);
     ubsPadraoPorToken.set(tokenFarma, UBS_A1);
+    ubsPadraoPorToken.set(tokenAdmin, UBS_A1);
 
     for (const codigo of Object.values(PerfilCodigo)) {
       if (codigo === PerfilCodigo.FARMACEUTICO_RESPONSAVEL) {
@@ -425,11 +426,12 @@ describe("GET /api/v1/estoque/relatorios/exportar-xlsx (E2E - camada C)", () => 
       // Só o lote com saldo da UBS A1: sem lote zerado, sem A2, sem município B.
       expect(coluna(ws, 4)).toEqual(["RL-E2E-A1"]);
       expect(coluna(ws, 6)).toEqual([430]);
+      expect(coluna(ws, 7)).toEqual(["Regular"]);
     });
   });
 
   describe("PERDAS_VENCIMENTO", () => {
-    it("200: lista só VENCIMENTO e AVARIA_FISICA do período, com subtotais e Total Geral na última linha", async () => {
+    it("200: lista todos os motivos de perda do período (VENCIMENTO, AVARIA_FISICA e EXTRAVIO), com subtotais e Total Geral na última linha", async () => {
       const res = await exportar(tokenFarma, {
         tipoRelatorio: "PERDAS_VENCIMENTO",
         dataInicio: "2026-01-01",
@@ -449,20 +451,22 @@ describe("GET /api/v1/estoque/relatorios/exportar-xlsx (E2E - camada C)", () => 
       );
       expect(celula(ws, PRIMEIRA_LINHA_TABELA, 5)).toBe("Motivo");
 
-      // Ordem: perdas mais recentes primeiro; EXTRAVIO fica de fora (decisão da ES-05).
-      expect(coluna(ws, 5).slice(0, 2)).toEqual([
+      // Ordem: perdas mais recentes primeiro.
+      expect(coluna(ws, 5).slice(0, 3)).toEqual([
+        "Extravio",
         "Avaria física",
         "Vencimento",
       ]);
-      expect(coluna(ws, 4).slice(0, 2)).toEqual([25, 10]);
+      expect(coluna(ws, 4).slice(0, 3)).toEqual([5, 25, 10]);
 
       const ultima = ws.rowCount;
       expect(celula(ws, ultima, 1)).toBe("Total Geral");
-      expect(celula(ws, ultima, 4)).toBe(35);
+      expect(celula(ws, ultima, 4)).toBe(40);
       expect(coluna(ws, 1)).toEqual(
         expect.arrayContaining([
           "Subtotal - Vencimento",
           "Subtotal - Avaria física",
+          "Subtotal - Extravio",
         ]),
       );
     });
@@ -600,6 +604,22 @@ describe("GET /api/v1/estoque/relatorios/exportar-xlsx (E2E - camada C)", () => 
         unidadeId: UBS_A1,
       });
       expect(res.status).toBe(200);
+    });
+
+    it("400: unidadeId ausente retorna 400 (mesmo para ADMINISTRADOR)", async () => {
+      const res = await request(server())
+        .get(ROTA)
+        .query({ tipoRelatorio: "SALDOS_ATUAIS" })
+        .set("Authorization", tokenAdmin);
+      expect(res.status).toBe(400);
+    });
+
+    it("404: ADMINISTRADOR consultando UBS de outro município é isolado pelo RLS", async () => {
+      const res = await exportar(tokenAdmin, {
+        tipoRelatorio: "SALDOS_ATUAIS",
+        unidadeId: UBS_B1,
+      });
+      expect(res.status).toBe(404);
     });
 
     it("isolamento por município: o usuário do município B só vê os dados do B", async () => {
