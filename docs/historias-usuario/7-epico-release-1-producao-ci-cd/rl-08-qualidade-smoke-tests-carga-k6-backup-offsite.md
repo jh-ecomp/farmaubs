@@ -83,7 +83,7 @@ Funcionalidade: Validação Pós-Deploy (Smoke), Carga (Load), Estresse (Stress)
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] `node infra/scripts/smoke-test.mjs` validado nos modos `full` (HML/local) e `readonly` (PROD).
-- [ ] `k6 run infra/load-tests/k6-ubs-load.js` executado com sucesso comprovando `p(95) < 2000ms` com 50 VUs simultâneos.
-- [ ] `k6 run infra/load-tests/k6-ubs-stress.js` executado com sucesso demonstrando comportamento sob pico (até 200 VUs) e recuperação automática sem queda do serviço.
-- [ ] Scripts `backup-postgres-r2.sh` e `restore-postgres-r2.sh` com `set -euo pipefail`, permissão de execução (`chmod +x`) e testados em restauração real contra banco limpo.
+- [x] `node infra/scripts/smoke-test.mjs` validado nos modos `full` (HML/local) e `readonly` (PROD).
+- [x] `k6 run infra/load-tests/k6-ubs-load.js` executado com sucesso comprovando `p(95) < 2000ms` com 50 VUs simultâneos.
+- [x] `k6 run infra/load-tests/k6-ubs-stress.js` executado com sucesso demonstrando comportamento sob pico (até 200 VUs) e recuperação automática sem queda do serviço.
+- [x] Scripts `backup-postgres-r2.sh` e `restore-postgres-r2.sh` com `set -euo pipefail`, permissão de execução (`chmod +x`) e testados em restauração real contra banco limpo.

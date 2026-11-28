@@ -144,5 +144,5 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | RL-05 | Infra | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` e Proxy Reverso de borda (ADR-021/023) | ✅ Redigida | ✅ Concluída | — |
 | RL-06 | CI/CD | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) para HML e PROD (ADR-024) | ✅ Redigida | ⏳ Não iniciada | — |
 | RL-07 | Frontend | Acabamento de produção: `lang="pt-BR"`, títulos dinâmicos, `robots.txt`, Sidebar responsiva/dinâmica, Feature Flags e `/privacidade` + `/termos` | ✅ Redigida | ⏳ Não iniciada | — |
-| RL-08 | QA / Infra | Suíte de Smoke Tests pós-deploy, testes de Carga e Estresse `k6` (Load & Stress) e scripts de backup/restore off-site (`pg_dump` → R2) | ✅ Redigida | ⏳ Não iniciada | — |
+| RL-08 | QA / Infra | Suíte de Smoke Tests pós-deploy, testes de Carga e Estresse `k6` (Load & Stress) e scripts de backup/restore off-site (`pg_dump` → R2) | ✅ Redigida | ✅ Concluída | — |
 
