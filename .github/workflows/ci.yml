@@ -123,8 +123,8 @@ jobs:
       - name: Instalar dependências do monorepo
         run: pnpm install --frozen-lockfile
 
-      - name: Build do pacote @farmaubs/shared
-        run: pnpm moon run shared:build
+      - name: Build de @farmaubs/shared e @farmaubs/backend (dist/)
+        run: pnpm moon run backend:build
 
       - name: Provisionar role não-dona farmaubs_app no PostgreSQL 18 (ADR-016)
         env:
