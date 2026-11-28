@@ -54,6 +54,7 @@ export const MATRIZ_PERMISSOES_ROTAS: Record<string, PerfilCodigo[]> = {
     PerfilCodigo.ADMINISTRADOR,
   ],
   "/relatorios": [
+    PerfilCodigo.FARMACEUTICO_RESIDENTE,
     PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
     PerfilCodigo.GERENTE,
     PerfilCodigo.ADMINISTRADOR,
