@@ -123,6 +123,9 @@ describe("Hardening HTTP da API — configureApp & Throttler (RL-01)", () => {
       expect(allowed.headers["access-control-allow-origin"]).toBe(
         "https://hml.farmaubs.com.br",
       );
+      expect(allowed.headers["access-control-expose-headers"]).toContain(
+        "Content-Disposition",
+      );
 
       const denied = await request(app.getHttpServer() as Server)
         .get("/api/v1/health")

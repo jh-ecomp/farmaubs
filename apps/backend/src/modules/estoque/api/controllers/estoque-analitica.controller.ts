@@ -9,6 +9,7 @@ import {
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import {
+  FUSO_UBS,
   PerfilCodigo,
   type EstoqueMetricasResponseDto,
 } from "@farmaubs/shared";
@@ -16,8 +17,6 @@ import { ObterMetricasEstoqueUseCase } from "../../application/use-cases/obter-m
 import { EstoqueMetricasQueryDto } from "../dto/estoque-metricas-query.dto";
 import { Roles } from "../../../../common/decorators";
 import { TenantScoped } from "../../../../common/decorators/tenant-scoped.decorator";
-
-const FUSO_UBS = "America/Fortaleza";
 
 @ApiTags("Estoque")
 @Controller("estoque")

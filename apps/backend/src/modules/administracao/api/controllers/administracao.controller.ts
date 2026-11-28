@@ -41,7 +41,6 @@ export class AdministracaoController {
   }
 
   @Get("unidades-saude")
-  @SkipTransaction()
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth("access-token")
   @ApiOperation({

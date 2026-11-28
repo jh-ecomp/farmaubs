@@ -114,7 +114,7 @@ Funcionalidade: Relatórios Estruturados de Estoque em XLSX (Camadas A e C)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Serviço de exportação implementado com streaming seguro via biblioteca `ExcelJS`.
-- [ ] Suporte aos três tipos de relatórios com metadados institucionais da UBS no cabeçalho.
-- [ ] Testes unitários (Camada A) validando formatação de células, cálculo de totais e filtros de datas.
-- [ ] Testes E2E (Camada C) validando download de stream binário e garantia de RLS por tenant.
+- [x] Serviço de exportação implementado com `ExcelJS` (adapter `exceljs-gerador-planilha-estoque.adapter.ts`) com blindagem contra Formula Injection (CWE-1236) e cabeçalho `Content-Disposition` exposto no CORS.
+- [x] Suporte aos três tipos de relatórios (`SALDOS_ATUAIS` com cálculo real de status de validade do lote, `PERDAS_VENCIMENTO` contemplando `VENCIMENTO`, `AVARIA_FISICA`, `EXTRAVIO` e `RECOLHIMENTO_SANITARIO`, e `MOVIMENTACOES_PERIODO`) com cabeçalho institucional (município, UBS e data de emissão). Cabeçalho sem CNES até migração futura da coluna em `unidades_saude`.
+- [x] Testes unitários (Camada A) do caso de uso, repositório, adapter ExcelJS, controller e DTO, validando formatação de células, cálculo de subtotais/totais, sanitização de fórmulas e filtros de datas, além de especificação BDD Cucumber.
+- [x] Testes E2E (Camada C) do download binário em `test/estoque-relatorios.e2e-spec.ts` e testes de integração (Camada B) contra PostgreSQL real como `farmaubs_app`, validando RLS multi-tenant, fuso `America/Fortaleza`, busca sem acentos com escape de curingas e JOIN em `users`.

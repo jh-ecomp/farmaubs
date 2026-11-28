@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 export interface TenantScope {
   municipioId: string | null;
+  isAdmin: boolean;
 }
 
 /**
@@ -19,5 +20,9 @@ export class TenantContextService {
 
   getMunicipioId(): string | null {
     return this.storage.getStore()?.municipioId ?? null;
+  }
+
+  isAdmin(): boolean {
+    return this.storage.getStore()?.isAdmin ?? false;
   }
 }

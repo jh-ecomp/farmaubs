@@ -77,8 +77,7 @@ describe('Guarda de escopo de tenant (ADR-002/ADR-016)', () => {
   describe('tabelas globais', () => {
     const globalTables = TABLE_SCOPES.filter((t) => t.scope === 'global');
 
-    // O que define global é RLS desabilitado, NÃO a ausência da coluna
-    // municipio_id: unidades_saude tem a coluna como FK e é global.
+    // O que define global é RLS desabilitado, NÃO a ausência da coluna.
     it.each(globalTables.map((t) => [t.table, t.justification]))(
       '%s: RLS desabilitado (%s)',
       async (table: string) => {

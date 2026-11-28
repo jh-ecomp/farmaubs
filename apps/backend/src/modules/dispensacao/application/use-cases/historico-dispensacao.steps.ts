@@ -67,7 +67,10 @@ defineFeature(feature, (test) => {
         };
       }),
       buscarParaExportacao: jest.fn(),
-      buscarDispensacaoParaEstorno: jest.fn(async () => dispensacaoEstornoMemoria),
+      buscarDispensacaoParaEstorno: jest.fn(
+        async (_dispensacaoId: string, _unidadeId?: string | null) =>
+          dispensacaoEstornoMemoria,
+      ),
       executarEstornoAtomico: jest.fn(async (params) => {
         if (dispensacaoEstornoMemoria) {
           dispensacaoEstornoMemoria.status = "estornada";
@@ -85,7 +88,7 @@ defineFeature(feature, (test) => {
         });
         return {
           id: params.dispensacaoId,
-          status: "estornada",
+          status: "estornada" as const,
           estornadoEm: dataReferencia,
           motivoEstorno: params.motivoEstorno,
           itensDevolvidos,

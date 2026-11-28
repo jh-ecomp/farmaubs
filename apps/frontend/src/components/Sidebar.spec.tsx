@@ -39,9 +39,9 @@ describe("Sidebar — Renderização Dinâmica de Menu por Perfil RBAC (NF009 / 
     expect(screen.getByRole("link", { name: /recebimento/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /dispensas/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /indicadores/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /relatórios/i })).toBeInTheDocument();
 
     // Rotas restritas NÃO devem existir no DOM
-    expect(screen.queryByRole("link", { name: /relatórios/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /auditoria/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /gestão de usuários/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /gestão de ubs/i })).not.toBeInTheDocument();

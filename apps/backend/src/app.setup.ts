@@ -79,7 +79,12 @@ export function configureApp(app: INestApplication): void {
       callback(null, false);
     },
     credentials: true,
-    exposedHeaders: ["Authorization", "X-Session-Expires-At", "Set-Cookie"],
+    exposedHeaders: [
+      "Authorization",
+      "X-Session-Expires-At",
+      "Set-Cookie",
+      "Content-Disposition",
+    ],
   });
 
   app.setGlobalPrefix("api/v1");
@@ -101,6 +106,10 @@ export function configureApp(app: INestApplication): void {
       .addTag(
         "Administração",
         "Consultas de catálogo e topologia municipal (RF001, RF026)",
+      )
+      .addTag(
+        "Estoque",
+        "Controle de saldos, ajustes, rastreabilidade e relatórios (RF005, RF020, RF028)",
       )
       .addTag("health", "Verificação de saúde do serviço e banco de dados")
       .addBearerAuth(

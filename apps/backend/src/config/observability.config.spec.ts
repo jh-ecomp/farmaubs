@@ -1,7 +1,11 @@
 import * as Sentry from "@sentry/nestjs";
 import type { ErrorEvent } from "@sentry/nestjs";
 import { Writable } from "node:stream";
-import pino from "pino";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pino = require("pino") as (
+  options: Record<string, unknown>,
+  destination: Writable,
+) => { info: (obj: Record<string, unknown>) => void };
 import {
   buildPinoRedactPaths,
   initSentryIfConfigured,
