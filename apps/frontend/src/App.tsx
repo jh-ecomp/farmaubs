@@ -15,17 +15,25 @@ import { Dispensacao } from "./pages/Dispensacao";
 import { RecebimentoPage } from "./features/recebimento/pages/RecebimentoPage";
 import { AccessDenied } from "./pages/AccessDenied";
 import { ServerError } from "./pages/ServerError";
+import Privacidade from "./pages/Privacidade";
+import Termos from "./pages/Termos";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RouteTitleUpdater } from "./hooks/useDocumentTitle";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <RouteTitleUpdater />
       <ErrorBoundary>
         {/* Modal global de aviso de expiração de sessão (NF012 / AC-10) */}
         <SessionTimeoutModal />
         <Routes>
           {/* Rota pública da tela de Login (ADR-012) */}
           <Route path="/login" element={<Login />} />
+
+          {/* Rotas públicas legais e de conformidade LGPD (NF010 / RL-07) */}
+          <Route path="/privacidade" element={<Privacidade />} />
+          <Route path="/termos" element={<Termos />} />
 
           {/* Rota de troca obrigatória de senha (RF003 / ADR-006 / AC-21) */}
           <Route

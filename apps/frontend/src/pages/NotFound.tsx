@@ -1,10 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { Compass, Home } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 import logoFarmaUbs from "../assets/logofarmaubs.svg";
 import "../index.css";
 
 export default function NotFound() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const rotaDestino = isAuthenticated ? "/dashboard" : "/login";
 
   return (
     <div className="login-container1">
@@ -75,7 +78,7 @@ export default function NotFound() {
 
         <button
           type="button"
-          onClick={() => navigate("/login")}
+          onClick={() => navigate(rotaDestino)}
           className="login-thq-primary-cta-button-elm"
           style={{
             display: "inline-flex",

@@ -35,6 +35,9 @@ export type UsuarioPayload = Omit<UsuarioAutenticado, "perfilCodigo"> & {
   perfil?: string[] | string;
   municipio_id?: number | string;
   unidade_id?: number | string;
+  municipioNome?: string;
+  municipioUf?: string;
+  unidadeNome?: string;
 };
 
 export type LoginResponse = Omit<LoginResponseDto, "usuario"> & {

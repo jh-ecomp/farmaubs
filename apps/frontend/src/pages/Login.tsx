@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import "../index.css";
 import { useAuth } from "../contexts/AuthContext";
@@ -462,35 +462,47 @@ export default function Login() {
         style={{
           textAlign: "center",
           marginTop: "32px",
-          color: "#64748B",
+          color: "#475569",
           fontSize: "11px",
           lineHeight: "1.6",
         }}
       >
         <p style={{ margin: "0 0 8px 0" }}>
-          Sistema Integrado de Gestão Farmacêutica • Município de Parnaíba - PI
-          • SUS
+          Sistema Integrado de Gestão Farmacêutica • Assistência Farmacêutica no
+          SUS
         </p>
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             justifyContent: "center",
-            gap: "12px",
+            gap: "10px",
             alignItems: "center",
           }}
         >
           <span>Central de Abastecimento Farmacêutico</span>
           <span aria-hidden="true">•</span>
-          <a
-            href="#"
+          <Link
+            to="/privacidade"
             style={{
               color: "#001c6d",
-              textDecoration: "none",
-              fontWeight: 500,
+              textDecoration: "underline",
+              fontWeight: 600,
             }}
           >
-            Aviso de Privacidade
-          </a>
+            Política de Privacidade
+          </Link>
+          <span aria-hidden="true">•</span>
+          <Link
+            to="/termos"
+            style={{
+              color: "#001c6d",
+              textDecoration: "underline",
+              fontWeight: 600,
+            }}
+          >
+            Termos de Uso
+          </Link>
         </div>
       </footer>
 

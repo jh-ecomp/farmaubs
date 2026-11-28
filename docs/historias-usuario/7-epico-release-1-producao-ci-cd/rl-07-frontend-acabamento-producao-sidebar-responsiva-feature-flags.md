@@ -80,8 +80,8 @@ Funcionalidade: Acabamento de Produção, Responsividade e Conformidade no Front
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] `<html lang="pt-BR">`, `robots.txt` (`Disallow: /`) e `document.title` dinâmico implementados.
-- [ ] Texto hardcoded `SMS Parnaíba/PI` removido da `Sidebar` e substituído por dado do contexto autenticado.
-- [ ] `Sidebar` responsiva testada em viewports `390x844`, `768x1024` e `1366x768` sem quebra de layout.
-- [ ] Rotas `/privacidade` e `/termos` acessíveis publicamente e validadas com `@axe-core/playwright` (zero violações críticas de acessibilidade).
-- [ ] Módulos futuros não entregues ocultados quando `VITE_SHOW_FUTURE_MODULES=false`.
+- [x] `<html lang="pt-BR">`, `robots.txt` (`Disallow: /`) e `document.title` dinâmico implementados.
+- [x] Texto hardcoded `SMS Parnaíba/PI` removido da `Sidebar` e substituído por dado do contexto autenticado.
+- [x] `Sidebar` responsiva testada em viewports `390x844`, `768x1024` e `1366x768` sem quebra de layout.
+- [x] Rotas `/privacidade` e `/termos` acessíveis publicamente e validadas com `@axe-core/playwright` (zero violações críticas de acessibilidade).
+- [x] Módulos futuros não entregues ocultados quando `VITE_SHOW_FUTURE_MODULES=false`.
