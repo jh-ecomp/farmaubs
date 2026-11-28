@@ -1,11 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { StatusBar } from "expo-status-bar";
+import type { CabecalhoRecebimentoDto, DispensacaoEfetivadaResultado, ItemRecebimentoFormDto, PacienteDispensacaoRequest } from "@farmaubs/shared";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { BannerConexao } from "./src/screens/BannerConexao";
 import { SeletorUbs } from "./src/screens/SeletorUbs";
 import { TrocaSenhaScreen } from "./src/screens/TrocaSenhaScreen";
+import { IdentificacaoPacienteScreen } from "./src/screens/IdentificacaoPacienteScreen";
+import { BuscaMedicamentoScreen } from "./src/screens/BuscaMedicamentoScreen";
+import { CarrinhoScreen } from "./src/screens/CarrinhoScreen";
+import { HistoricoDispensacaoScreen } from "./src/screens/HistoricoDispensacaoScreen";
+import { AberturaGuiaScreen } from "./src/screens/AberturaGuiaScreen";
+import { ConferenciaItensScreen } from "./src/screens/ConferenciaItensScreen";
+import { ComprovanteEntradaScreen, RevisaoEntradaScreen } from "./src/screens/RevisaoEntradaScreen";
+import { HistoricoRecebimentosScreen } from "./src/screens/recebimento/HistoricoRecebimentosScreen";
+import type { ReciboEntrada } from "./src/screens/revisao-entrada";
+import { ComprovanteDispensacaoScreen, RevisaoDispensacaoScreen } from "./src/screens/FechamentoDispensacaoScreen";
+import { incluirNoCarrinho, type ItemCarrinho } from "./src/screens/carrinho";
 import { MENSAGEM_SENHA_ALTERADA } from "./src/screens/senha-forte";
 import { sessionService } from "./src/services/session.service";
 import { encerrarSessao, MENSAGEM_CONFIRMAR_SAIDA } from "./src/services/logout";
@@ -45,10 +57,22 @@ import { theme } from "./src/theme/tokens";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
-type Destino = "login" | "trocar-senha" | "dashboard";
+type Destino = "login" | "trocar-senha" | "dashboard" | "dispensar" | "historico" | "recebimento";
+type EtapaDispensa = "paciente" | "medicamento" | "carrinho" | "revisao" | "recibo";
 
 export default function App() {
   const [destino, setDestino] = useState<Destino>("login");
+  const [etapaDispensa, setEtapaDispensa] = useState<EtapaDispensa>("paciente");
+  const [itensCarrinho, setItensCarrinho] = useState<ItemCarrinho[]>([]);
+  const [dataReceita, setDataReceita] = useState("");
+  const [pacienteAtendimento, setPacienteAtendimento] = useState<PacienteDispensacaoRequest | null>(null);
+  const [recibo, setRecibo] = useState<DispensacaoEfetivadaResultado | null>(null);
+  const [guiaRecebimento, setGuiaRecebimento] = useState<CabecalhoRecebimentoDto | null>(null);
+  const [itensRecebimento, setItensRecebimento] = useState<ItemRecebimentoFormDto[]>([]);
+  const [etapaRecebimento, setEtapaRecebimento] = useState<"guia" | "itens" | "revisao" | "recibo">("guia");
+  const [abaRecebimento, setAbaRecebimento] = useState<"conferencia" | "historico">("conferencia");
+  const [reciboEntrada, setReciboEntrada] = useState<ReciboEntrada | null>(null);
+  const [cicloAtendimento, setCicloAtendimento] = useState(0);
   const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(null);
   const [avisoSessao, setAvisoSessao] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
@@ -72,6 +96,11 @@ export default function App() {
       setUnidades([]);
       setUnidadeAtivaId(null);
       setAvisoUnidade(null);
+      setGuiaRecebimento(null);
+      setItensRecebimento([]);
+      setReciboEntrada(null);
+      setEtapaRecebimento("guia");
+      setAbaRecebimento("conferencia");
       setAvisoSessao(MENSAGEM_SESSAO_EXPIRADA);
       setDestino("login");
     });
@@ -247,11 +276,34 @@ export default function App() {
     setDestino(pessoa.deveTrocarSenha ? "trocar-senha" : "dashboard");
   }
 
+  function limparAtendimento() {
+    setItensCarrinho([]);
+    setDataReceita("");
+    setPacienteAtendimento(null);
+    setRecibo(null);
+  }
+
+  function reiniciarAtendimento() {
+    limparAtendimento();
+    setCicloAtendimento((ciclo) => ciclo + 1);
+    setEtapaDispensa("paciente");
+  }
+
   async function alternarUnidade(id: string) {
     const unidade = unidades.find((item) => item.id === id);
     if (!unidade) return;
     await sessionService.salvarUnidadeAtiva(unidade.id);
     setUnidadeAtivaId(unidade.id);
+    setEtapaDispensa("paciente");
+    setItensCarrinho([]);
+    setDataReceita("");
+    setPacienteAtendimento(null);
+    setRecibo(null);
+    setGuiaRecebimento(null);
+    setItensRecebimento([]);
+    setReciboEntrada(null);
+    setEtapaRecebimento("guia");
+    setAbaRecebimento("conferencia");
     setAvisoUnidade(mensagemUnidadeAlterada(unidade.nome));
   }
 
@@ -292,6 +344,11 @@ export default function App() {
       setUnidadeAtivaId(null);
       setAvisoUnidade(null);
       setAvisoSenha(null);
+      setGuiaRecebimento(null);
+      setItensRecebimento([]);
+      setReciboEntrada(null);
+      setEtapaRecebimento("guia");
+      setAbaRecebimento("conferencia");
       setAvisoSessao(MENSAGEM_SESSAO_INATIVIDADE);
       setDestino("login");
       return;
@@ -349,6 +406,11 @@ export default function App() {
       setAvisoUnidade(null);
       setAvisoSenha(null);
       setAvisoSessao(null);
+      setGuiaRecebimento(null);
+      setItensRecebimento([]);
+      setReciboEntrada(null);
+      setEtapaRecebimento("guia");
+      setAbaRecebimento("conferencia");
       setDestino("login");
       expiraEmAlerta.current = null;
       setAlertaIndisponivel(false);
@@ -416,15 +478,219 @@ export default function App() {
             contentContainerStyle={styles.destino}
             keyboardShouldPersistTaps="handled"
           >
-            <Dashboard nome={usuario.nomeCompleto} alertaIndisponivel={alertaIndisponivel} />
+            <Dashboard
+              nome={usuario.nomeCompleto}
+              alertaIndisponivel={alertaIndisponivel}
+              onDispensar={() => {
+                limparAtendimento();
+                setCicloAtendimento((ciclo) => ciclo + 1);
+                setEtapaDispensa("paciente");
+                setDestino("dispensar");
+              }}
+              onHistorico={() => setDestino("historico")}
+              onRecebimento={() => setDestino("recebimento")}
+            />
           </ScrollView>
+        </SafeAreaView>
+      )}
+      {autenticado && destino === "recebimento" && (
+        <SafeAreaView style={styles.autenticado}>
+          <SeletorUbs
+            unidades={unidades}
+            ativaId={unidadeAtivaId}
+            aviso={avisoUnidade}
+            onAlternar={alternarUnidade}
+            onSair={pedirSaida}
+            reservaTopo={!bannerAberto}
+          />
+          <View style={styles.miolo}>
+            <View style={styles.abas}>
+              <Pressable
+                onPress={() => setAbaRecebimento("conferencia")}
+                accessibilityRole="button"
+                style={[styles.aba, abaRecebimento === "conferencia" && styles.abaAtiva]}
+              >
+                <Text style={[styles.abaTexto, abaRecebimento === "conferencia" && styles.abaTextoAtiva]}>Conferência</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setAbaRecebimento("historico")}
+                accessibilityRole="button"
+                style={[styles.aba, abaRecebimento === "historico" && styles.abaAtiva]}
+              >
+                <Text style={[styles.abaTexto, abaRecebimento === "historico" && styles.abaTextoAtiva]}>Histórico</Text>
+              </Pressable>
+            </View>
+            {abaRecebimento === "historico" ? (
+              <HistoricoRecebimentosScreen
+                key={unidadeAtivaId ?? "sem-unidade"}
+                apiBaseUrl={API_BASE_URL}
+                semConexao={semConexao}
+                onVoltar={() => setDestino("dashboard")}
+              />
+            ) : etapaRecebimento === "recibo" && reciboEntrada ? (
+              <ComprovanteEntradaScreen
+                recibo={reciboEntrada}
+                onNovo={() => {
+                  setReciboEntrada(null);
+                  setEtapaRecebimento("guia");
+                }}
+                onPainel={() => {
+                  setReciboEntrada(null);
+                  setEtapaRecebimento("guia");
+                  setDestino("dashboard");
+                }}
+              />
+            ) : etapaRecebimento === "revisao" && guiaRecebimento ? (
+              <RevisaoEntradaScreen
+                key={unidadeAtivaId ?? "sem-unidade"}
+                apiBaseUrl={API_BASE_URL}
+                cabecalho={guiaRecebimento}
+                itens={itensRecebimento}
+                semConexao={semConexao}
+                onMudarItens={setItensRecebimento}
+                onVoltar={() => setEtapaRecebimento("itens")}
+                onConcluido={(recibo) => {
+                  setReciboEntrada(recibo);
+                  setGuiaRecebimento(null);
+                  setItensRecebimento([]);
+                  setEtapaRecebimento("recibo");
+                }}
+              />
+            ) : etapaRecebimento === "itens" && guiaRecebimento ? (
+              <ConferenciaItensScreen
+                key={unidadeAtivaId ?? "sem-unidade"}
+                apiBaseUrl={API_BASE_URL}
+                cabecalho={guiaRecebimento}
+                itens={itensRecebimento}
+                semConexao={semConexao}
+                onMudarItens={setItensRecebimento}
+                onAlterarGuia={() => setEtapaRecebimento("guia")}
+                onRevisar={() => setEtapaRecebimento("revisao")}
+                onVoltar={() => setDestino("dashboard")}
+              />
+            ) : (
+              <AberturaGuiaScreen
+                key={unidadeAtivaId ?? "sem-unidade"}
+                inicial={guiaRecebimento}
+                onVoltar={() => setDestino("dashboard")}
+                onProsseguir={(cabecalho) => {
+                  setGuiaRecebimento(cabecalho);
+                  setEtapaRecebimento("itens");
+                }}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      )}
+      {autenticado && destino === "historico" && (
+        <SafeAreaView style={styles.autenticado}>
+          <SeletorUbs
+            unidades={unidades}
+            ativaId={unidadeAtivaId}
+            aviso={avisoUnidade}
+            onAlternar={alternarUnidade}
+            onSair={pedirSaida}
+            reservaTopo={!bannerAberto}
+          />
+          <View style={styles.miolo}>
+            <HistoricoDispensacaoScreen
+              key={unidadeAtivaId ?? "sem-unidade"}
+              apiBaseUrl={API_BASE_URL}
+              ubsId={unidadeAtivaId}
+              semConexao={semConexao}
+              onVoltar={() => setDestino("dashboard")}
+            />
+          </View>
+        </SafeAreaView>
+      )}
+      {autenticado && destino === "dispensar" && (
+        <SafeAreaView style={styles.autenticado}>
+          <SeletorUbs
+            unidades={unidades}
+            ativaId={unidadeAtivaId}
+            aviso={avisoUnidade}
+            onAlternar={alternarUnidade}
+            onSair={pedirSaida}
+            reservaTopo={!bannerAberto}
+          />
+          <View style={styles.miolo}>
+            {etapaDispensa === "paciente" ? (
+              <IdentificacaoPacienteScreen
+                key={`${unidadeAtivaId ?? "sem-unidade"}:${cicloAtendimento}`}
+                apiBaseUrl={API_BASE_URL}
+                semConexao={semConexao}
+                onVoltar={() => {
+                  limparAtendimento();
+                  setDestino("dashboard");
+                }}
+                onAvancar={(paciente) => {
+                  setPacienteAtendimento(paciente);
+                  setEtapaDispensa("medicamento");
+                }}
+              />
+            ) : etapaDispensa === "medicamento" ? (
+              <BuscaMedicamentoScreen
+                key={`${unidadeAtivaId ?? "sem-unidade"}:${cicloAtendimento}`}
+                apiBaseUrl={API_BASE_URL}
+                ubsId={unidadeAtivaId}
+                semConexao={semConexao}
+                totalItens={itensCarrinho.length}
+                onVoltar={() => setEtapaDispensa("paciente")}
+                onIncluir={(item) => setItensCarrinho((atuais) => incluirNoCarrinho(atuais, item))}
+                onAbrirCarrinho={() => setEtapaDispensa("carrinho")}
+              />
+            ) : etapaDispensa === "carrinho" ? (
+              <CarrinhoScreen
+                itens={itensCarrinho}
+                dataReceita={dataReceita}
+                onMudarItens={setItensCarrinho}
+                onMudarData={setDataReceita}
+                onVoltar={() => setEtapaDispensa("medicamento")}
+                onRevisar={() => setEtapaDispensa("revisao")}
+              />
+            ) : etapaDispensa === "recibo" && recibo ? (
+              <ComprovanteDispensacaoScreen
+                resultado={recibo}
+                nomeUbs={unidades.find((unidade) => unidade.id === unidadeAtivaId)?.nome ?? ""}
+                itens={itensCarrinho}
+                onNovoAtendimento={reiniciarAtendimento}
+              />
+            ) : pacienteAtendimento ? (
+              <RevisaoDispensacaoScreen
+                apiBaseUrl={API_BASE_URL}
+                paciente={pacienteAtendimento}
+                itens={itensCarrinho}
+                dataReceita={dataReceita}
+                ubsId={unidadeAtivaId}
+                nomeUbs={unidades.find((unidade) => unidade.id === unidadeAtivaId)?.nome ?? ""}
+                semConexao={semConexao}
+                onVoltar={() => setEtapaDispensa("carrinho")}
+                onConcluido={(resultado) => {
+                  setRecibo(resultado);
+                  setEtapaDispensa("recibo");
+                }}
+              />
+            ) : null}
+          </View>
         </SafeAreaView>
       )}
     </View>
   );
 }
 
-function Dashboard({ nome, alertaIndisponivel }: { nome?: string; alertaIndisponivel?: boolean }) {
+function Dashboard({
+  nome,
+  alertaIndisponivel,
+  onDispensar,
+  onHistorico,
+  onRecebimento,
+}: {
+  nome?: string;
+  alertaIndisponivel?: boolean;
+  onDispensar: () => void;
+  onHistorico: () => void;
+  onRecebimento: () => void;
+}) {
   return (
     <View style={styles.gradeAviso}>
       {alertaIndisponivel ? <AvisoInatividade /> : null}
@@ -435,8 +701,22 @@ function Dashboard({ nome, alertaIndisponivel }: { nome?: string; alertaIndispon
         </Text>
       </View>
       <View style={styles.grade}>
+        <Atalho
+          titulo="Recebimento"
+          texto="Abertura da guia de remessa e conferência da carga."
+          onPress={onRecebimento}
+        />
         <Atalho titulo="Estoque" texto="Controle de lotes, validades e entradas de medicamentos." />
-        <Atalho titulo="Dispensas" texto="Registro e consulta de dispensações a pacientes do SUS." />
+        <Atalho
+          titulo="Dispensas"
+          texto="Registro e consulta de dispensações a pacientes do SUS."
+          onPress={onDispensar}
+        />
+        <Atalho
+          titulo="Histórico"
+          texto="Atendimentos de ontem, de hoje e dos últimos dias da UBS."
+          onPress={onHistorico}
+        />
         <Atalho titulo="Indicadores" texto="Métricas de consumo, curva ABC e cobertura da UBS." />
       </View>
     </View>
@@ -455,12 +735,20 @@ function AvisoInatividade() {
   );
 }
 
-function Atalho({ titulo, texto }: { titulo: string; texto: string }) {
+function Atalho({ titulo, texto, onPress }: { titulo: string; texto: string; onPress?: () => void }) {
+  if (!onPress) {
+    return (
+      <View style={styles.atalho} accessibilityRole="text">
+        <Text style={styles.atalhoTitulo}>{titulo}</Text>
+        <Text style={styles.atalhoTexto}>{texto}</Text>
+      </View>
+    );
+  }
   return (
-    <View style={styles.atalho} accessibilityRole="text">
+    <Pressable onPress={onPress} accessibilityRole="button" style={styles.atalho}>
       <Text style={styles.atalhoTitulo}>{titulo}</Text>
       <Text style={styles.atalhoTexto}>{texto}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -481,8 +769,28 @@ const styles = StyleSheet.create({
   miolo: {
     flex: 1,
   },
+  abas: {
+    flexDirection: "row",
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+  },
+  aba: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  abaAtiva: { backgroundColor: "#1D4ED8", borderColor: "#1D4ED8" },
+  abaTexto: { color: "#1D4ED8", fontWeight: "700" },
+  abaTextoAtiva: { color: "#FFFFFF" },
   destino: {
     padding: theme.spacing.md,
+    paddingBottom: Platform.OS === "android" ? 96 : theme.spacing.md,
     gap: theme.spacing.md,
     backgroundColor: theme.colors.canvas,
   },
