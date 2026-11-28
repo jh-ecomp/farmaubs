@@ -37,12 +37,14 @@ describe('HealthService (unit)', () => {
     await expect(service.check()).rejects.toThrow('pool exhausted');
   });
 
-  it('sempre emite um timestamp válido no resultado', async () => {
+  it('sempre emite timestamp válido e uptime numérico no resultado', async () => {
     databaseHealth.isUp.mockResolvedValue(true);
 
     const result = await service.check();
 
     expect(result.timestamp).toBeDefined();
     expect(new Date(result.timestamp).getTime()).not.toBeNaN();
+    expect(typeof result.uptime).toBe('number');
+    expect(result.uptime).toBeGreaterThanOrEqual(0);
   });
 });

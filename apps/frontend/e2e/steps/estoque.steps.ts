@@ -528,7 +528,7 @@ When(
 
 Then(
   "o arquivo Excel {string} de estoque deve ser baixado nativamente pelo navegador",
-  async ({}, extensao: string) => {
+  async ({ page: _page }, extensao: string) => {
     expect(ultimoDownloadEstoqueFilename.toLowerCase()).toContain(
       extensao.toLowerCase(),
     );

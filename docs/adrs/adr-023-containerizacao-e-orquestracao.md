@@ -1,7 +1,7 @@
 ## ADR-023 - Containerização e orquestração
 
 ### Status
-🟢 Decidido e documentado — última atualização: 24/07/2026
+🟢 Decidido e documentado — última atualização: 24/11/2026 (revisão do uso de registry externo `ghcr.io` e proxy reverso de borda após `ADR-024`)
 
 ### Contexto
 
@@ -42,7 +42,7 @@ Adotar **Docker Compose puro**, sem orquestrador adicional, com a seguinte estru
 - `api` — aplicação NestJS (backend), incluindo o worker do outbox pattern (ADR-004) executando como **processo interno ao mesmo container**, não como serviço separado. Esta escolha prioriza simplicidade operacional nesta fase, dado o volume atual de eventos assíncronos, mas é registrada como gatilho de revisão explícito (ver seção "Revisão"), coerente com a evolução futura já prevista no próprio ADR-004.
 - `frontend` — em desenvolvimento, servidor de desenvolvimento do Vite; em produção, build estático servido por um Nginx simples.
 
-**Registro de imagem**: nesta fase, sem uso de um registry de imagens externo (ex.: Docker Hub privado, GitHub Container Registry) — o build das imagens ocorre diretamente na VPS a partir do repositório, dado que existe apenas um ambiente de produção. Esta escolha é registrada como gatilho de revisão explícito, a ser reavaliada quando o pipeline de CI/CD (ADR-024, ainda não priorizado) ou múltiplos ambientes/VPS entrarem em operação.
+**Registro de imagem e Proxy de Borda (atualizado pelo `ADR-024` / `RL-05`)**: com a entrada do pipeline de CI/CD (`ADR-024`) e a convivência de `farmaubs-hml` e `farmaubs-prod` na mesma VPS (`ADR-025`), o `docker-compose.prod.yml` passa a consumir **imagens imutáveis publicadas no `ghcr.io`** (eliminando `docker build` na VPS), sem expor portas de `postgres` ou `api` no host, publicando cada `frontend` apenas em loopback (`127.0.0.1:8081` para HML e `127.0.0.1:8080` para PROD) atrás de um **Proxy Reverso único de borda (Caddy)** na VPS com certificado Origin SSL da Cloudflare.
 
 Esta estrutura resolve, junto com a decisão de orquestração, a necessidade de setup de desenvolvimento local: os quatro desenvolvedores sobem o ambiente completo (Postgres, API e frontend) com um único comando (`docker compose -f docker-compose.yml -f docker-compose.dev.yml up`), sem depender de configuração manual assistida pelo desenvolvedor sênior a cada onboarding.
 

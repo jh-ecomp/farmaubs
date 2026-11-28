@@ -4,24 +4,28 @@ import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcrypt';
 import { seedCicloOperacionalParnaiba } from './seed-parnaiba-epicos';
 
-// Leitura do arquivo de variáveis de ambiente (raiz do monorepo)
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+// Leitura do arquivo de variáveis de ambiente apenas quando invocado diretamente em dev (RL-02)
+if (require.main === module) {
+  dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
-// Guard: este seed é exclusivo de desenvolvimento local
-// Aborta em qualquer outro ambiente, incluindo homologação.
-if (process.env.NODE_ENV !== 'development') {
-  throw new Error(
-    'Seed de desenvolvimento só pode rodar com NODE_ENV=development',
-  );
+  // Guard: este seed é exclusivo de desenvolvimento local
+  // Aborta em qualquer outro ambiente, incluindo homologação.
+  if (process.env.NODE_ENV !== 'development') {
+    throw new Error(
+      'Seed de desenvolvimento só pode rodar com NODE_ENV=development',
+    );
+  }
 }
 
-const pool = new Pool({
-  host: process.env.DB_HOST ?? 'localhost', // fora do container: localhost
-  port: parseInt(process.env.DB_PORT ?? '5434', 10),
-  database: process.env.POSTGRES_DB ?? 'farmaubs',
-  user: process.env.POSTGRES_USER ?? 'farmaubs_admin',
-  password: process.env.POSTGRES_PASSWORD ?? '',
-});
+function createDevPool(): Pool {
+  return new Pool({
+    host: process.env.DB_HOST ?? 'localhost', // fora do container: localhost
+    port: parseInt(process.env.DB_PORT ?? '5434', 10),
+    database: process.env.POSTGRES_DB ?? 'farmaubs',
+    user: process.env.POSTGRES_USER ?? 'farmaubs_admin',
+    password: process.env.POSTGRES_PASSWORD ?? '',
+  });
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * DADOS DE SEED — referências por CHAVE NATURAL (nunca por ID fixo)
@@ -31,7 +35,7 @@ const pool = new Pool({
  */
 
 /** Perfis RBAC definidos no ADR-006 — chave natural: codigo (UNIQUE) */
-const PERFIS = [
+export const PERFIS = [
   {
     codigo: 'ADMINISTRADOR',
     nome: 'Administrador',
@@ -943,6 +947,38 @@ async function seedProdutos(client: PoolClient): Promise<Map<string, string>> {
 // MAIN
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * [ADR-025 / RL-02]: Popula catálogo RENAME, fabricantes, UBSs sintéticas e ciclo operacional em transação aberta.
+ * Reutilizado tanto pelo seed-dev (local) quanto pelo seed-qa (homologação isolada).
+ * @param client - PoolClient conectado dentro de uma transação ativa.
+ * @returns Mapas de IDs gerados/atualizados por chave natural.
+ */
+export async function executarSeedSinteticoBase(client: PoolClient): Promise<{
+  perfilIds: Map<string, string>;
+  municipioIds: Map<string, string>;
+  unidadeIds: Map<string, string>;
+  usuarioIds: Map<string, string>;
+}> {
+  const perfilIds = await seedPerfis(client);
+  const municipioIds = await seedMunicipios(client);
+  const unidadeIds = await seedUnidadesSaude(client, municipioIds);
+  const usuarioIds = await seedUsuarios(client, perfilIds, municipioIds);
+  await seedUserUnits(client, usuarioIds, unidadeIds);
+
+  const fabricanteIds = await seedFabricantes(client);
+  const produtoIds = await seedProdutos(client);
+  await seedCicloOperacionalParnaiba(
+    client,
+    municipioIds,
+    unidadeIds,
+    usuarioIds,
+    fabricanteIds,
+    produtoIds,
+  );
+
+  return { perfilIds, municipioIds, unidadeIds, usuarioIds };
+}
+
 async function main(): Promise<void> {
   console.log('\n🌱 FarmaUBS — Seed de Desenvolvimento');
   console.log('   Ambiente : development');
@@ -950,27 +986,11 @@ async function main(): Promise<void> {
     `   Banco     : ${process.env.POSTGRES_DB ?? 'farmaubs'} @ ${process.env.DB_HOST ?? 'localhost'}:${process.env.DB_PORT ?? '5434'}\n`,
   );
 
+  const pool = createDevPool();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    const perfilIds = await seedPerfis(client);
-    const municipioIds = await seedMunicipios(client);
-    const unidadeIds = await seedUnidadesSaude(client, municipioIds);
-    const usuarioIds = await seedUsuarios(client, perfilIds, municipioIds);
-    await seedUserUnits(client, usuarioIds, unidadeIds);
-
-    const fabricanteIds = await seedFabricantes(client);
-    const produtoIds = await seedProdutos(client);
-    await seedCicloOperacionalParnaiba(
-      client,
-      municipioIds,
-      unidadeIds,
-      usuarioIds,
-      fabricanteIds,
-      produtoIds,
-    );
-
+    await executarSeedSinteticoBase(client);
     await client.query('COMMIT');
 
     console.log('\n✅ Seed concluído com sucesso!\n');
@@ -993,7 +1013,9 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

@@ -53,7 +53,7 @@ defineFeature(feature, (test) => {
     };
 
     repoMock = {
-      obterOuCriarPaciente: jest.fn(async (p) => ({
+      obterOuCriarPaciente: jest.fn(async (p, _municipioId: string) => ({
         id: "paciente-1",
         nomeCompleto: p.nomeCompleto,
         cpf: p.cpf,
@@ -72,7 +72,7 @@ defineFeature(feature, (test) => {
         id: "dispensacao-1",
         numeroAtendimento: "DISP-001",
         dataAtendimento: dataReferencia,
-        status: "concluida",
+        status: "concluida" as const,
         paciente: dados.paciente,
         dispensador: {
           id: dados.dispensadorId,

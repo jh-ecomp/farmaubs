@@ -19,7 +19,7 @@
 3. [Política de retenção de dados (soft delete)](#3-política-de-retenção-de-dados-soft-delete)
 4. [Fluxo sequencial de trabalho](#4-fluxo-sequencial-de-trabalho)
    - [Passo 0: Leitura de atualizações](#passo-0-leitura-de-atualizações)
-   - [Passo 1: Atualizar a branch main](#passo-1-atualizar-a-branch-main)
+   - [Passo 1: Atualizar a branch develop](#passo-1-atualizar-a-branch-develop)
    - [Passo 2: Sincronizar variáveis de ambiente (.env)](#passo-2-sincronizar-variáveis-de-ambiente-env)
    - [Passo 3: Criar a branch de trabalho](#passo-3-criar-a-branch-de-trabalho)
    - [Passo 4: Desenvolvimento e Docker Compose](#passo-4-desenvolvimento-e-docker-compose)
@@ -99,7 +99,7 @@ Fonte única de verdade para contratos entre backend, frontend e mobile:
 O Moonrepo gerencia o build, execução de tarefas e cache inteligente:
 
 - **Instalação do CLI:** Instale globalmente com `npm install -g @moonrepo/cli`, ou execute via script do projeto com `pnpm moon <comando>`.
-- **Toolchain unificado:** Padroniza as versões do Node.js 20 LTS e PNPM 11 (`.moon/toolchain.yml`).
+- **Toolchain unificado:** Padroniza as versões do Node.js 22 LTS e PNPM 11 (`.moon/toolchain.yml`).
 - **Resolução de dependências:** Ao disparar tarefas do backend ou frontend, o Moonrepo compila `@farmaubs/shared` automaticamente se houver alterações pendentes.
 - **Cache de tarefas:** Hashes de inputs evitam reexecuções desnecessárias quando arquivos não foram alterados.
 
@@ -107,6 +107,7 @@ O Moonrepo gerencia o build, execução de tarefas e cache inteligente:
 
 - `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`: ambiente de desenvolvimento com PostgreSQL (porta **5434**) e API.
 - `infra/docker-compose.test.yml`: banco PostgreSQL efêmero na porta **5435** para testes automatizados de migrações e schema.
+- `infra/docker-compose.prod.yml` e `infra/proxy/Caddyfile`: composição das stacks isoladas `farmaubs-hml` e `farmaubs-prod` na VPS (StayCloud + Cloudflare) consumindo imagens imutáveis do `ghcr.io` (`ADR-023`, `ADR-024`, `ADR-025`).
 
 ---
 
@@ -166,14 +167,14 @@ Consultas operacionais filtram registros inativos por padrão, preservando os da
 Siga rigorosamente as etapas abaixo ao desenvolver:
 
 ### Passo 0: Leitura de atualizações
-Verifique se houve alterações recentes nas diretrizes do `CONTRIBUTING.md` na branch **main**.
+Verifique se houve alterações recentes nas diretrizes do `CONTRIBUTING.md` na branch **develop**.
 
-### Passo 1: Atualizar a branch main
-Sincronize o repositório local antes de iniciar qualquer atividade:
+### Passo 1: Atualizar a branch develop
+Sincronize o repositório local antes de iniciar qualquer atividade (`main` é reservada exclusivamente para releases em produção — veja a seção 4.1):
 
 ```bash
-git checkout main
-git pull origin main
+git checkout develop
+git pull origin develop
 ```
 
 ### Passo 2: Sincronizar variáveis de ambiente (.env)
@@ -216,36 +217,45 @@ docker exec -i farmaubs-api-1 pnpm install && docker restart farmaubs-api-1
 docker exec -i farmaubs-frontend-1 pnpm install && docker restart farmaubs-frontend-1
 ```
 
-### Passo 5: Execução de tarefas e testes com Moonrepo
+### Passo 5: Matriz de testes — o que rodar localmente vs. o que roda na esteira automática
 
-Execute validações através do Moonrepo:
+Com a esteira do GitHub Actions ativa (`ADR-024`, `ADR-030`), os testes dividem-se em **três momentos distintos** para manter o ciclo local rápido sem abrir mão de segurança:
 
-```bash
-# Executa testes apenas nos projetos afetados pela branch:
-moon run :test --affected
+| Categoria / Suíte | Comando | Local (Pré-Push pelo Dev) | Esteira CI de PR (`ci.yml`) | Esteira CD / Operação (`cd.yml` + VPS) |
+| --- | --- | --- | --- | --- |
+| **Lint, Tipos e Build** | `moon run :lint :typecheck :build --affected` | ✅ Obrigatório no escopo alterado | ✅ Automático (Job 1) | — (imagens já construídas) |
+| **Unitários e BDD de Domínio (Camada A)** | `moon run backend:test backend:test-bdd` / `moon run frontend:test` | ✅ Obrigatório no escopo alterado | ✅ Automático (Job 1) | — |
+| **Schema, Integração RLS e API E2E (Camadas B e C)** | `moon run backend:test-schema` + `backend:test-integration` + `backend:test-e2e` | ✅ Obrigatório ao alterar **migrations, SQL, RLS, repositórios ou endpoints do backend** | ✅ Automático em `postgres:18-alpine` (Job 2) | — |
+| **Playwright BDD e Acessibilidade WCAG (Camada D)** | `moon run frontend:test-bdd` + `moon run frontend:test-e2e` | ✅ Obrigatório ao alterar **telas, fluxos, rotas ou contratos visuais no frontend** | ✅ Automático em Chromium headless (Job 3) | — |
+| **Checagem Mobile (trilha independente)** | `moon run mobile:typecheck mobile:test` | ✅ Obrigatório apenas ao alterar `apps/mobile/` | Fora do gate web da Release 1 | — |
+| **Smoke Tests Pós-Deploy (`RL-08`)** | `node infra/scripts/smoke-test.mjs` | Opcional (apenas ao alterar Docker/Nginx/autenticação) | — | ✅ **Automático no `cd.yml`** (`full` em HML; `readonly` em PROD) |
+| **Carga (`Load`, 50 VUs) e Estresse (`Stress`, 200 VUs) (`k6`)** | `k6 run infra/load-tests/k6-ubs-load.js` / `k6-ubs-stress.js` | ❌ Não rodar a cada PR | ❌ Não roda em PR | 🎯 **Sob demanda em HML** antes de fechar release (`NF007`, `NF014` — **nunca** contra PROD) |
+| **Backup e Ensaio de Restore (`ADR-020`)** | `backup-postgres-r2.sh` / `restore-postgres-r2.sh` | ❌ Não rodar no dia a dia | ❌ Não roda em PR | ✅ Backup automático (pré-deploy no `cd.yml` + cron 4h na VPS); Restore **sob demanda** em ensaio de DR |
 
-# Checagem estática de tipos e lint nos arquivos modificados:
-moon check --affected
+#### Comandos rápidos para o dia a dia local (conforme o que você alterou)
 
-# Validação completa do monorepo:
-moon run :test
-moon run :build
-moon ci
-```
-
-Tarefas atômicas por escopo:
-
-- **Regras de negócio BDD (Camadas A e C):** `moon run backend:test-bdd` (Cucumber.js + Chai em português em `apps/backend/test/features/`).
-- **Testes unitários do backend (Camada A):** `moon run backend:test`.
-- **Execução de novas migrações no banco dev:** `moon run backend:migration-run` (e `moon run backend:migration-revert` para reversão).
-- **Testes de schema e migrações (Camada B):** `moon run backend:test-schema` (executa em banco efêmero porta **5435**). Para derrubar o banco de teste: `moon run backend:test-schema-down`.
-- **Testes de integração do backend (Camada B):** `moon run backend:test-integration`.
-- **Testes E2E do backend (Camada C):** `moon run backend:test-e2e`.
-- **Testes de componentes web (Camada D - Vitest legado):** `moon run frontend:test`.
-- **Especificação viva BDD de sistema frontend (Camada D - Playwright BDD):** `moon run frontend:test-bdd`.
-- **Testes E2E Full-Stack web (Camadas C e D - Playwright BDD):** `moon run frontend:test-e2e`.
-- **Checagem de tipos mobile:** `moon run mobile:typecheck`.
-- **Povoamento de banco local:** `moon run backend:db-seed`.
+1. **Qualquer alteração (checagem rápida dos pacotes afetados):**
+   ```bash
+   pnpm moon run :lint :typecheck :test :build --affected
+   ```
+2. **Alterou casos de uso / regras de negócio do backend (`apps/backend`):**
+   ```bash
+   pnpm moon run backend:lint backend:typecheck backend:test backend:test-bdd backend:build
+   ```
+3. **Alterou migrations, políticas RLS, queries TypeORM ou controllers HTTP (`Camadas B e C`):**
+   ```bash
+   # Sobe o PostgreSQL 18 efêmero na porta 5435, roda Schema + RLS + E2E e derruba ao final:
+   docker compose -f infra/docker-compose.test.yml up -d --wait
+   pnpm moon run backend:test-schema backend:test-integration backend:test-e2e
+   docker compose -f infra/docker-compose.test.yml down -v
+   ```
+4. **Alterou telas, componentes ou fluxos do frontend web (`apps/frontend`):**
+   ```bash
+   pnpm moon run frontend:lint frontend:typecheck frontend:test frontend:test-bdd frontend:test-e2e
+   ```
+5. **Utilitários locais de banco de desenvolvimento (porta 5434):**
+   - Aplicar/reverter migrações: `pnpm moon run backend:migration-run` / `pnpm moon run backend:migration-revert`
+   - Popular dados sintéticos de dev: `pnpm moon run backend:db-seed`
 
 ### Passo 6: Validação manual obrigatória
 
@@ -259,23 +269,34 @@ A validação manual é obrigatória antes de submeter o PR:
 
 Execute estas etapas nesta ordem antes de enviar alterações:
 
-1. **Sincronizar com a main:** Execute `git fetch origin main` e integre a versão atualizada da **main** com merge ou rebase.
-2. **Resolver conflitos:** Priorize o código já estabelecido e aprovado na **main**.
-3. **Executar testes afetados e build:**
+1. **Sincronizar com a develop:** Execute `git fetch origin develop` e integre a versão atualizada da **develop** com merge ou rebase.
+2. **Resolver conflitos:** Priorize o código já estabelecido e aprovado na **develop**.
+3. **Executar as validações locais do seu escopo (conforme a matriz do Passo 5):**
    ```bash
-   moon run :test --affected
-   moon run :build
+   pnpm moon run :lint :typecheck :test :build --affected
    ```
-   Se alterou regras de negócio de casos de uso do backend, rode também:
-   ```bash
-   moon run backend:test-bdd
-   ```
-4. **Auditar o diff:** Verifique `git diff origin/main` para garantir que nenhuma regra foi relaxada, nenhum teste foi desativado com `.skip` e não há uso indevido de `any`.
+   - Se alterou casos de uso do backend: rode também `pnpm moon run backend:test-bdd`.
+   - Se alterou migrations, RLS, repositórios ou controllers do backend: suba `infra/docker-compose.test.yml` e rode `pnpm moon run backend:test-schema backend:test-integration backend:test-e2e`.
+   - Se alterou telas ou fluxos do frontend: rode também `pnpm moon run frontend:test-bdd frontend:test-e2e`.
+4. **Auditar o diff:** Verifique `git diff origin/develop` para garantir que nenhuma regra foi relaxada, nenhum teste foi desativado com `.skip` e não há uso indevido de `any`.
 5. **Conferir critérios de aceite:** Certifique-se de cobrir todos os cenários da história de usuário.
 6. **Atualizar o progresso das histórias de usuário:**
    - Marque os critérios concluídos com `[x]` no arquivo markdown da história (`docs/historias-usuario/.../<historia>.md`).
    - Atualize o status para `✅ Concluída` no arquivo `PROGRESSO.md` do épico.
    - Atualize a linha correspondente no mapa consolidado geral (`docs/historias-usuario/MAPA_HISTORIAS.md`).
+
+---
+
+### 4.1 Promoção de releases (`develop` → `release/*` HML → `main` PROD) e rotação de segredos (`ADR-024`, `ADR-027`)
+
+Quando a esteira de entrega contínua estiver ativa (Épico 7 — Release 1):
+
+1. **Integração diária (`feature/*` → `develop`):** PRs passam obrigatoriamente pelo workflow `.github/workflows/ci.yml` (`lint`, `typecheck`, `build`, unitários/BDD, schema/integração RLS em Postgres 18 e Playwright).
+2. **Corte para Homologação (`develop` → `release/vX.Y.Z`):** publica imagem candidata única (`vX.Y.Z-rc`) no `ghcr.io`, atualiza `farmaubs-hml` com massa exclusivamente sintética (`seed-qa.js`) e executa *Smoke Tests* automáticos, habilitando a bateria `k6` de *Load* (50 VUs) e *Stress* (até 200 VUs).
+3. **Promoção para Produção (`release/vX.Y.Z` → `main` + tag `vX.Y.Z`):** exige aprovação manual no GitHub Environment `production`, re-tagueia o **mesmo digest** validado em HML (sem novo `docker build`), executa backup pré-deploy no Cloudflare R2, aplica `migration:run:prod` e verifica `/api/v1/health` em modo somente leitura.
+4. **Rotação manual de segredos em caso de incidente (`ADR-027`):**
+   - Conecte via SSH na VPS (`deploy@<VPS_HOST>`), gere novo valor aleatório (`openssl rand -hex 32`) e atualize `/opt/farmaubs/prod/.env` (mantendo `chmod 600`).
+   - Se a rotação envolver `DB_PASSWORD` / `FARMAUBS_APP_DB_PASSWORD`, altere primeiro a senha da role no PostgreSQL (`ALTER ROLE farmaubs_app WITH PASSWORD '...'`) e em seguida recrie apenas o container da API (`docker compose -p farmaubs-prod -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d --force-recreate api`), validando `GET /api/v1/health`.
 
 ---
 
@@ -307,10 +328,10 @@ Closes #78
 
 ### 6.1 Requisitos para aprovação
 
-1. Título do PR no formato Conventional Commits.
-2. Branch sincronizada com a **main** e conflitos resolvidos.
-3. Testes automatizados passando no Moonrepo com prints anexados na descrição.
-4. Validação manual relatada.
+1. Título do PR no formato Conventional Commits apontando para a branch **develop** (exceto PRs de fechamento de release `release/v*` → `main`).
+2. Branch sincronizada com a **develop** e sem conflitos.
+3. Todos os 3 status checks automáticos do GitHub Actions (`CI`) verdes no PR (`Lint, Typecheck, Build & Unit/BDD`, `Schema, Integração RLS & API E2E (Postgres 18)` e `Playwright BDD & E2E UI (Chromium + WCAG)`).
+4. Validação manual relatada (com screenshots visuais anexados quando houver mudança de interface).
 5. Progresso das histórias de usuário atualizado nos arquivos correspondentes.
 
 ### 6.2 Gestão de débitos técnicos
@@ -327,14 +348,15 @@ Closes #78
 
 ## Como foi testado
 
-### Testes automatizados com Moonrepo
-- [ ] Testes unitários do backend (`moon run backend:test`) - anexar print
-- [ ] Especificação viva BDD (`moon run backend:test-bdd`) - anexar print
-- [ ] Testes de schema e migrações (`moon run backend:test-schema`) - anexar print
-- [ ] Testes unitários do frontend (`moon run frontend:test`) - anexar print
-- [ ] Validação estática e telas mobile (`moon run mobile:typecheck`) - anexar print
-- [ ] Build global do monorepo (`moon run :build` ou `moon ci`) - anexar print
-- [ ] Evidências visuais de tela (frontend/mobile) - anexar screenshots
+### Validação local pré-push (conforme escopo do Passo 5)
+- [ ] Checagem estática e unitários afetados (`pnpm moon run :lint :typecheck :test :build --affected`)
+- [ ] Backend — BDD Cucumber (`pnpm moon run backend:test-bdd`) *(quando alterar regras de domínio)*
+- [ ] Backend — Schema, RLS e API E2E (`backend:test-schema`, `backend:test-integration`, `backend:test-e2e`) *(quando alterar banco/repositórios/controllers)*
+- [ ] Frontend — Playwright BDD + WCAG (`frontend:test-bdd`, `frontend:test-e2e`) *(quando alterar UI/fluxos web)*
+- [ ] Mobile — Tipos e checks (`pnpm moon run mobile:typecheck mobile:test`) *(quando alterar `apps/mobile`)*
+- [ ] Evidências visuais anexadas *(obrigatório para alterações visuais em frontend/mobile)*
+
+> Nota: A execução completa das camadas A, B, C e D fica auditada automaticamente nos checks da aba **Checks** deste Pull Request via `.github/workflows/ci.yml`.
 
 ### Validação manual obrigatória
 - [ ] Backend testado via Swagger (http://localhost:3000/api/v1/docs) e auditado no banco PostgreSQL.
@@ -349,8 +371,8 @@ Closes #78
 
 - [ ] Passo 0 a 7 do CONTRIBUTING.md seguidos rigorosamente
 - [ ] Isolamento de escopo respeitado (backend e frontend não misturados)
-- [ ] Validações pré-push executadas com Moonrepo (`moon run :test --affected` e `moon run :build`)
-- [ ] Branch sincronizada com a main mais recente
+- [ ] Validações locais pré-push do escopo executadas e todos os checks automáticos do GitHub Actions (`CI`) verdes
+- [ ] Branch sincronizada com a develop mais recente
 - [ ] Nenhuma regra de negócio ou teste foi relaxado ou enfraquecido
 - [ ] Todos os critérios de aceite da história de usuário foram cobertos
 - [ ] Progresso das histórias de usuário atualizado (arquivos individuais, PROGRESSO.md e MAPA_HISTORIAS.md)

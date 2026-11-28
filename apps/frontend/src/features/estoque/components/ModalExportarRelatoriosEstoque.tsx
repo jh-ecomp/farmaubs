@@ -3,7 +3,10 @@ import type {
   ExportarRelatorioEstoqueQueryDto,
   TipoRelatorioEstoque,
 } from "@farmaubs/shared";
-import { estoqueService } from "../../../services/estoque.service";
+import {
+  estoqueService,
+  obterUnidadeAtivaEstoque,
+} from "../../../services/estoque.service";
 import { CATEGORIAS_REMUME_OPCOES } from "./EstoqueFiltrosBar";
 
 export interface ModalExportarRelatoriosEstoqueProps {
@@ -167,7 +170,7 @@ export const ModalExportarRelatoriosEstoque: React.FC<
     setErroExportacao(null);
 
     const query: ExportarRelatorioEstoqueQueryDto = {
-      unidadeId,
+      unidadeId: obterUnidadeAtivaEstoque(unidadeId),
       tipoRelatorio,
       dataInicio,
       dataFim,

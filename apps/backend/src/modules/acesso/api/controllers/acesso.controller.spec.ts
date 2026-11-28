@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { UnauthorizedException } from "@nestjs/common";
-import type { Request } from "express";
+import type { Request, Response } from "express";
+import { PerfilCodigo } from "@farmaubs/shared";
 import { AcessoController } from "./acesso.controller";
 import { LoginUseCase } from "../../application/use-cases/login.use-case";
 import { RenewSessionUseCase } from "../../application/use-cases/renew-session.use-case";
@@ -82,14 +83,12 @@ describe("AcessoController (Camada A — Teste Unitário)", () => {
           id: "u-1",
           nomeCompleto: "Usuario Teste",
           email: "teste@ubs.gov.br",
-          perfil: "ADMINISTRADOR",
-          ativo: true,
+          perfilCodigo: PerfilCodigo.ADMINISTRADOR,
           deveTrocarSenha: false,
           municipioId: "m-1",
           unidadeIds: ["ubs-1"],
         },
         sessao: {
-          id: "s-1",
           expiresAt,
           ttlSeconds: 3600,
           warningSeconds: 300,

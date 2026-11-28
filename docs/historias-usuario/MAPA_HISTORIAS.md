@@ -81,7 +81,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | ES-02 | Backend | API de Saldos: consulta paginada com busca, categorias e lotes | ✅ Redigida | ✅ Concluída | — |
 | ES-03 | Backend | API de Ajustes: ajuste manual transacional com motivo e auditoria | ✅ Redigida | ✅ Concluída | — |
 | ES-04 | Backend | API de Rastreabilidade: linha do tempo de movimentações por lote | ✅ Redigida | ✅ Concluída | — |
-| ES-05 | Backend | API de Relatórios: geração de planilha XLSX por período e perdas | ✅ Redigida | ⏳ Não iniciada | — |
+| ES-05 | Backend | API de Relatórios: geração de planilha XLSX por período e perdas | ✅ Redigida | ✅ Concluída | — |
 | ES-06 | Frontend | Painel superior: cartões com indicadores em tempo real (RF018, RF022) | ✅ Redigida | ✅ Concluída | ES-MOB-01 |
 | ES-07 | Frontend | Tabela de saldos por produto, expansão de lotes e destaque laranja | ✅ Redigida | ✅ Concluída | ES-MOB-02 |
 | ES-08 | Frontend | Barra de filtros avançados: busca, vencimento no mês e categorias | ✅ Redigida | ✅ Concluída | ES-MOB-03 |
@@ -131,4 +131,18 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | AL-MOB-02 | Mobile | Notificações Locais/Push no Dispositivo Móvel para Novos Alertas Críticos de Ruptura e Vencimento na UBS Ativa (RF022, RF023, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-04 |
 | AL-MOB-03 | Mobile | Configuração Rápida de Parâmetros Operacionais da UBS no Celular (RF027, NF009, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-07 |
 | AL-MOB-04 | Mobile | Alerta Tátil Bloqueante de Confirmação no Recebimento de Lotes com Validade Curta (< 6 meses) no Celular (RF024, ADR-034) | ✅ Redigida | ⏳ Não iniciada | AL-08 |
+
+---
+
+## Épico 7: Release 1 — Prontidão para Produção, CI/CD e Infraestrutura
+| ID | Camada | Título | Redação (.md) | Implementação | Contra-parte |
+| --- | --- | --- | --- | --- | --- |
+| RL-01 | Backend | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | ✅ Redigida | ✅ Concluída | — |
+| RL-02 | Backend | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | ✅ Redigida | ✅ Concluída | — |
+| RL-03 | Backend | Adaptador real de e-mail transacional (SMTP/Resend com timeout) e limpeza periódica de sessões expiradas e relatórios antigos | ✅ Redigida | ✅ Concluída | — |
+| RL-04 | Backend | Observabilidade enxuta: logs JSON sanitizados com `nestjs-pino`, Sentry opcional e `/api/v1/health` enriquecido (ADR-026) | ✅ Redigida | ✅ Concluída | — |
+| RL-05 | Infra | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` e Proxy Reverso de borda (ADR-021/023) | ✅ Redigida | ✅ Concluída | — |
+| RL-06 | CI/CD | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) para HML e PROD (ADR-024) | ✅ Redigida | ✅ Concluída | — |
+| RL-07 | Frontend | Acabamento de produção: `lang="pt-BR"`, títulos dinâmicos, `robots.txt`, Sidebar responsiva/dinâmica, Feature Flags e `/privacidade` + `/termos` | ✅ Redigida | ✅ Concluída | — |
+| RL-08 | QA / Infra | Suíte de Smoke Tests pós-deploy, testes de Carga e Estresse `k6` (Load & Stress) e scripts de backup/restore off-site (`pg_dump` → R2) | ✅ Redigida | ✅ Concluída | — |
 

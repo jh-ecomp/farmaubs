@@ -56,13 +56,13 @@ Desvantagens:
 
 Adotar a **Opção A — GitHub Actions + `ghcr.io` (GitHub Container Registry) + CD via SSH/Docker Compose na VPS**, com fluxo de promoção em lotes (*cut* de release para QA):
 
-1. **Integração Contínua (CI) em Pull Requests para `develop`:**
-   - Orquestrada via `moon` (`ADR-035`) com detecção de tarefas afetadas: `lint`, `typecheck`, `build`, testes unitários (Jest/Vitest), testes de integração/schema/BDD (Cucumber + Jest contra *Service Container* `postgres:18-alpine`, incluindo teste obrigatório de RLS e `SELECT ... FOR UPDATE`), e testes de sistema/E2E Playwright (`frontend:test-bdd` e `frontend:test-e2e`).
-2. **Promoção por *Cut* (`develop` → `qa`/`release/*` → `main`):**
+1. **Integração Contínua (CI) em Pull Requests para `develop` e `main`:**
+   - Orquestrada via `moon` (`ADR-035`) com detecção de tarefas afetadas: `lint`, `typecheck`, `build`, testes unitários e BDD de domínio (Jest/Cucumber/Vitest), testes de schema, integração e E2E de API contra *Service Container* `postgres:18-alpine` (incluindo `01-create-role-farmaubs-app.sh`, teste obrigatório de RLS e `SELECT ... FOR UPDATE`), e testes de sistema/UI Playwright (`frontend:test-bdd` e `frontend:test-e2e`).
+2. **Promoção por *Cut* (`develop` → `release/*` → `main`):**
    - PRs aprovados são acumulados em `develop` (mantida sempre verde pelo CI).
-   - Periodicamente (ex.: fim de sprint/épico), realiza-se um **cut para QA** (branch `release/vX.Y.Z` ou merge em `qa`), congelando o escopo da versão, gerando as imagens Docker imutáveis no `ghcr.io` (ex.: `vX.Y.Z-rc.1`) e fazendo deploy automático na stack `farmaubs-hml` na VPS (`ADR-025`).
-   - Em QA executam-se *Smoke Tests* automáticos, validação funcional com dados sintéticos e testes de carga/stress (`k6` em janela controlada ou instância efêmera).
-   - Após aprovação manual no *GitHub Environment* de produção, faz-se o merge para `main` + tag `vX.Y.Z`, promovendo a **exata mesma imagem** já validada em QA para `farmaubs-prod` (executando `typeorm migration:run` antes da virada dos containers).
+   - Periodicamente (ex.: fim de sprint/épico), realiza-se um **cut para QA** (branch `release/vX.Y.Z`), congelando o escopo da versão, gerando as imagens Docker imutáveis no `ghcr.io` (tag candidata `vX.Y.Z-rc` + tag numerada `vX.Y.Z-rc.<N>`) e fazendo deploy automático na stack `farmaubs-hml` na VPS (`ADR-025`).
+   - Em QA executam-se automaticamente *Smoke Tests* completos (`smoke-test.mjs` cobrindo `/api/v1/health`, `/api/v1/acesso/login`, cookie `HttpOnly` e logout), validação funcional com dados sintéticos (`seed-qa.js`) e **testes de Carga (*Load*, 50 VUs) e Estresse (*Stress*, rampa até 200 VUs + recuperação)** com `k6`.
+   - Após aprovação manual no *GitHub Environment* `production`, faz-se o merge para `main` + tag `vX.Y.Z`, re-tagueando no `ghcr.io` o **mesmo digest SHA256** já validado em QA (`vX.Y.Z-rc` → `vX.Y.Z`, sem recompilar mesmo que o SHA do commit de merge mude), executando backup pré-deploy, `migration:run:prod` e verificação pós-deploy *somente leitura* em `farmaubs-prod`.
 
 ### Consequências
 

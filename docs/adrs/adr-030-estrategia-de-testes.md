@@ -32,7 +32,7 @@ Escopo: os fluxos críticos de ponta a ponta descritos no NF001 (registro de ent
 
 Escopo: os cenários em Gherkin (pt-BR) especificados nas histórias de usuário de frontend são executados diretamente em navegador Chromium real via **Playwright (`@playwright/test`) + `playwright-bdd` + `@axe-core/playwright`**, substituindo progressivamente os mocks de componente em JSDOM/Vitest nas páginas e fluxos operacionais:
 1. **Modalidade 1 — Teste de Sistema de Frontend (`moon run frontend:test-bdd`)**: Executa os arquivos `.feature` da Camada D interceptando as rotas HTTP via `page.route()` com contratos tipados de `@farmaubs/shared`, validando download binário real (`.xlsx`), emulação de folha de impressão A4 (`page.emulateMedia({ media: 'print' })`), controle de relógio (`page.clock`) e auditoria de contraste/acessibilidade WCAG 2.1 AA com `@axe-core/playwright`.
-2. **Modalidade 2 — Teste E2E Full-Stack (`moon run frontend:test-e2e`)**: Executa a jornada de ponta a ponta (Camadas C e D combinadas) integrando Frontend React/Vite, sessão com cookie `HttpOnly` e API de Backend real.
+2. **Modalidade 2 — Teste E2E de Contrato Full-Stack (`moon run frontend:test-e2e`)**: Executa a jornada de ponta a ponta no navegador integrando Frontend React/Vite, transporte de cookie `HttpOnly` (`farmaubs_session`) e servidor HTTP de contrato (`e2e-api-server.ts`) em local/CI — complementada em Homologação (`farmaubs-hml`) pelos *Smoke Tests* contra a stack Docker completa (NestJS + PostgreSQL + Nginx + Caddy + Cloudflare) e pelas suítes `k6` de **Carga (*Load*, 50 VUs)** e **Estresse (*Stress*, até 200 VUs)** (`RL-08`).
 
 #### Meta de cobertura
 
@@ -62,8 +62,7 @@ Adotar as quatro camadas de teste descritas acima (unitário/BDD de domínio com
 ### Revisão
 
 Esta decisão deve ser revisitada caso:
-- O ADR-024 (pipeline de CI/CD) seja priorizado, momento em que a execução de testes deve ser automatizada como gate de merge, em vez de depender de disciplina manual.
-- A ausência de testes e2e de UI se mostre, na prática, insuficiente à medida que a equipe de frontend cresça além de um único desenvolvedor.
+- O tempo total de execução dos 3 jobs paralelos de `.github/workflows/ci.yml` ultrapasse 10 minutos por Pull Request à medida que novos módulos sejam incorporados, exigindo particionamento adicional de suítes E2E/Playwright.
 - A regra de obrigatoriedade por tipo de mudança se mostre insuficiente para prevenir regressões reais observadas em produção, justificando a extensão da cobertura obrigatória a outras categorias de mudança.
 
 ### Decisões relacionadas
@@ -72,5 +71,5 @@ Esta decisão deve ser revisitada caso:
 - [[ADR-004|Registro de Decisões de Arquitetura 1 ‐ Arquitetura de Software#adr-004---estratégia-de-comunicação-entre-módulos-internos]] - Estratégia de comunicação entre módulos internos (outbox pattern, testes de integração)
 - [[ADR-008|Registro de Decisões de Arquitetura 2 ‐ Backend#adr-008---consistência-transacional-em-operações-de-estoque]] - Consistência transacional em operações de estoque (teste de integração obrigatório)
 - [[ADR-023|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-023---containerização-e-orquestração]] - Containerização e orquestração (banco de teste via Docker Compose)
-- [[ADR-024|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-024---pipeline-de-cicd]] - Pipeline de CI/CD (ainda não priorizado; automação futura do gate de testes)
-- [[ADR-025|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-025---estratégia-de-ambientes]] - Estratégia de ambientes (homologação como destino de validação e2e)
+- [[ADR-024|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-024---pipeline-de-cicd]] - Pipeline de CI/CD (gate automatizado obrigatório em `.github/workflows/ci.yml` e `cd.yml`)
+- [[ADR-025|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-025---estratégia-de-ambientes]] - Estratégia de ambientes (homologação como destino de Smoke, Load e Stress tests)

@@ -243,7 +243,7 @@ When(
 
 Then(
   "a requisição POST para {string} deve ser enviada",
-  async ({}, _rotaEsperada: string) => {
+  async ({ page: _page }, _rotaEsperada: string) => {
     expect(requisicaoRenovarEnviada).toBe(true);
   },
 );

@@ -56,9 +56,12 @@ Desvantagens:
 
 ### Decisão
 
-Adotar a **Opção B — `pgBackRest` com arquivamento contínuo de WAL (*PITR*) direto para Object Storage off-site** (nuvem/rede separada da VPS da aplicação).
+Adotar como arquitetura-alvo a **Opção B — `pgBackRest` com arquivamento contínuo de WAL (*PITR*) direto para Object Storage off-site**, implantada em **duas fases pragmáticas** conforme a maturidade operacional do projeto:
 
-Definições operacionais:
+- **Fase 1 (Release 1 / Piloto — `RL-08`):** `pg_dump -Fc` agendado (a cada 4h / diário) + envio automatizado via `rclone` para bucket privado no **Cloudflare R2** (retenção de 30 dias + script testado `restore-postgres-r2.sh` validando tabelas e políticas de RLS, atendendo `RTO <= 4h` e janela de 4h do `NF006` sem complexidade prematura de WAL em banco de piloto).
+- **Fase 2 (Escala Comercial):** evolução para **`pgBackRest` com arquivamento contínuo de WAL (*PITR*)** conforme as definições abaixo.
+
+Definições operacionais da arquitetura completa:
 1. **Frequência e Retenção (`NF006`):** Backup *full* diário (madrugada), backup diferencial/incremental a cada **4 horas** e arquivamento contínuo de WAL (`archive_mode = on`), com retenção mínima de **30 dias** no bucket off-site.
 2. **Isolamento de Nuvem e Criptografia:** Os backups são criptografados com AES-256 pelo próprio `pgBackRest` antes de sair da VPS e enviados para um bucket S3-compatível em provedor distinto da VPS (ex.: **Cloudflare R2** ou **Backblaze B2**) com versionamento/imutabilidade habilitados.
 3. **Recuperação de Desastres (DR) e Teste Periódico:** Manter *runbook* de DR versionado visando **RTO <= 4 horas** e **RPO <= minutos** (melhor que o teto de 4h do `NF006`). Executar **teste prático de restauração trimestral** em ambiente isolado e monitorar falhas de backup/arquivamento com alertas externos (`ADR-026`).

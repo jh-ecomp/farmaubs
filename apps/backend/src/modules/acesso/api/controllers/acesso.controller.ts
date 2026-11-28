@@ -17,7 +17,9 @@ import {
   ApiHeader,
   ApiBearerAuth,
 } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import type { CookieOptions, Request, Response } from "express";
+import { extractClientIp } from "../../../../app.setup";
 import type {
   RenovarSessaoResponse,
   SessaoUsuarioResponse,
@@ -66,6 +68,7 @@ export class AcessoController {
 
   @Post("login")
   @SkipAuth()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Realiza o login de acesso do usuário" })
   @ApiHeader({
@@ -99,7 +102,7 @@ export class AcessoController {
     const resultado = await this.loginUseCase.executar(
       dto.email,
       dto.senha,
-      req.ip,
+      extractClientIp(req),
       req.headers["user-agent"],
     );
 

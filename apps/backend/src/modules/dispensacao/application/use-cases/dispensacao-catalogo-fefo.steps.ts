@@ -51,8 +51,16 @@ defineFeature(feature, (test) => {
             m.apresentacao.toLowerCase().includes(t),
         );
       }),
-      buscarMedicamentoPorId: jest.fn(async () => medicamentoPadrao),
-      listarLotesPorMedicamentoEUnidade: jest.fn(async () => lotesMemoria),
+      buscarMedicamentoPorId: jest.fn(
+        async (
+          _medicamentoId: string,
+          _unidadeId?: string | null,
+        ): Promise<MedicamentoBuscaDto | null> => medicamentoPadrao,
+      ),
+      listarLotesPorMedicamentoEUnidade: jest.fn(
+        async (_medicamentoId: string, _unidadeId?: string | null) =>
+          lotesMemoria,
+      ),
     };
 
     buscarUseCase = new BuscarMedicamentosDispensacaoUseCase(catalogoRepoMock);

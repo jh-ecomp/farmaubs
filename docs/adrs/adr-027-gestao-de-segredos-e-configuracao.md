@@ -1,7 +1,7 @@
 ## ADR-027 - Gestão de segredos e configuração
 
 ### Status
-🟢 Decidido e documentado — última atualização: 24/07/2026
+🟢 Decidido e documentado — última atualização: 24/11/2026 (parametrização `ENV_FILE`, validação Zod no boot `RL-01` e procedimento de rotação documentado em `CONTRIBUTING.md`)
 
 ### Contexto
 
@@ -34,7 +34,7 @@ Desvantagens: sem um arquivo `.env.example` versionado, não há forma acessíve
 
 ### Decisão
 
-Adotar **arquivos `.env` por ambiente**, nunca versionados no controle de código-fonte (`.gitignore` cobrindo `.env*`, com exceção explícita de `.env.example`), com a diretiva `env_file` do Docker Compose apontando para o arquivo correspondente a cada ambiente (desenvolvimento, homologação, produção), coerente com a estrutura de composição já definida nos ADR-023 e ADR-025.
+Adotar **arquivos `.env` por ambiente**, nunca versionados no controle de código-fonte (`.gitignore` cobrindo `.env*`, com exceção explícita de `.env.example`), com a diretiva `env_file: ${ENV_FILE:-../.env}` do Docker Compose apontando para o arquivo correspondente a cada ambiente (`.env` local, `/opt/farmaubs/hml/.env` e `/opt/farmaubs/prod/.env` na VPS protegidos com `chmod 600`), combinada com validação *fail-fast* via Zod na inicialização da API (`RL-01`), coerente com a estrutura de composição já definida nos ADR-023 e ADR-025.
 
 Regras específicas de gestão de segredo adotadas:
 

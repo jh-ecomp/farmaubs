@@ -40,9 +40,9 @@ describe("Sidebar — Renderização Dinâmica de Menu por Perfil RBAC (NF009 / 
     expect(screen.getByRole("link", { name: /^estoque$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /dispensas/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /indicadores/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /relatórios/i })).toBeInTheDocument();
 
     // Rotas restritas NÃO devem existir no DOM
-    expect(screen.queryByRole("link", { name: /relatórios/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /auditoria/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /gestão de usuários/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /gestão de ubs/i })).not.toBeInTheDocument();
@@ -105,5 +105,54 @@ describe("Sidebar — Renderização Dinâmica de Menu por Perfil RBAC (NF009 / 
     expect(linkEstoque).toHaveAttribute("aria-current", "page");
     expect(linkRecebimento).not.toHaveAttribute("aria-current");
     expect(linkDashboard).not.toHaveAttribute("aria-current");
+  });
+
+  it("exibe dinamicamente o município/UBS do contexto autenticado sem texto hardcoded de Parnaíba (RL-07)", () => {
+    localStorage.setItem("@FarmaUBS:token", "fake-token");
+    localStorage.setItem(
+      "@FarmaUBS:usuario",
+      JSON.stringify({
+        id: "usr-mun",
+        nome: "Farmacêutica Floriano",
+        email: "farma@floriano.pi.gov.br",
+        perfil: [PerfilCodigo.FARMACEUTICO_RESPONSAVEL],
+        perfilCodigo: PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
+        municipioNome: "Floriano",
+        municipioUf: "PI",
+        deveTrocarSenha: false,
+      }),
+    );
+    localStorage.setItem(
+      "@FarmaUBS:expiresAt",
+      new Date(Date.now() + 3600_000).toISOString(),
+    );
+
+    renderWithProviders(<Sidebar />, { initialEntries: ["/dispensas"] });
+
+    expect(screen.getByTestId("sidebar-contexto-institucional")).toHaveTextContent(
+      "SMS Floriano/PI",
+    );
+    expect(screen.queryByText(/Parnaíba/i)).not.toBeInTheDocument();
+  });
+
+  it("oculta módulos futuros (<EmDesenvolvimento />) quando showFutureModules=false (RL-07)", () => {
+    setupUserSession(PerfilCodigo.ADMINISTRADOR);
+
+    renderWithProviders(<Sidebar showFutureModules={false} />, {
+      initialEntries: ["/dashboard"],
+    });
+
+    // Módulos entregues permanecem visíveis
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /recebimento/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /dispensas/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /gestão de usuários/i })).toBeInTheDocument();
+
+    // Módulos de incrementos futuros ficam ocultos
+    expect(screen.queryByRole("link", { name: /indicadores/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /relatórios/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /parâmetros/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /auditoria/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /gestão de ubs/i })).not.toBeInTheDocument();
   });
 });

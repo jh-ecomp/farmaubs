@@ -31,6 +31,14 @@ tasks:
       - 'test/**/*'
       - 'eslint.config.mjs'
 
+  typecheck:
+    command: 'pnpm exec tsc -p tsconfig.build.json --noEmit'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig*.json'
+    deps:
+      - 'shared:build'
+
   test:
     command: 'pnpm exec jest'
     inputs:

@@ -47,12 +47,11 @@ export const EstoquePage: React.FC = () => {
       auth.usuario?.unidade_id;
     unidadeAtivaContexto =
       rawUnidadeId !== undefined ? String(rawUnidadeId) : undefined;
-    // NF009: Ajustes restritos a Farmacêutico Responsável e Farmacêutico Residente (ou Admin em teste)
+    // NF009: Ajustes restritos a Farmacêutico Responsável e Farmacêutico Residente (alinhado ao EstoqueAjustesController)
     if (auth.usuario) {
       podeAjustarEstoque = auth.hasRole([
         PerfilCodigo.FARMACEUTICO_RESPONSAVEL,
         PerfilCodigo.FARMACEUTICO_RESIDENTE,
-        PerfilCodigo.ADMINISTRADOR,
       ]);
     }
   } catch {

@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { PerfilCodigo, MATRIZ_PERMISSOES_ROTAS } from "@farmaubs/shared";
 import { useAuth } from "../contexts/AuthContext";
+import type { UsuarioPayload } from "../types/auth";
+import { isFutureModulesEnabled } from "../utils/featureFlags";
 import iconeFarmaUbs from "../assets/iconefarmaubs.svg";
 
 interface MenuItem {
@@ -8,7 +10,15 @@ interface MenuItem {
   path: string;
   icon: string;
   allowedRoles: PerfilCodigo[];
-  grupo?: "operacional" | "gestao" | "governanca";
+  grupo: "operacional" | "gestao" | "governanca";
+  futureModule?: boolean;
+}
+
+export interface SidebarProps {
+  variant?: "desktop" | "drawer";
+  showFutureModules?: boolean;
+  onNavigate?: () => void;
+  onCloseDrawer?: () => void;
 }
 
 const MENU_ITEMS: MenuItem[] = [
@@ -47,6 +57,7 @@ const MENU_ITEMS: MenuItem[] = [
     icon: "analytics",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/indicadores"],
     grupo: "operacional",
+    futureModule: true,
   },
   // Gestão
   {
@@ -55,6 +66,7 @@ const MENU_ITEMS: MenuItem[] = [
     icon: "description",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/relatorios"],
     grupo: "gestao",
+    futureModule: true,
   },
   {
     label: "Parâmetros",
@@ -62,6 +74,7 @@ const MENU_ITEMS: MenuItem[] = [
     icon: "tune",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/parametros"],
     grupo: "gestao",
+    futureModule: true,
   },
   // Governança & Admin
   {
@@ -70,6 +83,7 @@ const MENU_ITEMS: MenuItem[] = [
     icon: "history_toggle_off",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/log-auditoria"],
     grupo: "governanca",
+    futureModule: true,
   },
   {
     label: "Gestão de Usuários",
@@ -84,19 +98,46 @@ const MENU_ITEMS: MenuItem[] = [
     icon: "local_hospital",
     allowedRoles: MATRIZ_PERMISSOES_ROTAS["/ubs"],
     grupo: "governanca",
+    futureModule: true,
   },
 ];
 
 /**
- * [NF009 / ADR-006 / ADR-032]: Barra lateral de navegação com renderização condicional de links por perfil RBAC.
- * Itens não autorizados NÃO são renderizados no DOM.
+ * [RL-07]: Resolve o subtítulo institucional dinâmico a partir do contexto autenticado,
+ * eliminando qualquer município hardcoded no código.
  */
-export function Sidebar() {
-  const { hasRole } = useAuth();
+function resolverContextoInstitucional(usuario: UsuarioPayload | null): string {
+  if (usuario?.unidadeNome && usuario.unidadeNome.trim().length > 0) {
+    return usuario.unidadeNome.trim();
+  }
+  if (usuario?.municipioNome && usuario.municipioNome.trim().length > 0) {
+    const mun = usuario.municipioNome.trim();
+    const uf = usuario.municipioUf?.trim().toUpperCase();
+    return uf ? `SMS ${mun}/${uf}` : `SMS ${mun}`;
+  }
+  return "Gestão Farmacêutica SUS";
+}
+
+/**
+ * [NF002 / NF009 / ADR-006 / ADR-032 / RL-07]: Barra lateral de navegação com RBAC estrito,
+ * subtítulo dinâmico por tenant/UBS, feature flag de módulos futuros e variante responsiva de drawer.
+ */
+export function Sidebar({
+  variant = "desktop",
+  showFutureModules,
+  onNavigate,
+  onCloseDrawer,
+}: SidebarProps = {}) {
+  const { hasRole, usuario } = useAuth();
   const location = useLocation();
 
-  // Filtra rigorosamente os itens de menu permitidos para o perfil logado
-  const visibleItems = MENU_ITEMS.filter((item) => hasRole(item.allowedRoles));
+  const exibirFuturos = isFutureModulesEnabled(showFutureModules);
+  const subtituloInstitucional = resolverContextoInstitucional(usuario);
+
+  const visibleItems = MENU_ITEMS.filter(
+    (item) =>
+      hasRole(item.allowedRoles) && (!item.futureModule || exibirFuturos),
+  );
 
   const grupos = [
     { id: "operacional", label: "Operação UBS" },
@@ -104,38 +145,52 @@ export function Sidebar() {
     { id: "governanca", label: "Governança & Admin" },
   ] as const;
 
-  return (
-    <aside
-      className="h-screen w-64 w-layout-sidebar-width bg-surface-container-lowest border-r border-border-crisp flex flex-col justify-between select-none shrink-0"
-      aria-label="Navegação Lateral"
-    >
+  const navContent = (
+    <>
       <div className="flex flex-col flex-1 min-h-0">
         {/* Cabeçalho do FarmaUBS */}
         <div className="min-h-16 pt-[1.5vh] pb-3 px-4 h-layout-header-height px-space-md border-b border-border-crisp flex items-center justify-between bg-surface-container-lowest shrink-0">
-          <div className="flex items-center gap-2.5 gap-space-xs">
+          <div className="flex items-center gap-2.5 gap-space-xs min-w-0">
             <img
               src={iconeFarmaUbs}
               alt="FarmaUBS"
-              className="w-8 h-8 object-contain"
+              className="w-8 h-8 object-contain shrink-0"
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <span className="font-title-sm text-title-sm text-primary leading-none tracking-tight">
                 FarmaUBS
               </span>
-              <span className="font-caption-micro text-caption-micro text-text-tertiary uppercase tracking-wider mt-0.5">
-                SMS Parnaíba/PI
+              <span
+                className="font-caption-micro text-caption-micro text-text-tertiary uppercase tracking-wider mt-0.5 truncate"
+                data-testid="sidebar-contexto-institucional"
+              >
+                {subtituloInstitucional}
               </span>
             </div>
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-surface-subtle border border-border-crisp text-text-secondary font-label-caps text-label-caps">
-            SUS
-          </span>
+
+          {variant === "drawer" ? (
+            <button
+              type="button"
+              onClick={onCloseDrawer}
+              aria-label="Fechar menu de navegação"
+              className="inline-flex items-center justify-center min-w-9 min-h-9 rounded-lg text-text-secondary hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                close
+              </span>
+            </button>
+          ) : (
+            <span className="px-1.5 py-0.5 rounded bg-surface-subtle border border-border-crisp text-text-secondary font-label-caps text-label-caps shrink-0">
+              SUS
+            </span>
+          )}
         </div>
 
         {/* Links de Navegação Agrupados */}
         <nav
           className="flex-1 overflow-y-auto px-3 py-4 px-space-xs py-space-sm space-y-4 space-y-space-md"
-          aria-label="Menu Principal"
+          aria-label={variant === "drawer" ? "Menu Móvel" : "Menu Principal"}
         >
           {grupos.map((grupo) => {
             const itemsDoGrupo = visibleItems.filter(
@@ -144,7 +199,10 @@ export function Sidebar() {
             if (itemsDoGrupo.length === 0) return null;
 
             return (
-              <div key={grupo.id} className="space-y-1 space-y-space-xxs pt-2 pt-space-xs">
+              <div
+                key={grupo.id}
+                className="space-y-1 space-y-space-xxs pt-2 pt-space-xs"
+              >
                 <div className="px-2.5 px-space-xs py-1 text-text-tertiary font-label-caps text-label-caps uppercase tracking-wider">
                   {grupo.label}
                 </div>
@@ -159,8 +217,9 @@ export function Sidebar() {
                       <Link
                         key={item.path}
                         to={item.path}
+                        onClick={onNavigate}
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-2.5 gap-space-xs px-3 px-space-xs py-2 rounded-lg font-body-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        className={`flex items-center gap-2.5 gap-space-xs px-3 px-space-xs py-2 rounded-lg font-body-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                           isActive
                             ? "bg-primary-container text-on-primary font-body-md-medium"
                             : "text-text-secondary hover:bg-surface-subtle hover:text-on-surface"
@@ -194,14 +253,31 @@ export function Sidebar() {
           >
             local_hospital
           </span>
-          <div>
-            <p className="font-label-badge text-label-badge text-text-secondary">
+          <div className="min-w-0">
+            <p className="font-label-badge text-label-badge text-text-secondary truncate">
               Secretaria Municipal de Saúde
             </p>
-            <p>Parnaíba/PI • SUS Brasil</p>
+            <p className="truncate">{subtituloInstitucional} • SUS Brasil</p>
           </div>
         </div>
       </div>
+    </>
+  );
+
+  if (variant === "drawer") {
+    return (
+      <div className="h-[100svh] w-72 max-w-[85vw] bg-surface-container-lowest border-r border-border-crisp flex flex-col justify-between select-none shadow-xl">
+        {navContent}
+      </div>
+    );
+  }
+
+  return (
+    <aside
+      className="hidden lg:flex h-screen w-64 w-layout-sidebar-width bg-surface-container-lowest border-r border-border-crisp flex-col justify-between select-none shrink-0"
+      aria-label="Lateral"
+    >
+      {navContent}
     </aside>
   );
 }

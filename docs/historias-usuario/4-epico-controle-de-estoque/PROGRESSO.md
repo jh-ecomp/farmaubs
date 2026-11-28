@@ -1,18 +1,18 @@
 # Progresso — Épico 4: Controle de Estoque
 
-Última atualização: 05/11/2026
+Última atualização: 28/11/2026
 
 ## Resumo Executivo
 
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 16 |
-| **Entregues** | 10 (62.5%) |
+| **Entregues** | 11 (69%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 6 (37.5%) |
+| **Pendentes** | 5 (31%) |
 
 ```
-Progresso: [████████████░░░░░░░░] 62.5% (10/16 concluídas)
+Progresso: [██████████████░░░░░░] 69% (11/16 concluídas)
 ```
 
 ---
@@ -25,7 +25,7 @@ Progresso: [████████████░░░░░░░░] 62.5% 
 | **ES-02** | Backend | API de Saldos: Consulta paginada com busca textual, categorias, agrupamento por lote e status (RF005, RF022) | [es-02-backend-api-saldos-consulta-paginada-filtros.md](./es-02-backend-api-saldos-consulta-paginada-filtros.md) | ✅ Redigida | ✅ Concluída |
 | **ES-03** | Backend | API de Ajustes: Rota atômica para ajustes rápidos (+/-) com motivo, justificativa e auditoria (RF009, RF011, RF028) | [es-03-backend-api-ajustes-estoque-transacao-justificada.md](./es-03-backend-api-ajustes-estoque-transacao-justificada.md) | ✅ Redigida | ✅ Concluída |
 | **ES-04** | Backend | API de Rastreabilidade: Histórico cronológico e linha do tempo de movimentações por lote (RF028) | [es-04-backend-api-rastreabilidade-historico-lote.md](./es-04-backend-api-rastreabilidade-historico-lote.md) | ✅ Redigida | ✅ Concluída |
-| **ES-05** | Backend | API de Relatórios: Geração e download de planilha Excel (.xlsx) por período, princípio ativo e perdas (RF020, RF028) | [es-05-backend-api-relatorios-exportacao-planilha-xlsx.md](./es-05-backend-api-relatorios-exportacao-planilha-xlsx.md) | ✅ Redigida | ⏳ Não iniciada |
+| **ES-05** | Backend | API de Relatórios: Geração e download de planilha Excel (.xlsx) por período, princípio ativo e perdas (RF020, RF028) | [es-05-backend-api-relatorios-exportacao-planilha-xlsx.md](./es-05-backend-api-relatorios-exportacao-planilha-xlsx.md) | ✅ Redigida | ✅ Concluída |
 | **ES-06** | Frontend | Dashboard Superior: Cartões de métricas em tempo real (totalizadores, baixo estoque e validade curta) (RF018, RF022, RF023) | [es-06-frontend-dashboard-cards-metricas-criticidade.md](./es-06-frontend-dashboard-cards-metricas-criticidade.md) | ✅ Redigida | ✅ Concluída |
 | **ES-07** | Frontend | Tabela Principal de Saldos: Visão por medicamento, expansão de lotes e badges de validade em laranja (RF022, NF001) | [es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md](./es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md) | ✅ Redigida | ✅ Concluída |
 | **ES-08** | Frontend | Barra de Filtros Avançados: Busca livre, filtro de validade no mês corrente e categorias da REMUME (RF022, NF001) | [es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md](./es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md) | ✅ Redigida | ✅ Concluída |

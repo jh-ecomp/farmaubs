@@ -412,7 +412,7 @@ When(
 
 Then(
   "o arquivo Excel {string} de recebimentos deve ser baixado nativamente pelo navegador",
-  async ({}, extensao: string) => {
+  async ({ page: _page }, extensao: string) => {
     expect(ultimoDownloadRecebimentoFilename.toLowerCase()).toContain(
       extensao.toLowerCase(),
     );

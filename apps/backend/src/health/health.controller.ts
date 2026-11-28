@@ -27,6 +27,7 @@ export class HealthController {
             database: { type: "string", enum: ["up", "down"], example: "up" },
           },
         },
+        uptime: { type: "number", example: 360 },
         timestamp: { type: "string", example: "2026-08-26T01:30:00.000Z" },
       },
     },

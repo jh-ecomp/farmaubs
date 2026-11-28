@@ -25,3 +25,9 @@ tasks:
     command: 'pnpm exec eslint src/'
     inputs:
       - 'src/**/*'
+
+  typecheck:
+    command: 'pnpm exec tsc --noEmit'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig.json'

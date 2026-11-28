@@ -4,4 +4,3 @@ export * from "./ajustes.types";
 export * from "./ajustes-helpers";
 export * from "./rastreabilidade.types";
 export * from "./relatorios.types";
-

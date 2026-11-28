@@ -360,9 +360,9 @@ describe("Autorização RBAC e TenantScope com Banco Real (AC-13, ADR-006, ADR-0
 
     it("GUC configurado para Município Alfa restringe leitura apenas aos dados do Alfa", async () => {
       await withTenantContext(MUNICIPIO_A, async (qr) => {
-        const rows = await qr.query<{ id: string; email: string }[]>(
+        const rows = (await qr.query(
           `SELECT id, email FROM users WHERE email LIKE '%@farmaubs.test'`,
-        );
+        )) as { id: string; email: string }[];
 
         // Apenas o usuário do Município Alfa e o Admin (que também foi alocado no Alfa para este teste) devem ser visíveis
         const emails = rows.map((r) => r.email);
@@ -373,9 +373,9 @@ describe("Autorização RBAC e TenantScope com Banco Real (AC-13, ADR-006, ADR-0
 
     it("GUC configurado para Município Beta restringe leitura apenas aos dados do Beta", async () => {
       await withTenantContext(MUNICIPIO_B, async (qr) => {
-        const rows = await qr.query<{ id: string; email: string }[]>(
+        const rows = (await qr.query(
           `SELECT id, email FROM users WHERE email LIKE '%@farmaubs.test'`,
-        );
+        )) as { id: string; email: string }[];
 
         const emails = rows.map((r) => r.email);
         expect(emails).toContain(EMAIL_GERENTE_B);
