@@ -77,8 +77,8 @@ Funcionalidade: Hardening e Validação de Inicialização da API em Produção
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] Schema Zod de validação de ambiente implementado e coberto por testes unitários (Camada A).
-- [ ] `helmet`, `trust proxy`, CORS multi-origem, Swagger condicional e `enableShutdownHooks()` configurados.
-- [ ] `@nestjs/throttler` ativo e verificado sem quebrar suítes E2E existentes (desabilitável ou limite ajustado em `NODE_ENV=test`).
-- [ ] Pool do PostgreSQL parametrizável via `DB_POOL_MAX` (padrão `25`).
-- [ ] `.env.example` atualizado refletindo exatamente todas as variáveis utilizadas pela aplicação.
+- [x] Schema Zod de validação de ambiente implementado e coberto por testes unitários (Camada A).
+- [x] `helmet`, `trust proxy`, CORS multi-origem, Swagger condicional e `enableShutdownHooks()` configurados.
+- [x] `@nestjs/throttler` ativo e verificado sem quebrar suítes E2E existentes (desabilitável ou limite ajustado em `NODE_ENV=test`).
+- [x] Pool do PostgreSQL parametrizável via `DB_POOL_MAX` (padrão `25`).
+- [x] `.env.example` atualizado refletindo exatamente todas as variáveis utilizadas pela aplicação.

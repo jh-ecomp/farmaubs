@@ -67,7 +67,7 @@ Funcionalidade: Envio Real de E-mail Transacional e Manutenção Periódica de D
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] Adaptador real de e-mail (SMTP/Resend) implementado atrás da porta `ServicoEmailPort` com timeout de 8s.
-- [ ] Limpeza automática de sessões expiradas testada contra PostgreSQL real (Camada B).
-- [ ] Expurgo de arquivos antigos em `REPORTS_DIR` testado unitariamente com diretório temporário (Camada A).
-- [ ] Jobs de manutenção respeitam `OnModuleDestroy` (sem timers vazando nos testes Jest).
+- [x] Adaptador real de e-mail (SMTP/Resend) implementado atrás da porta `ServicoEmailPort` com timeout de 8s.
+- [x] Limpeza automática de sessões expiradas testada contra PostgreSQL real (Camada B).
+- [x] Expurgo de arquivos antigos em `REPORTS_DIR` testado unitariamente com diretório temporário (Camada A).
+- [x] Jobs de manutenção respeitam `OnModuleDestroy` (sem timers vazando nos testes Jest).

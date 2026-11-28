@@ -1,3 +1,5 @@
+import { formatarDataCivilBrasil } from "./data-helpers";
+
 export type MotivoReceitaInvalida =
   | "AUSENTE"
   | "DATA_INVALIDA"
@@ -44,7 +46,7 @@ export function validarReceitaAntimicrobiano(
     return { valida: false, motivo: "DATA_INVALIDA" };
   }
 
-  const hojeStr = dataReferencia.toISOString().slice(0, 10);
+  const hojeStr = formatarDataCivilBrasil(dataReferencia);
   const hojeUtc = new Date(`${hojeStr}T00:00:00Z`);
 
   if (emissaoStr > hojeStr) {

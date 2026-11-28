@@ -1,0 +1,196 @@
+# ==============================================================================
+# FarmaUBS — Integração Contínua (CI) — Gate Automatizado de Qualidade
+# ADRs: ADR-022 (Monorepo), ADR-024 (CI/CD), ADR-030 (Pirâmide A/B/C/D), ADR-035 (Moon)
+# História: RL-06 | Requisitos: NF004, NF015 (Isolamento Multi-Tenant RLS)
+# ==============================================================================
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FORCE_COLOR: "1"
+  TZ: America/Sao_Paulo
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1 — Qualidade Estática (Lint + Typecheck + Build) & Unitários/BDD (Camada A)
+  # ----------------------------------------------------------------------------
+  static-and-unit:
+    name: Lint, Typecheck, Build & Unit/BDD
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout do repositório (histórico completo para moon --affected)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Configurar Node.js 22 LTS + cache pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Instalar dependências do monorepo
+        run: pnpm install --frozen-lockfile
+
+      - name: Executar Lint, Typecheck, Build e Testes Unitários/Cucumber via Moon
+        env:
+          NODE_ENV: test
+        run: |
+          TARGETS=(
+            shared:lint backend:lint frontend:lint
+            shared:typecheck backend:typecheck frontend:typecheck
+            shared:build backend:build frontend:build
+            backend:test backend:test-bdd frontend:test
+          )
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_REF="origin/${{ github.base_ref }}"
+            # Se arquivos globais de CI/infra/lockfile mudaram, roda todos os alvos sem filtro --affected
+            if git diff --name-only "${BASE_REF}...HEAD" | grep -Eq '^(\.github/|\.moon/|infra/|package\.json|pnpm-lock\.yaml)'; then
+              pnpm moon run "${TARGETS[@]}"
+            else
+              pnpm moon run "${TARGETS[@]}" --affected --base "${BASE_REF}"
+            fi
+          else
+            pnpm moon run "${TARGETS[@]}"
+          fi
+
+  # ----------------------------------------------------------------------------
+  # Job 2 — Schema PostgreSQL 18, Integração RLS/Concorrência e API E2E (Camadas B e C)
+  # ----------------------------------------------------------------------------
+  backend-db-rls-e2e:
+    name: Schema, Integração RLS & API E2E (Postgres 18)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: farmaubs_admin
+          POSTGRES_PASSWORD: farmaubs_test_password
+          POSTGRES_DB: farmaubs
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd="pg_isready -U farmaubs_admin -d farmaubs"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      NODE_ENV: test
+      TEST_DB_HOST: localhost
+      TEST_DB_PORT: "5435"
+      TEST_DB_USER: farmaubs_admin
+      TEST_DB_PASSWORD: farmaubs_test_password
+      TEST_ADMIN_DB_PASSWORD: farmaubs_test_password
+      TEST_APP_DB_PASSWORD: farmaubs_test_app_password
+      TEST_DB_DATABASE: farmaubs
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Configurar Node.js 22 LTS + cache pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Instalar dependências do monorepo
+        run: pnpm install --frozen-lockfile
+
+      - name: Build de @farmaubs/shared e @farmaubs/backend (dist/)
+        run: pnpm moon run backend:build
+
+      - name: Provisionar role não-dona farmaubs_app no PostgreSQL 18 (ADR-016)
+        env:
+          PGHOST: localhost
+          PGPORT: "5435"
+          PGPASSWORD: farmaubs_test_password
+          POSTGRES_USER: farmaubs_admin
+          POSTGRES_DB: farmaubs
+          FARMAUBS_APP_DB_PASSWORD: farmaubs_test_app_password
+        run: sh infra/db/init/01-create-role-farmaubs-app.sh
+
+      - name: Validar Schema e Reversibilidade de Migrations (jest-schema)
+        working-directory: apps/backend
+        run: pnpm exec jest --config test/schema/jest-schema.json --runInBand
+
+      - name: Executar Testes de Integração com RLS e Bloqueio Pessimista (Camada B — NF015)
+        working-directory: apps/backend
+        run: pnpm exec jest --config ./test/jest-integration.json --runInBand
+
+      - name: Executar Testes E2E de API NestJS + PostgreSQL Real (Camada C)
+        working-directory: apps/backend
+        run: pnpm exec jest --config ./test/jest-e2e.json --runInBand
+
+  # ----------------------------------------------------------------------------
+  # Job 3 — Sistema de Frontend, Acessibilidade WCAG e Contrato E2E UI (Camada D)
+  # ----------------------------------------------------------------------------
+  frontend-playwright:
+    name: Playwright BDD & E2E UI (Chromium + WCAG)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Configurar Node.js 22 LTS + cache pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Instalar dependências do monorepo
+        run: pnpm install --frozen-lockfile
+
+      - name: Instalar navegador Chromium do Playwright
+        working-directory: apps/frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Executar suíte Playwright BDD (sistema-frontend)
+        run: pnpm moon run frontend:test-bdd
+
+      - name: Executar suíte Playwright E2E + Acessibilidade axe-core (e2e-fullstack)
+        run: pnpm moon run frontend:test-e2e
+
+      - name: Publicar artefatos de diagnóstico do Playwright em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics-${{ github.run_id }}
+          path: |
+            apps/frontend/playwright-report/
+            apps/frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

@@ -6,6 +6,7 @@ import {
   ItemDetalheRecebimento,
   ItemResumoHistoricoRecebimento,
   ResultadoEstornoRecebimento,
+  obterIntervaloOntemHoje,
 } from "@farmaubs/shared";
 import { TransactionContext } from "../../../../common/transaction/transaction-context.service";
 import type {
@@ -70,13 +71,14 @@ export class TypeOrmHistoricoRecebimentoRepository
       );
     }
 
-    // Filtros de data
+    // Filtros de data alinhados ao dia civil brasileiro (America/Sao_Paulo, UTC-3 — RL-02)
     const agora = new Date();
+    const { dataInicio: ontemBr, dataFim: hojeBr } = obterIntervaloOntemHoje(agora);
     if (filtro.periodo === "HOJE") {
-      const hojeInicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+      const hojeInicio = new Date(`${hojeBr}T00:00:00.000-03:00`);
       query = query.andWhere("d.data_recebimento >= :hojeInicio", { hojeInicio });
     } else if (filtro.periodo === "ONTEM") {
-      const ontemInicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - 1);
+      const ontemInicio = new Date(`${ontemBr}T00:00:00.000-03:00`);
       query = query.andWhere("d.data_recebimento >= :ontemInicio", { ontemInicio });
     } else if (filtro.periodo === "ULTIMOS_7_DIAS") {
       const seteDiasAtras = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -87,12 +89,12 @@ export class TypeOrmHistoricoRecebimentoRepository
     } else if (filtro.dataInicio || filtro.dataFim) {
       if (filtro.dataInicio) {
         query = query.andWhere("d.data_recebimento >= :dataInicio", {
-          dataInicio: new Date(`${filtro.dataInicio}T00:00:00Z`),
+          dataInicio: new Date(`${filtro.dataInicio}T00:00:00.000-03:00`),
         });
       }
       if (filtro.dataFim) {
         query = query.andWhere("d.data_recebimento <= :dataFim", {
-          dataFim: new Date(`${filtro.dataFim}T23:59:59.999Z`),
+          dataFim: new Date(`${filtro.dataFim}T23:59:59.999-03:00`),
         });
       }
     }

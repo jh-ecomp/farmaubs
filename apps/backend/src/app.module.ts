@@ -1,9 +1,15 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { LoggerModule } from "nestjs-pino";
 import * as path from "node:path";
+import { extractClientIp } from "./app.setup";
+import { isThrottlerEnabled, validateEnv } from "./config/env.validation";
+import { buildLoggerModuleParams } from "./config/observability.config";
 import { CommonModule } from "./common/common.module";
+import { MaintenanceCleanupService } from "./common/maintenance/maintenance-cleanup.service";
 import { HealthModule } from "./health/health.module";
 import { AcessoModule } from "./modules/acesso/acesso.module";
 import { AdministracaoModule } from "./modules/administracao/administracao.module";
@@ -38,7 +44,18 @@ import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/pers
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      ignoreEnvFile: process.env.NODE_ENV === "production",
       envFilePath: path.resolve(process.cwd(), "../../.env"),
+      validate: validateEnv,
+    }),
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => buildLoggerModuleParams(config),
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ name: "default", ttl: 60_000, limit: 120 }],
+      getTracker: (req) => extractClientIp(req),
+      skipIf: () => !isThrottlerEnabled(),
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -50,6 +67,11 @@ import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/pers
         password: config.get<string>("DB_PASSWORD", ""),
         database: config.get<string>("POSTGRES_DB", "farmaubs"),
         schema: config.get<string>("DB_SCHEMA", "public"),
+        extra: {
+          max: parseInt(config.get<string>("DB_POOL_MAX", "25"), 10),
+          idleTimeoutMillis: 30_000,
+          connectionTimeoutMillis: 5_000,
+        },
         entities: [
           PerfilEntity,
           Session,
@@ -82,6 +104,8 @@ import { DispensacaoItemEntity } from "./modules/dispensacao/infrastructure/pers
     EstoqueModule,
   ],
   providers: [
+    MaintenanceCleanupService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: SessionAuthGuard },
     { provide: APP_GUARD, useClass: MustChangePasswordGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

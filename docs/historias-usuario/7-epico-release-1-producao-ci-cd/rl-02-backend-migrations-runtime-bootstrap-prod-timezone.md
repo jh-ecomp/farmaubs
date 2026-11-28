@@ -77,7 +77,7 @@ Funcionalidade: Migrations de Runtime, Bootstrap de Produção e Seed Sintético
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] `node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js` validado contra PostgreSQL limpo apenas com `dist/`.
-- [ ] `bootstrap-prod.js` implementado, testado com execução dupla (idempotência) e sem dados fictícios.
-- [ ] `seed-qa.js` implementado, bloqueado contra `APP_ENV=production` e populando massa sintética + conta `QA_SMOKE_EMAIL` em HML.
-- [ ] `TZ=America/Sao_Paulo` verificado nos filtros de data "Ontem/Hoje" e vencimento de lotes.
+- [x] `node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js` validado contra PostgreSQL limpo apenas com `dist/`.
+- [x] `bootstrap-prod.js` implementado, testado com execução dupla (idempotência) e sem dados fictícios.
+- [x] `seed-qa.js` implementado, bloqueado contra `APP_ENV=production` e populando massa sintética + conta `QA_SMOKE_EMAIL` em HML.
+- [x] `TZ=America/Sao_Paulo` verificado nos filtros de data "Ontem/Hoje" e vencimento de lotes.

@@ -63,16 +63,16 @@ Requisitos canônicos descritos em [farmaubs-requisitos.md](../../documento-requ
 
 | ID | Título | Camada / Testes | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| [RL-01](./rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md) | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | Backend (A, C) | AC-05 | ✅ Redigida |
-| [RL-02](./rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md) | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | Backend (B) | AC-01, DI-01, RE-01 | ✅ Redigida |
-| [RL-03](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | Adaptador real de e-mail transacional (SMTP/Resend opcional com fallback `console`) e limpeza periódica de sessões e relatórios | Backend (A, B) | AC-04 | ✅ Redigida |
-| [RL-04](./rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md) | Observabilidade enxuta: logs JSON estruturados com `nestjs-pino` (redação de PII/segredos), Sentry opcional e `/api/v1/health` enriquecido | Backend (A, C) | RL-01 | ✅ Redigida |
+| [RL-01](./rl-01-backend-hardening-api-validacao-env-graceful-shutdown.md) | Hardening da API NestJS: `helmet`, `trust proxy`, rate limit, validação de env com Zod, pool Postgres e *graceful shutdown* | Backend (A, C) | AC-05 | ✅ Concluída |
+| [RL-02](./rl-02-backend-migrations-runtime-bootstrap-prod-timezone.md) | Migrations de runtime em `dist/`, Bootstrap de Produção, Seed sintético de QA (`seed-qa`) e fuso `America/Sao_Paulo` | Backend (B) | AC-01, DI-01, RE-01 | ✅ Concluída |
+| [RL-03](./rl-03-backend-adaptador-email-transacional-limpeza-sessoes-relatorios.md) | Adaptador real de e-mail transacional (SMTP/Resend opcional com fallback `console`) e limpeza periódica de sessões e relatórios | Backend (A, B) | AC-04 | ✅ Concluída |
+| [RL-04](./rl-04-backend-observabilidade-logs-pino-sanitizados-sentry.md) | Observabilidade enxuta: logs JSON estruturados com `nestjs-pino` (redação de PII/segredos), Sentry opcional e `/api/v1/health` enriquecido | Backend (A, C) | RL-01 | ✅ Concluída |
 
 ### Infraestrutura, CI/CD, Frontend e Qualidade
 
 | ID | Título | Camada / Testes | Depende de | Status |
 | --- | --- | --- | --- | --- |
-| [RL-05](./rl-05-infra-dockerfiles-producao-compose-prod-proxy-borda.md) | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` com rotação de logs e Proxy Reverso de borda | Infra | RL-01, RL-02 | ✅ Redigida |
-| [RL-06](./rl-06-ci-cd-github-actions-ghcr-deploy-hml-prod.md) | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) com *cut* para HML e aprovação para PROD | CI/CD | RL-05 | ✅ Redigida |
-| [RL-07](./rl-07-frontend-acabamento-producao-sidebar-responsiva-feature-flags.md) | Acabamento de produção no Frontend: `lang="pt-BR"`, títulos dinâmicos, `robots.txt`, Sidebar responsiva/dinâmica, Feature Flags e páginas `/privacidade` e `/termos` | Frontend (D) | AC-21 | ✅ Redigida |
-| [RL-08](./rl-08-qualidade-smoke-tests-carga-k6-backup-offsite.md) | Suíte de Smoke Tests pós-deploy, testes de Carga e Estresse `k6` (Load & Stress) e scripts de backup/restore off-site (`pg_dump` → R2) | QA / Infra | RL-05, RL-06 | ✅ Redigida |
+| [RL-05](./rl-05-infra-dockerfiles-producao-compose-prod-proxy-borda.md) | Dockerfiles endurecidos (não-root e sem `devDependencies`), `docker-compose.prod.yml` com rotação de logs e Proxy Reverso de borda | Infra | RL-01, RL-02 | ✅ Concluída |
+| [RL-06](./rl-06-ci-cd-github-actions-ghcr-deploy-hml-prod.md) | Workflows GitHub Actions: CI completo com `moon` + Postgres + Playwright e CD imutável (`ghcr.io`) com *cut* para HML e aprovação para PROD | CI/CD | RL-05 | ✅ Concluída |
+| [RL-07](./rl-07-frontend-acabamento-producao-sidebar-responsiva-feature-flags.md) | Acabamento de produção no Frontend: `lang="pt-BR"`, títulos dinâmicos, `robots.txt`, Sidebar responsiva/dinâmica, Feature Flags e páginas `/privacidade` e `/termos` | Frontend (D) | AC-21 | ✅ Concluída |
+| [RL-08](./rl-08-qualidade-smoke-tests-carga-k6-backup-offsite.md) | Suíte de Smoke Tests pós-deploy, testes de Carga e Estresse `k6` (Load & Stress) e scripts de backup/restore off-site (`pg_dump` → R2) | QA / Infra | RL-05, RL-06 | ✅ Concluída |

@@ -1,4 +1,5 @@
 import type { LoteDisponivelDto } from "./catalogo.types";
+import { formatarDataCivilBrasil } from "./data-helpers";
 
 export interface LoteEntradaFefo {
   id: string;
@@ -19,7 +20,7 @@ export function ordenarLotesPorFEFO(
   lotes: LoteEntradaFefo[],
   dataReferencia: Date = new Date(),
 ): LoteDisponivelDto[] {
-  const hojeStr = dataReferencia.toISOString().slice(0, 10);
+  const hojeStr = formatarDataCivilBrasil(dataReferencia);
   const hojeUtc = new Date(`${hojeStr}T00:00:00Z`);
 
   const comSaldo = lotes

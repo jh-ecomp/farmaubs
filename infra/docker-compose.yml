@@ -6,7 +6,7 @@ name: farmaubs
 services:
   postgres:
     image: postgres:18-alpine
-    env_file: ../.env
+    env_file: ${ENV_FILE:-../.env}
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./db/init:/docker-entrypoint-initdb.d:ro
@@ -20,7 +20,7 @@ services:
     build:
       context: ..
       dockerfile: apps/backend/Dockerfile
-    env_file: ../.env
+    env_file: ${ENV_FILE:-../.env}
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"

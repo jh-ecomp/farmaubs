@@ -276,8 +276,8 @@ export class TypeOrmHistoricoDispensacaoRepository
     filtros: Omit<FiltrosHistoricoResolvidos, "pagina" | "limite">,
   ): { whereSql: string; params: unknown[] } {
     const clauses: string[] = [
-      "d.created_at >= ($1::date)::timestamptz",
-      "d.created_at <= (($2::date) + interval '1 day' - interval '1 millisecond')::timestamptz",
+      "d.created_at >= (($1::date)::timestamp AT TIME ZONE 'America/Sao_Paulo')",
+      "d.created_at < ((($2::date) + interval '1 day')::timestamp AT TIME ZONE 'America/Sao_Paulo')",
     ];
     const params: unknown[] = [filtros.dataInicio, filtros.dataFim];
 

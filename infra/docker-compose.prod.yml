@@ -1,0 +1,48 @@
+# FarmaUBS — overrides de produção e homologação (ADR-021, ADR-023, ADR-025, ADR-026, RL-05)
+# Uso na VPS (sem código-fonte nem docker build local):
+#   ENV_FILE=/opt/farmaubs/hml/.env API_IMAGE=... FRONTEND_IMAGE=... \
+#     docker compose -p farmaubs-hml -f /opt/farmaubs/infra/docker-compose.yml -f /opt/farmaubs/infra/docker-compose.prod.yml up -d
+#   ENV_FILE=/opt/farmaubs/prod/.env API_IMAGE=... FRONTEND_IMAGE=... \
+#     docker compose -p farmaubs-prod -f /opt/farmaubs/infra/docker-compose.yml -f /opt/farmaubs/infra/docker-compose.prod.yml up -d
+
+services:
+  postgres:
+    restart: unless-stopped
+    mem_limit: ${POSTGRES_MEM_LIMIT:-768m}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/farmaubs/farmaubs-api:latest}
+    build: !reset null
+    restart: unless-stopped
+    mem_limit: ${API_MEM_LIMIT:-512m}
+    environment:
+      NODE_ENV: production
+      TZ: America/Sao_Paulo
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/farmaubs/farmaubs-frontend:latest}
+    build: !reset null
+    restart: unless-stopped
+    mem_limit: ${FRONTEND_MEM_LIMIT:-128m}
+    # Regra crítica Docker + UFW (ADR-021 / RL-05): publicar APENAS em loopback (127.0.0.1)
+    # para que somente o Caddy de borda acesse o container e o Docker não contorne o UFW.
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"

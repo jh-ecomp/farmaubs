@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20_LTS-339933?logo=node.js&logoColor=white">
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-22_LTS-339933?logo=node.js&logoColor=white">
   <img alt="PNPM" src="https://img.shields.io/badge/pnpm-11.21-F69220?logo=pnpm&logoColor=white">
   <img alt="Moonrepo" src="https://img.shields.io/badge/moonrepo-2.5+-7952B3?logo=moonrepo&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white">
@@ -85,7 +85,7 @@ farmaubs/
 
 ### Pré-requisitos
 
-- Node.js 20 LTS (especificado no toolchain do Moonrepo)
+- Node.js 22 LTS (especificado em `.moon/toolchain.yml`)
 - PNPM 11 (`corepack enable pnpm`)
 - Docker e Docker Compose
 
@@ -157,12 +157,11 @@ moon run mobile:start       # Inicia ambiente Expo DevTools
 moon run backend:migration-run   # Aplica migrações pendentes no banco local
 moon run backend:db-seed         # Popula o banco local com dados iniciais
 
-# Testes e validações
-moon run :test --affected   # Executa testes apenas nos projetos modificados pela branch
-moon check --affected       # Checagem de tipos e lint nos arquivos alterados
-moon run backend:test-bdd   # Executa especificação viva BDD com Cucumber
-moon run :build             # Compila todos os workspaces na ordem correta do grafo
-moon ci                     # Pipeline completo de validação contínua local
+# Testes e validações locais (veja a matriz Local vs. CI/CD no CONTRIBUTING.md)
+pnpm moon run :lint :typecheck :test :build --affected   # Valida pacotes afetados pela branch
+pnpm moon run backend:test-bdd                           # Especificação viva BDD com Cucumber (domínio)
+pnpm moon run frontend:test-bdd                          # Especificação viva Playwright BDD + WCAG 2.1 AA
+pnpm moon run :build                                     # Compila os workspaces na ordem do grafo
 ```
 
 Para mais detalhes sobre padrões de código, arquitetura e fluxo de trabalho, consulte o [CONTRIBUTING.md](./CONTRIBUTING.md).
