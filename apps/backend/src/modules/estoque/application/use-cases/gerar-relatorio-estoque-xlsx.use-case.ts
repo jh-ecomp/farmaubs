@@ -1,4 +1,5 @@
 import {
+  FUSO_UBS,
   PERIODO_MAXIMO_RELATORIO_DIAS,
   PERIODO_PADRAO_RELATORIO_DIAS,
   calcularStatusValidade,
@@ -31,7 +32,6 @@ export interface SaidaGerarRelatorioEstoqueXlsx {
   contentType: string;
 }
 
-const FUSO_UBS = "America/Fortaleza";
 const REGEX_DATA_YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 const FORMATADOR_YMD_UBS = new Intl.DateTimeFormat("en-CA", {

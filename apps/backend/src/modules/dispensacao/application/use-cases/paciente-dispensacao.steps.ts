@@ -26,7 +26,7 @@ const feature = loadFeature(
 
 defineFeature(feature, (test) => {
   let cadastrarUseCase: CadastrarPacienteUseCase;
-  let consultarHistoricoUseCase: ConsultarHistoricoUseCase;
+  let consultarHistoricoUseCase: ConsultarHistoricoPacienteUseCase;
   let buscarPacientesUseCase: BuscarPacientesUseCase;
   let pacienteRepoMock: jest.Mocked<PacienteRepositoryPort>;
 

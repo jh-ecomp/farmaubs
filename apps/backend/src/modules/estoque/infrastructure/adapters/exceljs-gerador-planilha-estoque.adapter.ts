@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { FUSO_UBS } from "@farmaubs/shared";
 import { Workbook } from "exceljs";
 import type { CellValue, Worksheet } from "exceljs";
 import type {
@@ -10,7 +11,6 @@ import type {
   LinhaRelatorioSaldosAtuais,
 } from "../../domain/ports/gerador-planilha-estoque.port";
 
-const FUSO_UBS = "America/Fortaleza";
 const REGEX_FORMULA_INJECTION = /^[=+\-@\t\r]/;
 
 const FORMATADOR_DATA_HORA_UBS = new Intl.DateTimeFormat("en-US", {

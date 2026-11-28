@@ -13,7 +13,7 @@ import { EstoqueRelatoriosPgRepository } from "../../src/modules/estoque/infrast
 jest.setTimeout(30000);
 
 const uid = (sufixo: string): string =>
-  `6f000000-0000-4000-8000-${sufixo.padStart(12, "0")}`;
+  `7c000000-0000-4000-8000-${sufixo.padStart(12, "0")}`;
 const MUN_A = uid("a");
 const MUN_B = uid("b");
 const UBS_A1 = uid("a1");
