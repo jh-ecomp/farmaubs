@@ -70,6 +70,6 @@ Funcionalidade: Observabilidade Estruturada e Proteção de Dados Sensíveis em 
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] `nestjs-pino` configurado com redação testada para `cookie`, `authorization`, `senha`, `password`, `cpf` e `cns`.
-- [ ] Sentry inicializado condicionalmente via `SENTRY_DSN` com sanitização no `beforeSend`.
-- [ ] `GET /api/v1/health` testa consulta real ao Postgres e responde `200`/`503` corretamente, mantendo compatibilidade com o `docker-compose.yml`.
+- [x] `nestjs-pino` configurado com redação testada para `cookie`, `authorization`, `senha`, `password`, `cpf` e `cns`.
+- [x] Sentry inicializado condicionalmente via `SENTRY_DSN` com sanitização no `beforeSend`.
+- [x] `GET /api/v1/health` testa consulta real ao Postgres e responde `200`/`503` corretamente, mantendo compatibilidade com o `docker-compose.yml`.

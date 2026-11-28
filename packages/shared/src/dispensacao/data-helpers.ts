@@ -10,27 +10,36 @@ export interface ValidacaoIntervaloHistoricoResultado {
   motivo?: "FORMATO_INVALIDO" | "FIM_ANTERIOR_INICIO" | "INTERVALO_EXCEDE_365_DIAS";
 }
 
+export const FUSO_PADRAO_BRASIL = "America/Sao_Paulo";
+
 /**
- * Retorna o intervalo temporal padrão de ontem (D-1) e hoje (D0) no formato ISO (AAAA-MM-DD) (RF012).
+ * [NF003 / RL-02]: Extrai a data civil brasileira (AAAA-MM-DD) no fuso America/Sao_Paulo.
+ * Evita virada prematura do dia entre 21h00 e 23h59 BRT (00h00-02h59 UTC).
+ * @param data - Instante de referência (padrão: agora).
+ * @returns Data civil no formato ISO curto AAAA-MM-DD.
+ */
+export function formatarDataCivilBrasil(data: Date = new Date()): string {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: FUSO_PADRAO_BRASIL,
+  }).format(data);
+}
+
+/**
+ * Retorna o intervalo temporal padrão de ontem (D-1) e hoje (D0) no fuso America/Sao_Paulo (AAAA-MM-DD) (RF012).
  * @param dataReferencia Data base para o cálculo (padrão: agora).
  * @returns Objeto contendo dataInicio (ontem) e dataFim (hoje).
  */
 export function obterIntervaloOntemHoje(
   dataReferencia: Date = new Date(),
 ): IntervaloDatasEfetivo {
-  const hojeUtc = new Date(
-    Date.UTC(
-      dataReferencia.getUTCFullYear(),
-      dataReferencia.getUTCMonth(),
-      dataReferencia.getUTCDate(),
-    ),
-  );
+  const hojeStr = formatarDataCivilBrasil(dataReferencia);
+  const hojeUtc = new Date(`${hojeStr}T00:00:00Z`);
   const ontemUtc = new Date(hojeUtc);
   ontemUtc.setUTCDate(hojeUtc.getUTCDate() - 1);
 
   return {
     dataInicio: ontemUtc.toISOString().slice(0, 10),
-    dataFim: hojeUtc.toISOString().slice(0, 10),
+    dataFim: hojeStr,
   };
 }
 

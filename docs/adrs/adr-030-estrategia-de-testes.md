@@ -62,8 +62,7 @@ Adotar as quatro camadas de teste descritas acima (unitário/BDD de domínio com
 ### Revisão
 
 Esta decisão deve ser revisitada caso:
-- O ADR-024 (pipeline de CI/CD) seja priorizado, momento em que a execução de testes deve ser automatizada como gate de merge, em vez de depender de disciplina manual.
-- A ausência de testes e2e de UI se mostre, na prática, insuficiente à medida que a equipe de frontend cresça além de um único desenvolvedor.
+- O tempo total de execução dos 3 jobs paralelos de `.github/workflows/ci.yml` ultrapasse 10 minutos por Pull Request à medida que novos módulos sejam incorporados, exigindo particionamento adicional de suítes E2E/Playwright.
 - A regra de obrigatoriedade por tipo de mudança se mostre insuficiente para prevenir regressões reais observadas em produção, justificando a extensão da cobertura obrigatória a outras categorias de mudança.
 
 ### Decisões relacionadas
@@ -72,5 +71,5 @@ Esta decisão deve ser revisitada caso:
 - [[ADR-004|Registro de Decisões de Arquitetura 1 ‐ Arquitetura de Software#adr-004---estratégia-de-comunicação-entre-módulos-internos]] - Estratégia de comunicação entre módulos internos (outbox pattern, testes de integração)
 - [[ADR-008|Registro de Decisões de Arquitetura 2 ‐ Backend#adr-008---consistência-transacional-em-operações-de-estoque]] - Consistência transacional em operações de estoque (teste de integração obrigatório)
 - [[ADR-023|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-023---containerização-e-orquestração]] - Containerização e orquestração (banco de teste via Docker Compose)
-- [[ADR-024|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-024---pipeline-de-cicd]] - Pipeline de CI/CD (ainda não priorizado; automação futura do gate de testes)
-- [[ADR-025|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-025---estratégia-de-ambientes]] - Estratégia de ambientes (homologação como destino de validação e2e)
+- [[ADR-024|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-024---pipeline-de-cicd]] - Pipeline de CI/CD (gate automatizado obrigatório em `.github/workflows/ci.yml` e `cd.yml`)
+- [[ADR-025|Registro de Decisões de Arquitetura 5 ‐ CI CD e Infraestrutura#adr-025---estratégia-de-ambientes]] - Estratégia de ambientes (homologação como destino de Smoke, Load e Stress tests)

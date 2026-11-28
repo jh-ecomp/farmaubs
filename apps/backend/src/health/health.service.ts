@@ -13,6 +13,7 @@ export class HealthService {
       checks: {
         database: databaseUp ? 'up' : 'down',
       },
+      uptime: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
     };
   }

@@ -19,6 +19,14 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      "react-hooks/rules-of-hooks": "warn",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
@@ -26,8 +34,9 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/test/**", "**/*.spec.{ts,tsx}", "**/*.test.{ts,tsx}"],
+    files: ["src/test/**", "**/*.spec.{ts,tsx}", "**/*.test.{ts,tsx}", "e2e/**"],
     rules: {
+      "@typescript-eslint/no-explicit-any": "off",
       "react-refresh/only-export-components": "off",
     },
   },

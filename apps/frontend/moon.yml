@@ -66,6 +66,14 @@ tasks:
       - 'src/**/*'
       - 'eslint.config.js'
 
+  typecheck:
+    command: 'pnpm exec tsc -b --noEmit'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig*.json'
+    deps:
+      - 'shared:build'
+
   preview:
     command: 'pnpm exec vite preview'
     options:

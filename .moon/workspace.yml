@@ -10,7 +10,7 @@ projects:
 # Sistema de controle de versão para detecção de arquivos afetados (--affected)
 vcs:
   client: 'git'
-  defaultBranch: 'main'
+  defaultBranch: 'develop'
 
 # Configuração do gerador de templates e hashing
 hasher:
