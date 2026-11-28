@@ -220,4 +220,67 @@ describe('RLS — isolamento de tenant (conexão como farmaubs_app)', () => {
       ).resolves.toBeDefined();
     });
   });
+
+  describe('RLS em unidades_saude (isolamento municipal + bypass exclusivo de ADMINISTRADOR)', () => {
+    const UBS_A_ID = 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1';
+    const UBS_B_ID = 'dddddddd-dddd-4ddd-8ddd-ddddddddddd2';
+
+    beforeAll(async () => {
+      await admin.query(
+        `INSERT INTO unidades_saude (id, municipio_id, nome)
+         VALUES ($1, $3, 'UBS Alpha RLS'), ($2, $4, 'UBS Beta RLS')
+         ON CONFLICT (id) DO NOTHING`,
+        [UBS_A_ID, UBS_B_ID, MUNICIPIO_A, MUNICIPIO_B],
+      );
+    });
+
+    afterAll(async () => {
+      await admin.query(`DELETE FROM unidades_saude WHERE id = ANY($1::uuid[])`, [
+        [UBS_A_ID, UBS_B_ID],
+      ]);
+    });
+
+    it('pré-condição: RLS ativo e FORCE em unidades_saude', async () => {
+      const rows = await admin.query(
+        `SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE oid = 'public.unidades_saude'::regclass`,
+      );
+      expect(rows[0].relrowsecurity).toBe(true);
+      expect(rows[0].relforcerowsecurity).toBe(true);
+    });
+
+    it('fail-closed: sem GUC e sem is_admin, nenhuma UBS é visível', async () => {
+      await withGuc(null, async (qr) => {
+        const rows = await qr.query(
+          `SELECT id FROM unidades_saude WHERE id = ANY($1::uuid[])`,
+          [[UBS_A_ID, UBS_B_ID]],
+        );
+        expect(rows).toHaveLength(0);
+      });
+    });
+
+    it('usuário operacional do município A enxerga apenas UBS do município A', async () => {
+      await withGuc(MUNICIPIO_A, async (qr) => {
+        await qr.query(`SELECT set_config('app.is_admin', 'false', true)`);
+        const rows = await qr.query(
+          `SELECT id FROM unidades_saude WHERE id = ANY($1::uuid[])`,
+          [[UBS_A_ID, UBS_B_ID]],
+        );
+        expect(rows.map((r: { id: string }) => r.id)).toEqual([UBS_A_ID]);
+      });
+    });
+
+    it('somente administrador (app.is_admin = true) acessa UBSs de todas as cidades', async () => {
+      await withGuc(MUNICIPIO_A, async (qr) => {
+        await qr.query(`SELECT set_config('app.is_admin', 'true', true)`);
+        const rows = await qr.query(
+          `SELECT id FROM unidades_saude WHERE id = ANY($1::uuid[]) ORDER BY id`,
+          [[UBS_A_ID, UBS_B_ID]],
+        );
+        expect(rows.map((r: { id: string }) => r.id)).toEqual([
+          UBS_A_ID,
+          UBS_B_ID,
+        ]);
+      });
+    });
+  });
 });

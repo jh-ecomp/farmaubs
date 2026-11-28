@@ -12,14 +12,15 @@ import { TenantContextService } from '../tenant/tenant-context.service';
 import { TransactionContext } from './transaction-context.service';
 
 const GUC_TENANT = 'app.municipio_id';
+const GUC_IS_ADMIN = 'app.is_admin';
 
 /**
- * #40 — TransactionInterceptor: abre transação, aplica SET LOCAL do GUC de
- * tenant, executa o caso de uso e faz commit/rollback (AC-02, ADR-016).
+ * #40 — TransactionInterceptor: abre transação, aplica SET LOCAL dos GUCs de
+ * tenant (`app.municipio_id` e `app.is_admin`), executa o caso de uso e faz commit/rollback (AC-02, ADR-016).
  *
  * - set_config(..., true) equivale a SET LOCAL: escopo da transação, resetado
  *   no commit/rollback — não vaza para requisições seguintes no pool.
- * - Sem escopo de tenant, aplica o GUC vazio (fail-closed: 0 linhas).
+ * - Sem escopo de tenant, aplica os GUCs vazios/false (fail-closed: 0 linhas).
  * - Nenhuma chamada a serviço externo dentro da transação (ADR-008);
  *   efeitos assíncronos vão para o outbox (ADR-004).
  */
@@ -50,10 +51,11 @@ export class TransactionInterceptor implements NestInterceptor {
 
     try {
       const municipioId = this.tenantContext.getMunicipioId();
-      await queryRunner.query(`SELECT set_config($1, $2, true)`, [
-        GUC_TENANT,
-        municipioId ?? '',
-      ]);
+      const isAdmin = this.tenantContext.isAdmin();
+      await queryRunner.query(
+        `SELECT set_config($1, $2, true), set_config($3, $4, true)`,
+        [GUC_TENANT, municipioId ?? '', GUC_IS_ADMIN, isAdmin ? 'true' : 'false'],
+      );
 
       const result = await this.transactionContext.run(queryRunner, () =>
         lastValueFrom(next.handle()),

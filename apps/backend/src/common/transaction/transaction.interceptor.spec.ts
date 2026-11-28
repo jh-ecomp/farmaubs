@@ -8,6 +8,7 @@ import { TransactionContext } from './transaction-context.service';
 import { SKIP_TRANSACTION_KEY } from './skip-transaction.decorator';
 
 const GUC_TENANT = 'app.municipio_id';
+const GUC_IS_ADMIN = 'app.is_admin';
 
 describe('TransactionInterceptor', () => {
   let interceptor: TransactionInterceptor;
@@ -21,7 +22,7 @@ describe('TransactionInterceptor', () => {
   };
   let dataSource: { createQueryRunner: jest.Mock };
   let reflector: { getAllAndOverride: jest.Mock };
-  let tenantContext: { getMunicipioId: jest.Mock };
+  let tenantContext: { getMunicipioId: jest.Mock; isAdmin: jest.Mock };
   let transactionContext: { run: jest.Mock };
 
   const next = { handle: () => of({ ok: true }) };
@@ -44,7 +45,10 @@ describe('TransactionInterceptor', () => {
 
     dataSource = { createQueryRunner: jest.fn().mockReturnValue(queryRunner) };
     reflector = { getAllAndOverride: jest.fn().mockReturnValue(false) };
-    tenantContext = { getMunicipioId: jest.fn().mockReturnValue(null) };
+    tenantContext = {
+      getMunicipioId: jest.fn().mockReturnValue(null),
+      isAdmin: jest.fn().mockReturnValue(false),
+    };
     transactionContext = {
       run: jest.fn().mockImplementation((_qr, fn) => fn()),
     };
@@ -70,12 +74,24 @@ describe('TransactionInterceptor', () => {
     );
 
     expect(queryRunner.query).toHaveBeenCalledWith(
-      'SELECT set_config($1, $2, true)',
-      [GUC_TENANT, 'municipio-1'],
+      'SELECT set_config($1, $2, true), set_config($3, $4, true)',
+      [GUC_TENANT, 'municipio-1', GUC_IS_ADMIN, 'false'],
     );
     expect(queryRunner.commitTransaction).toHaveBeenCalled();
     expect(queryRunner.release).toHaveBeenCalled();
     expect(result).toEqual({ ok: true });
+  });
+
+  it('aplica app.is_admin = true quando o usuário é administrador global', async () => {
+    tenantContext.getMunicipioId.mockReturnValue('municipio-1');
+    tenantContext.isAdmin.mockReturnValue(true);
+
+    await lastValueFrom(interceptor.intercept(createContext(), next));
+
+    expect(queryRunner.query).toHaveBeenCalledWith(
+      'SELECT set_config($1, $2, true), set_config($3, $4, true)',
+      [GUC_TENANT, 'municipio-1', GUC_IS_ADMIN, 'true'],
+    );
   });
 
   it('aplica GUC vazio (fail-closed) quando não há escopo de tenant', async () => {
@@ -84,8 +100,8 @@ describe('TransactionInterceptor', () => {
     await lastValueFrom(interceptor.intercept(createContext(), next));
 
     expect(queryRunner.query).toHaveBeenCalledWith(
-      'SELECT set_config($1, $2, true)',
-      [GUC_TENANT, ''],
+      'SELECT set_config($1, $2, true), set_config($3, $4, true)',
+      [GUC_TENANT, '', GUC_IS_ADMIN, 'false'],
     );
     expect(queryRunner.commitTransaction).toHaveBeenCalled();
   });

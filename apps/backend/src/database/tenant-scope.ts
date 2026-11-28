@@ -23,9 +23,9 @@ export const TABLE_SCOPES: TableScope[] = [
   },
   {
     table: "unidades_saude",
-    scope: "global",
+    scope: "municipio",
     justification:
-      "Topologia (RF026). Lida no bootstrap de sessão pré-auth; RLS quebraria o login. municipio_id é FK, não escopo de RLS.",
+      "Topologia municipal (RF026). RLS forçado por municipio_id com bypass exclusivo para ADMINISTRADOR (app.is_admin = 'true'); login pré-auth usa funções SECURITY DEFINER.",
   },
   {
     table: "users",

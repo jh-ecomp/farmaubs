@@ -37,7 +37,24 @@ describe('TenantInterceptor', () => {
     );
 
     expect(tenantContext.run).toHaveBeenCalledWith(
-      { municipioId: 'municipio-1' },
+      { municipioId: 'municipio-1', isAdmin: false },
+      expect.any(Function),
+    );
+  });
+
+  it('propaga isAdmin true quando o usuário é ADMINISTRADOR', async () => {
+    await lastValueFrom(
+      interceptor.intercept(
+        createHttpContext({
+          municipioId: 'municipio-1',
+          perfilCodigo: 'ADMINISTRADOR',
+        }),
+        next,
+      ),
+    );
+
+    expect(tenantContext.run).toHaveBeenCalledWith(
+      { municipioId: 'municipio-1', isAdmin: true },
       expect.any(Function),
     );
   });
@@ -48,7 +65,7 @@ describe('TenantInterceptor', () => {
     );
 
     expect(tenantContext.run).toHaveBeenCalledWith(
-      { municipioId: null },
+      { municipioId: null, isAdmin: false },
       expect.any(Function),
     );
   });
@@ -59,7 +76,7 @@ describe('TenantInterceptor', () => {
     await lastValueFrom(interceptor.intercept(context, next));
 
     expect(tenantContext.run).toHaveBeenCalledWith(
-      { municipioId: null },
+      { municipioId: null, isAdmin: false },
       expect.any(Function),
     );
   });
