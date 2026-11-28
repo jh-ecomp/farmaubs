@@ -38,6 +38,9 @@
 4. **Scripts de Backup e Restauração Off-Site (`infra/scripts/backup-postgres-r2.sh` e `restore-postgres-r2.sh`)**:
    - `backup-postgres-r2.sh`: carrega variáveis de `/opt/farmaubs/prod/.env`, executa sem TTY (`docker compose -p farmaubs-prod ... exec -T postgres pg_dump -Fc -U "$POSTGRES_USER" "$POSTGRES_DB"`), valida tamanho > 0, envia via `rclone` para o bucket privado no Cloudflare R2 (`r2:farmaubs-backups`), aplica retenção de 30 dias (`rclone delete --min-age 30d`) e registra log com timestamp.
    - `restore-postgres-r2.sh`: baixa um `.dump` do Cloudflare R2 via `rclone` e restaura em um banco/container PostgreSQL alvo via `pg_restore --clean --if-exists --no-owner`, validando ao final a contagem de tabelas e a presença das políticas de RLS ativas (`pg_policies`). *(Implementa a Fase 1 operacional do `ADR-020`).*
+5. **Governança de Execução (Esteira Automática vs. Sob Demanda em HML)**:
+   - **Automático em cada deploy (`cd.yml`):** `smoke-test.mjs` (`SMOKE_MODE=full` após deploy em `farmaubs-hml` e `SMOKE_MODE=readonly` após promoção em `farmaubs-prod`) e `backup-postgres-r2.sh` (pré-deploy em `farmaubs-prod` + agendamento `cron` a cada 4h na VPS).
+   - **Sob demanda na homologação da release (fora do `ci.yml` de PRs):** `k6-ubs-load.js` (50 VUs) e `k6-ubs-stress.js` (até 200 VUs) são disparados contra `farmaubs-hml` durante a janela de certificação da release candidata (`release/vX.Y.Z`), e `restore-postgres-r2.sh` é executado sob demanda nos ensaios de recuperação de desastres (DR).
 
 ---
 
