@@ -147,7 +147,10 @@ export const RecebimentoPage: React.FC<RecebimentoPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div
+      data-testid="pagina-recebimento"
+      className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6"
+    >
       {/* Cabeçalho da Página */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">

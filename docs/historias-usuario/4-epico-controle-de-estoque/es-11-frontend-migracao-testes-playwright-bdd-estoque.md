@@ -66,6 +66,6 @@ Funcionalidade: Jornada Completa de Controle de Estoque, Ajuste Justificado e Re
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] Suíte `.feature` de Sistema de Frontend e E2E Full-Stack implementada para `ES-06` a `ES-10` sem dependência de mocks de serviços em JSDOM.
-- [ ] Auditoria `@axe-core/playwright` aprovada validando o contraste do alerta laranja (`RF022`).
-- [ ] Download nativo de `.xlsx` e atualização de saldo/rastreabilidade validados em `moon run frontend:test-bdd` e `moon run frontend:test-e2e`.
+- [x] Suíte `.feature` de Sistema de Frontend e E2E Full-Stack implementada para `ES-06` a `ES-10` sem dependência de mocks de serviços em JSDOM.
+- [x] Auditoria `@axe-core/playwright` aprovada validando o contraste do alerta laranja (`RF022`).
+- [x] Download nativo de `.xlsx` e atualização de saldo/rastreabilidade validados em `moon run frontend:test-bdd` e `moon run frontend:test-e2e`.

@@ -70,7 +70,7 @@ Funcionalidade: Conferência de Guia CAF, Termo SUS A4, Exportação XLSX e Esto
 
 ## 5. Checklist de DoD e aceitação
 
-- [ ] Cenários Gherkin das histórias `RE-05`, `RE-06`, `RE-07` e `RE-08` migrados para `.feature` e automatizados com `playwright-bdd`.
-- [ ] Emulação `@media print` (`page.emulateMedia({ media: 'print' })`) validada para o Termo de Recebimento do SUS.
-- [ ] Download nativo de `.xlsx` (`page.waitForEvent('download')`) e estorno justificado validados.
-- [ ] Execução aprovada em `moon run frontend:test-bdd` e `moon run frontend:test-e2e` com zero violações no `@axe-core/playwright`.
+- [x] Cenários Gherkin das histórias `RE-05`, `RE-06`, `RE-07` e `RE-08` migrados para `.feature` e automatizados com `playwright-bdd`.
+- [x] Emulação `@media print` (`page.emulateMedia({ media: 'print' })`) validada para o Termo de Recebimento do SUS.
+- [x] Download nativo de `.xlsx` (`page.waitForEvent('download')`) e estorno justificado validados.
+- [x] Execução aprovada em `moon run frontend:test-bdd` e `moon run frontend:test-e2e` com zero violações no `@axe-core/playwright`.

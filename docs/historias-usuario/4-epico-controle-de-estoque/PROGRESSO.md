@@ -7,12 +7,12 @@
 | Métrica | Valor |
 | --- | --- |
 | **Total de Histórias Mapeadas** | 16 |
-| **Entregues** | 5 (31%) |
+| **Entregues** | 11 (69%) |
 | **Em Andamento** | 0 (0%) |
-| **Pendentes** | 11 (69%) |
+| **Pendentes** | 5 (31%) |
 
 ```
-Progresso: [██████░░░░░░░░░░░░░░] 31% (5/16 concluídas)
+Progresso: [██████████████░░░░░░] 69% (11/16 concluídas)
 ```
 
 ---
@@ -26,12 +26,12 @@ Progresso: [██████░░░░░░░░░░░░░░] 31% (5
 | **ES-03** | Backend | API de Ajustes: Rota atômica para ajustes rápidos (+/-) com motivo, justificativa e auditoria (RF009, RF011, RF028) | [es-03-backend-api-ajustes-estoque-transacao-justificada.md](./es-03-backend-api-ajustes-estoque-transacao-justificada.md) | ✅ Redigida | ✅ Concluída |
 | **ES-04** | Backend | API de Rastreabilidade: Histórico cronológico e linha do tempo de movimentações por lote (RF028) | [es-04-backend-api-rastreabilidade-historico-lote.md](./es-04-backend-api-rastreabilidade-historico-lote.md) | ✅ Redigida | ✅ Concluída |
 | **ES-05** | Backend | API de Relatórios: Geração e download de planilha Excel (.xlsx) por período, princípio ativo e perdas (RF020, RF028) | [es-05-backend-api-relatorios-exportacao-planilha-xlsx.md](./es-05-backend-api-relatorios-exportacao-planilha-xlsx.md) | ✅ Redigida | ✅ Concluída |
-| **ES-06** | Frontend | Dashboard Superior: Cartões de métricas em tempo real (totalizadores, baixo estoque e validade curta) (RF018, RF022, RF023) | [es-06-frontend-dashboard-cards-metricas-criticidade.md](./es-06-frontend-dashboard-cards-metricas-criticidade.md) | ✅ Redigida | ⏳ Não iniciada |
-| **ES-07** | Frontend | Tabela Principal de Saldos: Visão por medicamento, expansão de lotes e badges de validade em laranja (RF022, NF001) | [es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md](./es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md) | ✅ Redigida | ⏳ Não iniciada |
-| **ES-08** | Frontend | Barra de Filtros Avançados: Busca livre, filtro de validade no mês corrente e categorias da REMUME (RF022, NF001) | [es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md](./es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md) | ✅ Redigida | ⏳ Não iniciada |
-| **ES-09** | Frontend | Modais Operacionais: Ficha de rastreabilidade do lote e diálogo de ajuste rápido (+/-) justificado (RF009, RF011, RF028) | [es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md](./es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md) | ✅ Redigida | ⏳ Não iniciada |
-| **ES-10** | Frontend | Interface de Relatórios: Seletor de período, filtros de exportação e download de planilha Excel (.xlsx) (RF020, RF028) | [es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md](./es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md) | ✅ Redigida | ⏳ Não iniciada |
-| **ES-11** | Frontend | Suíte Integrada Playwright BDD e E2E Full-Stack do Módulo de Controle de Estoque | [es-11-frontend-migracao-testes-playwright-bdd-estoque.md](./es-11-frontend-migracao-testes-playwright-bdd-estoque.md) | ✅ Redigida | ⏳ Não iniciada |
+| **ES-06** | Frontend | Dashboard Superior: Cartões de métricas em tempo real (totalizadores, baixo estoque e validade curta) (RF018, RF022, RF023) | [es-06-frontend-dashboard-cards-metricas-criticidade.md](./es-06-frontend-dashboard-cards-metricas-criticidade.md) | ✅ Redigida | ✅ Concluída |
+| **ES-07** | Frontend | Tabela Principal de Saldos: Visão por medicamento, expansão de lotes e badges de validade em laranja (RF022, NF001) | [es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md](./es-07-frontend-tabela-saldos-lotes-destaque-validade-laranja.md) | ✅ Redigida | ✅ Concluída |
+| **ES-08** | Frontend | Barra de Filtros Avançados: Busca livre, filtro de validade no mês corrente e categorias da REMUME (RF022, NF001) | [es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md](./es-08-frontend-barra-filtros-avancados-validade-mes-corrente.md) | ✅ Redigida | ✅ Concluída |
+| **ES-09** | Frontend | Modais Operacionais: Ficha de rastreabilidade do lote e diálogo de ajuste rápido (+/-) justificado (RF009, RF011, RF028) | [es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md](./es-09-frontend-modal-ajustes-rapidos-ficha-rastreabilidade.md) | ✅ Redigida | ✅ Concluída |
+| **ES-10** | Frontend | Interface de Relatórios: Seletor de período, filtros de exportação e download de planilha Excel (.xlsx) (RF020, RF028) | [es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md](./es-10-frontend-interface-exportacao-relatorios-consumo-saldos.md) | ✅ Redigida | ✅ Concluída |
+| **ES-11** | Frontend | Suíte Integrada Playwright BDD e E2E Full-Stack do Módulo de Controle de Estoque | [es-11-frontend-migracao-testes-playwright-bdd-estoque.md](./es-11-frontend-migracao-testes-playwright-bdd-estoque.md) | ✅ Redigida | ✅ Concluída |
 | **ES-MOB-01** | Mobile | Dashboard de Saldos e Indicadores de Criticidade no Celular | [es-mob-01-dashboard-saldos-criticidade-estoque-mobile.md](./es-mob-01-dashboard-saldos-criticidade-estoque-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-MOB-02** | Mobile | Consulta de Saldos por Medicamento e Expansão de Lotes no Celular | [es-mob-02-consulta-saldos-lotes-validade-mobile.md](./es-mob-02-consulta-saldos-lotes-validade-mobile.md) | ✅ Redigida | ⏳ Não iniciada |
 | **ES-MOB-03** | Mobile | Filtros Rápidos, Busca e Bottom Sheet de Estoque no Celular | [es-mob-03-filtros-rapidos-consulta-estoque-mobile.md](./es-mob-03-filtros-rapidos-consulta-estoque-mobile.md) | ✅ Redigida | ⏳ Não iniciada |

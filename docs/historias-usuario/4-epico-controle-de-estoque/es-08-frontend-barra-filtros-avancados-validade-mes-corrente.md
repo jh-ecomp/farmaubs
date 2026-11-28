@@ -92,7 +92,7 @@ Funcionalidade: Barra de Filtros de Estoque (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Componente implementado com debounce funcional via hook customizado `useDebounce`.
-- [ ] Seletor de validade contendo opção explícita de "Vencendo no Mês Corrente".
-- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando atraso do debounce (`page.clock`), acionamento dos filtros e acessibilidade por teclado (`Tab`, `Enter`).
-- [ ] Schema Zod consumido de `@farmaubs/shared`.
+- [x] Componente implementado com debounce funcional via hook customizado `useDebounce`.
+- [x] Seletor de validade contendo opção explícita de "Vencendo no Mês Corrente".
+- [x] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando atraso do debounce (`page.clock`), acionamento dos filtros e acessibilidade por teclado (`Tab`, `Enter`).
+- [x] Schema Zod consumido de `@farmaubs/shared`.

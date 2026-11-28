@@ -93,7 +93,7 @@ Funcionalidade: Interface de Exportação de Relatórios de Estoque (Camada D)
 
 ## 6. Checklist de DoD e aceitação
 
-- [ ] Modal de exportação implementado com React 19, Tailwind CSS e foco aprisionado.
-- [ ] Integração com o endpoint backend de streaming de arquivo binário `.xlsx`.
-- [ ] Validações de data e tratamento de erros de rede com feedback visual acessível.
-- [ ] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando alternância de tipos de relatório e captura real do download binário (`page.waitForEvent('download')`).
+- [x] Modal de exportação implementado com React 19, Tailwind CSS e foco aprisionado.
+- [x] Integração com o endpoint backend de streaming de arquivo binário `.xlsx`.
+- [x] Validações de data e tratamento de erros de rede com feedback visual acessível.
+- [x] Testes automatizados da Camada D em Gherkin (pt-BR) com Playwright + `playwright-bdd` (`moon run frontend:test-bdd` e `moon run frontend:test-e2e`) validando alternância de tipos de relatório e captura real do download binário (`page.waitForEvent('download')`).

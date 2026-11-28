@@ -22,7 +22,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | AC-24 | Frontend | Tela de troca obrigatória de senha (RF002) | ✅ Redigida | ✅ Concluída | AC-MOB-04 |
 | AC-25 | Frontend | Encerrar sessão no cliente e expurgo de cache | ✅ Redigida | ✅ Concluída | AC-MOB-05 |
 | AC-30 | Frontend | Migração de sessão para cookie HttpOnly e expurgo localStorage | ✅ Redigida | ✅ Concluída | AC-MOB-02 |
-| AC-31 | Frontend | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ⏳ Não iniciada | — |
+| AC-31 | Frontend | Migração da suíte de testes de frontend de Acesso (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ✅ Concluída | — |
 | AC-MOB-01 | Mobile | Tela de Login Mobile com Validação, Feedback e Gestão de Teclado (RF002) | ✅ Redigida | ✅ Concluída | AC-16 |
 | AC-MOB-02 | Mobile | Armazenamento Seguro de Sessão em Keystore e permanência com app encerrado (NF011, ADR-034) | ✅ Redigida | ✅ Concluída | AC-19 / AC-30 |
 | AC-MOB-03 | Mobile | Seleção e alternância de UBS ativa em dispositivo móvel (NF015) | ✅ Redigida | ✅ Concluída | AC-19 |
@@ -46,7 +46,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | DI-08 | Frontend | Carrinho de dispensação: múltiplos itens, posologia e antimicrobianos | ✅ Redigida | ✅ Concluída | DI-MOB-03 |
 | DI-09 | Frontend | Tela principal integrando atendimento, métricas e baixa de estoque | ✅ Redigida | ✅ Concluída | DI-MOB-04 |
 | DI-10 | Frontend | Painel de histórico de dispensas com filtro ontem/hoje e XLSX | ✅ Redigida | ✅ Concluída | DI-MOB-05 |
-| DI-11 | Frontend | Migração e consolidação da suíte de testes de Dispensação (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | 🚧 Em andamento (PoC DI-09/10 pronta) | — |
+| DI-11 | Frontend | Migração e consolidação da suíte de testes de Dispensação (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ✅ Concluída | — |
 | DI-MOB-01 | Mobile | Identificação do paciente por Cartão SUS / CPF e consulta de histórico | ✅ Redigida | ⏳ Não iniciada | DI-06 |
 | DI-MOB-02 | Mobile | Busca de medicamentos e seletor tátil de lotes FEFO com alertas | ✅ Redigida | ⏳ Não iniciada | DI-07 |
 | DI-MOB-03 | Mobile | Carrinho de dispensação ágil e posologia por toque | ✅ Redigida | ⏳ Não iniciada | DI-08 |
@@ -66,7 +66,7 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | RE-06 | Frontend | Busca no catálogo, fabricante obrigatório, lote e avisos de validade | ✅ Redigida | ✅ Concluída | RE-MOB-02 |
 | RE-07 | Frontend | Efetivação da entrada: envio da carga e atualização de estoque | ✅ Redigida | ✅ Concluída | RE-MOB-03 |
 | RE-08 | Frontend | Painel de histórico: visualização ontem/hoje, XLSX, termo e estorno | ✅ Redigida | ✅ Concluída | RE-MOB-04 |
-| RE-09 | Frontend | Migração da suíte de testes de Recebimento (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ⏳ Não iniciada | — |
+| RE-09 | Frontend | Migração da suíte de testes de Recebimento (Vitest -> Playwright BDD & E2E Full-Stack) | ✅ Redigida | ✅ Concluída | — |
 | RE-MOB-01 | Mobile | Conferência rápida de guia de recebimento CAF na doca de entrega | ✅ Redigida | ⏳ Não iniciada | RE-05 |
 | RE-MOB-02 | Mobile | Conferência física de lotes e aviso de validade no celular | ✅ Redigida | ⏳ Não iniciada | RE-06 |
 | RE-MOB-03 | Mobile | Confirmação de entrada de estoque e recibo digital mobile | ✅ Redigida | ⏳ Não iniciada | RE-07 |
@@ -82,12 +82,12 @@ Este documento serve como índice consolidado para acompanhar a especificação 
 | ES-03 | Backend | API de Ajustes: ajuste manual transacional com motivo e auditoria | ✅ Redigida | ✅ Concluída | — |
 | ES-04 | Backend | API de Rastreabilidade: linha do tempo de movimentações por lote | ✅ Redigida | ✅ Concluída | — |
 | ES-05 | Backend | API de Relatórios: geração de planilha XLSX por período e perdas | ✅ Redigida | ✅ Concluída | — |
-| ES-06 | Frontend | Painel superior: cartões com indicadores em tempo real (RF018, RF022) | ✅ Redigida | ⏳ Não iniciada | ES-MOB-01 |
-| ES-07 | Frontend | Tabela de saldos por produto, expansão de lotes e destaque laranja | ✅ Redigida | ⏳ Não iniciada | ES-MOB-02 |
-| ES-08 | Frontend | Barra de filtros avançados: busca, vencimento no mês e categorias | ✅ Redigida | ⏳ Não iniciada | ES-MOB-03 |
-| ES-09 | Frontend | Modais de ficha de movimentação do lote e ajuste rápido justificado | ✅ Redigida | ⏳ Não iniciada | ES-MOB-04 / ES-MOB-05 |
-| ES-10 | Frontend | Interface de relatórios com filtros por data e exportação em XLSX | ✅ Redigida | ⏳ Não iniciada | — |
-| ES-11 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Controle de Estoque (substituindo Vitest) | ✅ Redigida | ⏳ Não iniciada | — |
+| ES-06 | Frontend | Painel superior: cartões com indicadores em tempo real (RF018, RF022) | ✅ Redigida | ✅ Concluída | ES-MOB-01 |
+| ES-07 | Frontend | Tabela de saldos por produto, expansão de lotes e destaque laranja | ✅ Redigida | ✅ Concluída | ES-MOB-02 |
+| ES-08 | Frontend | Barra de filtros avançados: busca, vencimento no mês e categorias | ✅ Redigida | ✅ Concluída | ES-MOB-03 |
+| ES-09 | Frontend | Modais de ficha de movimentação do lote e ajuste rápido justificado | ✅ Redigida | ✅ Concluída | ES-MOB-04 / ES-MOB-05 |
+| ES-10 | Frontend | Interface de relatórios com filtros por data e exportação em XLSX | ✅ Redigida | ✅ Concluída | — |
+| ES-11 | Frontend | Suíte integrada Playwright BDD & E2E Full-Stack de Controle de Estoque (substituindo Vitest) | ✅ Redigida | ✅ Concluída | — |
 | ES-MOB-01 | Mobile | Dashboard de saldos e indicadores de criticidade na palma da mão | ✅ Redigida | ⏳ Não iniciada | ES-06 |
 | ES-MOB-02 | Mobile | Consulta rápida de saldos, lotes e validade no celular | ✅ Redigida | ⏳ Não iniciada | ES-07 |
 | ES-MOB-03 | Mobile | Filtros rápidos de estoque (vencimento no mês, em falta) | ✅ Redigida | ⏳ Não iniciada | ES-08 |
